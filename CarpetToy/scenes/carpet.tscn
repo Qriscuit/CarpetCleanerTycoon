@@ -1,0 +1,19 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://assets/carpet/mint_meadow.glb" id="1_carpet"]
+
+[sub_resource type="BoxShape3D" id="Shape"]
+size = Vector3(2, 0.067, 3)
+
+[node name="Carpet" type="Node3D"]
+
+[node name="MintMeadow" parent="." instance=ExtResource("1_carpet")]
+
+[node name="CleaningSurface" type="StaticBody3D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CleaningSurface"]
+position = Vector3(0, 0.0335, 0)
+shape = SubResource("Shape")
+

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/rug_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Terracotta Flatweave"
+cleaning_hint = "Brush / one pass\nLight dust lifts in a single sweep."
+surface_tint = Color(1.0, 0.65, 0.48, 1.0)
+dust_strength = 0.42
+removal_per_pass = 1.0

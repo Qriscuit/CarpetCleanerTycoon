@@ -1,0 +1,59 @@
+{
+  "default_discrete_first_route": {
+    "bonzi_min": 5.0,
+    "high_street_min": 29.0,
+    "manual_jobs": 29,
+    "bot_deliveries": 12,
+    "cash_remaining": 0
+  },
+  "base_auto_rates": [
+    300,
+    750,
+    1560,
+    4200,
+    9000
+  ],
+  "pacing_baseline": [
+    {
+      "jobs": 5,
+      "hours": 0.08333333333333333,
+      "cash": 0.0,
+      "elapsed": 0.08333333333333333
+    },
+    {
+      "jobs": 24,
+      "hours": 0.4,
+      "cash": 0.0,
+      "elapsed": 0.48333333333333334
+    },
+    {
+      "jobs": 75,
+      "hours": 1.4583333333333333,
+      "cash": 31.25,
+      "elapsed": 1.9416666666666667
+    },
+    {
+      "jobs": 174,
+      "hours": 5.316666666666666,
+      "cash": 7.75,
+      "elapsed": 7.258333333333333
+    },
+    {
+      "jobs": 293,
+      "hours": 11.394444444444444,
+      "cash": 153.91666666665697,
+      "elapsed": 18.65277777777778
+    }
+  ],
+  "workbook_validation": {
+    "formulas_recalculated": 289,
+    "formula_errors": 0,
+    "cached_value_mismatches": 0,
+    "formula_checks_passed": 10,
+    "sensitivity_120s_cycle": {
+      "bonzi_min": 10,
+      "high_street_min": 50
+    },
+    "gdd_pdf_pages": 9
+  }
+}

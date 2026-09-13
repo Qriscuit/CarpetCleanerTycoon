@@ -1,0 +1,58 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/carpet.tscn" id="1_rug"]
+[ext_resource type="Script" path="res://scripts/studio.gd" id="2_script"]
+
+[sub_resource type="Environment" id="Environment"]
+background_mode = 1
+background_color = Color(0.82, 0.89, 0.86, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.91, 0.97, 0.94, 1)
+ambient_light_energy = 0.25
+reflected_light_source = 2
+tonemap_mode = 0
+
+[sub_resource type="StandardMaterial3D" id="FloorMaterial"]
+albedo_color = Color(0.9, 0.96, 0.94, 1)
+roughness = 1.0
+
+[sub_resource type="PlaneMesh" id="FloorMesh"]
+material = SubResource("FloorMaterial")
+size = Vector2(200, 200)
+
+[node name="CarpetStudio" type="Node3D"]
+script = ExtResource("2_script")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment")
+
+[node name="Carpet" parent="." instance=ExtResource("1_rug")]
+rotation = Vector3(0, -0.14, 0)
+
+[node name="Ground" type="MeshInstance3D" parent="."]
+position = Vector3(0, -0.012, 0)
+mesh = SubResource("FloorMesh")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-64, -30, 0)
+light_color = Color(1, 0.99, 0.97, 1)
+light_energy = 0.16
+shadow_enabled = true
+shadow_bias = 0.1
+shadow_normal_bias = 2.0
+directional_shadow_max_distance = 12.0
+directional_shadow_mode = 0
+
+[node name="FillLight" type="DirectionalLight3D" parent="."]
+rotation_degrees = Vector3(-42, 145, 0)
+light_color = Color(0.79, 0.92, 1, 1)
+light_energy = 0.04
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(3.1, 6.8, 4.7)
+rotation_degrees = Vector3(-50.4, 33.4, 0)
+projection = 1
+size = 5.7
+near = 0.05
+far = 100.0
+current = true

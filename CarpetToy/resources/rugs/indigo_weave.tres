@@ -1,0 +1,13 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/rug_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Indigo Weave"
+cleaning_hint = "Brush / three passes\nSweep lengthwise with the weave."
+surface_tint = Color(0.52, 0.63, 1.0, 1.0)
+dust_strength = 0.68
+removal_per_pass = 0.333334
+grain_axis = Vector2(0, 1)
+cross_grain_efficiency = 0.35

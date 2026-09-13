@@ -1,0 +1,68 @@
+# Godot's generated import cache, editor state, and export credentials.
+# Keep *.import sidecars, *.uid files, scenes, and resources in version control.
+.godot/
+.import/
+.mono/
+export_credentials.cfg
+
+# Downloaded local engine binaries and export templates.
+/tools/godot/
+/CarpetToy/export_templates/
+
+# Compiled game exports and build output.
+/build/
+/builds/
+/dist/
+/CarpetToy/build/
+/CarpetToy/builds/
+/CarpetToy/export/
+/CarpetToy/exports/
+*.pck
+*.apk
+*.aab
+*.ipa
+
+# Reproducible renders, document previews, and validation output.
+# Keep the original Blender files, runtime assets, and design documents.
+/art/renders/*
+!/art/renders/.gitkeep
+/design/preview/
+/art/*_test_*.json
+*.log
+
+# Local game saves; test saves inside .godot are already excluded above.
+neighborhood_shop_v*.json
+shop_test_*.json
+
+# Blender backups, Python caches, and local virtual environments.
+*.blend[0-9]*
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Machine-specific IDE files, shortcuts, and operating-system clutter.
+.idea/
+.vs/
+*.lnk
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*.tmp
+*~
+~$*
+
+# Local environment secrets and signing keys. Example config stays shareable.
+.env
+.env.*
+!.env.example
+!.env.template
+*.keystore
+*.jks
+*.p12
+*.pfx

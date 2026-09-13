@@ -1,0 +1,24 @@
+{
+  "name": "Mint Meadow",
+  "dimensions_m": [
+    2,
+    3.32,
+    0.067
+  ],
+  "triangles": 3176,
+  "mesh_objects": 3,
+  "materials": 3,
+  "albedo_resolution": [
+    1024,
+    1536
+  ],
+  "normal_resolution": [
+    1024,
+    1536
+  ],
+  "roughness": 0.93,
+  "godot_up_axis": "Y",
+  "pivot": "ground center",
+  "source": "art/blender/mint_meadow.blend",
+  "export": "CarpetToy/assets/carpet/mint_meadow.glb"
+}

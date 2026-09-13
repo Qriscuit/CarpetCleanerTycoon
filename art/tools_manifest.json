@@ -1,0 +1,23 @@
+{
+  "large_brush": {
+    "triangles": 2108,
+    "mesh_surfaces": 1,
+    "palette": "64x8 shared colors",
+    "up": "Godot Y",
+    "pivot": "head contact / nozzle contact"
+  },
+  "squeegee": {
+    "triangles": 500,
+    "mesh_surfaces": 1,
+    "palette": "64x8 shared colors",
+    "up": "Godot Y",
+    "pivot": "head contact / nozzle contact"
+  },
+  "jet_spray": {
+    "triangles": 868,
+    "mesh_surfaces": 1,
+    "palette": "64x8 shared colors",
+    "up": "Godot Y",
+    "pivot": "head contact / nozzle contact"
+  }
+}
