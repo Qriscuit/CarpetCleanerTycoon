@@ -1,12 +1,2651 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=15 format=3]
 
-[ext_resource type="Script" path="res://scripts/shop_hub.gd" id="1"]
+[ext_resource type="Script" path="res://scripts/shop_hub.gd" id="hub"]
+[ext_resource type="Theme" path="res://resources/ui/mint_theme.tres" id="theme"]
+[ext_resource type="Script" path="res://scripts/ui/item_card.gd" id="card"]
+[ext_resource type="PackedScene" path="res://scenes/ui/art/store.tscn" id="store"]
+[ext_resource type="PackedScene" path="res://scenes/ui/art/bonzi.tscn" id="bonzi"]
+[ext_resource type="PackedScene" path="res://scenes/ui/art/brush.tscn" id="brush"]
+[ext_resource type="PackedScene" path="res://scenes/ui/art/wide_brush.tscn" id="wide_brush"]
+[ext_resource type="PackedScene" path="res://scenes/ui/art/blueprint.tscn" id="blueprint"]
+[ext_resource type="PackedScene" path="res://scenes/ui/art/upgrade.tscn" id="upgrade"]
+[ext_resource type="PackedScene" path="res://scenes/ui/art/intake.tscn" id="intake"]
+[ext_resource type="Texture2D" path="res://assets/ui/nav_shop.svg" id="nav_shop"]
+[ext_resource type="Texture2D" path="res://assets/ui/nav_items.svg" id="nav_items"]
+[ext_resource type="Texture2D" path="res://assets/ui/nav_plans.svg" id="nav_plans"]
+[ext_resource type="Texture2D" path="res://assets/ui/nav_bonzi.svg" id="nav_bonzi"]
 
 [node name="ShopHub" type="Control"]
 layout_mode = 3
 anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchor_right = 1
+anchor_bottom = 1
 grow_horizontal = 2
 grow_vertical = 2
-script = ExtResource("1")
+theme = ExtResource("theme")
+script = ExtResource("hub")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1
+anchor_bottom = 1
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.999, 0.988, 0.957, 1)
+
+[node name="Shell" type="MarginContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1
+anchor_bottom = 1
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 20
+
+[node name="Layout" type="VBoxContainer" parent="Shell"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Header" type="HBoxContainer" parent="Shell/Layout"]
+layout_mode = 2
+
+[node name="Brand" type="Label" parent="Shell/Layout/Header"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "mint meadow"
+autowrap_mode = 3
+unique_name_in_owner = true
+size_flags_horizontal = 3
+
+[node name="WalletCard" type="PanelContainer" parent="Shell/Layout/Header"]
+layout_mode = 2
+theme_type_variation = "GoldCard"
+
+[node name="Wallet" type="Label" parent="Shell/Layout/Header/WalletCard"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "{cash} cash"
+autowrap_mode = 0
+unique_name_in_owner = true
+
+[node name="Notice" type="PanelContainer" parent="Shell/Layout"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "GoldCard"
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Notice"]
+layout_mode = 2
+
+[node name="ErrorNotice" type="VBoxContainer" parent="Shell/Layout/Notice/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ToastLabel" type="Label" parent="Shell/Layout/Notice/Content/ErrorNotice"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Saved"
+autowrap_mode = 3
+unique_name_in_owner = true
+
+[node name="BuiltNotice" type="Label" parent="Shell/Layout/Notice/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = "Body"
+text = "Built! Your new upgrade is ready to use."
+autowrap_mode = 3
+mouse_filter = 2
+
+[node name="EquipNotice" type="Label" parent="Shell/Layout/Notice/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_type_variation = "Body"
+text = "Equipped for your next customer rug."
+autowrap_mode = 3
+mouse_filter = 2
+
+[node name="Pages" type="TabContainer" parent="Shell/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+tabs_visible = false
+clip_contents = true
+use_hidden_tabs_for_min_size = false
+
+[node name="ShopPage" type="ScrollContainer" parent="Shell/Layout/Pages"]
+unique_name_in_owner = true
+visible = true
+layout_mode = 2
+horizontal_scroll_mode = 0
+follow_focus = true
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/ShopPage"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 18
+
+[node name="Eyebrow" type="Label" parent="Shell/Layout/Pages/ShopPage/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "NEIGHBORHOOD · SHOP 01"
+autowrap_mode = 3
+
+[node name="PageTitle" type="Label" parent="Shell/Layout/Pages/ShopPage/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Title"
+text = "Your little happy place"
+autowrap_mode = 3
+
+[node name="ItemsPage" type="ScrollContainer" parent="Shell/Layout/Pages"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+horizontal_scroll_mode = 0
+follow_focus = true
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 18
+
+[node name="Eyebrow" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "YOUR TOOL BENCH"
+autowrap_mode = 3
+
+[node name="PageTitle" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Title"
+text = "Made for a good clean"
+autowrap_mode = 3
+
+[node name="PlansPage" type="ScrollContainer" parent="Shell/Layout/Pages"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+horizontal_scroll_mode = 0
+follow_focus = true
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 18
+
+[node name="Eyebrow" type="Label" parent="Shell/Layout/Pages/PlansPage/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "BLUEPRINT COLLECTION"
+autowrap_mode = 3
+
+[node name="PageTitle" type="Label" parent="Shell/Layout/Pages/PlansPage/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Title"
+text = "A plan for every step"
+autowrap_mode = 3
+
+[node name="BonziPage" type="ScrollContainer" parent="Shell/Layout/Pages"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+horizontal_scroll_mode = 0
+follow_focus = true
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 18
+
+[node name="Eyebrow" type="Label" parent="Shell/Layout/Pages/BonziPage/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "YOUR ROUTINE CLEANER"
+autowrap_mode = 3
+
+[node name="PageTitle" type="Label" parent="Shell/Layout/Pages/BonziPage/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Title"
+text = "A little help from Bonzi"
+autowrap_mode = 3
+
+[node name="ExpansionPage" type="ScrollContainer" parent="Shell/Layout/Pages"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+horizontal_scroll_mode = 0
+follow_focus = true
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/ExpansionPage"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 18
+
+[node name="Eyebrow" type="Label" parent="Shell/Layout/Pages/ExpansionPage/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "FUTURE SHOP · PREVIEW"
+autowrap_mode = 3
+
+[node name="PageTitle" type="Label" parent="Shell/Layout/Pages/ExpansionPage/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Title"
+text = "Someday, High Street"
+autowrap_mode = 3
+
+[node name="ReturnCard" type="PanelContainer" parent="Shell/Layout/Pages/ShopPage/Content"]
+layout_mode = 2
+theme_type_variation = "GoldCard"
+unique_name_in_owner = true
+visible = false
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/ReturnCard"]
+layout_mode = 2
+
+[node name="WelcomeTitle" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/ReturnCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Look what Bonzi did!"
+autowrap_mode = 3
+
+[node name="WelcomeAmount" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/ReturnCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "+{return_reward} cash while you were away. It's already in your wallet."
+autowrap_mode = 3
+
+[node name="AcknowledgeReturnButton" type="Button" parent="Shell/Layout/Pages/ShopPage/Content/ReturnCard/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Thanks, buddy"
+mouse_default_cursor_shape = 2
+metadata/action = "acknowledge"
+unique_name_in_owner = true
+
+[node name="ShopHero" type="PanelContainer" parent="Shell/Layout/Pages/ShopPage/Content"]
+layout_mode = 2
+theme_type_variation = "SoftCard"
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero"]
+layout_mode = 2
+
+[node name="Heading" type="HBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content"]
+layout_mode = 2
+
+[node name="ShopName" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content/Heading"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Neighborhood Shop"
+autowrap_mode = 3
+size_flags_horizontal = 3
+
+[node name="OpenBadge" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content/Heading"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "OPEN"
+autowrap_mode = 0
+
+[node name="Storefront" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content" instance=ExtResource("store")]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 178)
+unique_name_in_owner = true
+
+[node name="ServiceRecord" type="HBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content"]
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="Manual" type="VBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content/ServiceRecord"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Value" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content/ServiceRecord/Manual"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "{manual_jobs}"
+autowrap_mode = 3
+
+[node name="Caption" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content/ServiceRecord/Manual"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "customer rugs"
+autowrap_mode = 3
+
+[node name="Routine" type="VBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content/ServiceRecord"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Value" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content/ServiceRecord/Routine"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "{automated_jobs}"
+autowrap_mode = 3
+
+[node name="Caption" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content/ServiceRecord/Routine"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Bonzi deliveries"
+autowrap_mode = 3
+
+[node name="Income" type="VBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content/ServiceRecord"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Value" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content/ServiceRecord/Income"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "{income}"
+autowrap_mode = 3
+
+[node name="Caption" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content/ServiceRecord/Income"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "cash / hour"
+autowrap_mode = 3
+
+[node name="NextGoalCard" type="PanelContainer" parent="Shell/Layout/Pages/ShopPage/Content"]
+layout_mode = 2
+theme_type_variation = "Card"
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard"]
+layout_mode = 2
+
+[node name="GoalKicker" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "ONE LITTLE STEP AT A TIME"
+autowrap_mode = 3
+
+[node name="DiscoverGoal" type="VBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content"]
+layout_mode = 2
+unique_name_in_owner = true
+visible = true
+
+[node name="Title" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content/DiscoverGoal"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Meet your first teammate"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content/DiscoverGoal"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Finish {bonzi_rugs_left} more customer rugs to find Bonzi's blueprint. Each pays +20 cash."
+autowrap_mode = 3
+
+[node name="SaveGoal" type="VBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content"]
+layout_mode = 2
+unique_name_in_owner = true
+visible = false
+
+[node name="Title" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content/SaveGoal"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Bonzi's blueprint is yours"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content/SaveGoal"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Save {bonzi_shortfall} more cash to build him. That's {bonzi_jobs_left} customer rugs, with no parts or extras."
+autowrap_mode = 3
+
+[node name="BuildGoal" type="VBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content"]
+layout_mode = 2
+unique_name_in_owner = true
+visible = false
+
+[node name="Title" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content/BuildGoal"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Your buddy is ready to build"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content/BuildGoal"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "You've got the plan and the cash. Bonzi will handle routine orders while you clean."
+autowrap_mode = 3
+
+[node name="WideGoal" type="VBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content"]
+layout_mode = 2
+unique_name_in_owner = true
+visible = false
+
+[node name="Title" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content/WideGoal"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "A wider sweep, if you fancy"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content/WideGoal"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "At 8 customer rugs, find the optional Wide Brush plan. Keep cleaning toward {wide_rugs_left} more rugs."
+autowrap_mode = 3
+
+[node name="UpgradeGoal" type="VBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content"]
+layout_mode = 2
+unique_name_in_owner = true
+visible = false
+
+[node name="Title" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content/UpgradeGoal"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Make this shop your own"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content/UpgradeGoal"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Browse the optional Wide Brush and Bonzi upgrades. You can keep earning without buying them."
+autowrap_mode = 3
+
+[node name="SettledGoal" type="VBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content"]
+layout_mode = 2
+unique_name_in_owner = true
+visible = false
+
+[node name="Title" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content/SettledGoal"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "A lovely little shop, running smoothly"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content/SettledGoal"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Your first shop is fully equipped. Enjoy another rug, or play with different rugs in the practice gym."
+autowrap_mode = 3
+
+[node name="GoalProgress" type="ProgressBar" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 16)
+value = 0
+show_percentage = false
+
+[node name="GoalActionButton" type="Button" parent="Shell/Layout/Pages/ShopPage/Content/NextGoalCard/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Explore the next step"
+mouse_default_cursor_shape = 2
+metadata/action = "goal"
+unique_name_in_owner = true
+
+[node name="PracticeCard" type="PanelContainer" parent="Shell/Layout/Pages/ShopPage/Content"]
+layout_mode = 2
+theme_type_variation = "BlueCard"
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/ShopPage/Content/PracticeCard"]
+layout_mode = 2
+
+[node name="PracticeTitle" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/PracticeCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Just here to unwind?"
+autowrap_mode = 3
+
+[node name="PracticeDescription" type="Label" parent="Shell/Layout/Pages/ShopPage/Content/PracticeCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "The Rug Cleaning Gym is free practice. Try different rugs; it doesn't change your cash or jobs."
+autowrap_mode = 3
+
+[node name="GymButton" type="Button" parent="Shell/Layout/Pages/ShopPage/Content/PracticeCard/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Open the practice gym"
+mouse_default_cursor_shape = 2
+metadata/action = "gym"
+unique_name_in_owner = true
+
+[node name="ExpansionButton" type="Button" parent="Shell/Layout/Pages/ShopPage/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Peek at the future shop"
+mouse_default_cursor_shape = 2
+metadata/action = "expansion"
+unique_name_in_owner = true
+
+[node name="ItemsIntro" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Owned tools travel with you. Choose the brush that feels best for your next customer rug."
+autowrap_mode = 3
+
+[node name="HandBrushCard" type="PanelContainer" parent="Shell/Layout/Pages/ItemsPage/Content"]
+layout_mode = 2
+theme_type_variation = "Card"
+script = ExtResource("card")
+item_id = "hand_brush"
+personal_tool = true
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard"]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content"]
+layout_mode = 2
+
+[node name="Artwork" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/Header" instance=ExtResource("brush")]
+layout_mode = 2
+custom_minimum_size = Vector2(114, 114)
+size_flags_horizontal = 0
+
+[node name="Words" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Category" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "STARTER TOOL"
+autowrap_mode = 3
+
+[node name="ItemTitle" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Hand Brush"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "A reliable brush for small, dusty rugs."
+autowrap_mode = 3
+
+[node name="Benefit" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "The free starter. Always yours."
+autowrap_mode = 3
+
+[node name="LockedState" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "locked"
+
+[node name="Gate" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{done} / {gate} customer rugs · {rugs_left} to go"
+autowrap_mode = 3
+
+[node name="BonziGate" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Build Bonzi first to use this plan."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "needs_bonzi"
+
+[node name="EarnBlueprintButton" type="Button" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/LockedState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Clean a rug to unlock"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="NeedCashState" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "short"
+
+[node name="CashGoal" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Blueprint found! Save {shortfall} more cash."
+autowrap_mode = 3
+
+[node name="JobsGoal" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{jobs} customer rugs at +20 cash can cover it. Bonzi's deliveries help too."
+autowrap_mode = 3
+
+[node name="EarnCashButton" type="Button" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/NeedCashState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Clean a rug · +20 cash"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="ReadyState" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "ready"
+
+[node name="ReadyHint" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/ReadyState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Blueprint ready · yours forever"
+autowrap_mode = 3
+
+[node name="BuildButton" type="Button" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/ReadyState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Build · {cost} cash"
+mouse_default_cursor_shape = 2
+metadata/action = "build"
+
+[node name="OwnedState" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content"]
+layout_mode = 2
+visible = true
+metadata/show_when = "owned"
+
+[node name="OwnedNote" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/OwnedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Owned · use at your cleaning pad"
+autowrap_mode = 3
+
+[node name="EquippedState" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/OwnedState"]
+layout_mode = 2
+visible = true
+metadata/show_when = "equipped"
+
+[node name="EquippedLabel" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/OwnedState/EquippedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "✓ Equipped for customer rugs"
+autowrap_mode = 3
+
+[node name="EquipState" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equip"
+
+[node name="EquipButton" type="Button" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/OwnedState/EquipState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Equip this brush"
+mouse_default_cursor_shape = 2
+metadata/action = "equip"
+
+[node name="ZeroGainWarning" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "This adds no income yet. Upgrade Bonzi Mk II first for a useful boost."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "zero_gain"
+
+[node name="WideBrushCard" type="PanelContainer" parent="Shell/Layout/Pages/ItemsPage/Content"]
+layout_mode = 2
+theme_type_variation = "Card"
+script = ExtResource("card")
+item_id = "wide_brush"
+personal_tool = true
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard"]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content"]
+layout_mode = 2
+
+[node name="Artwork" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/Header" instance=ExtResource("wide_brush")]
+layout_mode = 2
+custom_minimum_size = Vector2(114, 114)
+size_flags_horizontal = 0
+
+[node name="Words" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Category" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "OPTIONAL UPGRADE"
+autowrap_mode = 3
+
+[node name="ItemTitle" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Wide Brush"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Sweep a wider strip without making the rug harder."
+autowrap_mode = 3
+
+[node name="Benefit" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "44% wider cleaning reach."
+autowrap_mode = 3
+
+[node name="LockedState" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content"]
+layout_mode = 2
+visible = true
+metadata/show_when = "locked"
+
+[node name="Gate" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{done} / {gate} customer rugs · {rugs_left} to go"
+autowrap_mode = 3
+
+[node name="BonziGate" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Build Bonzi first to use this plan."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "needs_bonzi"
+
+[node name="EarnBlueprintButton" type="Button" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/LockedState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Clean a rug to unlock"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="NeedCashState" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "short"
+
+[node name="CashGoal" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Blueprint found! Save {shortfall} more cash."
+autowrap_mode = 3
+
+[node name="JobsGoal" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{jobs} customer rugs at +20 cash can cover it. Bonzi's deliveries help too."
+autowrap_mode = 3
+
+[node name="EarnCashButton" type="Button" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/NeedCashState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Clean a rug · +20 cash"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="ReadyState" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "ready"
+
+[node name="ReadyHint" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/ReadyState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Blueprint ready · yours forever"
+autowrap_mode = 3
+
+[node name="BuildButton" type="Button" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/ReadyState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Build · {cost} cash"
+mouse_default_cursor_shape = 2
+metadata/action = "build"
+
+[node name="OwnedState" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "owned"
+
+[node name="OwnedNote" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/OwnedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Owned · use at your cleaning pad"
+autowrap_mode = 3
+
+[node name="EquippedState" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equipped"
+
+[node name="EquippedLabel" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/OwnedState/EquippedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "✓ Equipped for customer rugs"
+autowrap_mode = 3
+
+[node name="EquipState" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equip"
+
+[node name="EquipButton" type="Button" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/OwnedState/EquipState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Equip this brush"
+mouse_default_cursor_shape = 2
+metadata/action = "equip"
+
+[node name="ZeroGainWarning" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "This adds no income yet. Upgrade Bonzi Mk II first for a useful boost."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "zero_gain"
+
+[node name="FutureToolsCard" type="PanelContainer" parent="Shell/Layout/Pages/ItemsPage/Content"]
+layout_mode = 2
+theme_type_variation = "BlueCard"
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/ItemsPage/Content/FutureToolsCard"]
+layout_mode = 2
+
+[node name="FutureToolsTitle" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/FutureToolsCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Jet spray + squeegee"
+autowrap_mode = 3
+
+[node name="FutureToolsCopy" type="Label" parent="Shell/Layout/Pages/ItemsPage/Content/FutureToolsCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Preview models for a future wet-cleaning recipe. Their cleaning effects aren't active yet."
+autowrap_mode = 3
+
+[node name="TryToolsButton" type="Button" parent="Shell/Layout/Pages/ItemsPage/Content/FutureToolsCard/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Preview in the gym · no cash"
+mouse_default_cursor_shape = 2
+metadata/action = "gym"
+
+[node name="BlueprintIntro" type="PanelContainer" parent="Shell/Layout/Pages/PlansPage/Content"]
+layout_mode = 2
+theme_type_variation = "BlueCard"
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/BlueprintIntro"]
+layout_mode = 2
+
+[node name="Row" type="HBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/BlueprintIntro/Content"]
+layout_mode = 2
+
+[node name="BlueprintArt" parent="Shell/Layout/Pages/PlansPage/Content/BlueprintIntro/Content/Row" instance=ExtResource("blueprint")]
+layout_mode = 2
+custom_minimum_size = Vector2(114, 114)
+size_flags_horizontal = 0
+
+[node name="Words" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/BlueprintIntro/Content/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BlueprintTitle" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/BlueprintIntro/Content/Row/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Find it. Keep it. Build it."
+autowrap_mode = 3
+
+[node name="BlueprintBody" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/BlueprintIntro/Content/Row/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Plans unlock through customer rugs. A blueprint stays yours after you build."
+autowrap_mode = 3
+
+[node name="BonziPlan" type="PanelContainer" parent="Shell/Layout/Pages/PlansPage/Content"]
+layout_mode = 2
+theme_type_variation = "Card"
+script = ExtResource("card")
+item_id = "bonzi"
+personal_tool = false
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan"]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content"]
+layout_mode = 2
+
+[node name="Artwork" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/Header" instance=ExtResource("bonzi")]
+layout_mode = 2
+custom_minimum_size = Vector2(114, 114)
+size_flags_horizontal = 0
+
+[node name="Words" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Category" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "YOUR FIRST TEAMMATE"
+autowrap_mode = 3
+
+[node name="ItemTitle" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Bonzi"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Your first teammate takes over a separate routine lane."
+autowrap_mode = 3
+
+[node name="Benefit" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Adds {gain} cash / hour once built."
+autowrap_mode = 3
+
+[node name="LockedState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content"]
+layout_mode = 2
+visible = true
+metadata/show_when = "locked"
+
+[node name="Gate" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{done} / {gate} customer rugs · {rugs_left} to go"
+autowrap_mode = 3
+
+[node name="BonziGate" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Build Bonzi first to use this plan."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "needs_bonzi"
+
+[node name="EarnBlueprintButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/LockedState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Clean a rug to unlock"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="NeedCashState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "short"
+
+[node name="CashGoal" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Blueprint found! Save {shortfall} more cash."
+autowrap_mode = 3
+
+[node name="JobsGoal" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{jobs} customer rugs at +20 cash can cover it. Bonzi's deliveries help too."
+autowrap_mode = 3
+
+[node name="EarnCashButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/NeedCashState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Clean a rug · +20 cash"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="ReadyState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "ready"
+
+[node name="ReadyHint" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/ReadyState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Blueprint ready · yours forever"
+autowrap_mode = 3
+
+[node name="BuildButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/ReadyState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Build · {cost} cash"
+mouse_default_cursor_shape = 2
+metadata/action = "build"
+
+[node name="OwnedState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "owned"
+
+[node name="OwnedNote" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/OwnedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Installed in the Neighborhood Shop"
+autowrap_mode = 3
+
+[node name="EquippedState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equipped"
+
+[node name="EquippedLabel" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/OwnedState/EquippedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "✓ Equipped for customer rugs"
+autowrap_mode = 3
+
+[node name="EquipState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equip"
+
+[node name="EquipButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/OwnedState/EquipState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Equip this brush"
+mouse_default_cursor_shape = 2
+metadata/action = "equip"
+
+[node name="ZeroGainWarning" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "This adds no income yet. Upgrade Bonzi Mk II first for a useful boost."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "zero_gain"
+
+[node name="WidePlan" type="PanelContainer" parent="Shell/Layout/Pages/PlansPage/Content"]
+layout_mode = 2
+theme_type_variation = "Card"
+script = ExtResource("card")
+item_id = "wide_brush"
+personal_tool = true
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan"]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content"]
+layout_mode = 2
+
+[node name="Artwork" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/Header" instance=ExtResource("wide_brush")]
+layout_mode = 2
+custom_minimum_size = Vector2(114, 114)
+size_flags_horizontal = 0
+
+[node name="Words" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Category" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "OPTIONAL UPGRADE"
+autowrap_mode = 3
+
+[node name="ItemTitle" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Wide Brush"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "An optional, broader brush for your customer rugs."
+autowrap_mode = 3
+
+[node name="Benefit" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "44% wider reach. No required purchases."
+autowrap_mode = 3
+
+[node name="LockedState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content"]
+layout_mode = 2
+visible = true
+metadata/show_when = "locked"
+
+[node name="Gate" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{done} / {gate} customer rugs · {rugs_left} to go"
+autowrap_mode = 3
+
+[node name="BonziGate" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Build Bonzi first to use this plan."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "needs_bonzi"
+
+[node name="EarnBlueprintButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/LockedState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Clean a rug to unlock"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="NeedCashState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "short"
+
+[node name="CashGoal" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Blueprint found! Save {shortfall} more cash."
+autowrap_mode = 3
+
+[node name="JobsGoal" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{jobs} customer rugs at +20 cash can cover it. Bonzi's deliveries help too."
+autowrap_mode = 3
+
+[node name="EarnCashButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/NeedCashState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Clean a rug · +20 cash"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="ReadyState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "ready"
+
+[node name="ReadyHint" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/ReadyState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Blueprint ready · yours forever"
+autowrap_mode = 3
+
+[node name="BuildButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/ReadyState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Build · {cost} cash"
+mouse_default_cursor_shape = 2
+metadata/action = "build"
+
+[node name="OwnedState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "owned"
+
+[node name="OwnedNote" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/OwnedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Owned · use at your cleaning pad"
+autowrap_mode = 3
+
+[node name="EquippedState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equipped"
+
+[node name="EquippedLabel" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/OwnedState/EquippedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "✓ Equipped for customer rugs"
+autowrap_mode = 3
+
+[node name="EquipState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equip"
+
+[node name="EquipButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/OwnedState/EquipState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Equip this brush"
+mouse_default_cursor_shape = 2
+metadata/action = "equip"
+
+[node name="ZeroGainWarning" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "This adds no income yet. Upgrade Bonzi Mk II first for a useful boost."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "zero_gain"
+
+[node name="Mk2Plan" type="PanelContainer" parent="Shell/Layout/Pages/PlansPage/Content"]
+layout_mode = 2
+theme_type_variation = "Card"
+script = ExtResource("card")
+item_id = "bonzi_mk2"
+personal_tool = false
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan"]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content"]
+layout_mode = 2
+
+[node name="Artwork" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/Header" instance=ExtResource("upgrade")]
+layout_mode = 2
+custom_minimum_size = Vector2(114, 114)
+size_flags_horizontal = 0
+
+[node name="Words" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Category" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "OPTIONAL UPGRADE"
+autowrap_mode = 3
+
+[node name="ItemTitle" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Bonzi Mk II"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Raise cleaning capacity from 30 to 45 routine orders per hour."
+autowrap_mode = 3
+
+[node name="Benefit" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Adds {gain} cash / hour at your current demand."
+autowrap_mode = 3
+
+[node name="LockedState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content"]
+layout_mode = 2
+visible = true
+metadata/show_when = "locked"
+
+[node name="Gate" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{done} / {gate} customer rugs · {rugs_left} to go"
+autowrap_mode = 3
+
+[node name="BonziGate" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Build Bonzi first to use this plan."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "needs_bonzi"
+
+[node name="EarnBlueprintButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/LockedState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Clean a rug to unlock"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="NeedCashState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "short"
+
+[node name="CashGoal" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Blueprint found! Save {shortfall} more cash."
+autowrap_mode = 3
+
+[node name="JobsGoal" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{jobs} customer rugs at +20 cash can cover it. Bonzi's deliveries help too."
+autowrap_mode = 3
+
+[node name="EarnCashButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/NeedCashState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Clean a rug · +20 cash"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="ReadyState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "ready"
+
+[node name="ReadyHint" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/ReadyState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Blueprint ready · yours forever"
+autowrap_mode = 3
+
+[node name="BuildButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/ReadyState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Build · {cost} cash"
+mouse_default_cursor_shape = 2
+metadata/action = "build"
+
+[node name="OwnedState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "owned"
+
+[node name="OwnedNote" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/OwnedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Installed in the Neighborhood Shop"
+autowrap_mode = 3
+
+[node name="EquippedState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equipped"
+
+[node name="EquippedLabel" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/OwnedState/EquippedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "✓ Equipped for customer rugs"
+autowrap_mode = 3
+
+[node name="EquipState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equip"
+
+[node name="EquipButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/OwnedState/EquipState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Equip this brush"
+mouse_default_cursor_shape = 2
+metadata/action = "equip"
+
+[node name="ZeroGainWarning" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "This adds no income yet. Upgrade Bonzi Mk II first for a useful boost."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "zero_gain"
+
+[node name="IntakePlan" type="PanelContainer" parent="Shell/Layout/Pages/PlansPage/Content"]
+layout_mode = 2
+theme_type_variation = "Card"
+script = ExtResource("card")
+item_id = "intake"
+personal_tool = false
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan"]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content"]
+layout_mode = 2
+
+[node name="Artwork" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/Header" instance=ExtResource("intake")]
+layout_mode = 2
+custom_minimum_size = Vector2(114, 114)
+size_flags_horizontal = 0
+
+[node name="Words" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Category" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "OPTIONAL UPGRADE"
+autowrap_mode = 3
+
+[node name="ItemTitle" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Welcome Sign"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Raise demand from 40 to 60 routine orders per hour."
+autowrap_mode = 3
+
+[node name="Benefit" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Adds {gain} cash / hour with your current cleaner."
+autowrap_mode = 3
+
+[node name="LockedState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content"]
+layout_mode = 2
+visible = true
+metadata/show_when = "locked"
+
+[node name="Gate" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{done} / {gate} customer rugs · {rugs_left} to go"
+autowrap_mode = 3
+
+[node name="BonziGate" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Build Bonzi first to use this plan."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "needs_bonzi"
+
+[node name="EarnBlueprintButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/LockedState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Clean a rug to unlock"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="NeedCashState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "short"
+
+[node name="CashGoal" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Blueprint found! Save {shortfall} more cash."
+autowrap_mode = 3
+
+[node name="JobsGoal" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{jobs} customer rugs at +20 cash can cover it. Bonzi's deliveries help too."
+autowrap_mode = 3
+
+[node name="EarnCashButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/NeedCashState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Clean a rug · +20 cash"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="ReadyState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "ready"
+
+[node name="ReadyHint" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/ReadyState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Blueprint ready · yours forever"
+autowrap_mode = 3
+
+[node name="BuildButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/ReadyState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Build · {cost} cash"
+mouse_default_cursor_shape = 2
+metadata/action = "build"
+
+[node name="OwnedState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "owned"
+
+[node name="OwnedNote" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/OwnedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Installed in the Neighborhood Shop"
+autowrap_mode = 3
+
+[node name="EquippedState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equipped"
+
+[node name="EquippedLabel" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/OwnedState/EquippedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "✓ Equipped for customer rugs"
+autowrap_mode = 3
+
+[node name="EquipState" type="VBoxContainer" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equip"
+
+[node name="EquipButton" type="Button" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/OwnedState/EquipState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Equip this brush"
+mouse_default_cursor_shape = 2
+metadata/action = "equip"
+
+[node name="ZeroGainWarning" type="Label" parent="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "This adds no income yet. Upgrade Bonzi Mk II first for a useful boost."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "zero_gain"
+
+[node name="BonziHero" type="PanelContainer" parent="Shell/Layout/Pages/BonziPage/Content"]
+layout_mode = 2
+theme_type_variation = "SoftCard"
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziHero"]
+layout_mode = 2
+
+[node name="BonziArt" parent="Shell/Layout/Pages/BonziPage/Content/BonziHero/Content" instance=ExtResource("bonzi")]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 188)
+unique_name_in_owner = true
+
+[node name="BonziTitle" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziHero/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Your rugs. His routine."
+autowrap_mode = 3
+
+[node name="BonziBody" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziHero/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Bonzi works on his own orders. He never takes a rug from your brush or pauses when you clean."
+autowrap_mode = 3
+
+[node name="BonziNotBuilt" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziHero/Content"]
+layout_mode = 2
+unique_name_in_owner = true
+
+[node name="BonziPitch" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziHero/Content/BonziNotBuilt"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Build for 100 cash after 3 customer rugs. No parts, upkeep, or second invoice."
+autowrap_mode = 3
+
+[node name="BonziWorking" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziHero/Content"]
+layout_mode = 2
+unique_name_in_owner = true
+visible = false
+
+[node name="ProductionRate" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziHero/Content/BonziWorking"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "{income} cash / hour · {orders} orders / hour"
+autowrap_mode = 3
+
+[node name="DeliveryProgress" type="ProgressBar" parent="Shell/Layout/Pages/BonziPage/Content/BonziHero/Content/BonziWorking"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(0, 18)
+show_percentage = false
+
+[node name="DeliveryTime" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziHero/Content/BonziWorking"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Next delivery in {time} · +10 cash"
+autowrap_mode = 3
+unique_name_in_owner = true
+
+[node name="AutomationDetails" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziHero/Content/BonziWorking"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Completed orders pay automatically. Up to 8 hours of away earnings are saved for your return."
+autowrap_mode = 3
+
+[node name="BonziBuildCard" type="PanelContainer" parent="Shell/Layout/Pages/BonziPage/Content"]
+layout_mode = 2
+theme_type_variation = "Card"
+script = ExtResource("card")
+item_id = "bonzi"
+personal_tool = false
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard"]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content"]
+layout_mode = 2
+
+[node name="Artwork" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/Header" instance=ExtResource("bonzi")]
+layout_mode = 2
+custom_minimum_size = Vector2(114, 114)
+size_flags_horizontal = 0
+
+[node name="Words" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Category" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "YOUR FIRST TEAMMATE"
+autowrap_mode = 3
+
+[node name="ItemTitle" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Bring Bonzi to life"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Build once. He keeps the routine lane moving."
+autowrap_mode = 3
+
+[node name="Benefit" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Base output: 30 orders / hour × 10 cash."
+autowrap_mode = 3
+
+[node name="LockedState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content"]
+layout_mode = 2
+visible = true
+metadata/show_when = "locked"
+
+[node name="Gate" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{done} / {gate} customer rugs · {rugs_left} to go"
+autowrap_mode = 3
+
+[node name="BonziGate" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Build Bonzi first to use this plan."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "needs_bonzi"
+
+[node name="EarnBlueprintButton" type="Button" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/LockedState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Clean a rug to unlock"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="NeedCashState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "short"
+
+[node name="CashGoal" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Blueprint found! Save {shortfall} more cash."
+autowrap_mode = 3
+
+[node name="JobsGoal" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{jobs} customer rugs at +20 cash can cover it. Bonzi's deliveries help too."
+autowrap_mode = 3
+
+[node name="EarnCashButton" type="Button" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/NeedCashState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Clean a rug · +20 cash"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="ReadyState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "ready"
+
+[node name="ReadyHint" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/ReadyState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Blueprint ready · yours forever"
+autowrap_mode = 3
+
+[node name="BuildButton" type="Button" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/ReadyState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Build · {cost} cash"
+mouse_default_cursor_shape = 2
+metadata/action = "build"
+
+[node name="OwnedState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "owned"
+
+[node name="OwnedNote" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/OwnedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Installed in the Neighborhood Shop"
+autowrap_mode = 3
+
+[node name="EquippedState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equipped"
+
+[node name="EquippedLabel" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/OwnedState/EquippedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "✓ Equipped for customer rugs"
+autowrap_mode = 3
+
+[node name="EquipState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equip"
+
+[node name="EquipButton" type="Button" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/OwnedState/EquipState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Equip this brush"
+mouse_default_cursor_shape = 2
+metadata/action = "equip"
+
+[node name="ZeroGainWarning" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "This adds no income yet. Upgrade Bonzi Mk II first for a useful boost."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "zero_gain"
+
+[node name="CapacityCard" type="PanelContainer" parent="Shell/Layout/Pages/BonziPage/Content"]
+layout_mode = 2
+theme_type_variation = "Card"
+unique_name_in_owner = true
+visible = false
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/CapacityCard"]
+layout_mode = 2
+
+[node name="CapacityTitle" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/CapacityCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "What sets the pace?"
+autowrap_mode = 3
+
+[node name="CapacityValues" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/CapacityCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Demand: {demand} / hour\nCleaner: {capacity} / hour\nCurrent limit: {bottleneck}"
+autowrap_mode = 3
+
+[node name="BonziUpgradeCard" type="PanelContainer" parent="Shell/Layout/Pages/BonziPage/Content"]
+layout_mode = 2
+theme_type_variation = "Card"
+script = ExtResource("card")
+item_id = "bonzi_mk2"
+personal_tool = false
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard"]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content"]
+layout_mode = 2
+
+[node name="Artwork" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/Header" instance=ExtResource("upgrade")]
+layout_mode = 2
+custom_minimum_size = Vector2(114, 114)
+size_flags_horizontal = 0
+
+[node name="Words" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Category" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "OPTIONAL UPGRADE"
+autowrap_mode = 3
+
+[node name="ItemTitle" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Bonzi Mk II"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "More cleaning capacity for this shop."
+autowrap_mode = 3
+
+[node name="Benefit" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "+{gain} cash / hour at current demand."
+autowrap_mode = 3
+
+[node name="LockedState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content"]
+layout_mode = 2
+visible = true
+metadata/show_when = "locked"
+
+[node name="Gate" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{done} / {gate} customer rugs · {rugs_left} to go"
+autowrap_mode = 3
+
+[node name="BonziGate" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Build Bonzi first to use this plan."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "needs_bonzi"
+
+[node name="EarnBlueprintButton" type="Button" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/LockedState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Clean a rug to unlock"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="NeedCashState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "short"
+
+[node name="CashGoal" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Blueprint found! Save {shortfall} more cash."
+autowrap_mode = 3
+
+[node name="JobsGoal" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{jobs} customer rugs at +20 cash can cover it. Bonzi's deliveries help too."
+autowrap_mode = 3
+
+[node name="EarnCashButton" type="Button" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/NeedCashState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Clean a rug · +20 cash"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="ReadyState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "ready"
+
+[node name="ReadyHint" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/ReadyState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Blueprint ready · yours forever"
+autowrap_mode = 3
+
+[node name="BuildButton" type="Button" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/ReadyState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Build · {cost} cash"
+mouse_default_cursor_shape = 2
+metadata/action = "build"
+
+[node name="OwnedState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "owned"
+
+[node name="OwnedNote" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/OwnedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Installed in the Neighborhood Shop"
+autowrap_mode = 3
+
+[node name="EquippedState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equipped"
+
+[node name="EquippedLabel" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/OwnedState/EquippedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "✓ Equipped for customer rugs"
+autowrap_mode = 3
+
+[node name="EquipState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equip"
+
+[node name="EquipButton" type="Button" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/OwnedState/EquipState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Equip this brush"
+mouse_default_cursor_shape = 2
+metadata/action = "equip"
+
+[node name="ZeroGainWarning" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "This adds no income yet. Upgrade Bonzi Mk II first for a useful boost."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "zero_gain"
+
+[node name="IntakeUpgradeCard" type="PanelContainer" parent="Shell/Layout/Pages/BonziPage/Content"]
+layout_mode = 2
+theme_type_variation = "Card"
+script = ExtResource("card")
+item_id = "intake"
+personal_tool = false
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard"]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content"]
+layout_mode = 2
+
+[node name="Artwork" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/Header" instance=ExtResource("intake")]
+layout_mode = 2
+custom_minimum_size = Vector2(114, 114)
+size_flags_horizontal = 0
+
+[node name="Words" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Category" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "OPTIONAL UPGRADE"
+autowrap_mode = 3
+
+[node name="ItemTitle" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/Header/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Welcome Sign"
+autowrap_mode = 3
+
+[node name="Description" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Help more routine orders find your little shop."
+autowrap_mode = 3
+
+[node name="Benefit" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "+{gain} cash / hour with the current cleaner."
+autowrap_mode = 3
+
+[node name="LockedState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content"]
+layout_mode = 2
+visible = true
+metadata/show_when = "locked"
+
+[node name="Gate" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{done} / {gate} customer rugs · {rugs_left} to go"
+autowrap_mode = 3
+
+[node name="BonziGate" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/LockedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Build Bonzi first to use this plan."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "needs_bonzi"
+
+[node name="EarnBlueprintButton" type="Button" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/LockedState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Clean a rug to unlock"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="NeedCashState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "short"
+
+[node name="CashGoal" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Blueprint found! Save {shortfall} more cash."
+autowrap_mode = 3
+
+[node name="JobsGoal" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/NeedCashState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "{jobs} customer rugs at +20 cash can cover it. Bonzi's deliveries help too."
+autowrap_mode = 3
+
+[node name="EarnCashButton" type="Button" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/NeedCashState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Clean a rug · +20 cash"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="ReadyState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "ready"
+
+[node name="ReadyHint" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/ReadyState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Blueprint ready · yours forever"
+autowrap_mode = 3
+
+[node name="BuildButton" type="Button" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/ReadyState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Build · {cost} cash"
+mouse_default_cursor_shape = 2
+metadata/action = "build"
+
+[node name="OwnedState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content"]
+layout_mode = 2
+visible = false
+metadata/show_when = "owned"
+
+[node name="OwnedNote" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/OwnedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Installed in the Neighborhood Shop"
+autowrap_mode = 3
+
+[node name="EquippedState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equipped"
+
+[node name="EquippedLabel" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/OwnedState/EquippedState"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "✓ Equipped for customer rugs"
+autowrap_mode = 3
+
+[node name="EquipState" type="VBoxContainer" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/OwnedState"]
+layout_mode = 2
+visible = false
+metadata/show_when = "equip"
+
+[node name="EquipButton" type="Button" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/OwnedState/EquipState"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Equip this brush"
+mouse_default_cursor_shape = 2
+metadata/action = "equip"
+
+[node name="ZeroGainWarning" type="Label" parent="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "This adds no income yet. Upgrade Bonzi Mk II first for a useful boost."
+autowrap_mode = 3
+visible = false
+metadata/show_when = "zero_gain"
+
+[node name="FutureLocation" type="PanelContainer" parent="Shell/Layout/Pages/ExpansionPage/Content"]
+layout_mode = 2
+theme_type_variation = "SoftCard"
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/Pages/ExpansionPage/Content/FutureLocation"]
+layout_mode = 2
+
+[node name="FutureStorefront" parent="Shell/Layout/Pages/ExpansionPage/Content/FutureLocation/Content" instance=ExtResource("store")]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 200)
+
+[node name="FutureTitle" type="Label" parent="Shell/Layout/Pages/ExpansionPage/Content/FutureLocation/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Busy High Street"
+autowrap_mode = 3
+
+[node name="FutureCopy" type="Label" parent="Shell/Layout/Pages/ExpansionPage/Content/FutureLocation/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "A coral shop, washable household rugs, and a jet + squeegee opening kit. Your first shop will stay yours."
+autowrap_mode = 3
+
+[node name="FutureStatus" type="Label" parent="Shell/Layout/Pages/ExpansionPage/Content/FutureLocation/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Still being built. This preview takes no cash, and there is no purchase button yet."
+autowrap_mode = 3
+
+[node name="FuturePrice" type="Label" parent="Shell/Layout/Pages/ExpansionPage/Content/FutureLocation/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Subtitle"
+text = "Planned price · 600 cash"
+autowrap_mode = 3
+
+[node name="FutureGates" type="Label" parent="Shell/Layout/Pages/ExpansionPage/Content/FutureLocation/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Muted"
+text = "Your progress so far:\n{manual_jobs} / 15 customer rugs\n{automated_jobs} / 5 routine deliveries"
+autowrap_mode = 3
+
+[node name="BackFromFutureButton" type="Button" parent="Shell/Layout/Pages/ExpansionPage/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Back to my shop"
+mouse_default_cursor_shape = 2
+metadata/action = "shop"
+unique_name_in_owner = true
+
+[node name="CleanDock" type="VBoxContainer" parent="Shell/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="CleanRugButton" type="Button" parent="Shell/Layout/CleanDock"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Clean a customer rug · +20 cash"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+unique_name_in_owner = true
+
+[node name="ResumeHint" type="Label" parent="Shell/Layout/CleanDock"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Your customer rug is saved. Pick up where you left off."
+autowrap_mode = 3
+unique_name_in_owner = true
+visible = false
+
+[node name="ResumeRugButton" type="Button" parent="Shell/Layout/CleanDock"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Resume customer rug · +20 cash"
+mouse_default_cursor_shape = 2
+metadata/action = "clean"
+
+[node name="BottomNavigation" type="HBoxContainer" parent="Shell/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Tab_shop" type="Button" parent="Shell/Layout/BottomNavigation"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 90)
+theme_type_variation = "NavButton"
+text = ""
+mouse_default_cursor_shape = 2
+metadata/action = "tab:shop"
+unique_name_in_owner = true
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "Shop"
+
+[node name="Center" type="CenterContainer" parent="Shell/Layout/BottomNavigation/Tab_shop"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1
+anchor_bottom = 1
+mouse_filter = 2
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/BottomNavigation/Tab_shop/Center"]
+layout_mode = 2
+theme_override_constants/separation = 2
+mouse_filter = 2
+
+[node name="Icon" type="TextureRect" parent="Shell/Layout/BottomNavigation/Tab_shop/Center/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+size_flags_horizontal = 4
+texture = ExtResource("nav_shop")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Caption" type="Label" parent="Shell/Layout/BottomNavigation/Tab_shop/Center/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Shop"
+autowrap_mode = 0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+
+[node name="Tab_items" type="Button" parent="Shell/Layout/BottomNavigation"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 90)
+theme_type_variation = "NavButton"
+text = ""
+mouse_default_cursor_shape = 2
+metadata/action = "tab:items"
+unique_name_in_owner = true
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "Items"
+
+[node name="Center" type="CenterContainer" parent="Shell/Layout/BottomNavigation/Tab_items"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1
+anchor_bottom = 1
+mouse_filter = 2
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/BottomNavigation/Tab_items/Center"]
+layout_mode = 2
+theme_override_constants/separation = 2
+mouse_filter = 2
+
+[node name="Icon" type="TextureRect" parent="Shell/Layout/BottomNavigation/Tab_items/Center/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+size_flags_horizontal = 4
+texture = ExtResource("nav_items")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Caption" type="Label" parent="Shell/Layout/BottomNavigation/Tab_items/Center/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Items"
+autowrap_mode = 0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+
+[node name="Tab_plans" type="Button" parent="Shell/Layout/BottomNavigation"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 90)
+theme_type_variation = "NavButton"
+text = ""
+mouse_default_cursor_shape = 2
+metadata/action = "tab:plans"
+unique_name_in_owner = true
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "Blueprints"
+
+[node name="Center" type="CenterContainer" parent="Shell/Layout/BottomNavigation/Tab_plans"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1
+anchor_bottom = 1
+mouse_filter = 2
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/BottomNavigation/Tab_plans/Center"]
+layout_mode = 2
+theme_override_constants/separation = 2
+mouse_filter = 2
+
+[node name="Icon" type="TextureRect" parent="Shell/Layout/BottomNavigation/Tab_plans/Center/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+size_flags_horizontal = 4
+texture = ExtResource("nav_plans")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Caption" type="Label" parent="Shell/Layout/BottomNavigation/Tab_plans/Center/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Blueprints"
+autowrap_mode = 0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+
+[node name="Tab_bonzi" type="Button" parent="Shell/Layout/BottomNavigation"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 90)
+theme_type_variation = "NavButton"
+text = ""
+mouse_default_cursor_shape = 2
+metadata/action = "tab:bonzi"
+unique_name_in_owner = true
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "Bonzi"
+
+[node name="Center" type="CenterContainer" parent="Shell/Layout/BottomNavigation/Tab_bonzi"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1
+anchor_bottom = 1
+mouse_filter = 2
+
+[node name="Content" type="VBoxContainer" parent="Shell/Layout/BottomNavigation/Tab_bonzi/Center"]
+layout_mode = 2
+theme_override_constants/separation = 2
+mouse_filter = 2
+
+[node name="Icon" type="TextureRect" parent="Shell/Layout/BottomNavigation/Tab_bonzi/Center/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(28, 28)
+size_flags_horizontal = 4
+texture = ExtResource("nav_bonzi")
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="Caption" type="Label" parent="Shell/Layout/BottomNavigation/Tab_bonzi/Center/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "Bonzi"
+autowrap_mode = 0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+
+[node name="PurchaseSheet" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1
+anchor_bottom = 1
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="Dim" type="ColorRect" parent="PurchaseSheet"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1
+anchor_bottom = 1
+color = Color(0.08, 0.18, 0.14, 0.55)
+mouse_filter = 0
+
+[node name="Sheet" type="PanelContainer" parent="PurchaseSheet"]
+layout_mode = 1
+anchor_top = 1
+anchor_right = 1
+anchor_bottom = 1
+offset_left = 24
+offset_top = -590
+offset_right = -24
+offset_bottom = -24
+theme_type_variation = "Card"
+
+[node name="Content" type="VBoxContainer" parent="PurchaseSheet/Sheet"]
+layout_mode = 2
+
+[node name="PurchaseKicker" type="Label" parent="PurchaseSheet/Sheet/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "MAKE IT YOURS"
+autowrap_mode = 3
+
+[node name="PurchaseTitle" type="Label" parent="PurchaseSheet/Sheet/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Title"
+text = "Build {item}?"
+autowrap_mode = 3
+unique_name_in_owner = true
+
+[node name="PurchaseBenefit" type="Label" parent="PurchaseSheet/Sheet/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "{benefit}"
+autowrap_mode = 3
+unique_name_in_owner = true
+
+[node name="PurchaseTotals" type="PanelContainer" parent="PurchaseSheet/Sheet/Content"]
+layout_mode = 2
+theme_type_variation = "GoldCard"
+
+[node name="Content" type="VBoxContainer" parent="PurchaseSheet/Sheet/Content/PurchaseTotals"]
+layout_mode = 2
+
+[node name="PurchaseTotalsText" type="Label" parent="PurchaseSheet/Sheet/Content/PurchaseTotals/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Body"
+text = "Build cost: {cost} cash\nCash afterward: {remaining}"
+autowrap_mode = 3
+unique_name_in_owner = true
+
+[node name="PurchaseNote" type="Label" parent="PurchaseSheet/Sheet/Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = "Small"
+text = "One build. The blueprint stays yours."
+autowrap_mode = 3
+
+[node name="ConfirmBuildButton" type="Button" parent="PurchaseSheet/Sheet/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "PrimaryButton"
+text = "Build · {cost} cash"
+mouse_default_cursor_shape = 2
+metadata/action = "confirm"
+unique_name_in_owner = true
+
+[node name="CancelBuildButton" type="Button" parent="PurchaseSheet/Sheet/Content"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 78)
+theme_type_variation = "SecondaryButton"
+text = "Keep saving"
+mouse_default_cursor_shape = 2
+metadata/action = "cancel"
+unique_name_in_owner = true
+
+[node name="PurchaseErrorCopy" type="Label" parent="PurchaseSheet"]
+unique_name_in_owner = true
+visible = false
+text = "Couldn't build that yet. Check the blueprint and cash."
+
+[node name="NoticeTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 4
+one_shot = true
+
+[editable path="Shell/Layout/Pages/ShopPage/Content/ShopHero/Content/Storefront"]
+[editable path="Shell/Layout/Pages/ItemsPage/Content/HandBrushCard/Content/Header/Artwork"]
+[editable path="Shell/Layout/Pages/ItemsPage/Content/WideBrushCard/Content/Header/Artwork"]
+[editable path="Shell/Layout/Pages/PlansPage/Content/BlueprintIntro/Content/Row/BlueprintArt"]
+[editable path="Shell/Layout/Pages/PlansPage/Content/BonziPlan/Content/Header/Artwork"]
+[editable path="Shell/Layout/Pages/PlansPage/Content/WidePlan/Content/Header/Artwork"]
+[editable path="Shell/Layout/Pages/PlansPage/Content/Mk2Plan/Content/Header/Artwork"]
+[editable path="Shell/Layout/Pages/PlansPage/Content/IntakePlan/Content/Header/Artwork"]
+[editable path="Shell/Layout/Pages/BonziPage/Content/BonziHero/Content/BonziArt"]
+[editable path="Shell/Layout/Pages/BonziPage/Content/BonziBuildCard/Content/Header/Artwork"]
+[editable path="Shell/Layout/Pages/BonziPage/Content/BonziUpgradeCard/Content/Header/Artwork"]
+[editable path="Shell/Layout/Pages/BonziPage/Content/IntakeUpgradeCard/Content/Header/Artwork"]
+[editable path="Shell/Layout/Pages/ExpansionPage/Content/FutureLocation/Content/FutureStorefront"]

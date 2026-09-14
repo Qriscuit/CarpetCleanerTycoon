@@ -6,10 +6,14 @@ extends Node3D
 var top_view := false
 var turn := false
 var ui: CanvasLayer
+var touch_button: Button
+var touch_index := -1
+var touch_start := Vector2.ZERO
+var touch_canceled := false
 
 func _ready() -> void:
 	camera.look_at(Vector3(0, 0, 0))
-	_build_ui()
+	_bind_ui()
 	if "--capture" in OS.get_cmdline_user_args():
 		await get_tree().process_frame
 		await get_tree().process_frame
@@ -26,7 +30,7 @@ func _process(delta: float) -> void:
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
 		match event.keycode:
-			KEY_SPACE: turn = not turn
+			KEY_SPACE: _toggle_turntable()
 			KEY_T: _toggle_view()
 			KEY_R: _reset()
 
@@ -40,80 +44,51 @@ func _toggle_view() -> void:
 
 func _reset() -> void:
 	turn = false
+	(ui.get_node("%TurntableButton") as Button).set_pressed_no_signal(false)
 	top_view = false
 	carpet.rotation.y = -0.14
 	camera.position = Vector3(3.1, 6.8, 4.7)
 	camera.look_at(Vector3.ZERO)
 
-func _label(text: String, size: int, color: Color) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_size_override("font_size", size)
-	label.add_theme_color_override("font_color", color)
-	return label
+func _toggle_turntable() -> void:
+	turn = not turn
+	(ui.get_node("%TurntableButton") as Button).set_pressed_no_signal(turn)
 
-func _style(bg: Color, radius: int) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = bg
-	style.set_corner_radius_all(radius)
-	style.content_margin_left = 20
-	style.content_margin_right = 20
-	style.content_margin_top = 14
-	style.content_margin_bottom = 14
-	return style
+func _input(event: InputEvent) -> void:
+	if event.device == -1:
+		return
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			if touch_index != -1:
+				touch_canceled = true
+				return
+			touch_index = event.index
+			touch_start = event.position
+			touch_canceled = false
+			for node_name in ["TurntableButton", "ViewButton", "ResetButton"]:
+				var button := ui.get_node("%" + node_name) as Button
+				if button.get_global_rect().has_point(event.position):
+					touch_button = button
+					get_viewport().set_input_as_handled()
+					break
+		elif event.index == touch_index:
+			var button := touch_button
+			touch_index = -1
+			touch_button = null
+			if is_instance_valid(button) and not event.canceled and not touch_canceled and button.get_global_rect().has_point(event.position):
+				get_viewport().set_input_as_handled()
+				button.pressed.emit()
+	elif event is InputEventScreenDrag and event.index == touch_index:
+		if event.position.distance_to(touch_start) > 14.0:
+			touch_canceled = true
 
-func _build_ui() -> void:
-	ui = CanvasLayer.new()
-	add_child(ui)
-	var root := Control.new()
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ui.add_child(root)
-	var header := VBoxContainer.new()
-	header.position = Vector2(42, 38)
-	header.add_theme_constant_override("separation", 4)
-	root.add_child(header)
-	header.add_child(_label("CARPET CLEANER  /  ART STUDY 01", 15, Color("408674")))
-	header.add_child(_label("Mint Meadow", 42, Color("244b42")))
-	header.add_child(_label("A little sunshine. A fresh start.", 18, Color("548474")))
-	var badge := PanelContainer.new()
-	badge.position = Vector2(42, 158)
-	badge.add_theme_stylebox_override("panel", _style(Color("ecf4e9"), 18))
-	badge.add_child(_label("CLEAN RUG  •  01", 14, Color("408674")))
-	root.add_child(badge)
-	var footer := VBoxContainer.new()
-	footer.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
-	footer.offset_left = 42
-	footer.offset_right = -42
-	footer.offset_top = -197
-	footer.offset_bottom = -30
-	footer.add_theme_constant_override("separation", 16)
-	root.add_child(footer)
-	var swatches := HBoxContainer.new()
-	swatches.add_theme_constant_override("separation", 8)
-	footer.add_child(swatches)
-	for c in ["72c8ab", "f8eed4", "f58c74", "308e7d", "f4c45f"]:
-		var swatch := Panel.new()
-		swatch.custom_minimum_size = Vector2(28, 10)
-		swatch.add_theme_stylebox_override("panel", _style(Color(c), 5))
-		swatches.add_child(swatch)
-	footer.add_child(_label("Woven pile  ·  Soft binding  ·  Rounded fringe", 18, Color("416d60")))
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
-	footer.add_child(row)
-	for title in ["Turntable", "Top / Angle", "Reset"]:
-		var button := Button.new()
-		button.text = title
-		button.custom_minimum_size = Vector2(0, 54)
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		button.add_theme_font_size_override("font_size", 18)
-		button.add_theme_color_override("font_color", Color("f7f4e7") if title == "Turntable" else Color("30594c"))
-		button.add_theme_stylebox_override("normal", _style(Color("328671") if title == "Turntable" else Color("eaf1e7"), 16))
-		button.add_theme_stylebox_override("hover", _style(Color("63ae95"), 16))
-		button.add_theme_stylebox_override("pressed", _style(Color("8dcbb5"), 16))
-		row.add_child(button)
-		match title:
-			"Turntable": button.pressed.connect(func(): turn = not turn)
-			"Top / Angle": button.pressed.connect(_toggle_view)
-			"Reset": button.pressed.connect(_reset)
-	footer.add_child(_label("MATERIAL PREVIEW   /   MATTE + WOVEN", 12, Color("628676")))
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		touch_index = -1
+		touch_button = null
+
+func _bind_ui() -> void:
+	ui = $StudioUI
+	(ui.get_node("%TurntableButton") as Button).pressed.connect(_toggle_turntable)
+	(ui.get_node("%ViewButton") as Button).pressed.connect(_toggle_view)
+	(ui.get_node("%ResetButton") as Button).pressed.connect(_reset)

@@ -1,0 +1,167 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Theme" path="res://resources/ui/mint_theme.tres" id="1_theme"]
+
+[sub_resource type="StyleBoxFlat" id="Mint"]
+bg_color = Color(0.447, 0.784, 0.671, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="Cream"]
+bg_color = Color(0.973, 0.933, 0.831, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="Coral"]
+bg_color = Color(0.961, 0.549, 0.455, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="Green"]
+bg_color = Color(0.188, 0.557, 0.490, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="Gold"]
+bg_color = Color(0.957, 0.769, 0.373, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[node name="StudioUI" type="CanvasLayer"]
+
+[node name="HUD" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("1_theme")
+
+[node name="Header" type="VBoxContainer" parent="HUD"]
+layout_mode = 0
+offset_left = 32.0
+offset_top = 32.0
+offset_right = 560.0
+offset_bottom = 152.0
+theme_override_constants/separation = 8
+
+[node name="Eyebrow" type="Label" parent="HUD/Header"]
+layout_mode = 2
+theme_type_variation = &"Small"
+text = "CARPET CLEANER  /  ART STUDY 01"
+
+[node name="Title" type="Label" parent="HUD/Header"]
+layout_mode = 2
+theme_type_variation = &"Title"
+text = "Mint Meadow"
+
+[node name="Subtitle" type="Label" parent="HUD/Header"]
+layout_mode = 2
+theme_type_variation = &"Muted"
+text = "A little sunshine. A fresh start."
+
+[node name="Footer" type="PanelContainer" parent="HUD"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -228.0
+offset_right = -24.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_type_variation = &"Card"
+
+[node name="Column" type="VBoxContainer" parent="HUD/Footer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Swatches" type="HBoxContainer" parent="HUD/Footer/Column"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Mint" type="Panel" parent="HUD/Footer/Column/Swatches"]
+custom_minimum_size = Vector2(38, 12)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Mint")
+
+[node name="Cream" type="Panel" parent="HUD/Footer/Column/Swatches"]
+custom_minimum_size = Vector2(38, 12)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Cream")
+
+[node name="Coral" type="Panel" parent="HUD/Footer/Column/Swatches"]
+custom_minimum_size = Vector2(38, 12)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Coral")
+
+[node name="Green" type="Panel" parent="HUD/Footer/Column/Swatches"]
+custom_minimum_size = Vector2(38, 12)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Green")
+
+[node name="Gold" type="Panel" parent="HUD/Footer/Column/Swatches"]
+custom_minimum_size = Vector2(38, 12)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Gold")
+
+[node name="Details" type="Label" parent="HUD/Footer/Column"]
+layout_mode = 2
+theme_type_variation = &"Muted"
+text = "Woven pile · Soft binding · Rounded fringe"
+autowrap_mode = 2
+
+[node name="Actions" type="HBoxContainer" parent="HUD/Footer/Column"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TurntableButton" type="Button" parent="HUD/Footer/Column/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"NavButton"
+theme_override_font_sizes/font_size = 18
+text = "Turntable"
+toggle_mode = true
+action_mode = 1
+
+[node name="ViewButton" type="Button" parent="HUD/Footer/Column/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"SecondaryButton"
+theme_override_font_sizes/font_size = 18
+text = "Top / Angle"
+toggle_mode = false
+action_mode = 1
+
+[node name="ResetButton" type="Button" parent="HUD/Footer/Column/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"SecondaryButton"
+theme_override_font_sizes/font_size = 18
+text = "Reset"
+toggle_mode = false
+action_mode = 1
+
+[node name="Hint" type="Label" parent="HUD/Footer/Column"]
+layout_mode = 2
+theme_type_variation = &"Small"
+text = "Space: turntable  ·  T: camera  ·  R: reset"

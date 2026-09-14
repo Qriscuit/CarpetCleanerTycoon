@@ -80,11 +80,9 @@ func run() -> void:
 	for stage in 4:
 		workshop.update_progress(300 - stage * 100, 300)
 		check(workshop.progress_fill.bg_color.is_equal_approx(workshop.PROGRESS_COLORS[stage]), "Bar follows red-yellow-green-blue color stops")
-		check(workshop.state_label.get_theme_color("font_color").is_equal_approx(workshop.progress_fill.bg_color), "Number matches bar color")
+		check(workshop.state_label.self_modulate.is_equal_approx(workshop.progress_fill.bg_color), "Number matches the live bar color while its base style remains editor-authored")
 		await process_frame
-		var marker_center: float = workshop.progress_value_marker.position.x + workshop.progress_value_marker.size.x * 0.5
-		var expected_center: float = lerpf(workshop.progress_value_marker.size.x * 0.5, workshop.progress_track.size.x - workshop.progress_value_marker.size.x * 0.5, stage / 3.0)
-		check(absf(marker_center - expected_center) < 0.5, "Number follows the bar fill while staying inside its track")
+		check(workshop.progress_card.get_global_rect().encloses(workshop.state_label.get_global_rect()), "Stable top-left number remains inside its editor-authored card")
 		check(workshop.progress_fill.shadow_size > 0 and workshop.progress_fill.shadow_color.a > 0.0, "Progress fill has a matching glow")
 		await capture("cleanliness_meter_%d.png" % stage)
 	print("FEEL CHECKS COMPLETE: ", failures, " failures; two passes, soft edges, seeded growth, rug silhouette and 100 percent completion.")

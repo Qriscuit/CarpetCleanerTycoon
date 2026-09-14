@@ -8,7 +8,7 @@ Open **Open Godot Project.lnk**, then press **F5**. The main scene is `CarpetToy
 
 ## Neighborhood Shop
 
-The outside hub has four menus: **Shop**, **Items**, **Plans**, and **Bonzi**. Original scalable storefront, bot and tool illustrations use the mint/coral palette, rounded cards and chunky buttons. Menus support mouse and touch; a swipe over a build button scrolls without purchasing.
+The outside hub has four menus: **Shop**, **Items**, **Blueprints**, and **Bonzi**. UI controls and grouped artwork are saved in editable Godot scene hierarchies. See [Editing UI in Godot](design/Editing_UI_in_Godot.md) for scene locations, page previews, moving elements, shared styles and live text templates. Menus support mouse and touch; a swipe over a build button scrolls without purchasing. The Clean/Resume action stays available beneath scrolling pages, and purchases show their cost and cash remaining before confirmation.
 
 Start with a free shop, hand brush and 0 cash. **Clean a rug** starts one resumable customer job. Clear at least 90% of unique debris **and** 90% of surface dust, then choose **Finish job** for 20 cash exactly once. Leaving for the shop preserves the rug. The gym is free practice and never grants money. Paid jobs use owned tools; building the Wide Brush gives its visible model and real cleaning footprint 44% more width.
 
@@ -23,7 +23,7 @@ Bonzi's lane continues during manual cleaning and across menu changes. Orders pa
 
 Versioned JSON saves live at Godot's `user://neighborhood_shop_v1.json`. Purchases, paid jobs and routine deliveries are committed atomically. Failed writes roll back transactions; unreadable or unsupported saves are preserved. Local time supports this prototype's offline production, without an anti-cheat claim.
 
-Implementation: `scripts/shop_hub.gd`, `scripts/shop_illustration.gd`, `scripts/shop_state.gd`; paid mode and snapshots are in `scripts/workshop.gd` and `scripts/dirt_controller.gd`. Rug variants are reusable resources under `resources/rugs/`.
+Implementation: `scenes/shop_hub.tscn`, `scenes/ui/`, `resources/ui/mint_theme.tres`, `scripts/shop_hub.gd`, `scripts/ui/`, and `scripts/shop_state.gd`; paid mode and snapshots are in `scripts/workshop.gd` and `scripts/dirt_controller.gd`. Rug variants are reusable resources under `resources/rugs/`. Both owned brushes can be equipped in Items, with selection persisted across sessions. Cleaning completion has direct Next rug and Visit shop actions.
 
 Run the three management checks with the portable Godot executable and `--path CarpetToy --script ../tools/validate_shop_state.gd -- --shop-test`, then substitute `validate_contract.gd` and `validate_shop_ui.gd`. `--shop-test` isolates saves from player progress. The state suite supports `--headless`; the contract and menu suites use the graphics renderer. Menu captures are `art/renders/shop_*.png`; paid-job captures are `art/renders/contract_*.png`.
 
@@ -37,7 +37,7 @@ Density is set by CLUMP_COUNT in tools/assemble_workshop.gd. The dust_strength a
 
 ## Play
 
-Choose **Brush**, **Squeegee**, or **Jet spray** using the three illustrated, icon-only buttons at the top-right. Desktop hover tooltips identify each tool. The selected button stays highlighted and only its model is shown. Switching preserves the working contact point and ends any current drag. Hold the left mouse button or one finger and drag to position the equipped item. Brush bristles and the squeegee blade touch the surface; the jet nozzle points downward with 14 cm of clearance. Each tool follows the rug or surrounding tile height. Reset preserves the chosen tool.
+Choose **Brush**, **Squeegee**, or **Jet spray** using the illustrated, labeled buttons at the top-right in practice. Wet tools are marked as previews. The selected button stays highlighted and only its model is shown. Switching preserves the working contact point and ends any current drag. Hold the left mouse button or one finger and drag to position the equipped item. Brush bristles and the squeegee blade touch the surface; the jet nozzle points downward with 14 cm of clearance. Each tool follows the rug or surrounding tile height. Reset preserves the chosen tool.
 
 With the brush selected, sweep beyond the carpet edges to throw dirt onto the surrounding white tiles. Strokes fling clumps mainly along positive/negative Z, with a small X spread; stroke speed affects throw strength.
 

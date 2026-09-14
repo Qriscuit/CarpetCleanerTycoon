@@ -1,0 +1,557 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/illustration_layout.gd" id="1_134yc"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ajxx2"]
+resource_local_to_scene = true
+bg_color = Color(0.98039216, 0.54901963, 0.4509804, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_f0034"]
+resource_local_to_scene = true
+bg_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reck8"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ms8n8"]
+resource_local_to_scene = true
+bg_color = Color(0.2784314, 0.7137255, 0.5058824, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_urwi2"]
+resource_local_to_scene = true
+bg_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ditxp"]
+resource_local_to_scene = true
+bg_color = Color(0.49411765, 0.8627451, 0.6392157, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_v6360"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_g84mn"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_itn4s"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5m6wd"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_54cyr"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qr04c"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bq0ff"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_empnd"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rq6bk"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_of4si"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ralq8"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_iwwi3"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ihanb"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_v0brp"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_d5uku"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_1grml"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k5dlv"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qwgi6"]
+resource_local_to_scene = true
+bg_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[node name="WideBrushIllustration" type="Control" unique_id=256711379]
+editor_description = "Open this illustration scene to move and recolor its Artwork nodes. Its layout script only centers and scales Artwork."
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 200.0
+offset_bottom = 160.0
+size_flags_horizontal = 3
+mouse_filter = 2
+script = ExtResource("1_134yc")
+
+[node name="Artwork" type="Node2D" parent="." unique_id=36615896]
+
+[node name="Backdrop" type="Node2D" parent="Artwork" unique_id=1288794273]
+
+[node name="Oval01" type="Polygon2D" parent="Artwork/Backdrop" unique_id=840370563]
+position = Vector2(100, 80)
+color = Color(0.8980392, 0.9490196, 0.8627451, 1)
+antialiased = true
+polygon = PackedVector2Array(64, 0, 63.452473, 8.353676, 61.819252, 16.564419, 59.12829, 24.49174, 55.425625, 32, 50.774612, 38.96073, 45.254833, 45.254833, 38.96073, 50.774612, 32, 55.425625, 24.49174, 59.12829, 16.564419, 61.819252, 8.353676, 63.452473, 3.9187403e-15, 64, -8.353676, 63.452473, -16.564419, 61.819252, -24.49174, 59.12829, -32, 55.425625, -38.96073, 50.774612, -45.254833, 45.254833, -50.774612, 38.96073, -55.425625, 32, -59.12829, 24.49174, -61.819252, 16.564419, -63.452473, 8.353676, -64, 7.837481e-15, -63.452473, -8.353676, -61.819252, -16.564419, -59.12829, -24.49174, -55.425625, -32, -50.774612, -38.96073, -45.254833, -45.254833, -38.96073, -50.774612, -32, -55.425625, -24.49174, -59.12829, -16.564419, -61.819252, -8.353676, -63.452473, -1.1756221e-14, -64, 8.353676, -63.452473, 16.564419, -61.819252, 24.49174, -59.12829, 32, -55.425625, 38.96073, -50.774612, 45.254833, -45.254833, 50.774612, -38.96073, 55.425625, -32, 59.12829, -24.49174, 61.819252, -16.564419, 63.452473, -8.353676)
+
+[node name="Oval02" type="Polygon2D" parent="Artwork/Backdrop" unique_id=1321568377]
+position = Vector2(100, 135)
+color = Color(0.72156864, 0.83137256, 0.72156864, 1)
+antialiased = true
+polygon = PackedVector2Array(72, 0, 71.38403, 0.9136833, 69.54666, 1.8117332, 66.519325, 2.678784, 62.35383, 3.5, 57.121437, 4.26133, 50.911686, 4.9497476, 43.830822, 5.5534735, 36, 6.0621777, 27.553207, 6.4671564, 18.634972, 6.761481, 9.397885, 6.940114, 4.408583e-15, 7, -9.397885, 6.940114, -18.634972, 6.761481, -27.553207, 6.4671564, -36, 6.0621777, -43.830822, 5.5534735, -50.911686, 4.9497476, -57.121437, 4.26133, -62.35383, 3.5, -66.519325, 2.678784, -69.54666, 1.8117332, -71.38403, 0.9136833, -72, 8.5722445e-16, -71.38403, -0.9136833, -69.54666, -1.8117332, -66.519325, -2.678784, -62.35383, -3.5, -57.121437, -4.26133, -50.911686, -4.9497476, -43.830822, -5.5534735, -36, -6.0621777, -27.553207, -6.4671564, -18.634972, -6.761481, -9.397885, -6.940114, -1.3225749e-14, -7, 9.397885, -6.940114, 18.634972, -6.761481, 27.553207, -6.4671564, 36, -6.0621777, 43.830822, -5.5534735, 50.911686, -4.9497476, 57.121437, -4.26133, 62.35383, -3.5, 66.519325, -2.678784, 69.54666, -1.8117332, 71.38403, -0.9136833)
+
+[node name="WideBrushHandle" type="Node2D" parent="Artwork" unique_id=280162436]
+
+[node name="Stroke03" type="Line2D" parent="Artwork/WideBrushHandle" unique_id=634210803]
+position = Vector2(98, 103)
+points = PackedVector2Array(0, 0, 20, -79)
+width = 15.0
+default_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke04" type="Line2D" parent="Artwork/WideBrushHandle" unique_id=516646215]
+position = Vector2(98, 103)
+points = PackedVector2Array(0, 0, 20, -79)
+width = 9.0
+default_color = Color(0.972549, 0.8, 0.39607844, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="RoundedShape05" type="Panel" parent="Artwork/WideBrushHandle" unique_id=1811132753]
+offset_left = 108.0
+offset_top = 15.0
+offset_right = 131.0
+offset_bottom = 46.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ajxx2")
+
+[node name="PressedEdge" type="Panel" parent="Artwork/WideBrushHandle/RoundedShape05" unique_id=1139591972]
+show_behind_parent = true
+layout_mode = 0
+offset_top = 3.0
+offset_right = 23.0
+offset_bottom = 34.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_f0034")
+
+[node name="RoundedShape06" type="Panel" parent="Artwork/WideBrushHandle" unique_id=739021975]
+offset_left = 116.0
+offset_top = 20.0
+offset_right = 123.0
+offset_bottom = 35.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_reck8")
+
+[node name="WideBrushHead" type="Node2D" parent="Artwork" unique_id=716342208]
+
+[node name="RoundedShape07" type="Panel" parent="Artwork/WideBrushHead" unique_id=1673168538]
+offset_left = 30.0
+offset_top = 96.0
+offset_right = 168.0
+offset_bottom = 121.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ms8n8")
+
+[node name="PressedEdge" type="Panel" parent="Artwork/WideBrushHead/RoundedShape07" unique_id=760774349]
+show_behind_parent = true
+layout_mode = 0
+offset_top = 5.0
+offset_right = 138.0
+offset_bottom = 30.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_urwi2")
+
+[node name="RoundedShape08" type="Panel" parent="Artwork/WideBrushHead" unique_id=1986326517]
+offset_left = 39.0
+offset_top = 101.0
+offset_right = 159.0
+offset_bottom = 111.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ditxp")
+
+[node name="RoundedShape09" type="Panel" parent="Artwork/WideBrushHead" unique_id=1240336054]
+offset_left = 39.0
+offset_top = 120.0
+offset_right = 44.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_v6360")
+
+[node name="RoundedShape10" type="Panel" parent="Artwork/WideBrushHead" unique_id=184037570]
+offset_left = 47.0
+offset_top = 120.0
+offset_right = 52.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_g84mn")
+
+[node name="RoundedShape11" type="Panel" parent="Artwork/WideBrushHead" unique_id=1578644083]
+offset_left = 55.0
+offset_top = 120.0
+offset_right = 60.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_itn4s")
+
+[node name="RoundedShape12" type="Panel" parent="Artwork/WideBrushHead" unique_id=1810731204]
+offset_left = 63.0
+offset_top = 120.0
+offset_right = 68.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_5m6wd")
+
+[node name="RoundedShape13" type="Panel" parent="Artwork/WideBrushHead" unique_id=1469569504]
+offset_left = 71.0
+offset_top = 120.0
+offset_right = 76.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_54cyr")
+
+[node name="RoundedShape14" type="Panel" parent="Artwork/WideBrushHead" unique_id=1402116757]
+offset_left = 79.0
+offset_top = 120.0
+offset_right = 84.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_qr04c")
+
+[node name="RoundedShape15" type="Panel" parent="Artwork/WideBrushHead" unique_id=1562215241]
+offset_left = 87.0
+offset_top = 120.0
+offset_right = 92.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bq0ff")
+
+[node name="RoundedShape16" type="Panel" parent="Artwork/WideBrushHead" unique_id=244478579]
+offset_left = 95.0
+offset_top = 120.0
+offset_right = 100.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_empnd")
+
+[node name="RoundedShape17" type="Panel" parent="Artwork/WideBrushHead" unique_id=2000780093]
+offset_left = 103.0
+offset_top = 120.0
+offset_right = 108.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_rq6bk")
+
+[node name="RoundedShape18" type="Panel" parent="Artwork/WideBrushHead" unique_id=72183740]
+offset_left = 111.0
+offset_top = 120.0
+offset_right = 116.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_of4si")
+
+[node name="RoundedShape19" type="Panel" parent="Artwork/WideBrushHead" unique_id=806078109]
+offset_left = 119.0
+offset_top = 120.0
+offset_right = 124.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ralq8")
+
+[node name="RoundedShape20" type="Panel" parent="Artwork/WideBrushHead" unique_id=135356389]
+offset_left = 127.0
+offset_top = 120.0
+offset_right = 132.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_iwwi3")
+
+[node name="RoundedShape21" type="Panel" parent="Artwork/WideBrushHead" unique_id=356896020]
+offset_left = 135.0
+offset_top = 120.0
+offset_right = 140.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ihanb")
+
+[node name="RoundedShape22" type="Panel" parent="Artwork/WideBrushHead" unique_id=622694695]
+offset_left = 143.0
+offset_top = 120.0
+offset_right = 148.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_v0brp")
+
+[node name="RoundedShape23" type="Panel" parent="Artwork/WideBrushHead" unique_id=1162657580]
+offset_left = 151.0
+offset_top = 120.0
+offset_right = 156.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_d5uku")
+
+[node name="RoundedShape24" type="Panel" parent="Artwork/WideBrushHead" unique_id=238720896]
+offset_left = 159.0
+offset_top = 120.0
+offset_right = 164.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_1grml")
+
+[node name="Stroke25" type="Line2D" parent="Artwork/WideBrushHead" unique_id=984148941]
+position = Vector2(34, 132)
+points = PackedVector2Array(0, 0, 132, 0)
+width = 3.0
+default_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="WidthBadge" type="Node2D" parent="Artwork" unique_id=711379832]
+
+[node name="RoundedShape26" type="Panel" parent="Artwork/WidthBadge" unique_id=1836730330]
+offset_left = 35.0
+offset_top = 44.0
+offset_right = 82.0
+offset_bottom = 73.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_k5dlv")
+
+[node name="PressedEdge" type="Panel" parent="Artwork/WidthBadge/RoundedShape26" unique_id=30405927]
+show_behind_parent = true
+layout_mode = 0
+offset_top = 2.0
+offset_right = 47.0
+offset_bottom = 31.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_qwgi6")
+
+[node name="Stroke27" type="Line2D" parent="Artwork/WidthBadge" unique_id=2142854477]
+position = Vector2(45, 58)
+points = PackedVector2Array(0, 0, 27, 0)
+width = 3.0
+default_color = Color(0.2784314, 0.7137255, 0.5058824, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke28" type="Line2D" parent="Artwork/WidthBadge" unique_id=1702267466]
+position = Vector2(45, 58)
+points = PackedVector2Array(0, 0, 5, -5)
+width = 3.0
+default_color = Color(0.2784314, 0.7137255, 0.5058824, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke29" type="Line2D" parent="Artwork/WidthBadge" unique_id=1586147677]
+position = Vector2(45, 58)
+points = PackedVector2Array(0, 0, 5, 5)
+width = 3.0
+default_color = Color(0.2784314, 0.7137255, 0.5058824, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke30" type="Line2D" parent="Artwork/WidthBadge" unique_id=1178020755]
+position = Vector2(72, 58)
+points = PackedVector2Array(0, 0, -5, -5)
+width = 3.0
+default_color = Color(0.2784314, 0.7137255, 0.5058824, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke31" type="Line2D" parent="Artwork/WidthBadge" unique_id=869919152]
+position = Vector2(72, 58)
+points = PackedVector2Array(0, 0, -5, 5)
+width = 3.0
+default_color = Color(0.2784314, 0.7137255, 0.5058824, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Sparkles" type="Node2D" parent="Artwork" unique_id=1184694297]
+
+[node name="Shape32" type="Polygon2D" parent="Artwork/Sparkles" unique_id=577592523]
+position = Vector2(157, 54)
+color = Color(0.972549, 0.8, 0.39607844, 1)
+antialiased = true
+polygon = PackedVector2Array(0, -10, 2.899994, -2.9000015, 10, 0, 2.899994, 2.9000015, 0, 10, -2.899994, 2.9000015, -10, 0, -2.899994, -2.9000015)
+
+[node name="Shape33" type="Polygon2D" parent="Artwork/Sparkles" unique_id=2016718306]
+position = Vector2(39, 85)
+color = Color(0.972549, 0.8, 0.39607844, 1)
+antialiased = true
+polygon = PackedVector2Array(0, -6, 1.7400017, -1.7399979, 6, 0, 1.7400017, 1.7399979, 0, 6, -1.7400017, 1.7399979, -6, 0, -1.7400017, -1.7399979)

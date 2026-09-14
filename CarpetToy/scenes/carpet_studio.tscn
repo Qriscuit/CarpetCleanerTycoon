@@ -1,7 +1,9 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/carpet.tscn" id="1_rug"]
 [ext_resource type="Script" path="res://scripts/studio.gd" id="2_script"]
+
+[ext_resource type="PackedScene" path="res://scenes/ui/studio_hud.tscn" id="3_ui"]
 
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
@@ -56,3 +58,7 @@ size = 5.7
 near = 0.05
 far = 100.0
 current = true
+
+[node name="StudioUI" parent="." instance=ExtResource("3_ui")]
+
+[editable path="StudioUI"]

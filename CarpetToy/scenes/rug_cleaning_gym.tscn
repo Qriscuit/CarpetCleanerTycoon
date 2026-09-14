@@ -9,6 +9,8 @@
 [ext_resource type="Texture2D" uid="uid://0t3pexhqs4rb" path="res://assets/tools/squeegee_tool_palette.png" id="7_fwnk5"]
 [ext_resource type="Texture2D" uid="uid://cbxw2s2iny3ar" path="res://assets/tools/jet_spray_tool_palette.png" id="8_6u08o"]
 
+[ext_resource type="PackedScene" path="res://scenes/ui/cleaning_hud.tscn" id="9_hud"]
+
 [sub_resource type="Environment" id="Environment"]
 background_mode = 1
 background_color = Color(0.82, 0.89, 0.86, 1)
@@ -468,3 +470,7 @@ transform = Transform3D(0.28987736, 1.0818369, 0, -1.0818369, 0.28987736, 0, 0, 
 [node name="jet_spray" type="MeshInstance3D" parent="StarterTools/JetSpray" unique_id=39976210]
 transform = Transform3D(1, 0, 0, 0, -3.5762787e-07, -0.99999994, 0, 0.99999994, -3.5762787e-07, 0, 0, 0)
 mesh = SubResource("ArrayMesh_grxto")
+
+[node name="GymUI" parent="." instance=ExtResource("9_hud")]
+
+[editable path="GymUI"]

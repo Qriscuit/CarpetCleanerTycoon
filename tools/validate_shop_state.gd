@@ -17,6 +17,8 @@ func _initialize() -> void:
 func _run() -> void:
 	var state := _new_state("main")
 	_check(state.cash == 0 and state.owns("hand_brush") and state.output_per_hour() == 0.0, "Free shop starts without routine income")
+	_check(state.equipped_brush == "hand_brush", "Free starter brush is equipped by default")
+	_check(not state.equip_brush("wide_brush") and not state.equip_brush("bonzi") and not state.equip_brush("unknown") and state.equipped_brush == "hand_brush", "Only owned personal brushes can be equipped")
 	_check(not state.build("bonzi") and not state.build("unknown"), "Locked and unknown builds are rejected")
 	var first: String = state.start_job()
 	_check(not first.is_empty() and state.start_job() == first, "One resumable active job")
@@ -76,6 +78,18 @@ func _run() -> void:
 	state.save_state()
 	_check(state.cash == before_backward + 450, "Online production follows elapsed monotonic time")
 	_check(state.build("wide_brush") and state.owns("wide_brush"), "The optional personal tool can be built")
+	_check(state.equipped_brush == "wide_brush", "Building the wider brush equips its benefit immediately")
+	state = _reload(state)
+	_check(state.equipped_brush == "wide_brush", "New brush selection persists after building")
+	var before_equip_cash: int = state.cash
+	_check(state.equip_brush("hand_brush") and state.cash == before_equip_cash, "Owned brushes can be swapped without spending cash")
+	state = _reload(state)
+	_check(state.equipped_brush == "hand_brush" and state.owns("wide_brush"), "Selected starter brush survives reload while the wider brush remains owned")
+	var equipped_path: String = state._save_path
+	state._save_path += "/cannot-write.json"
+	_check(not state.equip_brush("wide_brush") and state.equipped_brush == "hand_brush", "Failed equipment save preserves the previous selection")
+	state._save_path = equipped_path
+	_check(state.equip_brush("wide_brush") and state.equip_brush("wide_brush") and state.cash == before_equip_cash, "Repeated equip taps are harmless and keep the wider brush selected")
 	_check(not state.build("wide_brush"), "The personal tool cannot be duplicated")
 	var pre_pause_cash: int = state.cash
 	state._notification(Node.NOTIFICATION_APPLICATION_PAUSED)
@@ -104,8 +118,36 @@ func _run() -> void:
 	_check(intake_first.build("bonzi") and intake_first.build("intake") and intake_first.output_per_hour() == 30.0, "Intake does not bypass the cleaner bottleneck")
 	var before_build: int = intake_first.cash
 	intake_first._save_path += "/cannot-write.json"
-	_check(not intake_first.build("wide_brush") and not intake_first.owns("wide_brush") and intake_first.cash == before_build, "Failed purchase preserves cash and ownership")
+	_check(not intake_first.build("wide_brush") and not intake_first.owns("wide_brush") and intake_first.cash == before_build and intake_first.equipped_brush == "hand_brush", "Failed purchase preserves cash, ownership and equipment")
 	intake_first.free()
+	# Additive version-1 migration preserves the pre-selector equipment behavior.
+	var legacy := _new_state("legacy_equipment")
+	_check(legacy.save_state(), "Legacy fixture begins with a valid ledger")
+	_remove_equipment_field(legacy._save_path)
+	legacy = _reload(legacy)
+	_check(legacy.equipped_brush == "hand_brush", "Legacy starter save migrates to its free hand brush")
+	for _job in range(8):
+		_finish_one(legacy)
+	_check(legacy.build("wide_brush"), "Legacy wider-brush fixture is earned and built")
+	_remove_equipment_field(legacy._save_path)
+	legacy = _reload(legacy)
+	_check(legacy.equipped_brush == "wide_brush", "Legacy save with an owned wide brush retains that equipped benefit")
+	_check(JSON.parse_string(FileAccess.get_file_as_string(legacy._save_path)).get("equipped_brush") == "wide_brush", "Migrated equipment is written back to disk")
+	for invalid_selection: Variant in ["jet_spray", 42, {"not": "an item"}]:
+		var fixture: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(legacy._save_path))
+		fixture["equipped_brush"] = invalid_selection
+		_write_fixture(legacy._save_path, fixture)
+		legacy = _reload(legacy)
+		_check(legacy.equipped_brush == "hand_brush" and legacy.owns("wide_brush"), "Invalid saved equipment falls back safely without losing owned tools")
+	legacy.free()
+	var unowned := _new_state("unowned_equipment")
+	unowned.save_state()
+	var unowned_fixture: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(unowned._save_path))
+	unowned_fixture["equipped_brush"] = "wide_brush"
+	_write_fixture(unowned._save_path, unowned_fixture)
+	unowned = _reload(unowned)
+	_check(unowned.equipped_brush == "hand_brush" and not unowned.owns("wide_brush"), "Saved equipment cannot grant an unowned tool")
+	unowned.free()
 	# Preserve unknown future data instead of silently starting over and overwriting it.
 	var invalid_path := _path("invalid")
 	var invalid := FileAccess.open(invalid_path, FileAccess.WRITE)
@@ -118,7 +160,7 @@ func _run() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
 		if FileAccess.file_exists(path + ".tmp"):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(path + ".tmp"))
-	print("VERIFIED: ", _checks, " shop ledger checks; save/resume, thresholds, one-time rewards/builds, production, offline cap, bottlenecks and failure rollback.")
+	print("VERIFIED: ", _checks, " shop ledger checks; save/resume, brush selection/migration, thresholds, one-time rewards/builds, production, offline cap, bottlenecks and failure rollback.")
 	quit(0)
 
 
@@ -158,6 +200,18 @@ func _advance(state: Node, seconds: float) -> void:
 func _finish_one(state: Node) -> void:
 	var id: String = state.start_job()
 	_check(state.save_job_snapshot({"unique_clearance": 1.0, "surface_clearance": 1.0}) and state.complete_job(id), "Complete an eligible manual commission")
+
+
+func _remove_equipment_field(path: String) -> void:
+	var fixture: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(path))
+	fixture.erase("equipped_brush")
+	_write_fixture(path, fixture)
+
+
+func _write_fixture(path: String, data: Dictionary) -> void:
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	file.store_string(JSON.stringify(data))
+	file.close()
 
 
 func _check(passed: bool, message: String) -> void:

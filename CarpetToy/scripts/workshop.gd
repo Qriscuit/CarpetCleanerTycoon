@@ -58,6 +58,17 @@ var reset_button: Button
 var wide_brush := false
 var snapshot_timer: Timer
 var rug_initialized := false
+@onready var hud: CanvasLayer = $GymUI
+var hud_touch := -1
+var hud_button: Button
+var hud_touch_origin := Vector2.ZERO
+var hud_touch_last := Vector2.ZERO
+var hud_touch_canceled := false
+var hud_touch_scroll := false
+var held_touches: Dictionary = {}
+var touch_chord := false
+var next_job_pending := false
+const TOUCH_DRAG_THRESHOLD := 14.0
 const CONTRACT_TARGET := 0.90
 
 func _ready() -> void:
@@ -65,14 +76,14 @@ func _ready() -> void:
 	paid_contract = shop_state != null and shop_state.contract_mode and not str(shop_state.active_job_id).is_empty()
 	if paid_contract:
 		contract_job_id = shop_state.active_job_id
-		wide_brush = shop_state.owns("wide_brush")
+		wide_brush = shop_state.owns("wide_brush") and shop_state.equipped_brush == "wide_brush"
 	frame_carpet()
 	add_soft_accent_lights()
 	brush_home = brush.transform
 	tool_nodes = [brush, $StarterTools/Squeegee, $StarterTools/JetSpray]
 	contact_point = brush.position + brush.basis * TOOL_PIVOTS[0]
 	last_brush_position = contact_point
-	build_ui()
+	bind_ui()
 	soil = preload("res://scripts/dirt_controller.gd").new()
 	soil.automatic_completion_enabled = not paid_contract
 	soil.head_half = Vector2(0.44, 0.11) if wide_brush else soil.HEAD_HALF
@@ -104,36 +115,88 @@ func _ready() -> void:
 		get_tree().quit()
 
 func _input(event: InputEvent) -> void:
-	# Releases must reach us even over a UI button; one finger owns each stroke.
 	if event.device == -1:
 		return
-	# Mouse emulation is disabled, so dispatch real touch taps to the UI explicitly.
-	if event is InputEventScreenTouch and event.pressed and not event.canceled:
-		for button in touch_buttons:
-			if button.is_visible_in_tree() and not button.disabled and button.get_global_rect().has_point(event.position):
-				button.pressed.emit()
+	# Real touch is routed on release because mouse emulation is disabled. A
+	# gesture belongs to one surface until every finger is up: a canceled swipe
+	# cannot become a button tap or a new brush stroke behind the HUD.
+	if event is InputEventScreenTouch:
+		if event.pressed and not event.canceled:
+			held_touches[event.index] = true
+			if held_touches.size() > 1:
+				touch_chord = true
+				hud_touch_canceled = true
+				end_stroke()
+			if touch_chord:
 				get_viewport().set_input_as_handled()
 				return
+			if hud.blocks_point(event.position):
+				end_stroke()
+				hud_touch = event.index
+				hud_touch_origin = event.position
+				hud_touch_last = event.position
+				hud_touch_canceled = false
+				hud_button = hud.visible_button_at(event.position, touch_buttons)
+				hud_touch_scroll = hud.control("LeftRail").get_global_rect().has_point(event.position)
+				get_viewport().set_input_as_handled()
+				return
+		else:
+			held_touches.erase(event.index)
+			if event.index == hud_touch:
+				var activate: bool = not event.canceled and not hud_touch_canceled and not touch_chord and is_instance_valid(hud_button) and hud.visible_button_at(event.position, touch_buttons) == hud_button
+				var button := hud_button
+				hud_touch = -1
+				hud_button = null
+				if held_touches.is_empty():
+					touch_chord = false
+				get_viewport().set_input_as_handled()
+				if activate:
+					button.grab_focus()
+					button.pressed.emit()
+				return
+			if held_touches.is_empty():
+				touch_chord = false
+	if event is InputEventScreenDrag:
+		if event.index == hud_touch:
+			if event.position.distance_to(hud_touch_origin) > TOUCH_DRAG_THRESHOLD:
+				hud_touch_canceled = true
+			if hud_touch_scroll and hud_touch_canceled:
+				var rail := hud.control("LeftRail") as ScrollContainer
+				rail.scroll_vertical += roundi(hud_touch_last.y - event.position.y)
+			hud_touch_last = event.position
+			get_viewport().set_input_as_handled()
+			return
+		if touch_chord:
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed and active_touch == -1:
 		end_stroke()
 	elif event is InputEventScreenTouch and event.index == active_touch and (not event.pressed or event.canceled):
 		end_stroke()
 	elif brush_dragging:
 		if event is InputEventMouseMotion and active_touch == -1:
-			move_brush_to_screen(event.position, false)
+			if hud.blocks_point(event.position):
+				end_stroke()
+			else:
+				move_brush_to_screen(event.position, false)
 			get_viewport().set_input_as_handled()
 		elif event is InputEventScreenDrag and event.index == active_touch:
-			move_brush_to_screen(event.position, true)
+			if hud.blocks_point(event.position) or hud.blocks_point(event.position + TOUCH_CONTACT_OFFSET):
+				end_stroke()
+			else:
+				move_brush_to_screen(event.position, true)
 			get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if soil.completion_started or brush_dragging or event.device == -1:
+	if soil.completion_started or brush_dragging or event.device == -1 or touch_chord or hud_touch != -1:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		begin_stroke(event.position, false)
+		if not hud.blocks_point(event.position):
+			begin_stroke(event.position, false)
 	elif event is InputEventScreenTouch and event.pressed and not event.canceled:
-		active_touch = event.index
-		begin_stroke(event.position, true)
+		if not hud.blocks_point(event.position) and not hud.blocks_point(event.position + TOUCH_CONTACT_OFFSET):
+			active_touch = event.index
+			begin_stroke(event.position, true)
 
 func begin_stroke(screen_position: Vector2, touch_input: bool) -> void:
 	if soil.completion_started:
@@ -160,6 +223,10 @@ func end_stroke() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		end_stroke()
+		hud_touch = -1
+		hud_button = null
+		held_touches.clear()
+		touch_chord = false
 
 func move_brush_to_screen(screen_position: Vector2, touch_input: bool) -> void:
 	var contact_position := screen_position + (TOUCH_CONTACT_OFFSET if touch_input else Vector2.ZERO)
@@ -212,21 +279,20 @@ func current_head_half() -> Vector2:
 	return soil.head_half if selected_tool == 0 else TOOL_HEAD_HALVES[selected_tool]
 
 func set_brush_instruction(active: bool) -> void:
-	if instruction_label == null:
+	if not is_instance_valid(hud):
 		return
-	if contract_finished:
-		instruction_label.text = "JOB COMPLETE / +20 CASH"
-		return
-	if selected_tool == 0:
-		instruction_label.text = "SWEEP BACK FOR PASS TWO" if active else "SWEEP. REVEAL. RELAX."
-	else:
-		instruction_label.text = TOOL_NAMES[selected_tool].to_upper() + " / HOLD + DRAG"
-	instruction_label.add_theme_color_override("font_color", Color("f58c74") if active else Color("547f72"))
+	var state := "InstructionActive" if active else "InstructionIdle"
+	if selected_tool != 0:
+		state = "InstructionOther"
+	if soil != null and soil.completion_started:
+		state = "InstructionComplete" if soil.vacuum_complete else "InstructionVacuum"
+	show_instruction(state)
 
 func reset_rug() -> void:
 	if paid_contract:
 		return
 	end_stroke()
+	hud.control("CompletionCard").hide()
 	soil.reset()
 	for button in tool_buttons:
 		button.disabled = false
@@ -239,6 +305,7 @@ func select_rug(index: int) -> void:
 	if paid_contract and (index != 0 or rug_initialized):
 		return
 	end_stroke()
+	hud.control("CompletionCard").hide()
 	selected_rug = index
 	soil.configure_rug(rugs[index])
 	for i in rug_buttons.size():
@@ -263,10 +330,8 @@ func update_progress(remaining: int, total: int) -> void:
 	progress_bar.value = fraction * 100.0
 	progress_fill.bg_color = color
 	progress_fill.shadow_color = Color(color, 0.42)
-	state_label.add_theme_color_override("font_color", color)
-	state_label.add_theme_color_override("font_shadow_color", Color(color, 0.34))
+	state_label.self_modulate = color
 	completion_icon.visible = not dirty
-	call_deferred("position_progress_value")
 	update_contract_status()
 	if paid_contract and snapshot_timer != null:
 		snapshot_timer.start()
@@ -274,7 +339,10 @@ func update_progress(remaining: int, total: int) -> void:
 func progress_color(fraction: float) -> Color:
 	var stage := clampf(fraction, 0.0, 1.0) * 3.0
 	var index := mini(floori(stage), 2)
-	return PROGRESS_COLORS[index].lerp(PROGRESS_COLORS[index + 1], stage - index)
+	var colors: PackedColorArray = hud.progress_colors
+	if colors.size() < 4:
+		colors = PackedColorArray(PROGRESS_COLORS)
+	return colors[index].lerp(colors[index + 1], stage - index)
 
 func toggle_view() -> void:
 	end_stroke()
@@ -284,11 +352,11 @@ func frame_carpet() -> void:
 	overhead = true
 	var viewport_size := get_viewport().get_visible_rect().size
 	# Reserve the left rug rail and right tool rail so neither covers the carpet.
-	var usable_width := maxf(viewport_size.x - 304.0, 120.0)
+	var usable_width := maxf(viewport_size.x - 348.0, 120.0)
 	var aspect := usable_width / maxf(viewport_size.y, 1.0)
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT
 	camera.size = maxf(4.35, 2.2 / aspect)
-	camera.position = Vector3(-56.0 * camera.size / maxf(viewport_size.y, 1.0), 9, -0.20)
+	camera.position = Vector3(-54.0 * camera.size / maxf(viewport_size.y, 1.0), 9, -0.20)
 	camera.rotation_degrees = Vector3(-90, 0, 0)
 	if soil != null:
 		soil.request_render()
@@ -299,10 +367,13 @@ func on_vacuum_started() -> void:
 		tool.hide()
 	for button in tool_buttons:
 		button.disabled = true
-	instruction_label.text = "CLEARING UP..."
+	show_instruction("InstructionVacuum")
 
 func on_vacuum_finished() -> void:
-	instruction_label.text = "JOB COMPLETE / +20 CASH" if contract_finished else "BEAUTIFULLY CLEAN"
+	show_instruction("InstructionComplete")
+	hud.control("CompletionCard").show()
+	hud.control("RewardReceived").visible = paid_contract
+	hud.control("LeftRail").set_deferred("scroll_vertical", 10000)
 	if contract_finished:
 		update_progress(0, soil.initial.size())
 
@@ -311,13 +382,11 @@ func update_contract_status() -> void:
 		return
 	var clumps: float = soil.unique_clearance()
 	var surface: float = soil.surface_clearance()
-	contract_status.text = "Debris %d%%  /  Dust %d%%\nReach 90%% on both to finish." % [floori(clumps * 100.0), floori(surface * 100.0)]
+	contract_status.text = hud.contract_progress_text % [floori(clumps * 100.0), floori(surface * 100.0)]
+	(hud.control("DustBar") as ProgressBar).value = surface * 100.0
 	finish_button.disabled = contract_finished or clumps < CONTRACT_TARGET or surface < CONTRACT_TARGET
-	if contract_finished:
-		contract_status.text = "Beautiful work!\n20 cash added to your shop."
-		finish_button.text = "JOB COMPLETE"
-	elif contract_save_failed:
-		contract_status.text = "Couldn't save this rug.\nTry Back to shop again."
+	hud.control("ContractCard").visible = not contract_finished
+	hud.control("SaveError").visible = contract_save_failed
 
 func save_contract_progress() -> bool:
 	if not paid_contract or contract_finished:
@@ -328,23 +397,42 @@ func save_contract_progress() -> bool:
 			update_contract_status()
 			return true
 	contract_save_failed = true
-	if is_instance_valid(contract_status):
-		contract_status.text = "Couldn't save this rug.\nTry Back to shop again."
+	if is_instance_valid(hud):
+		hud.control("SaveError").show()
 	return false
 
 func finish_contract() -> void:
 	if not paid_contract or contract_finished or soil.unique_clearance() < CONTRACT_TARGET or soil.surface_clearance() < CONTRACT_TARGET:
 		return
 	end_stroke()
+	hud.control("FinishSaveError").hide()
+	hud.control("FinishError").hide()
 	if not shop_state.save_job_snapshot(soil.make_snapshot()):
-		contract_status.text = "Couldn't save this job.\nTry Finish again."
+		hud.control("FinishSaveError").show()
 		return
 	if not shop_state.complete_job(contract_job_id):
-		contract_status.text = "Couldn't finish this job.\nYour cleaning is saved."
+		hud.control("FinishError").show()
 		return
 	contract_finished = true
 	update_contract_status()
 	soil.start_vacuum(true)
+
+func next_rug() -> void:
+	if next_job_pending or not soil.vacuum_complete:
+		return
+	if not paid_contract:
+		select_rug((selected_rug + 1) % rugs.size())
+		(hud.control("LeftRail") as ScrollContainer).scroll_vertical = 0
+		return
+	if not contract_finished:
+		return
+	hud.control("NextJobError").hide()
+	if shop_state.start_job().is_empty():
+		hud.control("NextJobError").show()
+		return
+	next_job_pending = true
+	shop_state.contract_mode = true
+	get_tree().change_scene_to_file("res://scenes/rug_cleaning_gym.tscn")
 
 func return_to_shop() -> void:
 	end_stroke()
@@ -372,229 +460,52 @@ func add_soft_accent_lights() -> void:
 		light.position = data[0]
 		add_child(light)
 
-func position_progress_value() -> void:
-	if progress_track == null or progress_value_marker == null:
-		return
-	progress_value_marker.reset_size()
-	var marker_width := progress_value_marker.size.x
-	var available := maxf(progress_track.size.x - marker_width, 0.0)
-	progress_value_marker.position = Vector2(available * progress_fraction, 35.0)
+func show_instruction(node_name: String) -> void:
+	for name in ["InstructionIdle", "InstructionActive", "InstructionOther", "InstructionVacuum", "InstructionComplete"]:
+		hud.control(name).visible = name == node_name
+	instruction_label = hud.control(node_name) as Label
 
-func label(text: String,size: int,color: String) -> Label:
-	var node := Label.new()
-	node.text=text
-	node.add_theme_font_size_override("font_size",size)
-	node.add_theme_color_override("font_color",Color(color))
-	return node
-
-func style(color: String) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.bg_color=Color(color)
-	box.set_corner_radius_all(16)
-	return box
-
-func build_ui() -> void:
-	var layer := CanvasLayer.new()
-	layer.name = "GymUI"
-	add_child(layer)
-	var root := Control.new()
-	root.name = "HUD"
-	layer.add_child(root)
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter=Control.MOUSE_FILTER_IGNORE
-	var heading := VBoxContainer.new()
-	heading.position = Vector2(16, 16)
-	heading.add_theme_constant_override("separation", 4)
-	root.add_child(heading)
-	heading.add_child(label("MINT MEADOW JOB" if paid_contract else "RUG CLEANING GYM", 15, "285c50"))
-	instruction_label = label("SWEEP. REVEAL. RELAX.", 10, "547f72")
-	heading.add_child(instruction_label)
-	var picker := VBoxContainer.new()
-	root.add_child(picker)
-	picker.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	picker.offset_left = -88
-	picker.offset_right = -24
-	picker.offset_top = 24
-	picker.add_theme_constant_override("separation", 8)
-	var group := ButtonGroup.new()
-	var icons := [preload("res://assets/ui/brush.svg"), preload("res://assets/ui/squeegee.svg"), preload("res://assets/ui/spray.svg")]
-	for i in TOOL_NAMES.size():
-		var button := Button.new()
-		button.name = ["BrushButton", "SqueegeeButton", "JetSprayButton"][i]
-		button.icon = icons[i]
-		button.tooltip_text = TOOL_NAMES[i]
-		if paid_contract:
-			button.tooltip_text = ("Wide brush / 44% wider reach" if wide_brush else "Starter brush") if i == 0 else "Practice tool / try it in the Rug Cleaning Gym"
-		button.toggle_mode = true
-		button.button_group = group
-		button.focus_mode = Control.FOCUS_NONE
-		button.custom_minimum_size = Vector2(64, 60)
-		button.add_theme_font_size_override("font_size", 17)
-		button.add_theme_color_override("font_color", Color("285c50"))
-		button.add_theme_color_override("font_hover_color", Color("285c50"))
-		button.add_theme_color_override("font_pressed_color", Color("fff8e8"))
-		button.add_theme_stylebox_override("normal", style("f6eedb"))
-		button.add_theme_stylebox_override("disabled", style("f6eedb"))
-		button.add_theme_stylebox_override("hover", style("e4ead8"))
-		button.add_theme_stylebox_override("pressed", style("328671"))
-		button.add_theme_stylebox_override("hover_pressed", style("328671"))
-		button.pressed.connect(select_tool.bind(i))
-		picker.add_child(button)
-		tool_buttons.append(button)
-		touch_buttons.append(button)
-	var card := PanelContainer.new()
-	progress_card = card
-	card.name = "CleaningProgress"
-	root.add_child(card)
-	card.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
-	card.offset_left = 16
-	card.offset_right = 200
-	card.offset_top = 64
-	var card_style := style("fff8e9")
-	card_style.set_corner_radius_all(22)
-	card_style.shadow_color = Color(0.22,0.35,0.30,0.12)
-	card_style.shadow_size = 2
-	card_style.shadow_offset = Vector2(0,4)
-	card_style.content_margin_left = 16
-	card_style.content_margin_right = 16
-	card_style.content_margin_top = 18
-	card_style.content_margin_bottom = 12
-	card.add_theme_stylebox_override("panel", card_style)
-	progress_track = Control.new()
-	progress_track.custom_minimum_size = Vector2(152, 70)
-	card.add_child(progress_track)
-	progress_track.resized.connect(position_progress_value)
-	progress_bar = ProgressBar.new()
-	progress_bar.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	progress_bar.offset_bottom = 26
-	progress_bar.show_percentage = false
-	progress_bar.step = 0.0
-	progress_bar.add_theme_stylebox_override("background", style("e3e5d8"))
-	progress_fill = style("e76c62")
-	progress_fill.shadow_color = Color("6ee76c62")
-	progress_fill.shadow_size = 8
-	progress_fill.shadow_offset = Vector2.ZERO
-	progress_bar.add_theme_stylebox_override("fill", progress_fill)
-	progress_track.add_child(progress_bar)
-	progress_value_marker = HBoxContainer.new()
-	progress_value_marker.add_theme_constant_override("separation", 6)
-	progress_track.add_child(progress_value_marker)
-	state_label = label("0%", 26, "e76c62")
-	state_label.add_theme_color_override("font_shadow_color", Color("57e76c62"))
-	state_label.add_theme_constant_override("shadow_outline_size", 6)
-	progress_value_marker.add_child(state_label)
-	completion_icon = TextureRect.new()
-	completion_icon.texture = preload("res://assets/ui/complete.svg")
-	completion_icon.custom_minimum_size = Vector2(24, 24)
-	completion_icon.stretch_mode = TextureRect.STRETCH_KEEP_CENTERED
-	completion_icon.visible = false
-	progress_value_marker.add_child(completion_icon)
-	var rug_picker := VBoxContainer.new()
-	rug_picker.name = "RugPicker"
-	root.add_child(rug_picker)
-	rug_picker.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
-	rug_picker.offset_left = 16
-	rug_picker.offset_right = 200
-	rug_picker.offset_top = 180
-	rug_picker.add_theme_constant_override("separation", 10)
-	rug_picker.add_child(label("CUSTOMER RUG" if paid_contract else "TEST RUGS", 12, "547f72"))
-	var rug_group := ButtonGroup.new()
-	for i in rugs.size():
-		var button := Button.new()
-		button.name = "RugButton%d" % i
-		button.text = rugs[i].display_name
-		button.tooltip_text = rugs[i].cleaning_hint
-		button.toggle_mode = true
-		button.button_group = rug_group
-		button.custom_minimum_size = Vector2(184, 52)
-		button.add_theme_font_size_override("font_size", 13)
-		button.add_theme_color_override("font_color", Color("285c50"))
-		button.add_theme_color_override("font_hover_color", Color("285c50"))
-		button.add_theme_color_override("font_pressed_color", Color("fff8e8"))
-		button.add_theme_stylebox_override("normal", style("f6eedb"))
-		button.add_theme_stylebox_override("hover", style("e4ead8"))
-		button.add_theme_stylebox_override("pressed", style("328671"))
-		button.add_theme_stylebox_override("hover_pressed", style("328671"))
-		button.add_theme_stylebox_override("disabled", style("dce9d8"))
-		button.add_theme_color_override("font_disabled_color", Color("285c50"))
-		button.pressed.connect(select_rug.bind(i))
-		if paid_contract:
-			button.disabled = true
-			button.visible = i == 0
-		rug_picker.add_child(button)
-		rug_buttons.append(button)
-		touch_buttons.append(button)
-	rug_hint = label("", 12, "285c50")
-	rug_hint.custom_minimum_size.x = 184
-	rug_hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	rug_picker.add_child(rug_hint)
-	var restart := Button.new()
-	reset_button = restart
-	restart.name = "ResetRugButton"
-	restart.text = "Reset rug"
-	restart.custom_minimum_size.y = 40
-	restart.add_theme_font_size_override("font_size", 13)
-	restart.add_theme_color_override("font_color", Color("285c50"))
-	restart.add_theme_stylebox_override("normal", style("e4ead8"))
-	restart.pressed.connect(reset_rug)
-	restart.visible = not paid_contract
-	rug_picker.add_child(restart)
-	touch_buttons.append(restart)
-	if paid_contract:
-		var contract_card := PanelContainer.new()
-		contract_card.name = "ContractCard"
-		var contract_style := style("fff8e9")
-		contract_style.content_margin_left = 12
-		contract_style.content_margin_right = 12
-		contract_style.content_margin_top = 14
-		contract_style.content_margin_bottom = 14
-		contract_card.add_theme_stylebox_override("panel", contract_style)
-		rug_picker.add_child(contract_card)
-		var contract_column := VBoxContainer.new()
-		contract_column.add_theme_constant_override("separation", 9)
-		contract_card.add_child(contract_column)
-		contract_column.add_child(label("JOB REWARD", 11, "547f72"))
-		contract_label = label("+20 CASH", 22, "cf9634")
-		contract_column.add_child(contract_label)
-		contract_status = label("", 11, "285c50")
-		contract_status.custom_minimum_size.x = 156
-		contract_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		contract_column.add_child(contract_status)
-		finish_button = Button.new()
-		finish_button.name = "FinishJobButton"
-		finish_button.text = "FINISH JOB"
-		finish_button.custom_minimum_size.y = 46
-		finish_button.add_theme_font_size_override("font_size", 13)
-		finish_button.add_theme_color_override("font_color", Color.WHITE)
-		finish_button.add_theme_color_override("font_disabled_color", Color("86a296"))
-		finish_button.add_theme_stylebox_override("normal", style("43a963"))
-		finish_button.add_theme_stylebox_override("hover", style("5cba78"))
-		finish_button.add_theme_stylebox_override("pressed", style("328671"))
-		finish_button.add_theme_stylebox_override("disabled", style("e4ead8"))
-		finish_button.pressed.connect(finish_contract)
-		contract_column.add_child(finish_button)
-		touch_buttons.append(finish_button)
-		var equipment := label("WIDE BRUSH\n44% wider cleaning reach" if wide_brush else "STARTER BRUSH\nSweep beyond the rug edges.", 11, "547f72")
-		equipment.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		equipment.custom_minimum_size.x = 184
-		rug_picker.add_child(equipment)
-		rug_picker.add_child(label("Progress saves as you clean.", 10, "547f72"))
-	var back := Button.new()
-	back.name = "BackToShopButton"
-	back.text = "<  BACK TO SHOP"
-	back.custom_minimum_size = Vector2(184, 48)
-	back.add_theme_font_size_override("font_size", 12)
-	back.add_theme_color_override("font_color", Color("285c50"))
-	back.add_theme_stylebox_override("normal", style("fff8e9"))
-	back.add_theme_stylebox_override("hover", style("e4ead8"))
-	back.add_theme_stylebox_override("pressed", style("c6dbc8"))
-	back.pressed.connect(return_to_shop)
-	root.add_child(back)
-	back.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
-	back.offset_left = 16
-	back.offset_right = 200
-	back.offset_top = -68
-	back.offset_bottom = -20
-	touch_buttons.append(back)
-
-
+func bind_ui() -> void:
+	# %unique names survive moving/reparenting controls in cleaning_hud.tscn.
+	# UI nodes, text, icons, dimensions and theme resources are serialized there.
+	rug_buttons.assign([hud.control("RugButton0"), hud.control("RugButton1"), hud.control("RugButton2")])
+	tool_buttons.assign([hud.control("BrushButton"), hud.control("SqueegeeButton"), hud.control("JetSprayButton")])
+	rug_hint = hud.control("RugHint") as Label
+	progress_card = hud.control("CleaningProgress") as PanelContainer
+	progress_track = hud.control("ProgressTrack")
+	progress_value_marker = hud.control("ProgressValueMarker") as HBoxContainer
+	state_label = hud.control("ProgressValue") as Label
+	progress_bar = hud.control("ProgressBar") as ProgressBar
+	progress_fill = progress_bar.get_theme_stylebox("fill") as StyleBoxFlat
+	completion_icon = hud.control("CompletionIcon") as TextureRect
+	contract_label = hud.control("ContractReward") as Label
+	contract_status = hud.control("ContractStatus") as Label
+	finish_button = hud.control("FinishJobButton") as Button
+	reset_button = hud.control("ResetRugButton") as Button
+	hud.control("PracticeTitle").visible = not paid_contract
+	hud.control("ContractTitle").visible = paid_contract
+	hud.control("PracticeRugs").visible = not paid_contract
+	hud.control("ContractCard").visible = paid_contract
+	hud.control("PaidTarget").visible = paid_contract
+	hud.control("PracticeToolsHint").visible = not paid_contract
+	hud.control("StarterBrushHint").visible = paid_contract and not wide_brush
+	hud.control("WideBrushHint").visible = paid_contract and wide_brush
+	var reward: int = shop_state.MANUAL_REWARD if shop_state != null else 20
+	contract_label.text = hud.reward_text % reward
+	(hud.control("RewardReceived") as Label).text = hud.reward_received_text % reward
+	for i in tool_buttons.size():
+		tool_buttons[i].pressed.connect(select_tool.bind(i))
+		tool_buttons[i].visible = not paid_contract or i == 0
+	for i in rug_buttons.size():
+		rug_buttons[i].pressed.connect(select_rug.bind(i))
+		rug_buttons[i].disabled = paid_contract
+	reset_button.pressed.connect(reset_rug)
+	finish_button.pressed.connect(finish_contract)
+	(hud.control("HomeButton") as Button).pressed.connect(return_to_shop)
+	(hud.control("CompletionHomeButton") as Button).pressed.connect(return_to_shop)
+	(hud.control("NextRugButton") as Button).pressed.connect(next_rug)
+	touch_buttons.assign(tool_buttons)
+	touch_buttons.append_array(rug_buttons)
+	for name in ["ResetRugButton", "FinishJobButton", "HomeButton", "CompletionHomeButton", "NextRugButton"]:
+		touch_buttons.append(hud.control(name) as Button)
+	show_instruction("InstructionIdle")

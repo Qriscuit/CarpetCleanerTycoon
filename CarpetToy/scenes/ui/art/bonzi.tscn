@@ -1,0 +1,513 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/illustration_layout.gd" id="1_mg44h"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lsg0p"]
+resource_local_to_scene = true
+bg_color = Color(0.7254902, 0.89411765, 0.9254902, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_nbfvj"]
+resource_local_to_scene = true
+bg_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_67kul"]
+resource_local_to_scene = true
+bg_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pruxh"]
+resource_local_to_scene = true
+bg_color = Color(0.49411765, 0.8627451, 0.6392157, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_063lx"]
+resource_local_to_scene = true
+bg_color = Color(0.49411765, 0.8627451, 0.6392157, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dqci1"]
+resource_local_to_scene = true
+bg_color = Color(0.98039216, 0.54901963, 0.4509804, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 27
+corner_radius_top_right = 27
+corner_radius_bottom_right = 27
+corner_radius_bottom_left = 27
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6xel8"]
+resource_local_to_scene = true
+bg_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 27
+corner_radius_top_right = 27
+corner_radius_bottom_right = 27
+corner_radius_bottom_left = 27
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kdb7e"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pgdqf"]
+resource_local_to_scene = true
+bg_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_x5lyc"]
+resource_local_to_scene = true
+bg_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bo50c"]
+resource_local_to_scene = true
+bg_color = Color(0.8745098, 0.41960785, 0.34901962, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 5
+corner_radius_top_right = 5
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7x8qr"]
+resource_local_to_scene = true
+bg_color = Color(0.2784314, 0.7137255, 0.5058824, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="BonziIllustration" type="Control" unique_id=1665114018]
+editor_description = "Open this illustration scene to move and recolor its Artwork nodes. Its layout script only centers and scales Artwork."
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 200.0
+offset_bottom = 160.0
+size_flags_horizontal = 3
+mouse_filter = 2
+script = ExtResource("1_mg44h")
+animation_target_path = NodePath("Artwork/Robot/Bonzi")
+
+[node name="Artwork" type="Node2D" parent="." unique_id=78647527]
+
+[node name="Backdrop" type="Node2D" parent="Artwork" unique_id=1125084426]
+
+[node name="Oval01" type="Polygon2D" parent="Artwork/Backdrop" unique_id=1203146744]
+position = Vector2(100, 77)
+color = Color(0.8862745, 0.95686275, 0.8745098, 1)
+antialiased = true
+polygon = PackedVector2Array(66, 0, 65.43536, 8.614728, 63.751102, 17.082056, 60.976048, 25.257107, 57.157677, 33, 52.36132, 40.178253, 46.66905, 46.66905, 40.178253, 52.36132, 33, 57.157677, 25.257107, 60.976048, 17.082056, 63.751102, 8.614728, 65.43536, 4.041201e-15, 66, -8.614728, 65.43536, -17.082056, 63.751102, -25.257107, 60.976048, -33, 57.157677, -40.178253, 52.36132, -46.66905, 46.66905, -52.36132, 40.178253, -57.157677, 33, -60.976048, 25.257107, -63.751102, 17.082056, -65.43536, 8.614728, -66, 8.082402e-15, -65.43536, -8.614728, -63.751102, -17.082056, -60.976048, -25.257107, -57.157677, -33, -52.36132, -40.178253, -46.66905, -46.66905, -40.178253, -52.36132, -33, -57.157677, -25.257107, -60.976048, -17.082056, -63.751102, -8.614728, -65.43536, -1.2123603e-14, -66, 8.614728, -65.43536, 17.082056, -63.751102, 25.257107, -60.976048, 33, -57.157677, 40.178253, -52.36132, 46.66905, -46.66905, 52.36132, -40.178253, 57.157677, -33, 60.976048, -25.257107, 63.751102, -17.082056, 65.43536, -8.614728)
+
+[node name="Shape02" type="Polygon2D" parent="Artwork/Backdrop" unique_id=170791432]
+position = Vector2(31, 46)
+color = Color(0.972549, 0.8, 0.39607844, 1)
+antialiased = true
+polygon = PackedVector2Array(0, -8, 2.3199997, -2.3199997, 8, 0, 2.3199997, 2.3199997, 0, 8, -2.3199997, 2.3199997, -8, 0, -2.3199997, -2.3199997)
+
+[node name="Shape03" type="Polygon2D" parent="Artwork/Backdrop" unique_id=898736704]
+position = Vector2(164, 65)
+color = Color(0.2784314, 0.7137255, 0.5058824, 1)
+antialiased = true
+polygon = PackedVector2Array(0, -6, 1.7400055, -1.7400017, 6, 0, 1.7400055, 1.7399979, 0, 6, -1.7400055, 1.7399979, -6, 0, -1.7400055, -1.7400017)
+
+[node name="RoundedShape04" type="Panel" parent="Artwork/Backdrop" unique_id=726747405]
+offset_left = 37.0
+offset_top = 122.0
+offset_right = 171.0
+offset_bottom = 141.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_lsg0p")
+
+[node name="Stroke05" type="Line2D" parent="Artwork/Backdrop" unique_id=1169322594]
+position = Vector2(47, 141)
+points = PackedVector2Array(0, 0, 0, 5)
+width = 2.0
+default_color = Color(0.52156866, 0.72156864, 0.7529412, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke06" type="Line2D" parent="Artwork/Backdrop" unique_id=1455654620]
+position = Vector2(66, 141)
+points = PackedVector2Array(0, 0, 0, 5)
+width = 2.0
+default_color = Color(0.52156866, 0.72156864, 0.7529412, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke07" type="Line2D" parent="Artwork/Backdrop" unique_id=378448338]
+position = Vector2(85, 141)
+points = PackedVector2Array(0, 0, 0, 5)
+width = 2.0
+default_color = Color(0.52156866, 0.72156864, 0.7529412, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke08" type="Line2D" parent="Artwork/Backdrop" unique_id=1451724976]
+position = Vector2(104, 141)
+points = PackedVector2Array(0, 0, 0, 5)
+width = 2.0
+default_color = Color(0.52156866, 0.72156864, 0.7529412, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke09" type="Line2D" parent="Artwork/Backdrop" unique_id=626062137]
+position = Vector2(123, 141)
+points = PackedVector2Array(0, 0, 0, 5)
+width = 2.0
+default_color = Color(0.52156866, 0.72156864, 0.7529412, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke10" type="Line2D" parent="Artwork/Backdrop" unique_id=834019895]
+position = Vector2(142, 141)
+points = PackedVector2Array(0, 0, 0, 5)
+width = 2.0
+default_color = Color(0.52156866, 0.72156864, 0.7529412, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke11" type="Line2D" parent="Artwork/Backdrop" unique_id=1384599915]
+position = Vector2(161, 141)
+points = PackedVector2Array(0, 0, 0, 5)
+width = 2.0
+default_color = Color(0.52156866, 0.72156864, 0.7529412, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Robot" type="Node2D" parent="Artwork" unique_id=292358374]
+
+[node name="Bonzi" type="Node2D" parent="Artwork/Robot" unique_id=1428414526]
+position = Vector2(40, 22)
+scale = Vector2(0.9, 0.9)
+
+[node name="Oval12" type="Polygon2D" parent="Artwork/Robot/Bonzi" unique_id=1583607070]
+position = Vector2(64, 126)
+color = Color(0.7137255, 0.84313726, 0.7647059, 1)
+antialiased = true
+polygon = PackedVector2Array(53, 0, 52.546577, 0.9136833, 51.19407, 1.8117332, 48.965614, 2.678784, 45.899345, 3.5, 42.047726, 4.26133, 37.476658, 4.9497476, 32.264355, 5.5534735, 26.5, 6.0621777, 20.28222, 6.4671564, 13.717409, 6.761481, 6.9178877, 6.940114, 3.2452068e-15, 7, -6.9178877, 6.940114, -13.717409, 6.761481, -20.28222, 6.4671564, -26.5, 6.0621777, -32.264355, 5.5534735, -37.476658, 4.9497476, -42.047726, 4.26133, -45.899345, 3.5, -48.965614, 2.678784, -51.19407, 1.8117332, -52.546577, 0.9136833, -53, 8.5722445e-16, -52.546577, -0.9136833, -51.19407, -1.8117332, -48.965614, -2.678784, -45.899345, -3.5, -42.047726, -4.26133, -37.476658, -4.9497476, -32.264355, -5.5534735, -26.5, -6.0621777, -20.28222, -6.4671564, -13.717409, -6.761481, -6.9178877, -6.940114, -9.7356205e-15, -7, 6.9178877, -6.940114, 13.717409, -6.761481, 20.28222, -6.4671564, 26.5, -6.0621777, 32.264355, -5.5534735, 37.476658, -4.9497476, 42.047726, -4.26133, 45.899345, -3.5, 48.965614, -2.678784, 51.19407, -1.8117332, 52.546577, -0.9136833)
+
+[node name="WheelsAndArms" type="Node2D" parent="Artwork/Robot/Bonzi" unique_id=89226835]
+
+[node name="RoundedShape13" type="Panel" parent="Artwork/Robot/Bonzi/WheelsAndArms" unique_id=537850061]
+offset_left = 24.0
+offset_top = 104.0
+offset_right = 49.0
+offset_bottom = 127.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_nbfvj")
+
+[node name="RoundedShape14" type="Panel" parent="Artwork/Robot/Bonzi/WheelsAndArms" unique_id=24121022]
+offset_left = 79.0
+offset_top = 104.0
+offset_right = 104.0
+offset_bottom = 127.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_67kul")
+
+[node name="Stroke15" type="Line2D" parent="Artwork/Robot/Bonzi/WheelsAndArms" unique_id=830055984]
+position = Vector2(30, 119)
+points = PackedVector2Array(0, 0, 11, 0)
+width = 3.0
+default_color = Color(0.39607844, 0.5254902, 0.5058824, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke16" type="Line2D" parent="Artwork/Robot/Bonzi/WheelsAndArms" unique_id=1956980314]
+position = Vector2(87, 119)
+points = PackedVector2Array(0, 0, 10, 0)
+width = 3.0
+default_color = Color(0.39607844, 0.5254902, 0.5058824, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="RoundedShape17" type="Panel" parent="Artwork/Robot/Bonzi/WheelsAndArms" unique_id=1158009316]
+offset_left = 7.0
+offset_top = 65.0
+offset_right = 25.0
+offset_bottom = 97.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_pruxh")
+
+[node name="RoundedShape18" type="Panel" parent="Artwork/Robot/Bonzi/WheelsAndArms" unique_id=1040432326]
+offset_left = 103.0
+offset_top = 64.0
+offset_right = 121.0
+offset_bottom = 96.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_063lx")
+
+[node name="Stroke19" type="Line2D" parent="Artwork/Robot/Bonzi/WheelsAndArms" unique_id=1737007963]
+position = Vector2(64, 21)
+points = PackedVector2Array(0, 0, 0, -12)
+width = 4.0
+default_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Oval20" type="Polygon2D" parent="Artwork/Robot/Bonzi/WheelsAndArms" unique_id=1086997998]
+position = Vector2(64, 8)
+color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+antialiased = true
+polygon = PackedVector2Array(7, 0, 6.940114, 0.9136833, 6.761481, 1.8117332, 6.4671564, 2.678784, 6.0621777, 3.5, 5.5534735, 4.26133, 4.9497476, 4.9497476, 4.26133, 5.5534735, 3.5, 6.0621777, 2.678784, 6.4671564, 1.8117332, 6.761481, 0.9136833, 6.940114, 4.2861222e-16, 7, -0.9136833, 6.940114, -1.8117332, 6.761481, -2.678784, 6.4671564, -3.5, 6.0621777, -4.26133, 5.5534735, -4.9497476, 4.9497476, -5.5534735, 4.26133, -6.0621777, 3.5, -6.4671564, 2.678784, -6.761481, 1.8117332, -6.940114, 0.9136833, -7, 8.5722445e-16, -6.940114, -0.9136833, -6.761481, -1.8117332, -6.4671564, -2.678784, -6.0621777, -3.5, -5.5534735, -4.26133, -4.9497476, -4.9497476, -4.26133, -5.5534735, -3.5, -6.0621777, -2.678784, -6.4671564, -1.8117332, -6.761481, -0.9136833, -6.940114, -1.2858367e-15, -7, 0.9136833, -6.940114, 1.8117332, -6.761481, 2.678784, -6.4671564, 3.5, -6.0621777, 4.26133, -5.5534735, 4.9497476, -4.9497476, 5.5534735, -4.26133, 6.0621777, -3.5, 6.4671564, -2.678784, 6.761481, -1.8117332, 6.940114, -0.9136833)
+
+[node name="Oval21" type="Polygon2D" parent="Artwork/Robot/Bonzi/WheelsAndArms" unique_id=1746166029]
+position = Vector2(64, 7)
+color = Color(0.972549, 0.8, 0.39607844, 1)
+antialiased = true
+polygon = PackedVector2Array(4, 0, 3.9657795, 0.52210474, 3.8637033, 1.0352762, 3.695518, 1.5307337, 3.4641016, 2, 3.1734133, 2.4350457, 2.828427, 2.828427, 2.4350457, 3.1734133, 2, 3.4641016, 1.5307337, 3.695518, 1.0352762, 3.8637033, 0.52210474, 3.9657795, 2.4492127e-16, 4, -0.52210474, 3.9657795, -1.0352762, 3.8637033, -1.5307337, 3.695518, -2, 3.4641016, -2.4350457, 3.1734133, -2.828427, 2.828427, -3.1734133, 2.4350457, -3.4641016, 2, -3.695518, 1.5307337, -3.8637033, 1.0352762, -3.9657795, 0.52210474, -4, 4.8984254e-16, -3.9657795, -0.52210474, -3.8637033, -1.0352762, -3.695518, -1.5307337, -3.4641016, -2, -3.1734133, -2.4350457, -2.828427, -2.828427, -2.4350457, -3.1734133, -2, -3.4641016, -1.5307337, -3.695518, -1.0352762, -3.8637033, -0.52210474, -3.9657795, -7.347638e-16, -4, 0.52210474, -3.9657795, 1.0352762, -3.8637033, 1.5307337, -3.695518, 2, -3.4641016, 2.4350457, -3.1734133, 2.828427, -2.828427, 3.1734133, -2.4350457, 3.4641016, -2, 3.695518, -1.5307337, 3.8637033, -1.0352762, 3.9657795, -0.52210474)
+
+[node name="CoralBodyAndFace" type="Node2D" parent="Artwork/Robot/Bonzi" unique_id=246801806]
+
+[node name="RoundedShape22" type="Panel" parent="Artwork/Robot/Bonzi/CoralBodyAndFace" unique_id=963868057]
+offset_left = 19.0
+offset_top = 25.0
+offset_right = 110.0
+offset_bottom = 109.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_dqci1")
+
+[node name="PressedEdge" type="Panel" parent="Artwork/Robot/Bonzi/CoralBodyAndFace/RoundedShape22" unique_id=294655044]
+show_behind_parent = true
+layout_mode = 0
+offset_top = 6.0
+offset_right = 91.0
+offset_bottom = 90.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_6xel8")
+
+[node name="RoundedShape23" type="Panel" parent="Artwork/Robot/Bonzi/CoralBodyAndFace" unique_id=1374210468]
+offset_left = 27.0
+offset_top = 32.0
+offset_right = 102.0
+offset_bottom = 85.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_kdb7e")
+
+[node name="EyesAndSmile" type="Node2D" parent="Artwork/Robot/Bonzi" unique_id=1982747533]
+
+[node name="RoundedShape24" type="Panel" parent="Artwork/Robot/Bonzi/EyesAndSmile" unique_id=1010938037]
+offset_left = 37.0
+offset_top = 48.0
+offset_right = 50.0
+offset_bottom = 68.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_pgdqf")
+
+[node name="RoundedShape25" type="Panel" parent="Artwork/Robot/Bonzi/EyesAndSmile" unique_id=1287540798]
+offset_left = 79.0
+offset_top = 48.0
+offset_right = 92.0
+offset_bottom = 68.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_x5lyc")
+
+[node name="Oval26" type="Polygon2D" parent="Artwork/Robot/Bonzi/EyesAndSmile" unique_id=1472104133]
+position = Vector2(41, 52)
+color = Color(1, 0.9764706, 0.9137255, 1)
+antialiased = true
+polygon = PackedVector2Array(2, 0, 1.9828898, 0.26105237, 1.9318516, 0.5176381, 1.847759, 0.76536685, 1.7320508, 1, 1.5867066, 1.2175229, 1.4142135, 1.4142135, 1.2175229, 1.5867066, 1, 1.7320508, 0.76536685, 1.847759, 0.5176381, 1.9318516, 0.26105237, 1.9828898, 1.2246064e-16, 2, -0.26105237, 1.9828898, -0.5176381, 1.9318516, -0.76536685, 1.847759, -1, 1.7320508, -1.2175229, 1.5867066, -1.4142135, 1.4142135, -1.5867066, 1.2175229, -1.7320508, 1, -1.847759, 0.76536685, -1.9318516, 0.5176381, -1.9828898, 0.26105237, -2, 2.4492127e-16, -1.9828898, -0.26105237, -1.9318516, -0.5176381, -1.847759, -0.76536685, -1.7320508, -1, -1.5867066, -1.2175229, -1.4142135, -1.4142135, -1.2175229, -1.5867066, -1, -1.7320508, -0.76536685, -1.847759, -0.5176381, -1.9318516, -0.26105237, -1.9828898, -3.673819e-16, -2, 0.26105237, -1.9828898, 0.5176381, -1.9318516, 0.76536685, -1.847759, 1, -1.7320508, 1.2175229, -1.5867066, 1.4142135, -1.4142135, 1.5867066, -1.2175229, 1.7320508, -1, 1.847759, -0.76536685, 1.9318516, -0.5176381, 1.9828898, -0.26105237)
+
+[node name="Oval27" type="Polygon2D" parent="Artwork/Robot/Bonzi/EyesAndSmile" unique_id=1057701137]
+position = Vector2(83, 52)
+color = Color(1, 0.9764706, 0.9137255, 1)
+antialiased = true
+polygon = PackedVector2Array(2, 0, 1.9828898, 0.26105237, 1.9318516, 0.5176381, 1.847759, 0.76536685, 1.7320508, 1, 1.5867066, 1.2175229, 1.4142135, 1.4142135, 1.2175229, 1.5867066, 1, 1.7320508, 0.76536685, 1.847759, 0.5176381, 1.9318516, 0.26105237, 1.9828898, 1.2246064e-16, 2, -0.26105237, 1.9828898, -0.5176381, 1.9318516, -0.76536685, 1.847759, -1, 1.7320508, -1.2175229, 1.5867066, -1.4142135, 1.4142135, -1.5867066, 1.2175229, -1.7320508, 1, -1.847759, 0.76536685, -1.9318516, 0.5176381, -1.9828898, 0.26105237, -2, 2.4492127e-16, -1.9828898, -0.26105237, -1.9318516, -0.5176381, -1.847759, -0.76536685, -1.7320508, -1, -1.5867066, -1.2175229, -1.4142135, -1.4142135, -1.2175229, -1.5867066, -1, -1.7320508, -0.76536685, -1.847759, -0.5176381, -1.9318516, -0.26105237, -1.9828898, -3.673819e-16, -2, 0.26105237, -1.9828898, 0.5176381, -1.9318516, 0.76536685, -1.847759, 1, -1.7320508, 1.2175229, -1.5867066, 1.4142135, -1.4142135, 1.5867066, -1.2175229, 1.7320508, -1, 1.847759, -0.76536685, 1.9318516, -0.5176381, 1.9828898, -0.26105237)
+
+[node name="Oval28" type="Polygon2D" parent="Artwork/Robot/Bonzi/EyesAndSmile" unique_id=1286861189]
+position = Vector2(36, 70)
+color = Color(1, 0.7294118, 0.6313726, 1)
+antialiased = true
+polygon = PackedVector2Array(7, 0, 6.940114, 0.39157856, 6.761481, 0.77645713, 6.4671564, 1.1480503, 6.0621777, 1.5, 5.5534735, 1.8262843, 4.9497476, 2.1213202, 4.26133, 2.38006, 3.5, 2.598076, 2.678784, 2.7716384, 1.8117332, 2.8977776, 0.9136833, 2.9743347, 4.2861222e-16, 3, -0.9136833, 2.9743347, -1.8117332, 2.8977776, -2.678784, 2.7716384, -3.5, 2.598076, -4.26133, 2.38006, -4.9497476, 2.1213202, -5.5534735, 1.8262843, -6.0621777, 1.5, -6.4671564, 1.1480503, -6.761481, 0.77645713, -6.940114, 0.39157856, -7, 3.673819e-16, -6.940114, -0.39157856, -6.761481, -0.77645713, -6.4671564, -1.1480503, -6.0621777, -1.5, -5.5534735, -1.8262843, -4.9497476, -2.1213202, -4.26133, -2.38006, -3.5, -2.598076, -2.678784, -2.7716384, -1.8117332, -2.8977776, -0.9136833, -2.9743347, -1.2858367e-15, -3, 0.9136833, -2.9743347, 1.8117332, -2.8977776, 2.678784, -2.7716384, 3.5, -2.598076, 4.26133, -2.38006, 4.9497476, -2.1213202, 5.5534735, -1.8262843, 6.0621777, -1.5, 6.4671564, -1.1480503, 6.761481, -0.77645713, 6.940114, -0.39157856)
+
+[node name="Oval29" type="Polygon2D" parent="Artwork/Robot/Bonzi/EyesAndSmile" unique_id=92142230]
+position = Vector2(92, 70)
+color = Color(1, 0.7294118, 0.6313726, 1)
+antialiased = true
+polygon = PackedVector2Array(7, 0, 6.940114, 0.39157856, 6.761481, 0.77645713, 6.4671564, 1.1480503, 6.0621777, 1.5, 5.5534735, 1.8262843, 4.9497476, 2.1213202, 4.26133, 2.38006, 3.5, 2.598076, 2.678784, 2.7716384, 1.8117332, 2.8977776, 0.9136833, 2.9743347, 4.2861222e-16, 3, -0.9136833, 2.9743347, -1.8117332, 2.8977776, -2.678784, 2.7716384, -3.5, 2.598076, -4.26133, 2.38006, -4.9497476, 2.1213202, -5.5534735, 1.8262843, -6.0621777, 1.5, -6.4671564, 1.1480503, -6.761481, 0.77645713, -6.940114, 0.39157856, -7, 3.673819e-16, -6.940114, -0.39157856, -6.761481, -0.77645713, -6.4671564, -1.1480503, -6.0621777, -1.5, -5.5534735, -1.8262843, -4.9497476, -2.1213202, -4.26133, -2.38006, -3.5, -2.598076, -2.678784, -2.7716384, -1.8117332, -2.8977776, -0.9136833, -2.9743347, -1.2858367e-15, -3, 0.9136833, -2.9743347, 1.8117332, -2.8977776, 2.678784, -2.7716384, 3.5, -2.598076, 4.26133, -2.38006, 4.9497476, -2.1213202, 5.5534735, -1.8262843, 6.0621777, -1.5, 6.4671564, -1.1480503, 6.761481, -0.77645713, 6.940114, -0.39157856)
+
+[node name="SmileOrSpiral30" type="Line2D" parent="Artwork/Robot/Bonzi/EyesAndSmile" unique_id=1235081756]
+position = Vector2(65, 64)
+points = PackedVector2Array(7.9101686, 1.195505, 7.5435314, 2.663669, 6.9069858, 4.0365267, 6.0233073, 5.264957, 4.9241138, 6.305006, 3.6487353, 7.1194615, 2.2428043, 7.6791816, 0.7566255, 7.9641395, -0.7566255, 7.9641395, -2.2428043, 7.6791816, -3.6487353, 7.1194615, -4.9241138, 6.305006, -6.0233073, 5.264957, -6.9069858, 4.0365267, -7.5435314, 2.663669, -7.9101686, 1.195505)
+width = 3.0
+default_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="StatusLights" type="Node2D" parent="Artwork/Robot/Bonzi" unique_id=924620308]
+
+[node name="RoundedShape31" type="Panel" parent="Artwork/Robot/Bonzi/StatusLights" unique_id=1689932895]
+offset_left = 49.0
+offset_top = 91.0
+offset_right = 81.0
+offset_bottom = 101.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_bo50c")
+
+[node name="Oval32" type="Polygon2D" parent="Artwork/Robot/Bonzi/StatusLights" unique_id=934676627]
+position = Vector2(57, 96)
+color = Color(1, 0.9764706, 0.9137255, 1)
+antialiased = true
+polygon = PackedVector2Array(2.3, 0, 2.2803233, 0.3002102, 2.2216294, 0.5952838, 2.1249228, 0.88017184, 1.9918584, 1.15, 1.8247126, 1.4001513, 1.6263455, 1.6263455, 1.4001513, 1.8247126, 1.15, 1.9918584, 0.88017184, 2.1249228, 0.5952838, 2.2216294, 0.3002102, 2.2803233, 1.4082972e-16, 2.3, -0.3002102, 2.2803233, -0.5952838, 2.2216294, -0.88017184, 2.1249228, -1.15, 1.9918584, -1.4001513, 1.8247126, -1.6263455, 1.6263455, -1.8247126, 1.4001513, -1.9918584, 1.15, -2.1249228, 0.88017184, -2.2216294, 0.5952838, -2.2803233, 0.3002102, -2.3, 2.8165945e-16, -2.2803233, -0.3002102, -2.2216294, -0.5952838, -2.1249228, -0.88017184, -1.9918584, -1.15, -1.8247126, -1.4001513, -1.6263455, -1.6263455, -1.4001513, -1.8247126, -1.15, -1.9918584, -0.88017184, -2.1249228, -0.5952838, -2.2216294, -0.3002102, -2.2803233, -4.2248918e-16, -2.3, 0.3002102, -2.2803233, 0.5952838, -2.2216294, 0.88017184, -2.1249228, 1.15, -1.9918584, 1.4001513, -1.8247126, 1.6263455, -1.6263455, 1.8247126, -1.4001513, 1.9918584, -1.15, 2.1249228, -0.88017184, 2.2216294, -0.5952838, 2.2803233, -0.3002102)
+
+[node name="Oval33" type="Polygon2D" parent="Artwork/Robot/Bonzi/StatusLights" unique_id=153307900]
+position = Vector2(65, 96)
+color = Color(1, 0.9764706, 0.9137255, 1)
+antialiased = true
+polygon = PackedVector2Array(2.3, 0, 2.2803233, 0.3002102, 2.2216294, 0.5952838, 2.1249228, 0.88017184, 1.9918584, 1.15, 1.8247126, 1.4001513, 1.6263455, 1.6263455, 1.4001513, 1.8247126, 1.15, 1.9918584, 0.88017184, 2.1249228, 0.5952838, 2.2216294, 0.3002102, 2.2803233, 1.4082972e-16, 2.3, -0.3002102, 2.2803233, -0.5952838, 2.2216294, -0.88017184, 2.1249228, -1.15, 1.9918584, -1.4001513, 1.8247126, -1.6263455, 1.6263455, -1.8247126, 1.4001513, -1.9918584, 1.15, -2.1249228, 0.88017184, -2.2216294, 0.5952838, -2.2803233, 0.3002102, -2.3, 2.8165945e-16, -2.2803233, -0.3002102, -2.2216294, -0.5952838, -2.1249228, -0.88017184, -1.9918584, -1.15, -1.8247126, -1.4001513, -1.6263455, -1.6263455, -1.4001513, -1.8247126, -1.15, -1.9918584, -0.88017184, -2.1249228, -0.5952838, -2.2216294, -0.3002102, -2.2803233, -4.2248918e-16, -2.3, 0.3002102, -2.2803233, 0.5952838, -2.2216294, 0.88017184, -2.1249228, 1.15, -1.9918584, 1.4001513, -1.8247126, 1.6263455, -1.6263455, 1.8247126, -1.4001513, 1.9918584, -1.15, 2.1249228, -0.88017184, 2.2216294, -0.5952838, 2.2803233, -0.3002102)
+
+[node name="Oval34" type="Polygon2D" parent="Artwork/Robot/Bonzi/StatusLights" unique_id=733189563]
+position = Vector2(73, 96)
+color = Color(1, 0.9764706, 0.9137255, 1)
+antialiased = true
+polygon = PackedVector2Array(2.3, 0, 2.2803233, 0.3002102, 2.2216294, 0.5952838, 2.1249228, 0.88017184, 1.9918584, 1.15, 1.8247126, 1.4001513, 1.6263455, 1.6263455, 1.4001513, 1.8247126, 1.15, 1.9918584, 0.88017184, 2.1249228, 0.5952838, 2.2216294, 0.3002102, 2.2803233, 1.4082972e-16, 2.3, -0.3002102, 2.2803233, -0.5952838, 2.2216294, -0.88017184, 2.1249228, -1.15, 1.9918584, -1.4001513, 1.8247126, -1.6263455, 1.6263455, -1.8247126, 1.4001513, -1.9918584, 1.15, -2.1249228, 0.88017184, -2.2216294, 0.5952838, -2.2803233, 0.3002102, -2.3, 2.8165945e-16, -2.2803233, -0.3002102, -2.2216294, -0.5952838, -2.1249228, -0.88017184, -1.9918584, -1.15, -1.8247126, -1.4001513, -1.6263455, -1.6263455, -1.4001513, -1.8247126, -1.15, -1.9918584, -0.88017184, -2.1249228, -0.5952838, -2.2216294, -0.3002102, -2.2803233, -4.2248918e-16, -2.3, 0.3002102, -2.2803233, 0.5952838, -2.2216294, 0.88017184, -2.1249228, 1.15, -1.9918584, 1.4001513, -1.8247126, 1.6263455, -1.6263455, 1.8247126, -1.4001513, 1.9918584, -1.15, 2.1249228, -0.88017184, 2.2216294, -0.5952838, 2.2803233, -0.3002102)
+
+[node name="RollerBrush" type="Node2D" parent="Artwork/Robot/Bonzi" unique_id=652368743]
+
+[node name="RoundedShape35" type="Panel" parent="Artwork/Robot/Bonzi/RollerBrush" unique_id=724512592]
+offset_left = 31.0
+offset_top = 109.0
+offset_right = 98.0
+offset_bottom = 119.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_7x8qr")
+
+[node name="Stroke36" type="Line2D" parent="Artwork/Robot/Bonzi/RollerBrush" unique_id=1602072395]
+position = Vector2(36, 114)
+points = PackedVector2Array(0, 0, 0, 6)
+width = 2.0
+default_color = Color(1, 0.9764706, 0.9137255, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke37" type="Line2D" parent="Artwork/Robot/Bonzi/RollerBrush" unique_id=108872964]
+position = Vector2(44, 114)
+points = PackedVector2Array(0, 0, 0, 6)
+width = 2.0
+default_color = Color(1, 0.9764706, 0.9137255, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke38" type="Line2D" parent="Artwork/Robot/Bonzi/RollerBrush" unique_id=1857893612]
+position = Vector2(52, 114)
+points = PackedVector2Array(0, 0, 0, 6)
+width = 2.0
+default_color = Color(1, 0.9764706, 0.9137255, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke39" type="Line2D" parent="Artwork/Robot/Bonzi/RollerBrush" unique_id=1484346051]
+position = Vector2(60, 114)
+points = PackedVector2Array(0, 0, 0, 6)
+width = 2.0
+default_color = Color(1, 0.9764706, 0.9137255, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke40" type="Line2D" parent="Artwork/Robot/Bonzi/RollerBrush" unique_id=576663371]
+position = Vector2(68, 114)
+points = PackedVector2Array(0, 0, 0, 6)
+width = 2.0
+default_color = Color(1, 0.9764706, 0.9137255, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke41" type="Line2D" parent="Artwork/Robot/Bonzi/RollerBrush" unique_id=992104182]
+position = Vector2(76, 114)
+points = PackedVector2Array(0, 0, 0, 6)
+width = 2.0
+default_color = Color(1, 0.9764706, 0.9137255, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke42" type="Line2D" parent="Artwork/Robot/Bonzi/RollerBrush" unique_id=500504276]
+position = Vector2(84, 114)
+points = PackedVector2Array(0, 0, 0, 6)
+width = 2.0
+default_color = Color(1, 0.9764706, 0.9137255, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke43" type="Line2D" parent="Artwork/Robot/Bonzi/RollerBrush" unique_id=984907497]
+position = Vector2(92, 114)
+points = PackedVector2Array(0, 0, 0, 6)
+width = 2.0
+default_color = Color(1, 0.9764706, 0.9137255, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true

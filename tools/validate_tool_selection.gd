@@ -55,10 +55,12 @@ func run() -> void:
 		tap.index = 4
 		tap.pressed = true
 		tap.position = workshop.tool_buttons[index].get_global_rect().get_center()
+		var before_touch: int = workshop.selected_tool
 		root.push_input(tap, true)
-		check(workshop.selected_tool == index and not workshop.brush_dragging, "Touch equips tool without dragging behind UI")
+		check(workshop.selected_tool == before_touch and not workshop.brush_dragging, "Touch down waits for release without cleaning behind UI")
 		tap.pressed = false
 		root.push_input(tap, true)
+		check(workshop.selected_tool == index and not workshop.brush_dragging, "Touch release equips tool without dragging behind UI")
 	for index in [1, 2]:
 		workshop.select_tool(index)
 		workshop.begin_stroke(camera.unproject_position(Vector3(0, 0.067, -1.2)), false)

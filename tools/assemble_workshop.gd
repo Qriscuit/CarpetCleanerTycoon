@@ -6,7 +6,9 @@ const CLUMP_COUNT := 560
 func own(node: Node, scene_root: Node) -> void:
 	for child in node.get_children():
 		child.owner = scene_root
-		own(child, scene_root)
+		# Keep authored scene instances and their %unique control ownership intact.
+		if child.scene_file_path.is_empty():
+			own(child, scene_root)
 
 func save_scene(node: Node, path: String) -> void:
 	own(node, node)
@@ -195,6 +197,9 @@ func _initialize() -> void:
 	camera.look_at_from_position(camera.position,Vector3(0,0.0335,0))
 	camera.size = 6.2
 	studio.set_script(load("res://scripts/workshop.gd"))
+	var hud := (load("res://scenes/ui/cleaning_hud.tscn") as PackedScene).instantiate()
+	studio.add_child(hud)
+	studio.set_editable_instance(hud, true)
 	save_scene(studio,OUTPUT+"rug_cleaning_gym.tscn")
 	print("WORKSHOP SAVED: white tiles, ", batch.instance_count, " batched soil clumps, light surface dust.")
 	studio.free()

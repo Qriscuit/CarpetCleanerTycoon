@@ -28,6 +28,7 @@ export_credentials.cfg
 !/art/renders/.gitkeep
 /design/preview/
 /art/*_test_*.json
+/art/test-appdata/
 *.log
 
 # Local game saves; test saves inside .godot are already excluded above.

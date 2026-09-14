@@ -12,6 +12,7 @@ const COSTS := {"hand_brush": 0, "wide_brush": 80, "bonzi": 100, "bonzi_mk2": 12
 const GATES := {"hand_brush": 0, "wide_brush": 8, "bonzi": 3, "bonzi_mk2": 10, "intake": 10}
 
 var cash: int = 0
+var equipped_brush: String = "hand_brush"
 var manual_jobs: int = 0
 var automated_jobs: int = 0
 var routine_remainder: float = 0.0
@@ -104,6 +105,18 @@ func unlock_requirement(id: String) -> int:
 	return int(GATES.get(id, -1))
 
 
+func equip_brush(id: String) -> bool:
+	if id not in ["hand_brush", "wide_brush"] or not owns(id):
+		return false
+	if equipped_brush == id:
+		return true
+	var before := _capture_state()
+	var old_ticks := _last_ticks
+	_settle_elapsed()
+	equipped_brush = id
+	return _finish_transaction(before, old_ticks)
+
+
 func build(id: String) -> bool:
 	if not COSTS.has(id) or owns(id) or not blueprint_known(id):
 		return false
@@ -116,6 +129,8 @@ func build(id: String) -> bool:
 		return false
 	cash -= build_cost(id)
 	_owned[id] = true
+	if id == "wide_brush":
+		equipped_brush = id
 	_refresh_blueprints()
 	return _finish_transaction(before, old_ticks)
 
@@ -254,6 +269,7 @@ func _capture_state() -> Dictionary:
 	return {
 		"version": SAVE_VERSION,
 		"cash": cash,
+		"equipped_brush": equipped_brush,
 		"manual_jobs": manual_jobs,
 		"automated_jobs": automated_jobs,
 		"routine_remainder": routine_remainder,
@@ -275,6 +291,10 @@ func _restore_state(data: Dictionary) -> void:
 	routine_remainder = float(data["routine_remainder"])
 	_owned = data["owned"].duplicate(true)
 	_blueprints = data["blueprints"].duplicate(true)
+	# Older version-1 saves always used the wide brush once owned. Preserve that
+	# choice on migration, and recover an invalid saved selection to the free brush.
+	var selection: Variant = data.get("equipped_brush", "wide_brush" if owns("wide_brush") else "hand_brush")
+	equipped_brush = selection if selection is String and selection in ["hand_brush", "wide_brush"] and owns(selection) else "hand_brush"
 	_job_serial = int(data["job_serial"])
 	active_job_id = str(data["active_job_id"])
 	job_snapshot = data["job_snapshot"].duplicate(true)

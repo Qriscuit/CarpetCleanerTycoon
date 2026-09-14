@@ -1,401 +1,237 @@
+@tool
 extends Control
-## The outside view and all first-shop management live here; cleaning stays separate.
-const INK := Color("284c47")
-const MUTED := Color("738b84")
-const GREEN := Color("58bc69")
-const PAPER := Color("fffcf4")
-const LINE := Color("dce7dc")
-const ART = preload("res://scripts/shop_illustration.gd")
-const TITLES := {"shop": "A little shop. Big plans.", "items": "Your trusty toolkit", "plans": "Good things to build", "bonzi": "Meet your new teammate", "expansion": "A bigger little dream"}
-const SUBTITLES := {"shop": "NEIGHBORHOOD / SHOP 01", "items": "THE TOOL BENCH", "plans": "BLUEPRINT COLLECTION", "bonzi": "BONZI'S WORK LANE", "expansion": "LOOKING AHEAD"}
+## Scenes own presentation. This controller binds data and routes user intent only.
+@export_enum("Shop", "Items", "Blueprints", "Bonzi", "Future shop") var editor_page := 0:
+	set(value):
+		editor_page = value
+		if Engine.is_editor_hint() and is_inside_tree(): _show_editor_page()
+const PAGE_KEYS := ["shop", "items", "plans", "bonzi", "expansion"]
 var state: Node
 var current_tab := "shop"
 var page: VBoxContainer
 var scroll: ScrollContainer
-var cash_label: Label
-var title_label: Label
-var eyebrow: Label
-var toast_label: Label
+var shell: MarginContainer
 var tabs: Dictionary = {}
 var buttons: Array[Button] = []
+var cards: Array[Node] = []
+var templates: Dictionary = {}
 var dirty_ui := false
-var delivery_label: Label
-var delivery_bar: ProgressBar
-var shell: MarginContainer
-var touch_candidate: Button
-var touch_start := Vector2.ZERO
+var pending_item := ""
 var touch_id := -1
+var touch_start := Vector2.ZERO
+var touch_candidate: Button
+var touch_scroll: ScrollContainer
+var scroll_start := 0
+var gesture_dragged := false
+var gesture_blocked := false
+var goal_stage := "DiscoverGoal"
+var cash_label: Label
 
 func _ready() -> void:
+	if Engine.is_editor_hint():
+		_show_editor_page()
+		set_process(false)
+		return
 	state = get_node("/root/ShopState")
 	state.contract_mode = false
-	build_shell()
-	state.changed.connect(func(): dirty_ui = true)
-	resized.connect(layout_shell)
-	layout_shell()
-	show_tab("shop")
-	if not state.last_error.is_empty():
-		toast(state.last_error)
-
-func box(fill: Color, border: Color = LINE, radius: int = 22, depth: int = 0) -> StyleBoxFlat:
-	var s := StyleBoxFlat.new()
-	s.bg_color = fill
-	s.border_color = border
-	s.set_border_width_all(2)
-	s.border_width_bottom = 2 + depth
-	s.set_corner_radius_all(radius)
-	s.content_margin_left = 20
-	s.content_margin_right = 20
-	s.content_margin_top = 16
-	s.content_margin_bottom = 16 + depth
-	return s
-
-func text_label(value: String, font_size: int = 18, color: Color = INK, wrap: bool = false) -> Label:
-	var l := Label.new()
-	l.text = value
-	l.add_theme_font_size_override("font_size", font_size)
-	l.add_theme_color_override("font_color", color)
-	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if wrap:
-		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	return l
-
-func copy(parent: Node, value: String, font_size: int = 18, color: Color = INK) -> Label:
-	var l := text_label(value, font_size, color, true)
-	parent.add_child(l)
-	return l
-
-func vertical(parent: Node, separation: int = 12) -> VBoxContainer:
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", separation)
-	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	parent.add_child(v)
-	return v
-
-func horizontal(parent: Node, separation: int = 14) -> HBoxContainer:
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", separation)
-	parent.add_child(h)
-	return h
-
-func card(parent: Node, color: Color = Color.WHITE) -> VBoxContainer:
-	var p := PanelContainer.new()
-	p.add_theme_stylebox_override("panel", box(color))
-	p.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	parent.add_child(p)
-	return vertical(p, 10)
-
-func pill(parent: Node, value: String, fill: Color, ink: Color = INK) -> void:
-	var p := PanelContainer.new()
-	var s := box(fill, fill, 10)
-	s.content_margin_left = 10
-	s.content_margin_right = 10
-	s.content_margin_top = 4
-	s.content_margin_bottom = 4
-	p.add_theme_stylebox_override("panel", s)
-	p.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	parent.add_child(p)
-	p.add_child(text_label(value, 12, ink))
-
-func action(parent: Node, value: String, handler: Callable, primary: bool = false, enabled: bool = true, node_name: String = "") -> Button:
-	var b := Button.new()
-	b.text = value
-	if not node_name.is_empty(): b.name = node_name
-	b.custom_minimum_size.y = 54
-	b.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	b.add_theme_font_size_override("font_size", 17)
-	b.add_theme_color_override("font_color", Color.WHITE if primary else INK)
-	b.add_theme_color_override("font_hover_color", Color.WHITE if primary else INK)
-	b.add_theme_color_override("font_pressed_color", Color.WHITE if primary else INK)
-	b.add_theme_color_override("font_disabled_color", MUTED)
-	b.add_theme_stylebox_override("normal", box(GREEN if primary else Color.WHITE, Color("3b9852") if primary else LINE, 16, 4))
-	b.add_theme_stylebox_override("hover", box(Color("65c976") if primary else Color("f0f7ea"), Color("3b9852") if primary else Color("b6d6b4"), 16, 4))
-	b.add_theme_stylebox_override("pressed", box(Color("4fac60") if primary else Color("e6f2df"), Color("3b9852") if primary else Color("b6d6b4"), 16))
-	b.add_theme_stylebox_override("disabled", box(Color("eef1e9"), LINE, 16, 2))
-	var focus := box(Color(0, 0, 0, 0), Color("479ec3"), 16)
-	focus.set_border_width_all(3)
-	b.add_theme_stylebox_override("focus", focus)
-	b.disabled = not enabled
-	b.pressed.connect(handler)
-	parent.add_child(b)
-	buttons.append(b)
-	return b
-
-func illustration(parent: Node, kind: String, height: float, working: bool = false) -> Control:
-	var a := Control.new()
-	a.set_script(ART)
-	a.kind = kind
-	a.working = working
-	a.custom_minimum_size = Vector2(0, height)
-	a.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	parent.add_child(a)
-	return a
-
-func build_shell() -> void:
-	var bg := ColorRect.new()
-	bg.color = PAPER
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	shell = MarginContainer.new()
-	add_child(shell)
-	for side in ["left", "right", "top", "bottom"]:
-		shell.add_theme_constant_override("margin_" + side, 24)
-	var layout := vertical(shell, 18)
-	var top := horizontal(layout)
-	var brand := text_label("mint meadow", 23)
-	brand.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top.add_child(brand)
-	var wallet := PanelContainer.new()
-	var wallet_style := box(Color("fff0b7"), Color("edd385"), 16)
-	wallet_style.content_margin_top = 6
-	wallet_style.content_margin_bottom = 6
-	wallet.add_theme_stylebox_override("panel", wallet_style)
-	top.add_child(wallet)
-	cash_label = text_label("0  cash", 21, Color("8c7024"))
-	cash_label.name = "Wallet"
-	wallet.add_child(cash_label)
-	var headings := vertical(layout, 4)
-	eyebrow = text_label("", 13, MUTED)
-	headings.add_child(eyebrow)
-	title_label = text_label("", 32, INK, true)
-	headings.add_child(title_label)
-	scroll = ScrollContainer.new()
-	scroll.name = "PageScroll"
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	layout.add_child(scroll)
-	page = vertical(scroll, 16)
-	toast_label = text_label("", 15, Color("458857"), true)
-	toast_label.visible = false
-	layout.add_child(toast_label)
-	var nav := HBoxContainer.new()
-	nav.add_theme_constant_override("separation", 8)
-	layout.add_child(nav)
-	for tab in ["shop", "items", "plans", "bonzi"]:
-		var b := action(nav, {"shop":"SHOP", "items":"ITEMS", "plans":"PLANS", "bonzi":"BONZI"}[tab], show_tab.bind(tab), false, true, "Tab_" + tab)
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		b.custom_minimum_size.y = 62
-		b.add_theme_font_size_override("font_size", 14)
-		tabs[tab] = b
-
-func layout_shell() -> void:
-	var width := minf(size.x, 800.0)
-	shell.position = Vector2((size.x - width) / 2, 0)
-	shell.size = Vector2(width, size.y)
-
-func _input(event: InputEvent) -> void:
-	if event is InputEventScreenTouch:
-		if event.pressed and not event.canceled and touch_id == -1:
-			touch_id = event.index
-			touch_start = event.position
-			touch_candidate = button_at(event.position)
-		elif event.index == touch_id and (not event.pressed or event.canceled):
-			var candidate := touch_candidate
-			touch_id = -1
-			touch_candidate = null
-			if not event.canceled and is_instance_valid(candidate) and button_at(event.position) == candidate and touch_start.distance_to(event.position) < 14.0:
-				candidate.pressed.emit()
-				get_viewport().set_input_as_handled()
-	elif event is InputEventScreenDrag and event.index == touch_id and touch_start.distance_to(event.position) >= 14.0:
-		touch_candidate = null
-
-func button_at(point: Vector2) -> Button:
+	shell = %Shell
+	cash_label = %Wallet
+	for node in find_children("*", "", true, false):
+		if node is Button: buttons.append(node)
+		if node.has_signal("build_requested"):
+			cards.append(node)
+			node.build_requested.connect(request_build)
+			node.clean_requested.connect(enter_cleaning)
+			node.equip_requested.connect(equip_brush)
+		if (node is Label or node is Button) and not _inside_card(node):
+			templates[node] = node.text
 	for b in buttons:
-		if is_instance_valid(b) and b.is_visible_in_tree() and not b.disabled and b.get_global_rect().has_point(point):
-			if scroll.is_ancestor_of(b) and not scroll.get_global_rect().has_point(point): continue
-			return b
-	return null
+		if _inside_card(b): continue
+		var action := str(b.get_meta("action", ""))
+		if not action.is_empty(): b.pressed.connect(_act.bind(action))
+	for key in ["shop", "items", "plans", "bonzi"]:
+		tabs[key] = get_node("%Tab_" + key)
+	state.changed.connect(func(): dirty_ui = true)
+	%NoticeTimer.timeout.connect(func(): %Notice.hide())
+	show_tab("shop")
+	refresh_state()
+	if not state.last_error.is_empty(): toast(state.last_error)
 
-func _process(_delta: float) -> void:
-	if dirty_ui:
-		dirty_ui = false
-		var old_scroll := scroll.scroll_vertical
-		show_tab(current_tab)
-		scroll.set_deferred("scroll_vertical", old_scroll)
-	if is_instance_valid(delivery_label) and state.owns("bonzi"):
-		var seconds: int = ceili(state.seconds_to_delivery())
-		delivery_label.text = "Next delivery in %d:%02d  /  +10 cash" % [seconds / 60, seconds % 60]
-	if is_instance_valid(delivery_bar):
-		delivery_bar.value = state.routine_remainder * 100.0
+func _inside_card(node: Node) -> bool:
+	var parent := node.get_parent()
+	while parent != null and parent != self:
+		if parent.has_signal("build_requested"): return true
+		parent = parent.get_parent()
+	return false
+
+func _show_editor_page() -> void:
+	var pages := get_node_or_null("%Pages") as TabContainer
+	if pages != null: pages.current_tab = editor_page
+
+func _act(action: String) -> void:
+	if action.begins_with("tab:"):
+		show_tab(action.trim_prefix("tab:"))
+		return
+	match action:
+		"clean": enter_cleaning()
+		"gym": enter_gym()
+		"expansion": show_expansion()
+		"shop": show_tab("shop")
+		"goal": follow_goal()
+		"acknowledge": acknowledge_return()
+		"confirm": confirm_build()
+		"cancel": cancel_build()
 
 func show_tab(tab: String) -> void:
+	if not PAGE_KEYS.has(tab): return
 	current_tab = tab
-	buttons = buttons.filter(func(b): return is_instance_valid(b) and not scroll.is_ancestor_of(b))
-	for child in page.get_children():
-		page.remove_child(child)
-		child.queue_free()
-	delivery_label = null
-	delivery_bar = null
-	cash_label.text = "%d  cash" % state.cash
-	eyebrow.text = SUBTITLES[tab]
-	title_label.text = TITLES[tab]
+	%Pages.current_tab = PAGE_KEYS.find(tab)
+	scroll = %Pages.get_child(%Pages.current_tab)
+	page = scroll.get_child(0)
+	%CleanDock.visible = tab != "expansion"
 	for key in tabs:
-		var selected: bool = key == tab or (key == "shop" and tab == "expansion")
-		tabs[key].add_theme_stylebox_override("normal", box(Color("e3f4d9") if selected else Color.WHITE, Color("89bf78") if selected else LINE, 16, 4))
-		tabs[key].add_theme_color_override("font_color", Color("3e8247") if selected else MUTED)
-	match tab:
-		"shop": build_shop()
-		"items": build_items()
-		"plans": build_plans()
-		"bonzi": build_bonzi()
-		"expansion": build_expansion()
-	if tab == "shop" and state.return_reward > 0:
-		show_return_card()
-	scroll.scroll_vertical = 0
+		tabs[key].set_pressed_no_signal(key == tab or (key == "shop" and tab == "expansion"))
+	# ScrollContainers and controls stay alive; their authored layout and scroll survive.
 
-func progress(parent: Node, value: float) -> ProgressBar:
-	var bar := ProgressBar.new()
-	bar.custom_minimum_size.y = 14
-	bar.show_percentage = false
-	bar.value = value * 100
-	var track := box(Color("e5eddf"), Color("e5eddf"), 7)
-	track.content_margin_top = 0
-	track.content_margin_bottom = 0
-	bar.add_theme_stylebox_override("background", track)
-	var fill := track.duplicate()
-	fill.bg_color = GREEN
-	fill.border_color = GREEN
-	bar.add_theme_stylebox_override("fill", fill)
-	parent.add_child(bar)
-	return bar
+func _process(_delta: float) -> void:
+	if Engine.is_editor_hint(): return
+	if dirty_ui:
+		dirty_ui = false
+		refresh_state()
+	if state.owns("bonzi"):
+		var seconds := ceili(state.seconds_to_delivery())
+		_format(%DeliveryTime, {"time": "%d:%02d" % [seconds / 60, seconds % 60]})
+		%DeliveryProgress.value = state.routine_remainder * 100.0
 
-func build_shop() -> void:
-	var hero := card(page, Color("edf7e6"))
-	var meta := horizontal(hero)
-	var shop_name := text_label("Neighborhood Shop", 22)
-	shop_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	meta.add_child(shop_name)
-	pill(meta, "OPEN", Color("d3efc8"), Color("488342"))
-	illustration(hero, "store", 198, state.owns("bonzi"))
-	var stats := horizontal(hero, 24)
-	for pair in [[str(state.manual_jobs), "rugs cleaned"], [str(state.automated_jobs), "Bonzi deliveries"], [str(roundi(state.output_per_hour() * 10)), "cash / hour"]]:
-		var cell := vertical(stats, 2)
-		copy(cell, pair[0], 25)
-		copy(cell, pair[1], 12, MUTED)
-	action(page, "RESUME YOUR RUG  /  +20 cash" if not state.active_job_id.is_empty() else "CLEAN A RUG  /  +20 cash", enter_cleaning, true, true, "CleanRugButton")
-	var goal := card(page)
+func _format(node: Node, values: Dictionary) -> void:
+	if templates.has(node):
+		node.text = str(templates[node]).format(values)
+
+func refresh_state() -> void:
+	var values := {
+		"cash": state.cash, "manual_jobs": state.manual_jobs, "automated_jobs": state.automated_jobs,
+		"income": roundi(state.output_per_hour() * 10), "orders": roundi(state.output_per_hour()),
+		"demand": roundi(state.demand_per_hour()), "capacity": roundi(state.capacity_per_hour()),
+		"bottleneck": state.bottleneck(), "return_reward": state.return_reward,
+		"bonzi_rugs_left": maxi(3 - state.manual_jobs, 0), "bonzi_shortfall": maxi(100 - state.cash, 0),
+		"bonzi_jobs_left": ceili(float(maxi(100 - state.cash, 0)) / 20.0),
+		"wide_rugs_left": maxi(8 - state.manual_jobs, 0)}
+	for node in templates:
+		if node in [%PurchaseTitle, %PurchaseBenefit, %PurchaseTotalsText, %ConfirmBuildButton, %DeliveryTime]: continue
+		if "{" in str(templates[node]): _format(node, values)
+	%ReturnCard.visible = state.return_reward > 0
+	%BonziWorking.visible = state.owns("bonzi")
+	%BonziNotBuilt.visible = not state.owns("bonzi")
+	%CapacityCard.visible = state.owns("bonzi")
+	%BonziArt.working = state.owns("bonzi")
+	%Storefront.working = state.owns("bonzi")
+	%ResumeHint.visible = not state.active_job_id.is_empty()
+	%ResumeRugButton.visible = not state.active_job_id.is_empty()
+	%CleanRugButton.visible = state.active_job_id.is_empty()
+	refresh_goal()
+	if not pending_item.is_empty(): _refresh_purchase()
+
+func refresh_goal() -> void:
+	var fraction := 0.0
 	if not state.owns("bonzi"):
-		pill(goal, "YOUR NEXT LITTLE WIN", Color("fff0c5"), Color("95772c"))
-		copy(goal, "A helping hand named Bonzi", 22)
 		if not state.blueprint_known("bonzi"):
-			copy(goal, "Finish 3 customer rugs to discover his blueprint. Then build your buddy for 100 cash.", 16, MUTED)
-			progress(goal, float(state.manual_jobs) / 3.0)
-			copy(goal, "%d / 3 rugs cleaned" % mini(state.manual_jobs, 3), 13, MUTED)
+			goal_stage = "DiscoverGoal"
+			fraction = float(state.manual_jobs) / 3.0
+		elif state.cash < state.build_cost("bonzi"):
+			goal_stage = "SaveGoal"
+			fraction = float(state.cash) / 100.0
 		else:
-			copy(goal, "Blueprint found! Bonzi handles routine orders while you enjoy your own rugs.", 16, MUTED)
-			action(goal, "MEET BONZI", show_tab.bind("bonzi"), false, true, "MeetBonziButton")
+			goal_stage = "BuildGoal"
+			fraction = 1.0
+	elif state.manual_jobs < 8:
+		goal_stage = "WideGoal"
+		fraction = float(state.manual_jobs) / 8.0
+	elif not (state.owns("wide_brush") and state.owns("bonzi_mk2") and state.owns("intake")):
+		goal_stage = "UpgradeGoal"
+		fraction = minf(float(state.manual_jobs) / 10.0, 1.0)
 	else:
-		pill(goal, "A GOOD DAY AT THE SHOP", Color("e3f4d9"))
-		copy(goal, "Bonzi has the routine covered", 22)
-		copy(goal, "%d orders per hour. Your customer rugs are a separate lane." % roundi(state.output_per_hour()), 16, MUTED)
-		delivery_bar = progress(goal, state.routine_remainder)
-		delivery_label = copy(goal, "", 14, MUTED)
-	var footer := horizontal(page)
-	var gym := action(footer, "Rug Cleaning Gym", enter_gym, false, true, "GymButton")
-	gym.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var plan := action(footer, "Shop plans", show_expansion, false, true, "ExpansionButton")
-	plan.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		goal_stage = "SettledGoal"
+		fraction = 1.0
+	for name in ["DiscoverGoal", "SaveGoal", "BuildGoal", "WideGoal", "UpgradeGoal", "SettledGoal"]:
+		get_node("%" + name).visible = name == goal_stage
+	%GoalProgress.value = fraction * 100.0
+	%GoalProgress.visible = goal_stage != "SettledGoal"
 
-func build_items() -> void:
-	copy(page, "Keep the tools you build. Each one has a job to do.", 17, MUTED)
-	item_card("hand_brush", "Hand Brush", "Your reliable starter. Sweep loose dirt off small rugs.", "brush", "Always ready", false)
-	item_card("wide_brush", "Wide Brush", "A broader brush head cleans a wider strip with every sweep.", "brush", "Wider cleaning footprint", false)
-	var future := card(page, Color("f2f4ee"))
-	pill(future, "NEXT SHOP'S KIT", Color("e0e6df"), MUTED)
-	copy(future, "Jet spray + squeegee", 22)
-	copy(future, "Washable rugs need a different approach. This kit belongs to the planned High Street shop.", 16, MUTED)
-	action(future, "Try the models in the gym", enter_gym, false, true, "TryToolsButton")
+func follow_goal() -> void:
+	if goal_stage == "BuildGoal": request_build("bonzi")
+	elif goal_stage in ["DiscoverGoal", "SaveGoal"]: show_tab("bonzi")
+	elif goal_stage in ["WideGoal", "SettledGoal"]: show_tab("items")
+	else: show_tab("plans")
 
-func item_card(id: String, title: String, description: String, art_kind: String, benefit: String, module: bool) -> void:
-	var c := card(page)
-	var row := horizontal(c)
-	var art := illustration(row, art_kind, 100)
-	art.custom_minimum_size.x = 118
-	art.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var detail := vertical(row, 5)
-	pill(detail, "INSTALLED" if state.owns(id) and module else ("OWNED" if state.owns(id) else ("BLUEPRINT READY" if state.blueprint_known(id) else "BLUEPRINT LOCKED")), Color("e3f4d9") if state.owns(id) else Color("eef2ed"))
-	copy(detail, title, 23)
-	copy(detail, description, 16, MUTED)
-	copy(c, benefit, 15, Color("54824d"))
-	if state.owns(id):
-		copy(c, "Installed in this shop" if module else "Available on your cleaning pad", 13, MUTED)
-	else:
-		build_control(c, id)
-
-func build_control(parent: Node, id: String) -> void:
-	var cost: int = state.build_cost(id)
-	if not state.blueprint_known(id):
-		var required: int = state.unlock_requirement(id)
-		var gate := "Unlocks after %d customer rugs (%d / %d)" % [required, mini(state.manual_jobs, required), required]
-		if id in ["bonzi_mk2", "intake"] and not state.owns("bonzi"):
-			gate += " and building Bonzi"
-		copy(parent, gate, 14, MUTED)
-		action(parent, "BLUEPRINT LOCKED  /  %d cash to build" % cost, func(): pass, false, false)
-	elif state.cash < cost:
-		copy(parent, "Blueprint collected. Save %d more cash to build it." % (cost - state.cash), 14, MUTED)
-		action(parent, "BUILD  /  %d cash" % cost, buy.bind(id), false, false, "Build_" + id)
-	else:
-		action(parent, "BUILD  /  %d cash" % cost, buy.bind(id), true, true, "Build_" + id)
-
-func build_plans() -> void:
-	var intro := card(page, Color("eaf4f8"))
-	var row := horizontal(intro)
-	var art := illustration(row, "blueprint", 100)
-	art.custom_minimum_size.x = 118
-	art.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var words := vertical(row, 6)
-	copy(words, "Find it. Keep it. Build it.", 23)
-	copy(words, "Blueprints unlock at milestones and stay yours. Cash turns a plan into something useful.", 16, MUTED)
-	for data in [["bonzi", "Bonzi", "Your first automated cleaner", 3], ["wide_brush", "Wide Brush", "A little more sweep per stroke", 8], ["bonzi_mk2", "Bonzi Mk II", "A faster cleaner for this shop", 10], ["intake", "Welcome Sign", "Help more routine orders find you", 10]]:
-		var c := card(page)
-		var row_title := horizontal(c)
-		var title := text_label(data[1], 23)
-		title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row_title.add_child(title)
-		pill(row_title, "BUILT" if state.owns(data[0]) else ("FOUND" if state.blueprint_known(data[0]) else "%d RUGS" % data[3]), Color("e3f4d9") if state.blueprint_known(data[0]) else Color("eef2ed"))
-		copy(c, data[2], 16, MUTED)
-		if state.owns(data[0]):
-			copy(c, "Blueprint kept in your collection", 14, MUTED)
-		else:
-			build_control(c, data[0])
-
-func build_bonzi() -> void:
-	var hero := card(page, Color("edf7e6"))
-	pill(hero, "ON DUTY" if state.owns("bonzi") else "YOUR FIRST CLEANING BUDDY", Color("d6eecb"))
-	illustration(hero, "bonzi", 205, state.owns("bonzi"))
-	copy(hero, "You do the satisfying stuff.", 25)
-	copy(hero, "Bonzi takes care of routine orders. He keeps working while you clean, browse, or step away.", 17, MUTED)
-	if not state.owns("bonzi"):
-		copy(hero, "30 orders / hour   ·   10 cash / delivery", 17, Color("54824d"))
-		build_control(hero, "bonzi")
-	else:
-		copy(hero, "%d cash / hour  ·  %d orders / hour" % [roundi(state.output_per_hour() * 10), roundi(state.output_per_hour())], 22, Color("54824d"))
-		delivery_bar = progress(hero, state.routine_remainder)
-		delivery_label = copy(hero, "", 15, MUTED)
-		var rates := card(page)
-		copy(rates, "What sets the pace?", 22)
-		copy(rates, "Incoming orders: %d / hour\nCleaner capacity: %d / hour\nCurrent limit: %s" % [roundi(state.demand_per_hour()), roundi(state.capacity_per_hour()), state.bottleneck()], 17, MUTED)
-		copy(rates, "Cash arrives after each completed delivery. Away earnings are capped at 8 hours per visit.", 14, MUTED)
-	var mk_benefit := "+100 cash / hour at current demand" if not state.owns("intake") else "+150 cash / hour with your Welcome Sign"
-	item_card("bonzi_mk2", "Bonzi Mk II", "Cleaner capacity grows from 30 to 45 orders per hour.", "upgrade", mk_benefit, true)
-	var intake_benefit := "+50 cash / hour with Bonzi Mk II" if state.owns("bonzi_mk2") else "No income increase until Bonzi Mk II is built"
-	item_card("intake", "Welcome Sign", "Raise routine demand from 40 to 60 orders per hour.", "intake", intake_benefit, true)
+func request_build(id: String) -> void:
+	if not state.blueprint_known(id) or state.owns(id) or state.cash < state.build_cost(id): return
+	pending_item = id
+	%PurchaseSheet.show()
+	%Notice.hide()
+	_refresh_purchase()
+	%ConfirmBuildButton.grab_focus()
 
 func buy(id: String) -> void:
-	if state.build(id):
-		toast("Built! Your shop just got a little better.")
-	else:
-		toast("Couldn't build that yet. Check the blueprint, cash, and save storage.")
-	dirty_ui = true
+	request_build(id)
 
-func toast(value: String) -> void:
-	toast_label.text = value
-	toast_label.visible = true
+func _refresh_purchase() -> void:
+	if state.owns(pending_item):
+		cancel_build()
+		return
+	var title := pending_item.capitalize()
+	var benefit := ""
+	for item in cards:
+		if item.item_id == pending_item:
+			title = item.find_child("ItemTitle", true, false).text
+			benefit = item.find_child("Benefit", true, false).text
+			break
+	var values := {"item": title, "benefit": benefit, "cost": state.build_cost(pending_item),
+		"remaining": state.cash - state.build_cost(pending_item)}
+	for node in [%PurchaseTitle, %PurchaseBenefit, %PurchaseTotalsText, %ConfirmBuildButton]:
+		_format(node, values)
+	%ConfirmBuildButton.disabled = not state.blueprint_known(pending_item) or state.cash < state.build_cost(pending_item)
+
+func confirm_build() -> void:
+	if pending_item.is_empty(): return
+	var id := pending_item
+	# Close the review first so a repeated release cannot purchase twice.
+	cancel_build()
+	if state.build(id):
+		%BuiltNotice.show()
+		%ErrorNotice.hide()
+		%EquipNotice.hide()
+		show_notice()
+	else:
+		toast(state.last_error if not state.last_error.is_empty() else %PurchaseErrorCopy.text)
+	refresh_state()
+
+func cancel_build() -> void:
+	pending_item = ""
+	%PurchaseSheet.hide()
+	if tabs.has(current_tab): tabs[current_tab].grab_focus()
+
+func equip_brush(id: String) -> void:
+	if state.equip_brush(id):
+		%EquipNotice.show()
+		%BuiltNotice.hide()
+		%ErrorNotice.hide()
+		show_notice()
+	else: toast(state.last_error)
+
+func show_notice() -> void:
+	%Notice.show()
+	%NoticeTimer.start()
+
+func toast(message: String) -> void:
+	%ToastLabel.text = message
+	%ErrorNotice.show()
+	%BuiltNotice.hide()
+	%EquipNotice.hide()
+	show_notice()
 
 func enter_cleaning() -> void:
 	if state.start_job().is_empty():
-		toast("Couldn't save this job. Please check save storage and try again.")
+		toast(state.last_error)
 		return
 	state.contract_mode = true
 	get_tree().change_scene_to_file("res://scenes/rug_cleaning_gym.tscn")
@@ -407,25 +243,76 @@ func enter_gym() -> void:
 func show_expansion() -> void:
 	show_tab("expansion")
 
-func build_expansion() -> void:
-	var c := card(page, Color("fff0e4"))
-	pill(c, "FUTURE LOCATION", Color("f8d8c5"), Color("a56c4b"))
-	illustration(c, "store", 235)
-	copy(c, "Busy High Street", 29)
-	copy(c, "Sunny windows, washable rugs, and a jet + squeegee opening kit. Your Neighborhood Shop will stay yours.", 18, MUTED)
-	copy(c, "Planned opening price: 600 cash", 21)
-	copy(c, "%s Bonzi built\n%d / 15 customer rugs\n%d / 5 routine deliveries" % ["✓" if state.owns("bonzi") else "○", mini(state.manual_jobs, 15), mini(state.automated_jobs, 5)], 18, MUTED)
-	copy(c, "This build focuses on one working shop. High Street opens in a future update.", 15, MUTED)
-	action(page, "BACK TO MY SHOP", show_tab.bind("shop"), true)
-
-func show_return_card() -> void:
-	var c := card(page, Color("fff1bd"))
-	page.move_child(c.get_parent(), 0)
-	copy(c, "Welcome back!", 25)
-	copy(c, "Bonzi delivered +%d cash while you were away. It's already in your wallet." % state.return_reward, 17)
-	action(c, "NICE WORK, BONZI", acknowledge_return, true, true, "AcknowledgeReturnButton")
-
 func acknowledge_return() -> void:
-	if not state.acknowledge_return():
-		toast(state.last_error)
-	dirty_ui = true
+	if not state.acknowledge_return(): toast(state.last_error)
+	refresh_state()
+
+func _notification(what: int) -> void:
+	if Engine.is_editor_hint(): return
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		_reset_touch()
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
+		_back()
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
+		_back()
+		get_viewport().set_input_as_handled()
+
+func _back() -> void:
+	if %PurchaseSheet.visible: cancel_build()
+	elif current_tab != "shop": show_tab("shop")
+
+func _reset_touch() -> void:
+	touch_id = -1
+	touch_candidate = null
+	touch_scroll = null
+	gesture_dragged = false
+	gesture_blocked = false
+
+func button_at(point: Vector2) -> Button:
+	for b in buttons:
+		if not is_instance_valid(b) or not b.is_visible_in_tree() or b.disabled: continue
+		if %PurchaseSheet.visible and not %PurchaseSheet.is_ancestor_of(b): continue
+		if not b.get_global_rect().has_point(point): continue
+		var clipped := false
+		var ancestor := b.get_parent()
+		while ancestor != null and ancestor != self:
+			if ancestor is Control and ancestor.clip_contents and not ancestor.get_global_rect().has_point(point):
+				clipped = true
+				break
+			ancestor = ancestor.get_parent()
+		if not clipped: return b
+	return null
+
+func _input(event: InputEvent) -> void:
+	if Engine.is_editor_hint(): return
+	if event is InputEventScreenTouch:
+		if event.pressed and not event.canceled:
+			if touch_id != -1:
+				gesture_blocked = true
+				touch_candidate = null
+				get_viewport().set_input_as_handled()
+				return
+			touch_id = event.index
+			touch_start = event.position
+			touch_candidate = button_at(event.position)
+			touch_scroll = scroll if not %PurchaseSheet.visible and scroll.get_global_rect().has_point(event.position) else null
+			scroll_start = touch_scroll.scroll_vertical if touch_scroll != null else 0
+			gesture_dragged = false
+			gesture_blocked = false
+			get_viewport().set_input_as_handled()
+		elif event.index == touch_id:
+			var candidate := touch_candidate
+			var activate: bool = not event.canceled and not gesture_dragged and not gesture_blocked and touch_start.distance_to(event.position) < 14.0
+			_reset_touch()
+			if activate and is_instance_valid(candidate) and button_at(event.position) == candidate:
+				candidate.pressed.emit()
+			get_viewport().set_input_as_handled()
+	elif event is InputEventScreenDrag and event.index == touch_id:
+		if touch_start.distance_to(event.position) >= 14.0:
+			gesture_dragged = true
+			touch_candidate = null
+		if gesture_dragged and not gesture_blocked and touch_scroll != null:
+			touch_scroll.scroll_vertical = scroll_start - roundi(event.position.y - touch_start.y)
+		get_viewport().set_input_as_handled()

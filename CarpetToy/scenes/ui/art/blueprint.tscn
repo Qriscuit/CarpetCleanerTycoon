@@ -1,0 +1,404 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/illustration_layout.gd" id="1_ctvil"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7tc5y"]
+resource_local_to_scene = true
+bg_color = Color(0.44705883, 0.73333335, 0.8156863, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qo1o0"]
+resource_local_to_scene = true
+bg_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xb7l6"]
+resource_local_to_scene = true
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 13
+corner_radius_top_right = 13
+corner_radius_bottom_right = 13
+corner_radius_bottom_left = 13
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_reoio"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_uk1g4"]
+resource_local_to_scene = true
+bg_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_isgfo"]
+resource_local_to_scene = true
+bg_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_j6pmu"]
+resource_local_to_scene = true
+bg_color = Color(0.7254902, 0.89411765, 0.9254902, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4tm6j"]
+resource_local_to_scene = true
+bg_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 9
+corner_radius_top_right = 9
+corner_radius_bottom_right = 9
+corner_radius_bottom_left = 9
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_2uplp"]
+resource_local_to_scene = true
+bg_color = Color(0.7254902, 0.89411765, 0.9254902, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 7
+corner_radius_top_right = 7
+corner_radius_bottom_right = 7
+corner_radius_bottom_left = 7
+
+[node name="BlueprintIllustration" type="Control" unique_id=190578604]
+editor_description = "Open this illustration scene to move and recolor its Artwork nodes. Its layout script only centers and scales Artwork."
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 200.0
+offset_bottom = 160.0
+size_flags_horizontal = 3
+mouse_filter = 2
+script = ExtResource("1_ctvil")
+
+[node name="Artwork" type="Node2D" parent="." unique_id=1985057997]
+
+[node name="Backdrop" type="Node2D" parent="Artwork" unique_id=574993282]
+
+[node name="Oval01" type="Polygon2D" parent="Artwork/Backdrop" unique_id=1295435923]
+position = Vector2(100, 80)
+color = Color(0.8784314, 0.9372549, 0.9607843, 1)
+antialiased = true
+polygon = PackedVector2Array(63, 0, 62.46103, 8.223149, 60.853325, 16.3056, 58.20441, 24.109056, 54.5596, 31.5, 49.98126, 38.35197, 44.547726, 44.547726, 38.35197, 49.98126, 31.5, 54.5596, 24.109056, 58.20441, 16.3056, 60.853325, 8.223149, 62.46103, 3.85751e-15, 63, -8.223149, 62.46103, -16.3056, 60.853325, -24.109056, 58.20441, -31.5, 54.5596, -38.35197, 49.98126, -44.547726, 44.547726, -49.98126, 38.35197, -54.5596, 31.5, -58.20441, 24.109056, -60.853325, 16.3056, -62.46103, 8.223149, -63, 7.71502e-15, -62.46103, -8.223149, -60.853325, -16.3056, -58.20441, -24.109056, -54.5596, -31.5, -49.98126, -38.35197, -44.547726, -44.547726, -38.35197, -49.98126, -31.5, -54.5596, -24.109056, -58.20441, -16.3056, -60.853325, -8.223149, -62.46103, -1.157253e-14, -63, 8.223149, -62.46103, 16.3056, -60.853325, 24.109056, -58.20441, 31.5, -54.5596, 38.35197, -49.98126, 44.547726, -44.547726, 49.98126, -38.35197, 54.5596, -31.5, 58.20441, -24.109056, 60.853325, -16.3056, 62.46103, -8.223149)
+
+[node name="Oval02" type="Polygon2D" parent="Artwork/Backdrop" unique_id=121704782]
+position = Vector2(99, 135)
+color = Color(0.7529412, 0.85882354, 0.8862745, 1)
+antialiased = true
+polygon = PackedVector2Array(58, 0, 57.503803, 0.9136833, 56.023697, 1.8117332, 53.58501, 2.678784, 50.229473, 3.5, 46.014492, 4.26133, 41.01219, 4.9497476, 35.308163, 5.5534735, 29, 6.0621777, 22.195639, 6.4671564, 15.011504, 6.761481, 7.5705185, 6.940114, 3.5513584e-15, 7, -7.5705185, 6.940114, -15.011504, 6.761481, -22.195639, 6.4671564, -29, 6.0621777, -35.308163, 5.5534735, -41.01219, 4.9497476, -46.014492, 4.26133, -50.229473, 3.5, -53.58501, 2.678784, -56.023697, 1.8117332, -57.503803, 0.9136833, -58, 8.5722445e-16, -57.503803, -0.9136833, -56.023697, -1.8117332, -53.58501, -2.678784, -50.229473, -3.5, -46.014492, -4.26133, -41.01219, -4.9497476, -35.308163, -5.5534735, -29, -6.0621777, -22.195639, -6.4671564, -15.011504, -6.761481, -7.5705185, -6.940114, -1.0654075e-14, -7, 7.5705185, -6.940114, 15.011504, -6.761481, 22.195639, -6.4671564, 29, -6.0621777, 35.308163, -5.5534735, 41.01219, -4.9497476, 46.014492, -4.26133, 50.229473, -3.5, 53.58501, -2.678784, 56.023697, -1.8117332, 57.503803, -0.9136833)
+
+[node name="BlueprintPaper" type="Node2D" parent="Artwork" unique_id=873281156]
+
+[node name="RoundedShape03" type="Panel" parent="Artwork/BlueprintPaper" unique_id=1649400060]
+offset_left = 43.0
+offset_top = 27.0
+offset_right = 154.0
+offset_bottom = 132.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_7tc5y")
+
+[node name="PressedEdge" type="Panel" parent="Artwork/BlueprintPaper/RoundedShape03" unique_id=1351122984]
+show_behind_parent = true
+layout_mode = 0
+offset_top = 5.0
+offset_right = 111.0
+offset_bottom = 110.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_qo1o0")
+
+[node name="Stroke04" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=1933091131]
+position = Vector2(54, 37)
+points = PackedVector2Array(0, 0, 0, 84)
+width = 1.0
+default_color = Color(0.62352943, 0.83137256, 0.8784314, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke05" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=244959304]
+position = Vector2(70, 37)
+points = PackedVector2Array(0, 0, 0, 84)
+width = 1.0
+default_color = Color(0.62352943, 0.83137256, 0.8784314, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke06" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=387218635]
+position = Vector2(86, 37)
+points = PackedVector2Array(0, 0, 0, 84)
+width = 1.0
+default_color = Color(0.62352943, 0.83137256, 0.8784314, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke07" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=167009404]
+position = Vector2(102, 37)
+points = PackedVector2Array(0, 0, 0, 84)
+width = 1.0
+default_color = Color(0.62352943, 0.83137256, 0.8784314, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke08" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=1551154999]
+position = Vector2(118, 37)
+points = PackedVector2Array(0, 0, 0, 84)
+width = 1.0
+default_color = Color(0.62352943, 0.83137256, 0.8784314, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke09" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=1168673373]
+position = Vector2(134, 37)
+points = PackedVector2Array(0, 0, 0, 84)
+width = 1.0
+default_color = Color(0.62352943, 0.83137256, 0.8784314, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke10" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=304607841]
+position = Vector2(49, 42)
+points = PackedVector2Array(0, 0, 98, 0)
+width = 1.0
+default_color = Color(0.62352943, 0.83137256, 0.8784314, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke11" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=1928989696]
+position = Vector2(49, 58)
+points = PackedVector2Array(0, 0, 98, 0)
+width = 1.0
+default_color = Color(0.62352943, 0.83137256, 0.8784314, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke12" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=1333292057]
+position = Vector2(49, 74)
+points = PackedVector2Array(0, 0, 98, 0)
+width = 1.0
+default_color = Color(0.62352943, 0.83137256, 0.8784314, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke13" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=1955338578]
+position = Vector2(49, 90)
+points = PackedVector2Array(0, 0, 98, 0)
+width = 1.0
+default_color = Color(0.62352943, 0.83137256, 0.8784314, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke14" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=206695613]
+position = Vector2(49, 106)
+points = PackedVector2Array(0, 0, 98, 0)
+width = 1.0
+default_color = Color(0.62352943, 0.83137256, 0.8784314, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke15" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=1773232604]
+position = Vector2(49, 122)
+points = PackedVector2Array(0, 0, 98, 0)
+width = 1.0
+default_color = Color(0.62352943, 0.83137256, 0.8784314, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="RoundedShape16" type="Panel" parent="Artwork/BlueprintPaper" unique_id=1578595098]
+offset_left = 62.0
+offset_top = 53.0
+offset_right = 132.0
+offset_bottom = 107.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_xb7l6")
+
+[node name="RoundedShape17" type="Panel" parent="Artwork/BlueprintPaper" unique_id=515668875]
+offset_left = 72.0
+offset_top = 62.0
+offset_right = 121.0
+offset_bottom = 89.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_reoio")
+
+[node name="RoundedShape18" type="Panel" parent="Artwork/BlueprintPaper" unique_id=537487251]
+offset_left = 80.0
+offset_top = 70.0
+offset_right = 86.0
+offset_bottom = 81.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_uk1g4")
+
+[node name="RoundedShape19" type="Panel" parent="Artwork/BlueprintPaper" unique_id=809443741]
+offset_left = 107.0
+offset_top = 70.0
+offset_right = 113.0
+offset_bottom = 81.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_isgfo")
+
+[node name="Stroke20" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=1708567256]
+position = Vector2(97, 53)
+points = PackedVector2Array(0, 0, 0, -9)
+width = 3.0
+default_color = Color(1, 0.9764706, 0.9137255, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Oval21" type="Polygon2D" parent="Artwork/BlueprintPaper" unique_id=436325945]
+position = Vector2(97, 43)
+color = Color(1, 0.9764706, 0.9137255, 1)
+antialiased = true
+polygon = PackedVector2Array(4, 0, 3.9657795, 0.52210474, 3.8637033, 1.0352762, 3.695518, 1.5307337, 3.4641016, 2, 3.1734133, 2.4350457, 2.828427, 2.828427, 2.4350457, 3.1734133, 2, 3.4641016, 1.5307337, 3.695518, 1.0352762, 3.8637033, 0.52210474, 3.9657795, 2.4492127e-16, 4, -0.52210474, 3.9657795, -1.0352762, 3.8637033, -1.5307337, 3.695518, -2, 3.4641016, -2.4350457, 3.1734133, -2.828427, 2.828427, -3.1734133, 2.4350457, -3.4641016, 2, -3.695518, 1.5307337, -3.8637033, 1.0352762, -3.9657795, 0.52210474, -4, 4.8984254e-16, -3.9657795, -0.52210474, -3.8637033, -1.0352762, -3.695518, -1.5307337, -3.4641016, -2, -3.1734133, -2.4350457, -2.828427, -2.828427, -2.4350457, -3.1734133, -2, -3.4641016, -1.5307337, -3.695518, -1.0352762, -3.8637033, -0.52210474, -3.9657795, -7.347638e-16, -4, 0.52210474, -3.9657795, 1.0352762, -3.8637033, 1.5307337, -3.695518, 2, -3.4641016, 2.4350457, -3.1734133, 2.828427, -2.828427, 3.1734133, -2.4350457, 3.4641016, -2, 3.695518, -1.5307337, 3.8637033, -1.0352762, 3.9657795, -0.52210474)
+
+[node name="Stroke22" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=197325132]
+position = Vector2(74, 114)
+points = PackedVector2Array(0, 0, 47, 0)
+width = 2.0
+default_color = Color(1, 0.9764706, 0.9137255, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke23" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=714203191]
+position = Vector2(74, 110)
+points = PackedVector2Array(0, 0, 0, 8)
+width = 2.0
+default_color = Color(1, 0.9764706, 0.9137255, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke24" type="Line2D" parent="Artwork/BlueprintPaper" unique_id=1477839478]
+position = Vector2(121, 110)
+points = PackedVector2Array(0, 0, 0, 8)
+width = 2.0
+default_color = Color(1, 0.9764706, 0.9137255, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="RoundedShape25" type="Panel" parent="Artwork/BlueprintPaper" unique_id=756102864]
+offset_left = 137.0
+offset_top = 24.0
+offset_right = 157.0
+offset_bottom = 135.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_j6pmu")
+
+[node name="PressedEdge" type="Panel" parent="Artwork/BlueprintPaper/RoundedShape25" unique_id=1718075741]
+show_behind_parent = true
+layout_mode = 0
+offset_top = 2.0
+offset_right = 20.0
+offset_bottom = 113.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_4tm6j")
+
+[node name="RoundedShape26" type="Panel" parent="Artwork/BlueprintPaper" unique_id=1082862420]
+offset_left = 41.0
+offset_top = 24.0
+offset_right = 58.0
+offset_bottom = 40.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_2uplp")
+
+[node name="Pencil" type="Node2D" parent="Artwork" unique_id=1826694540]
+
+[node name="Shape27" type="Polygon2D" parent="Artwork/Pencil" unique_id=1782147202]
+position = Vector2(152.8, 100.2)
+color = Color(0.972549, 0.8, 0.39607844, 1)
+antialiased = true
+polygon = PackedVector2Array(-13.800003, 15.800003, 11.199997, -35.199997, 21.199997, -30.199997, -3.800003, 20.800003, -14.800003, 28.800003)
+
+[node name="Outline" type="Line2D" parent="Artwork/Pencil/Shape27" unique_id=858640403]
+points = PackedVector2Array(-13.800003, 15.800003, 11.199997, -35.199997, 21.199997, -30.199997, -3.800003, 20.800003, -14.800003, 28.800003)
+closed = true
+width = 3.0
+default_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+joint_mode = 2
+antialiased = true
+
+[node name="Stroke28" type="Line2D" parent="Artwork/Pencil" unique_id=2111068877]
+position = Vector2(162, 74)
+points = PackedVector2Array(0, 0, 8, 4)
+width = 6.0
+default_color = Color(0.98039216, 0.54901963, 0.4509804, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Shape29" type="Polygon2D" parent="Artwork/Pencil" unique_id=869431978]
+position = Vector2(141, 125)
+color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+antialiased = true
+polygon = PackedVector2Array(-1, -4, 4, 0, -3, 4)
+
+[node name="Shape30" type="Polygon2D" parent="Artwork/Pencil" unique_id=1457200311]
+position = Vector2(27, 63)
+color = Color(0.972549, 0.8, 0.39607844, 1)
+antialiased = true
+polygon = PackedVector2Array(0, -8, 2.3199997, -2.3199997, 8, 0, 2.3199997, 2.3199997, 0, 8, -2.3199997, 2.3199997, -8, 0, -2.3199997, -2.3199997)
+
+[node name="Shape31" type="Polygon2D" parent="Artwork/Pencil" unique_id=757481188]
+position = Vector2(175, 40)
+color = Color(0.2784314, 0.7137255, 0.5058824, 1)
+antialiased = true
+polygon = PackedVector2Array(0, -6, 1.7400055, -1.7400017, 6, 0, 1.7400055, 1.7400017, 0, 6, -1.7400055, 1.7400017, -6, 0, -1.7400055, -1.7400017)

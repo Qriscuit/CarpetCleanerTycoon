@@ -1,0 +1,260 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/illustration_layout.gd" id="1_u1kl3"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_f84op"]
+resource_local_to_scene = true
+bg_color = Color(0.98039216, 0.54901963, 0.4509804, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 15
+corner_radius_top_right = 15
+corner_radius_bottom_right = 15
+corner_radius_bottom_left = 15
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_xyg0m"]
+resource_local_to_scene = true
+bg_color = Color(0.5686275, 0.7372549, 0.8117647, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ttw3l"]
+resource_local_to_scene = true
+bg_color = Color(0.49411765, 0.8627451, 0.6392157, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6kjvm"]
+resource_local_to_scene = true
+bg_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6e7bd"]
+resource_local_to_scene = true
+bg_color = Color(0.2784314, 0.7137255, 0.5058824, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_0577g"]
+resource_local_to_scene = true
+bg_color = Color(1, 0.9764706, 0.9137255, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[node name="IntakeIllustration" type="Control" unique_id=1040644404]
+editor_description = "Open this illustration scene to move and recolor its Artwork nodes. Its layout script only centers and scales Artwork."
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 200.0
+offset_bottom = 160.0
+size_flags_horizontal = 3
+mouse_filter = 2
+script = ExtResource("1_u1kl3")
+
+[node name="Artwork" type="Node2D" parent="." unique_id=610717351]
+
+[node name="Backdrop" type="Node2D" parent="Artwork" unique_id=853383543]
+
+[node name="Oval01" type="Polygon2D" parent="Artwork/Backdrop" unique_id=1505006250]
+position = Vector2(100, 80)
+color = Color(1, 0.9411765, 0.83137256, 1)
+antialiased = true
+polygon = PackedVector2Array(64, 0, 63.452473, 8.353676, 61.819252, 16.564419, 59.12829, 24.49174, 55.425625, 32, 50.774612, 38.96073, 45.254833, 45.254833, 38.96073, 50.774612, 32, 55.425625, 24.49174, 59.12829, 16.564419, 61.819252, 8.353676, 63.452473, 3.9187403e-15, 64, -8.353676, 63.452473, -16.564419, 61.819252, -24.49174, 59.12829, -32, 55.425625, -38.96073, 50.774612, -45.254833, 45.254833, -50.774612, 38.96073, -55.425625, 32, -59.12829, 24.49174, -61.819252, 16.564419, -63.452473, 8.353676, -64, 7.837481e-15, -63.452473, -8.353676, -61.819252, -16.564419, -59.12829, -24.49174, -55.425625, -32, -50.774612, -38.96073, -45.254833, -45.254833, -38.96073, -50.774612, -32, -55.425625, -24.49174, -59.12829, -16.564419, -61.819252, -8.353676, -63.452473, -1.1756221e-14, -64, 8.353676, -63.452473, 16.564419, -61.819252, 24.49174, -59.12829, 32, -55.425625, 38.96073, -50.774612, 45.254833, -45.254833, 50.774612, -38.96073, 55.425625, -32, 59.12829, -24.49174, 61.819252, -16.564419, 63.452473, -8.353676)
+
+[node name="Oval02" type="Polygon2D" parent="Artwork/Backdrop" unique_id=1718216798]
+position = Vector2(101, 134)
+color = Color(0.89411765, 0.84705883, 0.7137255, 1)
+antialiased = true
+polygon = PackedVector2Array(62, 0, 61.46958, 0.9136833, 59.8874, 1.8117332, 57.28053, 2.678784, 53.693573, 3.5, 49.187904, 4.26133, 43.84062, 4.9497476, 37.74321, 5.5534735, 31, 6.0621777, 23.726372, 6.4671564, 16.046782, 6.761481, 8.092624, 6.940114, 3.7962797e-15, 7, -8.092624, 6.940114, -16.046782, 6.761481, -23.726372, 6.4671564, -31, 6.0621777, -37.74321, 5.5534735, -43.84062, 4.9497476, -49.187904, 4.26133, -53.693573, 3.5, -57.28053, 2.678784, -59.8874, 1.8117332, -61.46958, 0.9136833, -62, 8.5722445e-16, -61.46958, -0.9136833, -59.8874, -1.8117332, -57.28053, -2.678784, -53.693573, -3.5, -49.187904, -4.26133, -43.84062, -4.9497476, -37.74321, -5.5534735, -31, -6.0621777, -23.726372, -6.4671564, -16.046782, -6.761481, -8.092624, -6.940114, -1.1388839e-14, -7, 8.092624, -6.940114, 16.046782, -6.761481, 23.726372, -6.4671564, 31, -6.0621777, 37.74321, -5.5534735, 43.84062, -4.9497476, 49.187904, -4.26133, 53.693573, -3.5, 57.28053, -2.678784, 59.8874, -1.8117332, 61.46958, -0.9136833)
+
+[node name="RolledRugsAndIntakeBin" type="Node2D" parent="Artwork" unique_id=232147503]
+
+[node name="RoundedShape03" type="Panel" parent="Artwork/RolledRugsAndIntakeBin" unique_id=1425770259]
+offset_left = 58.0
+offset_top = 41.0
+offset_right = 91.0
+offset_bottom = 127.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_f84op")
+
+[node name="Oval04" type="Polygon2D" parent="Artwork/RolledRugsAndIntakeBin" unique_id=1361223511]
+position = Vector2(74.5, 43)
+color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+antialiased = true
+polygon = PackedVector2Array(16.5, 0, 16.35884, 1.435788, 15.937776, 2.8470094, 15.244012, 4.2095175, 14.289419, 5.5, 13.09033, 6.696376, 11.667262, 7.7781744, 10.044563, 8.726887, 8.25, 9.526279, 6.3142767, 10.162675, 4.270514, 10.625184, 2.153682, 10.905893, 1.0103002e-15, 11, -2.153682, 10.905893, -4.270514, 10.625184, -6.3142767, 10.162675, -8.25, 9.526279, -10.044563, 8.726887, -11.667262, 7.7781744, -13.09033, 6.696376, -14.289419, 5.5, -15.244012, 4.2095175, -15.937776, 2.8470094, -16.35884, 1.435788, -16.5, 1.347067e-15, -16.35884, -1.435788, -15.937776, -2.8470094, -15.244012, -4.2095175, -14.289419, -5.5, -13.09033, -6.696376, -11.667262, -7.7781744, -10.044563, -8.726887, -8.25, -9.526279, -6.3142767, -10.162675, -4.270514, -10.625184, -2.153682, -10.905893, -3.0309007e-15, -11, 2.153682, -10.905893, 4.270514, -10.625184, 6.3142767, -10.162675, 8.25, -9.526279, 10.044563, -8.726887, 11.667262, -7.7781744, 13.09033, -6.696376, 14.289419, -5.5, 15.244012, -4.2095175, 15.937776, -2.8470094, 16.35884, -1.435788)
+
+[node name="Oval05" type="Polygon2D" parent="Artwork/RolledRugsAndIntakeBin" unique_id=673832222]
+position = Vector2(74.5, 42)
+color = Color(1, 0.7058824, 0.6156863, 1)
+antialiased = true
+polygon = PackedVector2Array(13, 0, 12.888783, 1.0442095, 12.557035, 2.0705523, 12.010433, 3.0614674, 11.25833, 4, 10.313593, 4.8700914, 9.192388, 5.656854, 7.9138985, 6.3468266, 6.5, 6.928203, 4.9748845, 7.391036, 3.3646476, 7.7274065, 1.6968404, 7.931559, 7.9599413e-16, 8, -1.6968404, 7.931559, -3.3646476, 7.7274065, -4.9748845, 7.391036, -6.5, 6.928203, -7.9138985, 6.3468266, -9.192388, 5.656854, -10.313593, 4.8700914, -11.25833, 4, -12.010433, 3.0614674, -12.557035, 2.0705523, -12.888783, 1.0442095, -13, 9.796851e-16, -12.888783, -1.0442095, -12.557035, -2.0705523, -12.010433, -3.0614674, -11.25833, -4, -10.313593, -4.8700914, -9.192388, -5.656854, -7.9138985, -6.3468266, -6.5, -6.928203, -4.9748845, -7.391036, -3.3646476, -7.7274065, -1.6968404, -7.931559, -2.3879824e-15, -8, 1.6968404, -7.931559, 3.3646476, -7.7274065, 4.9748845, -7.391036, 6.5, -6.928203, 7.9138985, -6.3468266, 9.192388, -5.656854, 10.313593, -4.8700914, 11.25833, -4, 12.010433, -3.0614674, 12.557035, -2.0705523, 12.888783, -1.0442095)
+
+[node name="SmileOrSpiral06" type="Line2D" parent="Artwork/RolledRugsAndIntakeBin" unique_id=860176050]
+position = Vector2(75, 43)
+points = PackedVector2Array(6, 0, 5.7589865, 1.6834713, 5.0553083, 3.2316961, 3.9454973, 4.520293, 2.5187137, 5.4457397, 0.8895819, 5.933687, -0.8110169, 5.944935, -2.4464602, 5.4785795, -3.8853607, 4.5720863, -5.0121193, 3.2982817, -5.7362146, 1.7595001, -5.999475, 0.07936423, -5.7807503, -1.6071477, -5.0976124, -3.164545, -4.004944, -4.467709, -2.590526, -5.4119473, -0.9679912, -5.921401, 0.7323102, -5.9551425, 2.3737793, -5.5104604, 3.824544, -4.6230793)
+width = 3.0
+default_color = Color(0.8745098, 0.41960785, 0.34901962, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke07" type="Line2D" parent="Artwork/RolledRugsAndIntakeBin" unique_id=403241478]
+position = Vector2(65, 58)
+points = PackedVector2Array(0, 0, 0, 36)
+width = 3.0
+default_color = Color(1, 0.7058824, 0.6156863, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="RoundedShape08" type="Panel" parent="Artwork/RolledRugsAndIntakeBin" unique_id=933557564]
+offset_left = 98.0
+offset_top = 28.0
+offset_right = 137.0
+offset_bottom = 124.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_xyg0m")
+
+[node name="Oval09" type="Polygon2D" parent="Artwork/RolledRugsAndIntakeBin" unique_id=2135754342]
+position = Vector2(117.5, 30)
+color = Color(0.15686275, 0.34117648, 0.32941177, 1)
+antialiased = true
+polygon = PackedVector2Array(19.5, 0, 19.333176, 1.5663142, 18.835554, 3.1058285, 18.01565, 4.592201, 16.887495, 6, 15.470389, 7.305137, 13.788582, 8.485281, 11.870848, 9.52024, 9.75, 10.392304, 7.462327, 11.086554, 5.0469713, 11.59111, 2.5452607, 11.897339, 1.1939912e-15, 12, -2.5452607, 11.897339, -5.0469713, 11.59111, -7.462327, 11.086554, -9.75, 10.392304, -11.870848, 9.52024, -13.788582, 8.485281, -15.470389, 7.305137, -16.887495, 6, -18.01565, 4.592201, -18.835554, 3.1058285, -19.333176, 1.5663142, -19.5, 1.4695276e-15, -19.333176, -1.5663142, -18.835554, -3.1058285, -18.01565, -4.592201, -16.887495, -6, -15.470389, -7.305137, -13.788582, -8.485281, -11.870848, -9.52024, -9.75, -10.392304, -7.462327, -11.086554, -5.0469713, -11.59111, -2.5452607, -11.897339, -3.5819736e-15, -12, 2.5452607, -11.897339, 5.0469713, -11.59111, 7.462327, -11.086554, 9.75, -10.392304, 11.870848, -9.52024, 13.788582, -8.485281, 15.470389, -7.305137, 16.887495, -6, 18.01565, -4.592201, 18.835554, -3.1058285, 19.333176, -1.5663142)
+
+[node name="Oval10" type="Polygon2D" parent="Artwork/RolledRugsAndIntakeBin" unique_id=1161961353]
+position = Vector2(117.5, 29)
+color = Color(0.7254902, 0.89411765, 0.9254902, 1)
+antialiased = true
+polygon = PackedVector2Array(16, 0, 15.863118, 1.1747357, 15.454813, 2.3293715, 14.782072, 3.444151, 13.856406, 4.5, 12.693653, 5.4788527, 11.313708, 6.3639607, 9.740183, 7.1401796, 8, 7.7942286, 6.122935, 8.314916, 4.1411047, 8.693333, 2.088419, 8.923004, 9.796851e-16, 9, -2.088419, 8.923004, -4.1411047, 8.693333, -6.122935, 8.314916, -8, 7.7942286, -9.740183, 7.1401796, -11.313708, 6.3639607, -12.693653, 5.4788527, -13.856406, 4.5, -14.782072, 3.444151, -15.454813, 2.3293715, -15.863118, 1.1747357, -16, 1.1021457e-15, -15.863118, -1.1747357, -15.454813, -2.3293715, -14.782072, -3.444151, -13.856406, -4.5, -12.693653, -5.4788527, -11.313708, -6.3639607, -9.740183, -7.1401796, -8, -7.7942286, -6.122935, -8.314916, -4.1411047, -8.693333, -2.088419, -8.923004, -2.9390552e-15, -9, 2.088419, -8.923004, 4.1411047, -8.693333, 6.122935, -8.314916, 8, -7.7942286, 9.740183, -7.1401796, 11.313708, -6.3639607, 12.693653, -5.4788527, 13.856406, -4.5, 14.782072, -3.444151, 15.454813, -2.3293715, 15.863118, -1.1747357)
+
+[node name="SmileOrSpiral11" type="Line2D" parent="Artwork/RolledRugsAndIntakeBin" unique_id=641294917]
+position = Vector2(118, 30)
+points = PackedVector2Array(7, 0, 6.725276, 1.9418204, 5.922667, 3.731222, 4.655172, 5.2277503, 3.0222805, 6.3139386, 1.1521621, 6.904529, -0.80839247, 6.953165, -2.7054942, 6.456028, -4.3902345, 5.452141, -5.7303734, 4.020301, -6.620721, 2.2728963, -6.99139, 0.34708628, -6.8132863, -1.6059675, -6.1003895, -3.4329646, -4.9086576, -4.9904995, -3.3316317, -6.1563163, -1.4930974, -6.8389077, 0.4626341, -6.9846954, 2.3820522, -6.582236, 4.1144967, -5.663119)
+width = 3.0
+default_color = Color(0.40392157, 0.61960787, 0.70980394, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke12" type="Line2D" parent="Artwork/RolledRugsAndIntakeBin" unique_id=1656306066]
+position = Vector2(107, 48)
+points = PackedVector2Array(0, 0, 0, 40)
+width = 4.0
+default_color = Color(0.7254902, 0.89411765, 0.9254902, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke13" type="Line2D" parent="Artwork/RolledRugsAndIntakeBin" unique_id=645591524]
+position = Vector2(126, 49)
+points = PackedVector2Array(0, 0, 0, 39)
+width = 2.0
+default_color = Color(0.7254902, 0.89411765, 0.9254902, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="IntakeBin" type="Node2D" parent="Artwork" unique_id=593993110]
+
+[node name="RoundedShape14" type="Panel" parent="Artwork/IntakeBin" unique_id=1349454310]
+offset_left = 43.0
+offset_top = 91.0
+offset_right = 156.0
+offset_bottom = 135.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_ttw3l")
+
+[node name="PressedEdge" type="Panel" parent="Artwork/IntakeBin/RoundedShape14" unique_id=1928037579]
+show_behind_parent = true
+layout_mode = 0
+offset_top = 4.0
+offset_right = 113.0
+offset_bottom = 48.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_6kjvm")
+
+[node name="RoundedShape15" type="Panel" parent="Artwork/IntakeBin" unique_id=619772060]
+offset_left = 39.0
+offset_top = 86.0
+offset_right = 160.0
+offset_bottom = 101.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_6e7bd")
+
+[node name="RoundedShape16" type="Panel" parent="Artwork/IntakeBin" unique_id=1782915773]
+offset_left = 82.0
+offset_top = 106.0
+offset_right = 118.0
+offset_bottom = 126.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_0577g")
+
+[node name="Stroke17" type="Line2D" parent="Artwork/IntakeBin" unique_id=1822157783]
+position = Vector2(91, 116)
+points = PackedVector2Array(0, 0, 6, 5)
+width = 3.0
+default_color = Color(0.2784314, 0.7137255, 0.5058824, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Stroke18" type="Line2D" parent="Artwork/IntakeBin" unique_id=501677701]
+position = Vector2(97, 121)
+points = PackedVector2Array(0, 0, 12, -11)
+width = 3.0
+default_color = Color(0.2784314, 0.7137255, 0.5058824, 1)
+begin_cap_mode = 2
+end_cap_mode = 2
+antialiased = true
+
+[node name="Shape19" type="Polygon2D" parent="Artwork/IntakeBin" unique_id=349810231]
+position = Vector2(38, 48)
+color = Color(0.972549, 0.8, 0.39607844, 1)
+antialiased = true
+polygon = PackedVector2Array(0, -8, 2.3199997, -2.3199997, 8, 0, 2.3199997, 2.3199997, 0, 8, -2.3199997, 2.3199997, -8, 0, -2.3199997, -2.3199997)
+
+[node name="Shape20" type="Polygon2D" parent="Artwork/IntakeBin" unique_id=956095631]
+position = Vector2(160, 64)
+color = Color(0.98039216, 0.54901963, 0.4509804, 1)
+antialiased = true
+polygon = PackedVector2Array(0, -8, 2.3200073, -2.3199997, 8, 0, 2.3200073, 2.3199997, 0, 8, -2.3200073, 2.3199997, -8, 0, -2.3200073, -2.3199997)

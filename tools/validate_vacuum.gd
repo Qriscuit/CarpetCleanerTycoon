@@ -11,7 +11,7 @@ func run() -> void:
 	root.add_child(game)
 	await process_frame
 	var soil: Node = game.soil
-	check(game.overhead and game.touch_buttons.size() == 3, "Top-only gameplay has no footer buttons")
+	check(game.overhead and game.hud.control("HomeButton").visible, "Overhead gameplay provides a persistent route home")
 	soil.positions[0] = Vector3(30, 0, 30)
 	soil.refresh_visible_clumps()
 	check(soil.batch.visible_instance_count == 559, "Offscreen clump omitted from submitted batch")
@@ -43,7 +43,7 @@ func run() -> void:
 		soil._physics_process(1.0 / 60.0)
 	check(soil.vacuum_complete and soil.batch.visible_instance_count == 0, "All debris disappears")
 	check(not soil.is_physics_processing(), "Completed vacuum sleeps")
-	check(game.instruction_label.text == "BEAUTIFULLY CLEAN", "Finished UI shown")
+	check(game.hud.control("InstructionComplete").visible and game.hud.control("CompletionCard").visible, "Editor-authored completion UI and next-rug choices shown")
 	soil.start_vacuum()
 	check(soil.vacuum_complete, "Completion cannot restart")
 	await process_frame

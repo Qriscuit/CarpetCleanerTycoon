@@ -66,7 +66,7 @@ func run() -> void:
 	check(is_instance_valid(game) and game.is_inside_tree() and state.contract_mode, "A failed Back save keeps the paid scene alive")
 	check(is_equal_approx(soil.surface_clearance(), unsaved_surface), "A failed Back save preserves the current rug work")
 	game.update_contract_status()
-	check(game.contract_status.text.contains("Couldn't save"), "A failed Back save explains how to retry")
+	check(game.hud.control("SaveError").visible and game.hud.control("SaveError").text.contains("Couldn't save"), "A failed Back save explains how to retry")
 	state._save_enabled = true
 	check(game.save_contract_progress(), "Saving can be retried after the write failure clears")
 	game.save_contract_progress()
@@ -98,6 +98,18 @@ func run() -> void:
 	for tick in 120:
 		soil._physics_process(1.0 / 60.0)
 	await capture("contract_complete.png")
+	check(game.hud.control("NextRugButton").is_visible_in_tree(), "Completed work offers a direct next-rug action")
+	state._save_enabled = false
+	game.next_rug()
+	check(state.active_job_id.is_empty() and not game.next_job_pending and game.hud.control("NextJobError").visible, "A failed next-job save keeps the reward screen and offers retry")
+	state._save_enabled = true
+	current_scene = game
+	game.next_rug()
+	await process_frame
+	await process_frame
+	game = current_scene
+	check(game != null and game.paid_contract and not game.contract_finished and game.soil.surface_clearance() == 0.0, "Next rug opens a new paid job directly")
+	check(state.cash == 20 and state.manual_jobs == 1, "Next rug never duplicates the prior payout")
 	game.free()
 	state.contract_mode = false
 	game = scene.instantiate()
@@ -108,6 +120,7 @@ func run() -> void:
 	check(state.cash == 20, "Free gym never awards cash")
 	game.free()
 	state._owned["wide_brush"] = true
+	check(state.equip_brush("wide_brush"), "Owned wide brush can be equipped")
 	state.start_job()
 	state.contract_mode = true
 	game = scene.instantiate()
