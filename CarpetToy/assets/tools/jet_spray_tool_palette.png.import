@@ -4,8 +4,9 @@ importer="texture"
 type="CompressedTexture2D"
 uid="uid://cbxw2s2iny3ar"
 path.s3tc="res://.godot/imported/jet_spray_tool_palette.png-8a2b53e419df5b81db1369f1c6d0c7b4.s3tc.ctex"
+path.etc2="res://.godot/imported/jet_spray_tool_palette.png-8a2b53e419df5b81db1369f1c6d0c7b4.etc2.ctex"
 metadata={
-"imported_formats": ["s3tc_bptc"],
+"imported_formats": ["s3tc_bptc", "etc2_astc"],
 "vram_texture": true
 }
 generator_parameters={
@@ -15,7 +16,7 @@ generator_parameters={
 [deps]
 
 source_file="res://assets/tools/jet_spray_tool_palette.png"
-dest_files=["res://.godot/imported/jet_spray_tool_palette.png-8a2b53e419df5b81db1369f1c6d0c7b4.s3tc.ctex"]
+dest_files=["res://.godot/imported/jet_spray_tool_palette.png-8a2b53e419df5b81db1369f1c6d0c7b4.s3tc.ctex", "res://.godot/imported/jet_spray_tool_palette.png-8a2b53e419df5b81db1369f1c6d0c7b4.etc2.ctex"]
 
 [params]
 
