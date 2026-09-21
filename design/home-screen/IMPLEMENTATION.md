@@ -27,7 +27,7 @@ Scene layout and behavior live in `CarpetToy/scripts/floating_home.gd`. The root
 
 The scene temporarily uses an expanding 390-unit short-side canvas and restores the prior window scaling when leaving. On mobile it requests sensor orientation while this home is active, then restores the previous orientation when leaving. Top controls and dock respect the device safe area; the model fits both available dimensions and remains framed through a full rotation. Portrait and landscape retain separate control positions rather than stretching a screenshot.
 
-Both cleaning Home buttons always return to the production floating home, including direct gym entry. The original hub is a test scene. Bonzi's panel and purchase review show coins per bar duration: 10 coins every 120s at base, 90s with Mk II, or 80s with Mk II and Welcome Sign. The countdown shows the next +10 payout. Reward amounts and the save format are unchanged.
+The cleaning scene's icon Back control always returns to the production floating home, including direct gym entry. The original hub is a test scene. Bonzi's panel and purchase review show coins per bar duration: 10 coins every 120s at base, 90s with Mk II, or 80s with Mk II and Welcome Sign. The countdown shows the next +10 payout. Reward amounts and the save format are unchanged.
 
 Suspended income uses bounded wall-clock absence, like reopening the app, so a stopped live timer does not lose phone sleep time. Failed saves retain that bounded absence for retry without exposing uncommitted coins. Automated fixtures test this separately from the UI labeling issue.
 

@@ -12,7 +12,17 @@ Press **F5** to play the production game. Use **F6** on a test scene for develop
 
 Reusable rugs, floor and UI remain under `scenes/` and `scenes/ui/`. Android exports exclude `scenes/test/*` and the legacy menu controller.
 
-Both cleaning **Home** buttons always open the floating production menu. This includes running the gym directly, finishing a rug, or entering through the old test menu. Returning during a paid job still saves progress first; a failed save keeps the player in the rug.
+With no overlay open, the cleaning scene's icon Back control opens the floating production menu, including direct test-gym entry or entry through the old test menu. Returning during a paid job attempts to save first; if disk persistence is temporarily unavailable, the latest snapshot is retained in memory and navigation still works.
+
+The production cleaning scene always creates or resumes a paid rug, even when run directly. The inherited `rug_cleaning_gym.tscn` and legacy `starter_workshop.tscn` explicitly set `practice_only = true`, so test scenes cannot become paid because of stale menu state.
+
+There is no scene reload between cleaning jobs. The active cleaning scene retains its rug meshes, soil controller and fixed 560-slot GPU dirt pool: arrival unrolls an already dust-textured rug, grows the small starter rocks and brings in the brush. Other pooled clumps stay invisible until brushed. Completion vacuums debris, rolls the rug away, shows the paid reward and refills the same pool for the next arrival. The icon Back control remains usable throughout.
+
+The lower of debris clearance and surface-dust clearance determines the reward. Finishing at 85% or higher but below 99% pays 20 coins; 99% or higher finishes automatically and pays 40. Payment and reservation of the next job are committed together before takeaway, so leaving during the transition cannot pay twice or lose the replacement job.
+
+The cleaning HUD keeps a gold wallet at the top-right. Reusable 2D reward coins linger briefly, then fly into it. Each arrival increments the displayed balance by that coin's exact value; it does not award money again. The saved balance already contains the full reward, so leaving before the burst finishes preserves all earnings.
+
+The **Upgrade** button opens a centered placeholder menu within the cleaning scene, with no purchases available yet. It pauses brushing, soil simulation and rug transitions. Close or Back dismisses the menu and resumes the same phase; a subsequent Back returns to the main menu. Opening this menu does not create another cleaning scene or reset the rug.
 
 The old bug came from a fallback to `shop_hub.tscn` plus a mutable `return_home_scene` setting. Routing now uses `CarpetToy/scripts/scene_routes.gd`: use `Routes.MAIN_MENU` for all full-scene Home actions and `Routes.CLEANING` for paid jobs. Sheet close/back actions stay within the main menu. Do not add per-menu return destinations.
 

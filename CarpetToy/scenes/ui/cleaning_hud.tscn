@@ -1,37 +1,126 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/cleaning_hud.gd" id="1_script"]
 [ext_resource type="Theme" path="res://resources/ui/mint_theme.tres" id="2_theme"]
-[ext_resource type="Texture2D" path="res://assets/ui/brush.svg" id="3_brush"]
-[ext_resource type="Texture2D" path="res://assets/ui/squeegee.svg" id="4_squeegee"]
-[ext_resource type="Texture2D" path="res://assets/ui/spray.svg" id="5_spray"]
-[ext_resource type="Texture2D" path="res://assets/ui/complete.svg" id="6_complete"]
+[ext_resource type="Texture2D" path="res://assets/ui/back.svg" id="3_back"]
+[ext_resource type="Texture2D" path="res://assets/floating_shop/CoinIcon.png" id="4_coin"]
+[ext_resource type="Texture2D" path="res://assets/ui/nav_items.svg" id="5_upgrade"]
 
-[sub_resource type="ButtonGroup" id="Tools"]
-[sub_resource type="ButtonGroup" id="Rugs"]
+[sub_resource type="StyleBoxFlat" id="UpgradesPanel"]
+content_margin_left = 24.0
+content_margin_top = 24.0
+content_margin_right = 24.0
+content_margin_bottom = 24.0
+bg_color = Color(0.96, 0.99, 0.96, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 5
+border_color = Color(0.64, 0.80, 0.72, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+
+[sub_resource type="StyleBoxFlat" id="RewardPanel"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 16.0
+content_margin_bottom = 8.0
+bg_color = Color(1, 0.965, 0.78, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 4
+border_color = Color(0.87, 0.7, 0.32, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="ProgressPanel"]
+content_margin_left = 10.0
+content_margin_top = 9.0
+content_margin_right = 10.0
+content_margin_bottom = 9.0
+bg_color = Color(1, 1, 1, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 4
+border_color = Color(0.76, 0.85, 0.8, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_right = 20
+corner_radius_bottom_left = 20
 
 [sub_resource type="StyleBoxFlat" id="ProgressTrack"]
-bg_color = Color(0.86, 0.90, 0.83, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_left = 10
-corner_radius_bottom_right = 10
+bg_color = Color(0.86, 0.9, 0.83, 1)
+corner_radius_top_left = 13
+corner_radius_top_right = 13
+corner_radius_bottom_left = 13
+corner_radius_bottom_right = 13
 
 [sub_resource type="StyleBoxFlat" id="ProgressFill"]
 resource_local_to_scene = true
 bg_color = Color(0.906, 0.424, 0.384, 1)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_left = 10
-corner_radius_bottom_right = 10
-shadow_color = Color(0.906, 0.424, 0.384, 0.3)
-shadow_size = 4
+corner_radius_top_left = 13
+corner_radius_top_right = 13
+corner_radius_bottom_left = 13
+corner_radius_bottom_right = 13
+shadow_color = Color(0.906, 0.424, 0.384, 0.28)
+shadow_size = 3
 
-[node name="GymUI" type="CanvasLayer"]
+[sub_resource type="StyleBoxFlat" id="BackNormal"]
+bg_color = Color(1, 1, 1, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 5
+border_color = Color(0.76, 0.85, 0.8, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_left = 20
+corner_radius_bottom_right = 20
+
+[sub_resource type="StyleBoxFlat" id="BackHover"]
+bg_color = Color(0.94, 0.98, 0.92, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 5
+border_color = Color(0.61, 0.78, 0.62, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_left = 20
+corner_radius_bottom_right = 20
+
+[sub_resource type="StyleBoxFlat" id="BackPressed"]
+bg_color = Color(0.88, 0.96, 0.85, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.53, 0.73, 0.47, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_left = 20
+corner_radius_bottom_right = 20
+
+[sub_resource type="StyleBoxFlat" id="BackFocus"]
+draw_center = false
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.21, 0.57, 0.73, 1)
+corner_radius_top_left = 20
+corner_radius_top_right = 20
+corner_radius_bottom_left = 20
+corner_radius_bottom_right = 20
+
+[node name="CleaningHUD" type="CanvasLayer"]
 script = ExtResource("1_script")
-contract_progress_text = "Debris %d%% · Dust %d%%"
-reward_text = "+%d cash"
-reward_received_text = "%d cash added to your shop."
 
 [node name="HUD" type="Control" parent="."]
 layout_mode = 3
@@ -43,523 +132,215 @@ grow_vertical = 2
 mouse_filter = 2
 theme = ExtResource("2_theme")
 
-[node name="Heading" type="VBoxContainer" parent="HUD"]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 16.0
-offset_top = 16.0
-offset_right = 316.0
-offset_bottom = 66.0
-mouse_filter = 2
-theme_override_constants/separation = 2
-
-[node name="PracticeTitle" type="Label" parent="HUD/Heading"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"Subtitle"
-theme_override_font_sizes/font_size = 21
-text = "Rug Cleaning Gym"
-
-[node name="ContractTitle" type="Label" parent="HUD/Heading"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"Subtitle"
-theme_override_font_sizes/font_size = 21
-text = "Mint Meadow job"
-
-[node name="InstructionIdle" type="Label" parent="HUD/Heading"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "Sweep. Reveal. Relax."
-
-[node name="InstructionActive" type="Label" parent="HUD/Heading"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "Sweep back for pass two."
-
-[node name="InstructionOther" type="Label" parent="HUD/Heading"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "Hold + drag to try this tool."
-
-[node name="InstructionVacuum" type="Label" parent="HUD/Heading"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "A little finishing magic…"
-
-[node name="InstructionComplete" type="Label" parent="HUD/Heading"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "Beautifully clean!"
-
 [node name="CleaningProgress" type="PanelContainer" parent="HUD"]
 unique_name_in_owner = true
-layout_mode = 0
-offset_left = 16.0
-offset_top = 84.0
-offset_right = 220.0
-offset_bottom = 196.0
-theme_type_variation = &"Card"
+offset_left = 190.0
+offset_top = 16.0
+offset_right = 530.0
+offset_bottom = 72.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("ProgressPanel")
 
-[node name="ProgressTrack" type="VBoxContainer" parent="HUD/CleaningProgress"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="ProgressValueMarker" type="HBoxContainer" parent="HUD/CleaningProgress/ProgressTrack"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="Caption" type="Label" parent="HUD/CleaningProgress/ProgressTrack/ProgressValueMarker"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "Debris cleared"
-
-[node name="ProgressValue" type="Label" parent="HUD/CleaningProgress/ProgressTrack/ProgressValueMarker"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 23
-text = "0%"
-
-[node name="CompletionIcon" type="TextureRect" parent="HUD/CleaningProgress/ProgressTrack/ProgressValueMarker"]
-unique_name_in_owner = true
-visible = false
-custom_minimum_size = Vector2(22, 22)
-layout_mode = 2
-texture = ExtResource("6_complete")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="ProgressBar" type="ProgressBar" parent="HUD/CleaningProgress/ProgressTrack"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 18)
+[node name="ProgressArea" type="Control" parent="HUD/CleaningProgress"]
+custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
 mouse_filter = 2
-theme_override_styles/background = SubResource("ProgressTrack")
-theme_override_styles/fill = SubResource("ProgressFill")
-step = 0.0
-show_percentage = false
 
-[node name="PaidTarget" type="Label" parent="HUD/CleaningProgress/ProgressTrack"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "Goal: 90% debris + dust"
-autowrap_mode = 2
-
-[node name="LeftRail" type="ScrollContainer" parent="HUD"]
+[node name="ProgressBar" type="ProgressBar" parent="HUD/CleaningProgress/ProgressArea"]
 unique_name_in_owner = true
 layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 16.0
-offset_top = 218.0
-offset_right = 220.0
-offset_bottom = -96.0
+grow_horizontal = 2
 grow_vertical = 2
-horizontal_scroll_mode = 0
-vertical_scroll_mode = 1
-
-[node name="Column" type="VBoxContainer" parent="HUD/LeftRail"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 12
-
-[node name="PracticeRugs" type="VBoxContainer" parent="HUD/LeftRail/Column"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="RugPickerTitle" type="Label" parent="HUD/LeftRail/Column/PracticeRugs"]
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "TRY A DIFFERENT RUG"
-
-[node name="RugButton0" type="Button" parent="HUD/LeftRail/Column/PracticeRugs"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme_type_variation = &"NavButton"
-theme_override_font_sizes/font_size = 16
-toggle_mode = true
-button_group = SubResource("Rugs")
-text = "Mint Meadow"
-action_mode = 1
-
-[node name="RugButton1" type="Button" parent="HUD/LeftRail/Column/PracticeRugs"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme_type_variation = &"NavButton"
-theme_override_font_sizes/font_size = 16
-toggle_mode = true
-button_group = SubResource("Rugs")
-text = "Terracotta"
-action_mode = 1
-
-[node name="RugButton2" type="Button" parent="HUD/LeftRail/Column/PracticeRugs"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme_type_variation = &"NavButton"
-theme_override_font_sizes/font_size = 16
-toggle_mode = true
-button_group = SubResource("Rugs")
-text = "Indigo Weave"
-action_mode = 1
-
-[node name="RugHint" type="Label" parent="HUD/LeftRail/Column/PracticeRugs"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "Brush / two passes\nSweep back to lift the dust."
-autowrap_mode = 2
-
-[node name="ResetRugButton" type="Button" parent="HUD/LeftRail/Column/PracticeRugs"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 56)
-layout_mode = 2
-theme_type_variation = &"SecondaryButton"
-theme_override_font_sizes/font_size = 16
-text = "Reset rug"
-action_mode = 1
-
-[node name="PracticeExplanation" type="Label" parent="HUD/LeftRail/Column/PracticeRugs"]
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "Practice is free. Earn cash with customer jobs from your shop."
-autowrap_mode = 2
-
-[node name="ContractCard" type="PanelContainer" parent="HUD/LeftRail/Column"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"Card"
-
-[node name="ContractColumn" type="VBoxContainer" parent="HUD/LeftRail/Column/ContractCard"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="RewardCaption" type="Label" parent="HUD/LeftRail/Column/ContractCard/ContractColumn"]
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "CUSTOMER REWARD"
-
-[node name="ContractReward" type="Label" parent="HUD/LeftRail/Column/ContractCard/ContractColumn"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"Subtitle"
-theme_override_font_sizes/font_size = 24
-text = "+20 cash"
-
-[node name="ContractStatus" type="Label" parent="HUD/LeftRail/Column/ContractCard/ContractColumn"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "Debris 0% · Dust 0%"
-autowrap_mode = 2
-
-[node name="DustBar" type="ProgressBar" parent="HUD/LeftRail/Column/ContractCard/ContractColumn"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 12)
-layout_mode = 2
 mouse_filter = 2
 theme_override_styles/background = SubResource("ProgressTrack")
 theme_override_styles/fill = SubResource("ProgressFill")
 step = 0.0
 show_percentage = false
 
-[node name="FinishHint" type="Label" parent="HUD/LeftRail/Column/ContractCard/ContractColumn"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "Reach 90% on both. Brush past the edges, then sweep back to lift the dust."
-autowrap_mode = 2
-
-[node name="FinishJobButton" type="Button" parent="HUD/LeftRail/Column/ContractCard/ContractColumn"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme_type_variation = &"PrimaryButton"
-theme_override_font_sizes/font_size = 16
-text = "Finish job"
-action_mode = 1
-disabled = true
-
-[node name="SaveHint" type="Label" parent="HUD/LeftRail/Column/ContractCard/ContractColumn"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "Your progress saves as you clean."
-autowrap_mode = 2
-
-[node name="SaveError" type="Label" parent="HUD/LeftRail/Column"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.65, 0.21, 0.17, 1)
-text = "Couldn't save this rug. Try Home again."
-autowrap_mode = 2
-
-[node name="FinishSaveError" type="Label" parent="HUD/LeftRail/Column"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.65, 0.21, 0.17, 1)
-text = "Couldn't save this job. Try Finish again."
-autowrap_mode = 2
-
-[node name="FinishError" type="Label" parent="HUD/LeftRail/Column"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.65, 0.21, 0.17, 1)
-text = "Couldn't finish this job. Your cleaning is saved."
-autowrap_mode = 2
-
-[node name="NextJobError" type="Label" parent="HUD/LeftRail/Column"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.65, 0.21, 0.17, 1)
-text = "Couldn't start the next rug. Try again."
-autowrap_mode = 2
-
-[node name="CompletionCard" type="PanelContainer" parent="HUD/LeftRail/Column"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"GoldCard"
-
-[node name="CompletionColumn" type="VBoxContainer" parent="HUD/LeftRail/Column/CompletionCard"]
-layout_mode = 2
-theme_override_constants/separation = 10
-
-[node name="SuccessTitle" type="Label" parent="HUD/LeftRail/Column/CompletionCard/CompletionColumn"]
-layout_mode = 2
-theme_type_variation = &"Subtitle"
-theme_override_font_sizes/font_size = 23
-text = "Lovely work!"
-autowrap_mode = 2
-
-[node name="RewardReceived" type="Label" parent="HUD/LeftRail/Column/CompletionCard/CompletionColumn"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "20 cash added to your shop."
-autowrap_mode = 2
-
-[node name="NextRugButton" type="Button" parent="HUD/LeftRail/Column/CompletionCard/CompletionColumn"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 60)
-layout_mode = 2
-theme_type_variation = &"PrimaryButton"
-theme_override_font_sizes/font_size = 16
-text = "Next rug"
-action_mode = 1
-
-[node name="CompletionHomeButton" type="Button" parent="HUD/LeftRail/Column/CompletionCard/CompletionColumn"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 56)
-layout_mode = 2
-theme_type_variation = &"SecondaryButton"
-theme_override_font_sizes/font_size = 16
-text = "Home"
-action_mode = 1
-
-[node name="ToolRail" type="VBoxContainer" parent="HUD"]
+[node name="ProgressValue" type="Label" parent="HUD/CleaningProgress/ProgressArea"]
 unique_name_in_owner = true
 layout_mode = 1
-anchor_left = 1.0
+anchors_preset = 15
 anchor_right = 1.0
-offset_left = -112.0
-offset_top = 20.0
-offset_right = -16.0
-offset_bottom = 272.0
-grow_horizontal = 0
-theme_override_constants/separation = 10
-
-[node name="ToolsTitle" type="Label" parent="HUD/ToolRail"]
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "TOOLS"
-horizontal_alignment = 1
-
-[node name="BrushButton" type="Button" parent="HUD/ToolRail"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(96, 84)
-layout_mode = 2
-theme_type_variation = &"NavButton"
-toggle_mode = true
-button_group = SubResource("Tools")
-tooltip_text = "Brush"
-action_mode = 1
-
-[node name="Icon" type="TextureRect" parent="HUD/ToolRail/BrushButton"]
-layout_mode = 1
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -20.0
-offset_top = 8.0
-offset_right = 20.0
-offset_bottom = 48.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("3_brush")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Caption" type="Label" parent="HUD/ToolRail/BrushButton"]
-layout_mode = 1
-anchor_right = 1.0
-offset_top = 50.0
-offset_bottom = 73.0
-mouse_filter = 2
-theme_override_font_sizes/font_size = 13
-text = "Brush"
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_outline_color = Color(1, 1, 1, 0.82)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 20
+text = "0%"
 horizontal_alignment = 1
-
-[node name="SqueegeeButton" type="Button" parent="HUD/ToolRail"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(96, 84)
-layout_mode = 2
-theme_type_variation = &"NavButton"
-toggle_mode = true
-button_group = SubResource("Tools")
-tooltip_text = "Squeegee"
-action_mode = 1
-
-[node name="Icon" type="TextureRect" parent="HUD/ToolRail/SqueegeeButton"]
-layout_mode = 1
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -20.0
-offset_top = 8.0
-offset_right = 20.0
-offset_bottom = 48.0
-mouse_filter = 2
-texture = ExtResource("4_squeegee")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Caption" type="Label" parent="HUD/ToolRail/SqueegeeButton"]
-layout_mode = 1
-anchor_right = 1.0
-offset_top = 50.0
-offset_bottom = 73.0
-mouse_filter = 2
-theme_override_font_sizes/font_size = 13
-text = "Squeegee"
-horizontal_alignment = 1
-
-[node name="JetSprayButton" type="Button" parent="HUD/ToolRail"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(96, 84)
-layout_mode = 2
-theme_type_variation = &"NavButton"
-toggle_mode = true
-button_group = SubResource("Tools")
-tooltip_text = "Spray"
-action_mode = 1
-
-[node name="Icon" type="TextureRect" parent="HUD/ToolRail/JetSprayButton"]
-layout_mode = 1
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -20.0
-offset_top = 8.0
-offset_right = 20.0
-offset_bottom = 48.0
-mouse_filter = 2
-texture = ExtResource("5_spray")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Caption" type="Label" parent="HUD/ToolRail/JetSprayButton"]
-layout_mode = 1
-anchor_right = 1.0
-offset_top = 50.0
-offset_bottom = 73.0
-mouse_filter = 2
-theme_override_font_sizes/font_size = 13
-text = "Spray"
-horizontal_alignment = 1
-
-[node name="PracticeToolsHint" type="Label" parent="HUD/ToolRail"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 12
-text = "Brush cleans.\nOthers are\npreviews."
-horizontal_alignment = 1
-
-[node name="StarterBrushHint" type="Label" parent="HUD/ToolRail"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "Starter\nbrush"
-horizontal_alignment = 1
-
-[node name="WideBrushHint" type="Label" parent="HUD/ToolRail"]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_type_variation = &"Small"
-theme_override_font_sizes/font_size = 14
-text = "Wide brush\n44% wider"
-horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="HomeButton" type="Button" parent="HUD"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(204, 60)
-layout_mode = 1
-anchor_top = 1.0
-anchor_bottom = 1.0
+custom_minimum_size = Vector2(56, 56)
 offset_left = 16.0
-offset_top = -80.0
-offset_right = 220.0
-offset_bottom = -20.0
-grow_vertical = 0
-theme_type_variation = &"SecondaryButton"
-theme_override_font_sizes/font_size = 16
-text = "‹  Home"
+offset_top = 16.0
+offset_right = 72.0
+offset_bottom = 72.0
+tooltip_text = "Back to store"
+theme_override_styles/normal = SubResource("BackNormal")
+theme_override_styles/hover = SubResource("BackHover")
+theme_override_styles/pressed = SubResource("BackPressed")
+theme_override_styles/focus = SubResource("BackFocus")
+icon = ExtResource("3_back")
+icon_max_width = 28
+expand_icon = true
 action_mode = 1
 
+[node name="FinishJobButton" type="Button" parent="HUD"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(148, 56)
+offset_left = 286.0
+offset_top = 924.0
+offset_right = 434.0
+offset_bottom = 980.0
+theme_type_variation = &"PrimaryButton"
+theme_override_font_sizes/font_size = 17
+text = "Finish job"
+action_mode = 1
+
+[node name="Wallet" type="PanelContainer" parent="HUD"]
+unique_name_in_owner = true
+z_index = 30
+offset_left = 572.0
+offset_top = 16.0
+offset_right = 704.0
+offset_bottom = 72.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("RewardPanel")
+
+[node name="WalletRow" type="HBoxContainer" parent="HUD/Wallet"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="WalletIcon" type="TextureRect" parent="HUD/Wallet/WalletRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("4_coin")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="WalletValue" type="Label" parent="HUD/Wallet/WalletRow"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.35, 0.27, 0.11, 1)
+theme_override_font_sizes/font_size = 23
+text = "0"
+vertical_alignment = 1
+
+[node name="UpgradeButton" type="Button" parent="HUD"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(116, 56)
+offset_left = 588.0
+offset_top = 924.0
+offset_right = 704.0
+offset_bottom = 980.0
+theme_type_variation = &"SecondaryButton"
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_hover_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_pressed_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_focus_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 17
+text = "Upgrade"
+action_mode = 1
+
+[node name="CoinLayer" type="Control" parent="HUD"]
+unique_name_in_owner = true
+z_index = 20
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="UpgradeSheet" type="Control" parent="HUD"]
+unique_name_in_owner = true
+visible = false
+z_index = 25
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="Dim" type="ColorRect" parent="HUD/UpgradeSheet"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.09, 0.20, 0.22, 0.38)
+
+[node name="UpgradesPanel" type="PanelContainer" parent="HUD/UpgradeSheet"]
+unique_name_in_owner = true
+offset_left = 180.0
+offset_top = 360.0
+offset_right = 540.0
+offset_bottom = 640.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("UpgradesPanel")
+
+[node name="Contents" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="UpgradeIcon" type="TextureRect" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("5_upgrade")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 28
+text = "Upgrades"
+horizontal_alignment = 1
+
+[node name="Placeholder" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
+theme_override_font_sizes/font_size = 18
+text = "Coming soon"
+horizontal_alignment = 1
+
+[node name="CloseUpgradesButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_type_variation = &"PrimaryButton"
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_hover_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_pressed_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_focus_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 18
+text = "Done"
+action_mode = 1

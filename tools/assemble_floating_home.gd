@@ -55,6 +55,10 @@ func label(parent: Node, title: String, text: String, font_size: int) -> Label:
 	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	return node
 
+func readable_button_text(control: Control) -> void:
+	for color_name: String in ["font_color","font_hover_color","font_pressed_color","font_hover_pressed_color","font_focus_color","font_disabled_color"]:
+		control.add_theme_color_override(color_name,Color("355876"))
+
 func build() -> void:
 	home = Control.new()
 	home.name = "FloatingHome"
@@ -199,12 +203,12 @@ func build() -> void:
 	motion.text="Animate shop"
 	motion.button_pressed=true
 	motion.custom_minimum_size.y=48
-	motion.add_theme_color_override("font_color",Color("355876"))
+	readable_button_text(motion)
 	var close := add(column,Button.new(),"CloseSettings",true) as Button
 	close.text="Done"
 	close.custom_minimum_size.y=48
 	close.add_theme_stylebox_override("normal",style(Color("dbedce"),16))
-	close.add_theme_color_override("font_color",Color("355876"))
+	readable_button_text(close)
 	var management := add(home,Control.new(),"Management",true) as Control
 	full(management)
 	management.visible=false

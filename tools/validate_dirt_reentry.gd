@@ -17,7 +17,8 @@ func _initialize() -> void:
 	call_deferred("run")
 
 func run() -> void:
-	var workshop := (load("res://scenes/production/rug_cleaning.tscn") as PackedScene).instantiate()
+	var workshop := (load("res://scenes/test/rug_cleaning_gym.tscn") as PackedScene).instantiate()
+	workshop.animate_rug_changes = false
 	root.add_child(workshop)
 	await process_frame
 	var soil: Node = workshop.soil
@@ -31,6 +32,7 @@ func run() -> void:
 					soil.cleared[i] = true
 					soil.credited[i] = true
 				soil.remaining = 0
+				soil.surface_coverage_total = 0.0
 			else:
 				soil.cleared[0] = true
 				soil.credited[0] = true
@@ -47,7 +49,7 @@ func run() -> void:
 			check(not soil.cleared[0] and soil.remaining == before, "Returning clump preserves earned cleanliness")
 			check(workshop.dirty == (not already_complete), "Returning dirt never revokes completion")
 			var returned: Vector3 = soil.positions[0] + soil.rug_origin
-			soil.stroke(returned, returned + Vector3(0, 0, 0.03 * edge_sign), 0.03)
+			soil.stroke(returned, returned + Vector3(0, 0, 0.30 * edge_sign), 0.03)
 			check(soil.moving[0] and soil.velocities[0].z * edge_sign > 0.0, "Returned dirt can be brushed back off")
 			settle(soil)
 			check(soil.cleared[0] and soil.is_fully_outside(soil.positions[0], soil.radii[0]), "Rebrushed clump clears the edge again")

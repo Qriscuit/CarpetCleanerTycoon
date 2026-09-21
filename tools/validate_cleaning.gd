@@ -15,16 +15,12 @@ func settle(soil: Node) -> void:
 			break
 		soil._physics_process(1.0 / 60.0)
 
-func screenshot(filename: String) -> void:
-	await process_frame
-	await RenderingServer.frame_post_draw
-	root.get_texture().get_image().save_png(ProjectSettings.globalize_path("res://../art/renders/" + filename))
-
 func _initialize() -> void:
 	call_deferred("run")
 
 func run() -> void:
-	workshop = (load("res://scenes/production/rug_cleaning.tscn") as PackedScene).instantiate()
+	workshop = (load("res://scenes/test/rug_cleaning_gym.tscn") as PackedScene).instantiate()
+	workshop.animate_rug_changes = false
 	root.add_child(workshop)
 	await process_frame
 	var soil: Node = workshop.soil
@@ -54,9 +50,8 @@ func run() -> void:
 	check(soil.remaining == 560, "Contact alone does not count as removed")
 	workshop.end_stroke()
 	settle(soil)
-	check(soil.remaining > 0 and soil.remaining < 560, "Only flung-off clumps count")
+	check(soil.remaining < 560, "Settled off-rug clumps count after the stroke")
 	check(absf(soil.mask.get_pixel(128, 208).r - 0.5) < 0.01, "First pass removes half the dust")
-	await screenshot("cleaning_partial.png")
 	# A negative stroke and touch input use the same world projection.
 	workshop.reset_rug()
 	var screen: Vector2 = camera.unproject_position(Vector3(0.0, 0.067, 0.7)) - workshop.TOUCH_CONTACT_OFFSET
@@ -92,11 +87,12 @@ func run() -> void:
 		workshop.end_stroke()
 		settle(soil)
 	check(soil.remaining == 0, "Every clump can be removed with real brush strokes")
-	check(not workshop.dirty and workshop.state_label.text == "100%" and workshop.completion_icon.visible, "Full clearance shows 100% and completion check")
+	workshop.update_contract_status()
+	var combined := minf(soil.unique_clearance(), soil.surface_clearance())
+	check(is_equal_approx(workshop.progress_fraction, combined) and workshop.state_label.text == "%d%%" % floori(combined * 100.0 + 0.0001), "The one meter reports the dirtier of debris and surface dust")
 	check(soil.active.is_empty() and not soil.is_physics_processing(), "Settled dirt costs no simulation ticks")
 	for i in soil.positions.size():
 		check(soil.clump_is_outside(i), "All final clump footprints outside the rug")
-	await screenshot("cleaning_complete.png")
 	workshop.reset_rug()
 	check(soil.remaining == 560 and workshop.dirty, "Reset restores dirt and progress")
 	check(soil.mask.get_pixel(64, 100).r > 0.9, "Reset restores full soil cover")

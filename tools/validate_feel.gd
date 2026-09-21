@@ -9,13 +9,9 @@ func check(condition: bool, message: String) -> void:
 func _initialize() -> void:
 	call_deferred("run")
 
-func capture(filename: String) -> void:
-	await process_frame
-	await RenderingServer.frame_post_draw
-	root.get_texture().get_image().save_png(ProjectSettings.globalize_path("res://../art/renders/" + filename))
-
 func run() -> void:
-	var workshop := (load("res://scenes/production/rug_cleaning.tscn") as PackedScene).instantiate()
+	var workshop := (load("res://scenes/test/rug_cleaning_gym.tscn") as PackedScene).instantiate()
+	workshop.animate_rug_changes = false
 	root.add_child(workshop)
 	await process_frame
 	var soil: Node = workshop.soil
@@ -38,12 +34,10 @@ func run() -> void:
 	check(absf(soil.coverage_values[208 * 256 + 128] - 0.5) < 0.001, "One long pass leaves half the dust despite many events")
 	var feather: float = soil.coverage_values[208 * 256 + 167]
 	check(feather > 0.55 and feather < 0.95, "Cleaning edge has intermediate feathered opacity")
-	await capture("two_pass_first.png")
 	soil.end_pass()
 	soil.begin_pass()
 	soil.stroke(Vector3(0,0.067,-1.6), Vector3(0,0.067,1.6), 0.5)
 	check(soil.coverage_values[208 * 256 + 128] == 0.0, "Second separate pass restores original material")
-	await capture("two_pass_second.png")
 	workshop.reset_rug()
 	soil.begin_pass()
 	soil.stroke(Vector3(0,0.067,-1.6), Vector3(0,0.067,1.6), 0.5)
@@ -63,11 +57,14 @@ func run() -> void:
 	soil.stroke(p, p + Vector3(0,0,-0.02), 0.1)
 	soil._physics_process(1.0 / 60.0)
 	check(soil.growth[1] == 1.0 and soil.positions[1] != p, "Repeat contact moves immediately without growing again")
-	workshop.update_progress(281, 560)
+	soil.remaining = 281
+	soil.surface_coverage_total = float(soil.surface_pixel_count) * 0.5
+	workshop.update_contract_status()
 	check(workshop.dirty, "Below 50 percent is incomplete")
-	workshop.update_progress(280, 560)
+	soil.remaining = 280
+	workshop.update_contract_status()
 	check(workshop.dirty, "Exactly 50 percent is still incomplete")
-	check(workshop.state_label.text == "50%" and workshop.progress_bar.value == 50.0 and not workshop.completion_icon.visible, "Meter and number reflect cleanliness")
+	check(workshop.state_label.text == "50%" and workshop.progress_bar.value == 50.0, "Meter and number reflect combined cleanliness")
 	check(soil.coverage_values[0] == 1.0, "Completion never auto-erases untouched surface dust")
 	workshop.reset_rug()
 	check(soil.growth[1] == original_size and soil.remaining == 560 and workshop.dirty, "Reset restores seeds, progress and dust")
@@ -77,14 +74,14 @@ func run() -> void:
 		check(workshop.overhead and is_equal_approx(workshop.camera.rotation_degrees.x, -90.0), "Gameplay remains locked overhead")
 	workshop.overhead = false
 	workshop.frame_carpet()
-	for stage in 4:
-		workshop.update_progress(300 - stage * 100, 300)
-		check(workshop.progress_fill.bg_color.is_equal_approx(workshop.PROGRESS_COLORS[stage]), "Bar follows red-yellow-green-blue color stops")
-		check(workshop.state_label.self_modulate.is_equal_approx(workshop.progress_fill.bg_color), "Number matches the live bar color while its base style remains editor-authored")
+	for fraction in [0.0, 1.0 / 3.0, 2.0 / 3.0, 0.98]:
+		soil.remaining = roundi(float(soil.initial.size()) * (1.0 - fraction))
+		soil.surface_coverage_total = float(soil.surface_pixel_count) * (1.0 - fraction)
+		workshop.update_contract_status()
+		check(workshop.progress_fill.bg_color.is_equal_approx(workshop.progress_color(workshop.progress_fraction)), "Bar follows the live red-yellow-green-blue gradient")
 		await process_frame
 		check(workshop.progress_card.get_global_rect().encloses(workshop.state_label.get_global_rect()), "Stable top-left number remains inside its editor-authored card")
 		check(workshop.progress_fill.shadow_size > 0 and workshop.progress_fill.shadow_color.a > 0.0, "Progress fill has a matching glow")
-		await capture("cleanliness_meter_%d.png" % stage)
 	print("FEEL CHECKS COMPLETE: ", failures, " failures; two passes, soft edges, seeded growth, rug silhouette and 100 percent completion.")
 	workshop.free()
 	quit(0 if failures == 0 else 1)

@@ -148,7 +148,7 @@ func run() -> void:
 	# Seed earned progress through the same guarded ledger transactions.
 	for i in 20:
 		var job: String = ledger.start_job()
-		check(ledger.save_job_snapshot({"unique_clearance":1.0, "surface_clearance":1.0}), "Test job saves")
+		check(ledger.save_job_snapshot({"unique_clearance":0.85, "surface_clearance":0.85}), "Base-reward test job saves")
 		check(ledger.complete_job(job), "Test job pays")
 		if i == 2:
 			await frame()
@@ -257,10 +257,10 @@ func run() -> void:
 	root.size = Vector2i(720, 1000)
 	hub.enter_cleaning()
 	await frame()
-	check(current_scene.name == "RugCleaningGym", "Paid button opens the cleaning scene")
+	check(current_scene.name == "RugCleaningWindow", "Paid button opens the distinct cleaning scene")
 	check(current_scene.paid_contract, "Paid job keeps contract mode")
 	check(current_scene.wide_brush, "The customer rug uses the brush selected in Items")
-	check(current_scene.soil.automatic_completion_enabled == false, "Paid work requires explicit completion")
+	check(current_scene.soil.automatic_completion_enabled == false, "The cleaning window owns its 85% Finish and 99% automatic rules")
 	await screenshot("shop_paid_rug")
 	current_scene.return_to_shop()
 	await frame()

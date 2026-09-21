@@ -1,29 +1,24 @@
 extends SceneTree
-## Renderer-backed contract tests use a separate ledger and never touch player progress.
+## Renderer-backed checks for the production 85%/99% rug loop.
 var failures := 0
+
 
 func check(condition: bool, message: String) -> void:
 	if not condition:
 		failures += 1
 		push_error("CONTRACT CHECK: " + message)
 
+
 func _initialize() -> void:
 	call_deferred("run")
 
-func capture(filename: String) -> void:
-	await process_frame
-	await RenderingServer.frame_post_draw
-	root.get_texture().get_image().save_png(ProjectSettings.globalize_path("res://../art/renders/" + filename))
 
-func sweep_lanes(soil: Node) -> void:
-	for lane in [-0.85, -0.42, 0.0, 0.42, 0.85]:
-		soil.begin_pass()
-		soil.stroke(Vector3(lane, 0.067, -2.5), Vector3(lane, 0.067, 1.85), 0.04)
-		soil.end_pass()
-		for tick in 200:
-			if not soil.is_physics_processing():
-				break
-			soil._physics_process(1.0 / 60.0)
+func set_cleanliness(game: Node, unique: float, surface: float) -> void:
+	var soil: Node = game.soil
+	soil.remaining = roundi(float(soil.initial.size()) * (1.0 - unique))
+	soil.surface_coverage_total = float(soil.surface_pixel_count) * (1.0 - surface)
+	game.update_contract_status()
+
 
 func run() -> void:
 	if not "--shop-test" in OS.get_cmdline_user_args():
@@ -32,108 +27,95 @@ func run() -> void:
 		return
 	var state := root.get_node("ShopState")
 	state._save_path = "res://../art/contract_test_%d.json" % OS.get_process_id()
-	var job_id: String = state.start_job()
-	check(not job_id.is_empty(), "Job creation commits")
-	state.contract_mode = true
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(state._save_path))
+	check(state.reset_progress(), "Isolated ledger starts clean")
 	var scene := load("res://scenes/production/rug_cleaning.tscn") as PackedScene
 	var game := scene.instantiate()
+	game.animate_rug_changes = false
 	root.add_child(game)
 	await process_frame
 	var soil: Node = game.soil
-	check(game.paid_contract and not soil.automatic_completion_enabled, "Paid mode disables the free gym auto reveal")
-	check(game.finish_button.disabled, "Untouched rug cannot finish")
-	check(game.tool_buttons[1].disabled and game.tool_buttons[2].disabled, "Paid work equips the owned functional brush")
-	game.select_tool(2)
-	check(game.selected_tool == 0, "Unowned test tools cannot be selected by code")
-	game.select_rug(2)
-	check(game.selected_rug == 0, "A customer's rug cannot be switched")
-	game.finish_contract()
-	check(state.cash == 0 and state.manual_jobs == 0, "Empty job never pays")
-	await capture("contract_start.png")
-	sweep_lanes(soil)
-	check(soil.unique_clearance() >= 0.9, "Real sweeps remove at least 90 percent of unique debris")
-	check(soil.surface_clearance() < 0.9, "A first dust pass remains insufficient")
-	check(not soil.completion_started, "Clearing every clump does not auto erase paid-job dust")
-	game.update_contract_status()
-	check(game.finish_button.disabled, "High debris clearance alone cannot finish")
-	game.finish_contract()
-	check(state.cash == 0, "Dust threshold is enforced by the action")
-	# Back must keep the live rug when a disk write cannot commit its latest work.
-	var unsaved_surface: float = soil.surface_clearance()
+	var first_job: String = game.contract_job_id
+	check(game.name == "RugCleaningWindow" and game.paid_contract and not first_job.is_empty(), "Production cleaning is a distinct paid scene with a rug ready")
+	check(not soil.automatic_completion_enabled, "Workshop owns the combined completion rule")
+	check(game.hud.get_node_or_null("%LeftRail") == null and game.hud.get_node_or_null("%ToolRail") == null and game.hud.get_node_or_null("%CompletionCard") == null, "Legacy rails and completion prompt are absent")
+	check(not game.finish_button.visible, "Untouched rug has no Finish button")
+
+	set_cleanliness(game, 1.0, 0.84)
+	check(game.state_label.text == "84%" and not game.finish_button.visible, "The bar uses the dirtier layer and stays locked below 85%")
+	set_cleanliness(game, 0.85, 0.85)
+	check(game.state_label.text == "85%" and game.finish_button.visible and not game.finish_button.disabled, "Finish job appears at 85%")
+
 	state._save_enabled = false
-	game.return_to_shop()
-	await process_frame
-	check(is_instance_valid(game) and game.is_inside_tree() and state.contract_mode, "A failed Back save keeps the paid scene alive")
-	check(is_equal_approx(soil.surface_clearance(), unsaved_surface), "A failed Back save preserves the current rug work")
-	game.update_contract_status()
-	check(game.hud.control("SaveError").visible and game.hud.control("SaveError").text.contains("Couldn't save"), "A failed Back save explains how to retry")
+	game.finish_contract()
+	check(state.cash == 0 and state.manual_jobs == 0 and state.active_job_id == first_job, "A failed commit leaves the current rug and reward unchanged")
+	check(not soil.completion_started and game.finish_button.visible, "A failed Finish can be retried")
 	state._save_enabled = true
-	check(game.save_contract_progress(), "Saving can be retried after the write failure clears")
-	game.save_contract_progress()
-	var unique_before: float = soil.unique_clearance()
-	var dust_before: float = soil.surface_clearance()
+	game.finish_contract()
+	var second_job: String = state.active_job_id
+	check(state.cash == 20 and state.manual_jobs == 1 and not second_job.is_empty() and second_job != first_job, "Finish pays once and atomically reserves the next rug")
+	check(game.contract_finished and soil.completion_started and not game.finish_button.visible, "Accepted Finish starts automatic takeaway")
+	check(game.state_label.text == "100%" and game.progress_bar.value == 100.0, "Accepted cleanup fills the one progress bar during takeaway")
+	game.finish_contract()
+	game.finish_contract()
+	check(not state.complete_job(first_job) and state.cash == 20 and state.manual_jobs == 1, "Repeated taps and the old job id cannot pay twice")
+
+	# Re-enter before the old takeaway ends: the replacement is already durable.
 	game.free()
-	# Reload the serialized data, not just an in-memory copy of the snapshot.
-	var ledger: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(state._save_path))
-	state.job_snapshot = ledger.job_snapshot
 	game = scene.instantiate()
+	game.animate_rug_changes = false
 	root.add_child(game)
 	await process_frame
 	soil = game.soil
-	check(is_equal_approx(soil.unique_clearance(), unique_before), "Unique clump progress survives JSON save and re-entry")
-	check(absf(soil.surface_clearance() - dust_before) < 0.003, "Dust mask survives JSON save and re-entry")
-	game.reset_rug()
-	check(is_equal_approx(soil.unique_clearance(), unique_before), "Paid reset cannot replace the current contract state")
-	sweep_lanes(soil)
-	sweep_lanes(soil)
-	game.update_contract_status()
-	check(soil.unique_clearance() >= 0.9 and soil.surface_clearance() >= 0.9, "Repeated real brush strokes satisfy both targets")
-	check(not game.finish_button.disabled, "Complete cleaning enables Finish")
-	await capture("contract_ready.png")
-	game.finish_contract()
-	check(state.cash == 20 and state.manual_jobs == 1 and state.active_job_id.is_empty(), "One completed contract pays exactly 20 cash")
-	check(game.contract_finished and soil.completion_started, "Only accepted completion triggers the clean reveal")
-	game.finish_contract()
-	check(not state.complete_job(job_id) and state.cash == 20 and state.manual_jobs == 1, "Repeated button/API completion cannot pay twice")
-	for tick in 120:
-		soil._physics_process(1.0 / 60.0)
-	await capture("contract_complete.png")
-	check(game.hud.control("NextRugButton").is_visible_in_tree(), "Completed work offers a direct next-rug action")
-	state._save_enabled = false
-	game.next_rug()
-	check(state.active_job_id.is_empty() and not game.next_job_pending and game.hud.control("NextJobError").visible, "A failed next-job save keeps the reward screen and offers retry")
-	state._save_enabled = true
+	check(game.contract_job_id == second_job and game.progress_fraction == 0.0 and not soil.completion_started, "Restarting during takeaway opens the fresh reserved rug")
+	set_cleanliness(game, 1.0, 0.989)
+	check(game.state_label.text == "98%" and game.finish_button.visible and not soil.completion_started, "98% still leaves manual Finish available")
+	set_cleanliness(game, 1.0, 0.99)
+	await process_frame
+	var third_job: String = state.active_job_id
+	check(game.contract_finished and soil.completion_started, "99% automatically finishes without a tap")
+	check(state.cash == 60 and state.manual_jobs == 2 and third_job != second_job, "99% completion pays double exactly once and reserves another rug")
+
+	# The cleaning scene and its dirt batch are retained across jobs. This suite
+	# skips presentation timing; the production transition suite exercises rolls.
 	current_scene = game
-	game.next_rug()
+	var scene_id: int = game.get_instance_id()
+	var soil_id: int = soil.get_instance_id()
+	var batch_id: int = soil.batch.get_instance_id()
+	for _tick in 140:
+		if soil.vacuum_complete:
+			break
+		soil._physics_process(1.0 / 60.0)
 	await process_frame
 	await process_frame
 	game = current_scene
-	check(game != null and game.paid_contract and not game.contract_finished and game.soil.surface_clearance() == 0.0, "Next rug opens a new paid job directly")
-	check(state.cash == 20 and state.manual_jobs == 1, "Next rug never duplicates the prior payout")
-	game.free()
-	state.contract_mode = false
-	game = scene.instantiate()
-	root.add_child(game)
+	check(game != null and game.get_instance_id() == scene_id, "Takeaway keeps the same cleaning scene instance")
+	check(game.soil.get_instance_id() == soil_id and game.soil.batch.get_instance_id() == batch_id, "The next job reuses the same soil controller and GPU dirt pool")
+	check(game.contract_job_id == third_job and not game.contract_finished and game.progress_fraction == 0.0, "The replacement rug is immediately ready to clean")
+	check(game.hud.get_node_or_null("%NextRugButton") == null, "No new-rug prompt is present")
+	state._save_enabled = false
+	set_cleanliness(game, 1.0, 0.99)
 	await process_frame
-	check(not game.paid_contract and game.soil.automatic_completion_enabled, "Free gym retains its original completion behavior")
+	await process_frame
+	check(state.cash == 60 and state.active_job_id == third_job and not game.soil.completion_started, "A failed 99% auto-save keeps the current rug and never pays")
+	check(game.finish_button.visible, "A failed automatic save exposes Finish for a manual retry instead of retrying every frame")
+	state._save_enabled = true
 	game.finish_contract()
-	check(state.cash == 20, "Free gym never awards cash")
+	check(state.cash == 100 and state.manual_jobs == 3 and state.active_job_id != third_job, "Manual retry preserves the 99% double reward and completes exactly once")
+
 	game.free()
-	state._owned["wide_brush"] = true
-	check(state.equip_brush("wide_brush"), "Owned wide brush can be equipped")
-	state.start_job()
-	state.contract_mode = true
-	game = scene.instantiate()
-	root.add_child(game)
+	current_scene = null
+	state.contract_mode = false
+	var practice := (load("res://scenes/test/rug_cleaning_gym.tscn") as PackedScene).instantiate()
+	practice.animate_rug_changes = false
+	root.add_child(practice)
 	await process_frame
-	check(game.soil.head_half.x > game.soil.HEAD_HALF.x * 1.4, "Owned wide brush has a wider physical footprint")
-	check(game.brush.scale.x > game.brush.scale.z * 1.4, "Owned wide brush is visibly wider")
-	game.soil.begin_pass()
-	game.soil.stroke(Vector3(0, 0.067, -1.6), Vector3(0, 0.067, 1.6), 0.4)
-	check(game.soil.coverage_values[208 * 256 + 177] < 0.6, "Wider brush actually removes dust beyond the starter width")
-	await capture("contract_wide_brush.png")
-	game.free()
+	var cash_before: int = state.cash
+	set_cleanliness(practice, 0.85, 0.85)
+	practice.finish_contract()
+	check(not practice.paid_contract and state.cash == cash_before, "The inherited test gym remains free practice")
+	practice.free()
 	state.set_process(false)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(state._save_path))
-	print("CONTRACT CHECKS COMPLETE: ", failures, " failures; separate gym mode, two cleanliness targets, JSON resume, exact-once cash and wide brush.")
+	print("CONTRACT CHECKS COMPLETE: ", failures, " failures; minimal HUD, 85% Finish, 99% auto, exact-once reward and immediate replacement rug.")
 	quit(0 if failures == 0 else 1)

@@ -16,7 +16,7 @@ The current Godot toy has a brush interaction, thrown dirt, a two-pass dust surf
 
 The current check mark appears when 50% of the unique dirt clumps have been moved off the carpet. Surface dust is tracked independently. That is a feel-test rule, not yet a valid contract payout signal. Do not simply attach money to the current check mark.
 
-Proposed first economy contract: require at least 90% unique clump clearance AND 90% surface-mask cleaning, then offer “Finish carpet.” Confirming finishes small leftovers, shows the reveal and awards the fixed reward once. Test this against a stricter 95% version; adjust the threshold before increasing rug size. These percentages are editable in the workbook. Never require hunting isolated pixels. Optional continued brushing before finishing gives no extra money. No countdown, destructive failure, score loss or reward for individual dirt particles.
+The first economy contract uses one honest cleanliness number: the lower of unique clump clearance and surface-mask cleaning. At 85%, a small **Finish job** button appears; at 99%, the job finishes automatically. Completion clears small leftovers, awards the fixed reward once, takes the rug away, and immediately loads the next one. Never require hunting isolated pixels. Optional continued brushing before finishing gives no extra money. No countdown, destructive failure, score loss or reward for individual dirt particles.
 
 The economy figures assume the first rug takes 50 seconds of hands-on cleaning plus 10 seconds of handling/reveal. That is an unmeasured target. If the toy actually takes two minutes, the workbook must use that measured duration; do not claim the five-minute Bonzi target still holds.
 
@@ -126,7 +126,7 @@ At the base rates, eight hours with Shops 1–2 automated yields (300 + 750) × 
 ## 9. UI plan for the next implementation pass
 | Surface | Information and actions | State or feedback requirement |
 | --- | --- | --- |
-| Cleaning HUD | Cash; current rug reward; cleanliness; equipped tool; Finish carpet | Lock reward until both cleaning thresholds pass; award once |
+| Cleaning HUD | One combined cleanliness bar; icon Back; conditional Finish job | Show Finish at 85%, auto-finish at 99%, award once, then open the next rug |
 | Next-goal card | Bonzi first, then next shop; current progress and missing requirement | One goal at a time; allow optional upgrades without losing it |
 | Shop overview | Manual job button; routine rate; Bonzi animation; bottleneck | “No bot yet,” producing, or demand/cleaner/finishing limited |
 | Upgrade drawer | Current→next appearance, cost, parts, exact income/time change | Blueprint locked, affordable, short of resources, owned/maxed |
@@ -166,7 +166,7 @@ Build in this order: one paid brush contract with reliable save/reward; Bonzi an
 
 Record actual cleaning duration, handling time, first Bonzi time, first expansion time, cash source/sink, skipped upgrades, active/passive cash share, local gate progress and return claims. Small playtests establish comprehension and feel, not market viability. No monetization balance is assumed here.
 
-Decisions still to test: 90% versus 95% completion; desired strength of manual gates; whether parts create a meaningful optional choice; the Wide Brush’s actual time saving; final shop aesthetics and Bonzi art; whether the longer chain needs more than five authored destinations. Shop 3–5 prices and timings should not be production commitments yet.
+Decisions still to test: whether the 85% manual and 99% automatic thresholds feel right; desired strength of manual gates; whether parts create a meaningful optional choice; the Wide Brush’s actual time saving; final shop aesthetics and Bonzi art; whether the longer chain needs more than five authored destinations. Shop 3–5 prices and timings should not be production commitments yet.
 
 ## 12. Companion workbook
 Carpet_Cleaner_Economy_v0_2.xlsx is the adjustable numeric model. Read Me explains the sheets; Assumptions, Shops and blue input cells hold tuning values; formulas calculate output, costs, pacing and offline claims. The first two shops are the slice baseline. Later shops are placeholders. The current written examples reflect the default workbook values; if the balance changes, regenerate or revise the examples before implementation.

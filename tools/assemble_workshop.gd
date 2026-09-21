@@ -161,7 +161,7 @@ func _initialize() -> void:
 	var floor_root := tiled_floor()
 	save_scene(floor_root, OUTPUT+"tiled_floor.tscn")
 	studio.add_child(floor_root)
-	studio.name = "RugCleaningGym"
+	studio.name = "RugCleaningWindow"
 	var subject := Node3D.new()
 	subject.name = "RugDisplay"
 	subject.position = Vector3.ZERO

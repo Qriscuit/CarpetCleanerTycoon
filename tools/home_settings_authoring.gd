@@ -16,10 +16,11 @@ static func decorate(home: Control) -> void:
 	message.add_theme_font_size_override("font_size",16)
 	var timer := home.get_node_or_null("%StatusTimer")
 	if timer == null: home.get_node("%HintTimer").name = "StatusTimer"
+	for name: String in ["MotionToggle","CloseSettings","ResetProgress","CancelReset","ConfirmReset"]:
+		var control := home.get_node_or_null("%"+name) as Control
+		if control != null:
+			_readable_button_text(control)
 	if home.get_node_or_null("%ResetProgress") != null:
-		for name: String in ["ResetProgress","CancelReset","ConfirmReset"]:
-			for color_name: String in ["font_color","font_hover_color","font_pressed_color","font_focus_color"]:
-				home.get_node("%"+name).add_theme_color_override(color_name,Color("355876"))
 		return
 	var column: VBoxContainer = home.get_node("SettingsSheet/SettingsPanel/SettingsContents")
 	var reset := _button(home,column,"ResetProgress","Reset progress",Color("f5ded8"))
@@ -62,9 +63,7 @@ static func _button(home: Control, parent: Control, node_name: String, caption: 
 	button.unique_name_in_owner = true
 	button.text = caption
 	button.custom_minimum_size.y = 48
-	button.add_theme_color_override("font_color",Color("355876"))
-	for color_name: String in ["font_hover_color","font_pressed_color","font_focus_color"]:
-		button.add_theme_color_override(color_name,Color("355876"))
+	_readable_button_text(button)
 	button.add_theme_font_size_override("font_size",16)
 	for state_name in ["normal","hover","pressed","focus"]:
 		var style := StyleBoxFlat.new()
@@ -76,3 +75,7 @@ static func _button(home: Control, parent: Control, node_name: String, caption: 
 			style.set_border_width_all(2)
 		button.add_theme_stylebox_override(state_name,style)
 	return button
+
+static func _readable_button_text(control: Control) -> void:
+	for color_name: String in ["font_color","font_hover_color","font_pressed_color","font_hover_pressed_color","font_focus_color","font_disabled_color"]:
+		control.add_theme_color_override(color_name,Color("355876"))

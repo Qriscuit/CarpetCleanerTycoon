@@ -1,7 +1,15 @@
 extends Node3D
 ## Mouse/touch brush control over the rug and surrounding tiled work area.
 const Routes = preload("res://scripts/scene_routes.gd")
+const Pop = preload("res://scripts/ui/button_pop.gd")
+const ShopLedger = preload("res://scripts/shop_state.gd")
 @export var practice_only := false
+@export var animate_rug_changes := true
+enum RugPhase { ARRIVING, GROWING, TOOL_ENTERING, CLEANING, VACUUMING, DEPARTING }
+var rug_phase := RugPhase.ARRIVING
+var rug_roll := preload("res://scripts/rug_roll.gd").new()
+var transition_tween: Tween
+var leaving_scene := false
 
 const CARPET_PLANE_Y := 0.067
 const BRUSH_X_LIMIT := 2.4
@@ -20,7 +28,6 @@ const PROGRESS_COLORS := [Color("e76c62"), Color("dfb13d"), Color("63b66e"), Col
 ]
 var selected_rug := 0
 var rug_buttons: Array[Button] = []
-var rug_hint: Label
 var progress_card: PanelContainer
 
 @onready var camera: Camera3D = $Camera3D
@@ -34,12 +41,7 @@ var last_brush_position := Vector3.ZERO
 var state_label: Label
 var progress_bar: ProgressBar
 var progress_fill: StyleBoxFlat
-var progress_track: Control
-var progress_value_marker: HBoxContainer
 var progress_fraction := 0.0
-var completion_icon: TextureRect
-var dirt_button: Button
-var instruction_label: Label
 var active_touch := -1
 var stroke_time := 0
 var soil: Node
@@ -53,10 +55,7 @@ var paid_contract := false
 var contract_finished := false
 var contract_save_failed := false
 var contract_job_id := ""
-var contract_label: Label
-var contract_status: Label
 var finish_button: Button
-var reset_button: Button
 var wide_brush := false
 var snapshot_timer: Timer
 var rug_initialized := false
@@ -64,22 +63,47 @@ var rug_initialized := false
 var hud_touch := -1
 var hud_button: Button
 var hud_touch_origin := Vector2.ZERO
-var hud_touch_last := Vector2.ZERO
 var hud_touch_canceled := false
-var hud_touch_scroll := false
 var held_touches: Dictionary = {}
 var touch_chord := false
 var next_job_pending := false
+var finish_requested := false
+var auto_finish_queued := false
+var replacement_job_id := ""
+var completed_reward := 0
+var original_scale_size := Vector2i.ZERO
+var original_scale_aspect := 0
+var original_scale_mode := 0
+var original_orientation := -1
 const TOUCH_DRAG_THRESHOLD := 14.0
-const CONTRACT_TARGET := 0.90
+const CONTRACT_TARGET := ShopLedger.MANUAL_COMPLETION_THRESHOLD
+const AUTO_FINISH_TARGET := ShopLedger.PERFECT_COMPLETION_THRESHOLD
 
 func _ready() -> void:
+	var window := get_window()
+	original_scale_size = window.content_scale_size
+	original_scale_aspect = window.content_scale_aspect
+	original_scale_mode = window.content_scale_mode
+	window.content_scale_size = Vector2i(720, 1000)
+	window.content_scale_mode = Window.CONTENT_SCALE_MODE_CANVAS_ITEMS
+	window.content_scale_aspect = Window.CONTENT_SCALE_ASPECT_EXPAND
+	if OS.has_feature("mobile"):
+		original_orientation = DisplayServer.screen_get_orientation()
+		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR)
 	shop_state = get_node_or_null("/root/ShopState")
-	if practice_only and shop_state != null:
-		shop_state.contract_mode = false
-	paid_contract = shop_state != null and shop_state.contract_mode and not str(shop_state.active_job_id).is_empty()
+	if practice_only:
+		if shop_state != null:
+			shop_state.contract_mode = false
+	else:
+		# This production scene is always the paid cleaning window. Direct F6
+		# entry and a process restart both create/resume a real rug automatically.
+		paid_contract = shop_state != null
+		if paid_contract:
+			shop_state.contract_mode = true
+			if str(shop_state.active_job_id).is_empty():
+				shop_state.start_job()
 	if paid_contract:
-		contract_job_id = shop_state.active_job_id
+		contract_job_id = str(shop_state.active_job_id)
 		wide_brush = shop_state.owns("wide_brush") and shop_state.equipped_brush == "wide_brush"
 	frame_carpet()
 	add_soft_accent_lights()
@@ -88,13 +112,21 @@ func _ready() -> void:
 	contact_point = brush.position + brush.basis * TOOL_PIVOTS[0]
 	last_brush_position = contact_point
 	bind_ui()
+	if shop_state != null:
+		hud.initialize_wallet(shop_state.cash)
+		shop_state.changed.connect(_sync_wallet)
 	soil = preload("res://scripts/dirt_controller.gd").new()
-	soil.automatic_completion_enabled = not paid_contract
+	# Workshop owns the 85% manual and 99% automatic rules for both modes.
+	soil.automatic_completion_enabled = false
 	soil.head_half = Vector2(0.44, 0.11) if wide_brush else soil.HEAD_HALF
 	add_child(soil)
 	soil.progress_changed.connect(update_progress)
-	soil.surface_changed.connect(update_contract_status)
+	soil.surface_changed.connect(update_surface_progress)
+	soil.vacuum_started.connect(on_vacuum_started)
+	soil.vacuum_finished.connect(on_vacuum_finished)
 	soil.setup($RugDisplay)
+	if animate_rug_changes:
+		rug_roll.setup($RugDisplay/Dirty/CarpetMesh)
 	select_rug(0)
 	if paid_contract and not shop_state.job_snapshot.is_empty():
 		soil.restore_snapshot(shop_state.job_snapshot)
@@ -103,10 +135,8 @@ func _ready() -> void:
 	snapshot_timer.wait_time = 0.5
 	add_child(snapshot_timer)
 	snapshot_timer.timeout.connect(save_contract_progress)
-	update_contract_status()
+	start_rug_arrival()
 	get_viewport().size_changed.connect(frame_carpet)
-	soil.vacuum_started.connect(on_vacuum_started)
-	soil.vacuum_finished.connect(on_vacuum_finished)
 	if "--capture" in OS.get_cmdline_user_args():
 		await get_tree().create_timer(0.5).timeout
 		await RenderingServer.frame_post_draw
@@ -130,6 +160,8 @@ func _input(event: InputEvent) -> void:
 			if held_touches.size() > 1:
 				touch_chord = true
 				hud_touch_canceled = true
+				if is_instance_valid(hud_button):
+					Pop.reset(hud_button)
 				end_stroke()
 			if touch_chord:
 				get_viewport().set_input_as_handled()
@@ -138,10 +170,10 @@ func _input(event: InputEvent) -> void:
 				end_stroke()
 				hud_touch = event.index
 				hud_touch_origin = event.position
-				hud_touch_last = event.position
 				hud_touch_canceled = false
 				hud_button = hud.visible_button_at(event.position, touch_buttons)
-				hud_touch_scroll = hud.control("LeftRail").get_global_rect().has_point(event.position)
+				if is_instance_valid(hud_button):
+					Pop.press(hud_button)
 				get_viewport().set_input_as_handled()
 				return
 		else:
@@ -155,19 +187,20 @@ func _input(event: InputEvent) -> void:
 					touch_chord = false
 				get_viewport().set_input_as_handled()
 				if activate:
+					Pop.release(button)
 					button.grab_focus()
 					button.pressed.emit()
+				elif is_instance_valid(button):
+					Pop.reset(button)
 				return
 			if held_touches.is_empty():
 				touch_chord = false
 	if event is InputEventScreenDrag:
 		if event.index == hud_touch:
-			if event.position.distance_to(hud_touch_origin) > TOUCH_DRAG_THRESHOLD:
+			if not hud_touch_canceled and event.position.distance_to(hud_touch_origin) > TOUCH_DRAG_THRESHOLD:
 				hud_touch_canceled = true
-			if hud_touch_scroll and hud_touch_canceled:
-				var rail := hud.control("LeftRail") as ScrollContainer
-				rail.scroll_vertical += roundi(hud_touch_last.y - event.position.y)
-			hud_touch_last = event.position
+				if is_instance_valid(hud_button):
+					Pop.reset(hud_button)
 			get_viewport().set_input_as_handled()
 			return
 		if touch_chord:
@@ -192,7 +225,7 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if soil.completion_started or brush_dragging or event.device == -1 or touch_chord or hud_touch != -1:
+	if rug_phase != RugPhase.CLEANING or leaving_scene or soil.completion_started or brush_dragging or event.device == -1 or touch_chord or hud_touch != -1:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		if not hud.blocks_point(event.position):
@@ -203,7 +236,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			begin_stroke(event.position, true)
 
 func begin_stroke(screen_position: Vector2, touch_input: bool) -> void:
-	if soil.completion_started:
+	if rug_phase != RugPhase.CLEANING or leaving_scene or hud.upgrades_open() or soil.completion_started:
 		return
 	# Placement is not a sweep from the parked tool: only held motion rakes dirt.
 	if selected_tool == 0:
@@ -221,16 +254,46 @@ func end_stroke() -> void:
 	brush_dragging = false
 	active_touch = -1
 	set_brush_instruction(false)
-	if was_dragging:
+	if was_dragging and not finish_requested:
 		save_contract_progress()
 
 func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_GO_BACK_REQUEST and is_node_ready():
+		back()
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		end_stroke()
+		if is_instance_valid(hud_button):
+			Pop.reset(hud_button)
 		hud_touch = -1
 		hud_button = null
 		held_touches.clear()
 		touch_chord = false
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event.is_action_pressed("ui_cancel"):
+		back()
+		get_viewport().set_input_as_handled()
+
+func back() -> void:
+	if hud.upgrades_open():
+		hud.close_upgrades()
+	else:
+		return_to_shop()
+
+func _sync_wallet() -> void:
+	hud.sync_wallet(shop_state.cash)
+
+func _on_upgrades_changed(open: bool) -> void:
+	end_stroke()
+	if open:
+		soil.suspend_simulation(true)
+		if transition_tween != null and transition_tween.is_valid():
+			transition_tween.pause()
+	else:
+		soil.suspend_simulation(rug_phase not in [RugPhase.CLEANING, RugPhase.VACUUMING])
+		if transition_tween != null and transition_tween.is_valid():
+			transition_tween.play()
+	update_contract_status()
 
 func move_brush_to_screen(screen_position: Vector2, touch_input: bool) -> void:
 	var contact_position := screen_position + (TOUCH_CONTACT_OFFSET if touch_input else Vector2.ZERO)
@@ -262,7 +325,8 @@ func select_tool(index: int) -> void:
 	selected_tool = index
 	for i in tool_nodes.size():
 		tool_nodes[i].visible = i == selected_tool
-		tool_buttons[i].set_pressed_no_signal(i == selected_tool)
+		if i < tool_buttons.size():
+			tool_buttons[i].set_pressed_no_signal(i == selected_tool)
 	contact_point.y = soil.brush_surface_height(contact_point, current_head_half())
 	place_selected_tool()
 	last_brush_position = contact_point
@@ -282,26 +346,29 @@ func place_selected_tool() -> void:
 func current_head_half() -> Vector2:
 	return soil.head_half if selected_tool == 0 else TOOL_HEAD_HALVES[selected_tool]
 
-func set_brush_instruction(active: bool) -> void:
-	if not is_instance_valid(hud):
-		return
-	var state := "InstructionActive" if active else "InstructionIdle"
-	if selected_tool != 0:
-		state = "InstructionOther"
-	if soil != null and soil.completion_started:
-		state = "InstructionComplete" if soil.vacuum_complete else "InstructionVacuum"
-	show_instruction(state)
+func set_brush_instruction(_active: bool) -> void:
+	# The cleaning window intentionally carries no instructional copy.
+	pass
 
 func reset_rug() -> void:
 	if paid_contract:
 		return
 	end_stroke()
-	hud.control("CompletionCard").hide()
+	_cancel_transition()
+	finish_requested = false
+	auto_finish_queued = false
+	contract_finished = false
+	$RugDisplay.position = Vector3.ZERO
+	rug_roll.set_roll(0.0)
 	soil.reset()
+	soil.set_reveal_progress(1.0)
+	soil.suspend_simulation(false)
+	rug_phase = RugPhase.CLEANING
 	for button in tool_buttons:
 		button.disabled = false
 	contact_point = brush_home.origin + brush_home.basis * TOOL_PIVOTS[0]
 	select_tool(selected_tool)
+	update_contract_status()
 
 func select_rug(index: int) -> void:
 	if index < 0 or index >= rugs.size():
@@ -309,12 +376,10 @@ func select_rug(index: int) -> void:
 	if paid_contract and (index != 0 or rug_initialized):
 		return
 	end_stroke()
-	hud.control("CompletionCard").hide()
 	selected_rug = index
 	soil.configure_rug(rugs[index])
 	for i in rug_buttons.size():
 		rug_buttons[i].set_pressed_no_signal(i == index)
-	rug_hint.text = rugs[index].cleaning_hint
 	for button in tool_buttons:
 		button.disabled = false
 	if paid_contract:
@@ -324,21 +389,40 @@ func select_rug(index: int) -> void:
 	select_tool(0)
 	rug_initialized = true
 
-func update_progress(remaining: int, total: int) -> void:
-	var fraction := float(total - remaining) / maxf(total, 1)
+func update_progress(_remaining: int, _total: int) -> void:
+	update_contract_status()
+	queue_snapshot_save()
+
+
+func update_surface_progress() -> void:
+	update_contract_status()
+	queue_snapshot_save()
+
+
+func queue_snapshot_save() -> void:
+	if paid_contract and snapshot_timer != null and snapshot_timer.is_inside_tree() and not contract_finished:
+		snapshot_timer.start()
+
+
+func update_contract_status() -> void:
+	if soil == null or state_label == null:
+		return
+	# A rug is only as clean as its dirtier layer. One honest number now drives
+	# the bar, the Finish button, and automatic completion.
+	var fraction := 1.0 if contract_finished else minf(soil.unique_clearance(), soil.surface_clearance())
 	progress_fraction = clampf(fraction, 0.0, 1.0)
-	var percent := floori(fraction * 100.0)
-	dirty = fraction < soil.COMPLETION_FRACTION
+	var percent := floori(progress_fraction * 100.0 + 0.0001)
+	dirty = not contract_finished and progress_fraction < AUTO_FINISH_TARGET
 	state_label.text = "%d%%" % percent
-	var color := progress_color(fraction)
-	progress_bar.value = fraction * 100.0
+	var color := progress_color(progress_fraction)
+	progress_bar.value = progress_fraction * 100.0
 	progress_fill.bg_color = color
 	progress_fill.shadow_color = Color(color, 0.42)
-	state_label.self_modulate = color
-	completion_icon.visible = not dirty
-	update_contract_status()
-	if paid_contract and snapshot_timer != null:
-		snapshot_timer.start()
+	finish_button.visible = rug_phase == RugPhase.CLEANING and not hud.upgrades_open() and not contract_finished and not finish_requested and progress_fraction >= CONTRACT_TARGET and (progress_fraction < AUTO_FINISH_TARGET or contract_save_failed)
+	finish_button.disabled = not finish_button.visible
+	if rug_phase == RugPhase.CLEANING and not hud.upgrades_open() and progress_fraction >= AUTO_FINISH_TARGET and not contract_finished and not finish_requested and not auto_finish_queued and not contract_save_failed:
+		auto_finish_queued = true
+		finish_rug.call_deferred()
 
 func progress_color(fraction: float) -> Color:
 	var stage := clampf(fraction, 0.0, 1.0) * 3.0
@@ -355,99 +439,191 @@ func toggle_view() -> void:
 func frame_carpet() -> void:
 	overhead = true
 	var viewport_size := get_viewport().get_visible_rect().size
-	# Reserve the left rug rail and right tool rail so neither covers the carpet.
-	var usable_width := maxf(viewport_size.x - 348.0, 120.0)
-	var aspect := usable_width / maxf(viewport_size.y, 1.0)
+	var aspect := maxf(viewport_size.x, 1.0) / maxf(viewport_size.y, 1.0)
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT
 	camera.size = maxf(4.35, 2.2 / aspect)
-	camera.position = Vector3(-54.0 * camera.size / maxf(viewport_size.y, 1.0), 9, -0.20)
+	camera.position = Vector3(0.0, 9.0, -0.20)
 	camera.rotation_degrees = Vector3(-90, 0, 0)
 	if soil != null:
 		soil.request_render()
 
 func on_vacuum_started() -> void:
+	rug_phase = RugPhase.VACUUMING
 	end_stroke()
 	for tool in tool_nodes:
 		tool.hide()
 	for button in tool_buttons:
 		button.disabled = true
-	show_instruction("InstructionVacuum")
+	finish_button.hide()
+	_cancel_transition()
 
 func on_vacuum_finished() -> void:
-	show_instruction("InstructionComplete")
-	hud.control("CompletionCard").show()
-	hud.control("RewardReceived").visible = paid_contract
-	hud.control("LeftRail").set_deferred("scroll_vertical", 10000)
-	if contract_finished:
-		update_progress(0, soil.initial.size())
-
-func update_contract_status() -> void:
-	if not paid_contract or soil == null or contract_status == null:
+	if not contract_finished or leaving_scene:
 		return
-	var clumps: float = soil.unique_clearance()
-	var surface: float = soil.surface_clearance()
-	contract_status.text = hud.contract_progress_text % [floori(clumps * 100.0), floori(surface * 100.0)]
-	(hud.control("DustBar") as ProgressBar).value = surface * 100.0
-	finish_button.disabled = contract_finished or clumps < CONTRACT_TARGET or surface < CONTRACT_TARGET
-	hud.control("ContractCard").visible = not contract_finished
-	hud.control("SaveError").visible = contract_save_failed
+	rug_phase = RugPhase.DEPARTING
+	if not animate_rug_changes:
+		next_rug.call_deferred()
+		return
+	transition_tween = create_tween()
+	transition_tween.tween_method(_roll_departure,0.0,1.0,0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	transition_tween.tween_property($RugDisplay,"position:z",_offscreen_z(-1.0),0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	transition_tween.tween_callback(next_rug)
+
+func _roll_departure(amount: float) -> void:
+	rug_roll.set_roll(amount,1.0)
+
+func _roll_arrival(amount: float) -> void:
+	rug_roll.set_roll(amount,-1.0)
+
+func _offscreen_z(direction: float) -> float:
+	return direction * (camera.size * 0.5 + 2.3)
+
+func _cancel_transition() -> void:
+	if transition_tween != null and transition_tween.is_valid():
+		transition_tween.kill()
+
+func start_rug_arrival() -> void:
+	_cancel_transition()
+	rug_phase = RugPhase.ARRIVING
+	soil.suspend_simulation(true)
+	soil.set_reveal_progress(0.0)
+	for tool in tool_nodes: tool.hide()
+	finish_button.hide()
+	update_contract_status()
+	# Persist the new scatter before its presentation, including a Back tap
+	# during arrival. Render-only growth never changes this saved dirt state.
+	save_contract_progress()
+	if not animate_rug_changes:
+		$RugDisplay.position = Vector3.ZERO
+		soil.set_reveal_progress(1.0)
+		_tool_arrival_finished()
+		return
+	$RugDisplay.position = Vector3(0,0,_offscreen_z(1.0))
+	_roll_arrival(1.0)
+	transition_tween = create_tween()
+	transition_tween.tween_property($RugDisplay,"position:z",0.0,0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	transition_tween.tween_method(_roll_arrival,1.0,0.0,0.68).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	transition_tween.tween_callback(_grow_arriving_dirt)
+	transition_tween.tween_method(soil.set_reveal_progress,0.0,1.0,0.42)
+	transition_tween.tween_callback(_bring_in_tool)
+
+func _grow_arriving_dirt() -> void:
+	rug_phase = RugPhase.GROWING
+
+func _bring_in_tool() -> void:
+	rug_phase = RugPhase.TOOL_ENTERING
+	contact_point = brush_home.origin + brush_home.basis * TOOL_PIVOTS[0]
+	place_selected_tool()
+	last_brush_position = contact_point
+	var tool := tool_nodes[selected_tool]
+	var resting_position := tool.position
+	tool.position.z = _offscreen_z(1.0)
+	tool.show()
+	transition_tween = create_tween()
+	transition_tween.tween_property(tool,"position",resting_position,0.24).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	transition_tween.tween_callback(_tool_arrival_finished)
+
+func _tool_arrival_finished() -> void:
+	if leaving_scene: return
+	rug_phase = RugPhase.CLEANING
+	soil.suspend_simulation(false)
+	select_tool(0)
+	update_contract_status()
 
 func save_contract_progress() -> bool:
 	if not paid_contract or contract_finished:
 		return true
 	if is_instance_valid(soil) and is_instance_valid(shop_state) and shop_state.active_job_id == contract_job_id:
-		if shop_state.save_job_snapshot(soil.make_snapshot()):
+		var snapshot: Dictionary = soil.make_snapshot()
+		if shop_state.save_job_snapshot(snapshot):
 			contract_save_failed = false
 			update_contract_status()
 			return true
+		# Keep the latest rug in memory so Back remains available even when the
+		# device cannot write. A later save/re-entry in this process can retry it.
+		shop_state.job_snapshot = snapshot.duplicate(true)
 	contract_save_failed = true
-	if is_instance_valid(hud):
-		hud.control("SaveError").show()
 	return false
 
 func finish_contract() -> void:
-	if not paid_contract or contract_finished or soil.unique_clearance() < CONTRACT_TARGET or soil.surface_clearance() < CONTRACT_TARGET:
+	finish_rug()
+
+
+func finish_rug() -> void:
+	auto_finish_queued = false
+	if rug_phase != RugPhase.CLEANING or leaving_scene or hud.upgrades_open() or soil == null or soil.completion_started or contract_finished or finish_requested:
 		return
+	if minf(soil.unique_clearance(), soil.surface_clearance()) < CONTRACT_TARGET:
+		return
+	finish_requested = true
 	end_stroke()
-	hud.control("FinishSaveError").hide()
-	hud.control("FinishError").hide()
-	if not shop_state.save_job_snapshot(soil.make_snapshot()):
-		hud.control("FinishSaveError").show()
-		return
-	if not shop_state.complete_job(contract_job_id):
-		hud.control("FinishError").show()
-		return
+	if paid_contract:
+		var completed_snapshot: Dictionary = soil.make_snapshot()
+		# Reserve only the visual count-up before the transaction emits changed.
+		# The ledger owns the payout; coin arrivals never grant actual currency.
+		completed_reward = ShopLedger.manual_reward_for(completed_snapshot)
+		hud.reserve_reward(completed_reward)
+		replacement_job_id = shop_state.complete_and_start_next_job(contract_job_id, completed_snapshot)
+		if replacement_job_id.is_empty():
+			hud.cancel_reserved_reward(completed_reward)
+			completed_reward = 0
+			_sync_wallet()
+			shop_state.job_snapshot = completed_snapshot.duplicate(true)
+			finish_requested = false
+			contract_save_failed = true
+			update_contract_status()
+			return
 	contract_finished = true
+	contract_save_failed = false
+	snapshot_timer.stop()
 	update_contract_status()
 	soil.start_vacuum(true)
 
 func next_rug() -> void:
-	if next_job_pending or not soil.vacuum_complete:
-		return
-	if not paid_contract:
-		select_rug((selected_rug + 1) % rugs.size())
-		(hud.control("LeftRail") as ScrollContainer).scroll_vertical = 0
-		return
-	if not contract_finished:
-		return
-	hud.control("NextJobError").hide()
-	if shop_state.start_job().is_empty():
-		hud.control("NextJobError").show()
+	if leaving_scene or next_job_pending or not soil.vacuum_complete or not contract_finished:
 		return
 	next_job_pending = true
-	shop_state.contract_mode = true
-	get_tree().change_scene_to_file(Routes.CLEANING)
+	rug_phase = RugPhase.ARRIVING
+	if paid_contract:
+		hud.show_reward(completed_reward,shop_state.cash)
+		completed_reward = 0
+		contract_job_id = replacement_job_id
+		replacement_job_id = ""
+		shop_state.contract_mode = true
+	else:
+		selected_rug = (selected_rug+1)%rugs.size()
+	# Refill the existing batch offscreen. No PackedScene instantiation, mesh
+	# loading, or scene replacement occurs between rugs.
+	soil.set_reveal_progress(0.0)
+	soil.configure_rug(rugs[selected_rug])
+	contract_finished = false
+	finish_requested = false
+	auto_finish_queued = false
+	contract_save_failed = false
+	next_job_pending = false
+	start_rug_arrival()
 
 func return_to_shop() -> void:
+	if leaving_scene: return
+	leaving_scene = true
+	_cancel_transition()
 	end_stroke()
-	if not save_contract_progress():
-		return
+	save_contract_progress()
 	if shop_state != null:
 		shop_state.contract_mode = false
 	get_tree().change_scene_to_file(Routes.MAIN_MENU)
 
 func _exit_tree() -> void:
+	if is_instance_valid(shop_state) and shop_state.changed.is_connected(_sync_wallet):
+		shop_state.changed.disconnect(_sync_wallet)
 	save_contract_progress()
+	if original_scale_size != Vector2i.ZERO:
+		var window := get_window()
+		window.content_scale_size = original_scale_size
+		window.content_scale_aspect = original_scale_aspect
+		window.content_scale_mode = original_scale_mode
+	if original_orientation >= 0:
+		DisplayServer.screen_set_orientation(original_orientation)
 
 func add_soft_accent_lights() -> void:
 	# Small, shadowless color pools give the vinyl objects a gentle mobile-safe glow.
@@ -464,52 +640,20 @@ func add_soft_accent_lights() -> void:
 		light.position = data[0]
 		add_child(light)
 
-func show_instruction(node_name: String) -> void:
-	for name in ["InstructionIdle", "InstructionActive", "InstructionOther", "InstructionVacuum", "InstructionComplete"]:
-		hud.control(name).visible = name == node_name
-	instruction_label = hud.control(node_name) as Label
-
 func bind_ui() -> void:
-	# %unique names survive moving/reparenting controls in cleaning_hud.tscn.
-	# UI nodes, text, icons, dimensions and theme resources are serialized there.
-	rug_buttons.assign([hud.control("RugButton0"), hud.control("RugButton1"), hud.control("RugButton2")])
-	tool_buttons.assign([hud.control("BrushButton"), hud.control("SqueegeeButton"), hud.control("JetSprayButton")])
-	rug_hint = hud.control("RugHint") as Label
 	progress_card = hud.control("CleaningProgress") as PanelContainer
-	progress_track = hud.control("ProgressTrack")
-	progress_value_marker = hud.control("ProgressValueMarker") as HBoxContainer
 	state_label = hud.control("ProgressValue") as Label
 	progress_bar = hud.control("ProgressBar") as ProgressBar
 	progress_fill = progress_bar.get_theme_stylebox("fill") as StyleBoxFlat
-	completion_icon = hud.control("CompletionIcon") as TextureRect
-	contract_label = hud.control("ContractReward") as Label
-	contract_status = hud.control("ContractStatus") as Label
 	finish_button = hud.control("FinishJobButton") as Button
-	reset_button = hud.control("ResetRugButton") as Button
-	hud.control("PracticeTitle").visible = not paid_contract
-	hud.control("ContractTitle").visible = paid_contract
-	hud.control("PracticeRugs").visible = not paid_contract
-	hud.control("ContractCard").visible = paid_contract
-	hud.control("PaidTarget").visible = paid_contract
-	hud.control("PracticeToolsHint").visible = not paid_contract
-	hud.control("StarterBrushHint").visible = paid_contract and not wide_brush
-	hud.control("WideBrushHint").visible = paid_contract and wide_brush
-	var reward: int = shop_state.MANUAL_REWARD if shop_state != null else 20
-	contract_label.text = hud.reward_text % reward
-	(hud.control("RewardReceived") as Label).text = hud.reward_received_text % reward
-	for i in tool_buttons.size():
-		tool_buttons[i].pressed.connect(select_tool.bind(i))
-		tool_buttons[i].visible = not paid_contract or i == 0
-	for i in rug_buttons.size():
-		rug_buttons[i].pressed.connect(select_rug.bind(i))
-		rug_buttons[i].disabled = paid_contract
-	reset_button.pressed.connect(reset_rug)
 	finish_button.pressed.connect(finish_contract)
-	(hud.control("HomeButton") as Button).pressed.connect(return_to_shop)
-	(hud.control("CompletionHomeButton") as Button).pressed.connect(return_to_shop)
-	(hud.control("NextRugButton") as Button).pressed.connect(next_rug)
-	touch_buttons.assign(tool_buttons)
-	touch_buttons.append_array(rug_buttons)
-	for name in ["ResetRugButton", "FinishJobButton", "HomeButton", "CompletionHomeButton", "NextRugButton"]:
-		touch_buttons.append(hud.control(name) as Button)
-	show_instruction("InstructionIdle")
+	var home_button := hud.control("HomeButton") as Button
+	home_button.pressed.connect(back)
+	var upgrade_button := hud.control("UpgradeButton") as Button
+	var close_upgrades := hud.control("CloseUpgradesButton") as Button
+	upgrade_button.pressed.connect(hud.open_upgrades)
+	close_upgrades.pressed.connect(hud.close_upgrades)
+	hud.upgrades_changed.connect(_on_upgrades_changed)
+	for button in [home_button, finish_button, upgrade_button, close_upgrades]:
+		Pop.bind(button)
+		touch_buttons.append(button)

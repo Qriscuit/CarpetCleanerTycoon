@@ -15,6 +15,7 @@ func _initialize() -> void:
 
 
 func _run() -> void:
+	_check_manual_reward_tiers()
 	var state := _new_state("main")
 	_check(state.cash == 0 and state.owns("hand_brush") and state.output_per_hour() == 0.0, "Free shop starts without routine income")
 	_check(state.equipped_brush == "hand_brush", "Free starter brush is equipped by default")
@@ -23,9 +24,9 @@ func _run() -> void:
 	var first: String = state.start_job()
 	_check(not first.is_empty() and state.start_job() == first, "One resumable active job")
 	_check(not state.complete_job(first), "Uncleaned carpet does not pay")
-	state.save_job_snapshot({"unique_clearance": 0.95, "surface_clearance": 0.89, "pixels": [1, 2, 3]})
+	state.save_job_snapshot({"unique_clearance": 0.95, "surface_clearance": 0.84, "pixels": [1, 2, 3]})
 	_check(not state.complete_job(first), "Both clearance thresholds are required")
-	state.save_job_snapshot({"unique_clearance": 0.9, "surface_clearance": 0.9, "pixels": [1, 2, 3]})
+	state.save_job_snapshot({"unique_clearance": 0.85, "surface_clearance": 0.85, "pixels": [1, 2, 3]})
 	state = _reload(state)
 	_check(state.active_job_id == first and state.job_snapshot["pixels"].size() == 3, "Active carpet persists across reload")
 	_check(state.complete_job(first) and state.cash == 20 and state.manual_jobs == 1, "Saved eligible carpet pays 20")
@@ -110,7 +111,29 @@ func _run() -> void:
 	state._save_path = main_path + "/missing-folder/save.json"
 	_check(not state.complete_job(pending) and state.cash == before_failed_cash and state.manual_jobs == before_failed_jobs and state.active_job_id == pending, "Failed commit rolls back cash, count and the active job")
 	state._save_path = main_path
+	_check(state.complete_job(pending) and state.cash == before_failed_cash + 40 and state.manual_jobs == before_failed_jobs + 1, "Retry after a failed perfect-rug commit pays exactly 40")
+	_check(not state.complete_job(pending) and state.cash == before_failed_cash + 40, "Repeated perfect-rug completion cannot pay twice")
+	state = _reload(state)
+	_check(state.cash == before_failed_cash + 40 and state.active_job_id.is_empty(), "Perfect-rug payout survives a reload without restoring the completed job")
 	state.free()
+	# Finishing and reserving the next rug is atomic and rejects the old id twice.
+	var atomic := _new_state("atomic_next")
+	var old_job: String = atomic.start_job()
+	var next_job: String = atomic.complete_and_start_next_job(old_job, {"unique_clearance": 0.85, "surface_clearance": 0.85})
+	_check(not next_job.is_empty() and next_job != old_job and atomic.active_job_id == next_job, "Completion atomically reserves a fresh rug")
+	_check(atomic.cash == 20 and atomic.manual_jobs == 1 and atomic.job_snapshot.is_empty(), "Atomic completion pays once and starts the next rug clean")
+	_check(atomic.complete_and_start_next_job(old_job, {"unique_clearance": 1.0, "surface_clearance": 1.0}).is_empty() and atomic.cash == 20, "Repeated completion with the old id cannot pay twice")
+	var atomic_path: String = atomic._save_path
+	atomic._save_path += "/cannot-write.json"
+	var active_before_failure: String = atomic.active_job_id
+	_check(atomic.complete_and_start_next_job(active_before_failure, {"unique_clearance": 1.0, "surface_clearance": 1.0}).is_empty() and atomic.active_job_id == active_before_failure and atomic.cash == 20, "Failed atomic save keeps the current rug and reward ledger unchanged")
+	atomic._save_path = atomic_path
+	var perfect_next: String = atomic.complete_and_start_next_job(active_before_failure, {"unique_clearance": 0.99, "surface_clearance": 1.0})
+	_check(not perfect_next.is_empty() and perfect_next != active_before_failure and atomic.cash == 60 and atomic.manual_jobs == 2, "Retry atomically awards 40 for a perfect rug and reserves its replacement")
+	_check(atomic.complete_and_start_next_job(active_before_failure, {"unique_clearance": 1.0, "surface_clearance": 1.0}).is_empty() and atomic.cash == 60, "Repeated perfect atomic completion cannot pay twice")
+	atomic = _reload(atomic)
+	_check(atomic.cash == 60 and atomic.manual_jobs == 2 and atomic.active_job_id == perfect_next and atomic.job_snapshot.is_empty(), "Atomic perfect reward and next-rug reservation survive reload together")
+	atomic.free()
 	# Intake before Mk II is allowed, and honestly yields no immediate rate increase.
 	var intake_first := _new_state("intake_first")
 	for _job in range(15):
@@ -199,7 +222,50 @@ func _advance(state: Node, seconds: float) -> void:
 
 func _finish_one(state: Node) -> void:
 	var id: String = state.start_job()
-	_check(state.save_job_snapshot({"unique_clearance": 1.0, "surface_clearance": 1.0}) and state.complete_job(id), "Complete an eligible manual commission")
+	_check(state.save_job_snapshot({"unique_clearance": 0.85, "surface_clearance": 0.85}) and state.complete_job(id), "Complete an eligible manual commission")
+
+
+func _check_manual_reward_tiers() -> void:
+	var cases: Array[Dictionary] = [
+		{"label": "84.99 percent", "snapshot": {"unique_clearance": 0.8499, "surface_clearance": 0.8499}, "reward": 0},
+		{"label": "85 percent", "snapshot": {"unique_clearance": 0.85, "surface_clearance": 0.85}, "reward": 20},
+		{"label": "98.99 percent", "snapshot": {"unique_clearance": 0.9899, "surface_clearance": 0.9899}, "reward": 20},
+		{"label": "99 percent", "snapshot": {"unique_clearance": 0.99, "surface_clearance": 0.99}, "reward": 40},
+		{"label": "100 percent", "snapshot": {"unique_clearance": 1.0, "surface_clearance": 1.0}, "reward": 40},
+		{"label": "integer full clearances", "snapshot": {"unique_clearance": 1, "surface_clearance": 1}, "reward": 40},
+		{"label": "dust below minimum", "snapshot": {"unique_clearance": 1.0, "surface_clearance": 0.8499}, "reward": 0},
+		{"label": "debris below minimum", "snapshot": {"unique_clearance": 0.8499, "surface_clearance": 1.0}, "reward": 0},
+		{"label": "dust limits early reward", "snapshot": {"unique_clearance": 1.0, "surface_clearance": 0.9899}, "reward": 20},
+		{"label": "debris limits early reward", "snapshot": {"unique_clearance": 0.85, "surface_clearance": 1.0}, "reward": 20},
+		{"label": "unequal perfect layers", "snapshot": {"unique_clearance": 0.99, "surface_clearance": 1.0}, "reward": 40},
+		{"label": "missing layers", "snapshot": {}, "reward": 0},
+		{"label": "missing surface", "snapshot": {"unique_clearance": 1.0}, "reward": 0},
+		{"label": "missing debris", "snapshot": {"surface_clearance": 1.0}, "reward": 0},
+	]
+	for invalid: Variant in [null, true, "1.0", NAN, INF, -INF, -0.1, 1.001, [], {}]:
+		for key: String in ["unique_clearance", "surface_clearance"]:
+			var snapshot := {"unique_clearance": 1.0, "surface_clearance": 1.0}
+			snapshot[key] = invalid
+			cases.append({"label": "invalid %s (%s)" % [key, str(invalid)], "snapshot": snapshot, "reward": 0})
+	var ledger := _new_state("reward_tiers")
+	for sample: Dictionary in cases:
+		var label: String = sample.label
+		var snapshot: Dictionary = sample.snapshot
+		var expected: int = sample.reward
+		_check(State.manual_reward_for(snapshot) == expected, "Reward rule handles " + label)
+		var job: String = ledger.start_job()
+		var before_cash: int = ledger.cash
+		var before_jobs: int = ledger.manual_jobs
+		ledger.job_snapshot = snapshot.duplicate(true)
+		var completed: bool = ledger.complete_job(job)
+		_check(completed == (expected > 0) and ledger.cash == before_cash + expected and ledger.manual_jobs == before_jobs + (1 if expected > 0 else 0) and ledger.active_job_id == ("" if expected > 0 else job), "Standalone payout follows both-layer rule for " + label)
+		job = ledger.start_job()
+		before_cash = ledger.cash
+		before_jobs = ledger.manual_jobs
+		var replacement: String = ledger.complete_and_start_next_job(job, snapshot)
+		var replaced: bool = not replacement.is_empty() and replacement != job and replacement == ledger.active_job_id
+		_check(replaced == (expected > 0) and ledger.cash == before_cash + expected and ledger.manual_jobs == before_jobs + (1 if expected > 0 else 0) and (expected > 0 or ledger.active_job_id == job), "Atomic payout follows both-layer rule for " + label)
+	ledger.free()
 
 
 func _remove_equipment_field(path: String) -> void:

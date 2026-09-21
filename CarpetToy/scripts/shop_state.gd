@@ -7,6 +7,9 @@ const SAVE_VERSION := 1
 const SAVE_PATH := "user://neighborhood_shop_v1.json"
 const OFFLINE_CAP_SECONDS := 8.0 * 60.0 * 60.0
 const MANUAL_REWARD := 20
+const MANUAL_COMPLETION_THRESHOLD := 0.85
+const PERFECT_REWARD := 40
+const PERFECT_COMPLETION_THRESHOLD := 0.99
 const ROUTINE_REWARD := 10
 const COSTS := {"hand_brush": 0, "wide_brush": 80, "bonzi": 100, "bonzi_mk2": 120, "intake": 100}
 const GATES := {"hand_brush": 0, "wide_brush": 8, "bonzi": 3, "bonzi_mk2": 10, "intake": 10}
@@ -200,17 +203,41 @@ func save_job_snapshot(snapshot: Dictionary) -> bool:
 func complete_job(job_id: String) -> bool:
 	if job_id.is_empty() or job_id != active_job_id:
 		return false
-	if not _valid_clearance(job_snapshot.get("unique_clearance", 0.0)) or not _valid_clearance(job_snapshot.get("surface_clearance", 0.0)):
+	var reward := manual_reward_for(job_snapshot)
+	if reward == 0:
 		return false
 	var before := _capture_state()
 	var old_ticks := _last_ticks
 	_settle_elapsed()
-	cash += MANUAL_REWARD
+	cash += reward
 	manual_jobs += 1
 	active_job_id = ""
 	job_snapshot = {}
 	_refresh_blueprints()
 	return _finish_transaction(before, old_ticks)
+
+
+func complete_and_start_next_job(job_id: String, completed_snapshot: Dictionary) -> String:
+	# Rewarding the finished rug and reserving its replacement are one ledger
+	# transaction. A repeated tap still carries the old id and is rejected, while
+	# a restart during the takeaway animation opens the already-saved next rug.
+	if job_id.is_empty() or job_id != active_job_id:
+		return ""
+	var reward := manual_reward_for(completed_snapshot)
+	if reward == 0:
+		return ""
+	var before := _capture_state()
+	var old_ticks := _last_ticks
+	_settle_elapsed()
+	cash += reward
+	manual_jobs += 1
+	_job_serial += 1
+	active_job_id = "neighborhood-%d" % _job_serial
+	job_snapshot = {}
+	_refresh_blueprints()
+	if not _finish_transaction(before, old_ticks):
+		return ""
+	return active_job_id
 
 
 func save_state() -> bool:
@@ -255,8 +282,17 @@ func reset_progress() -> bool:
 	return true
 
 
-func _valid_clearance(value: Variant) -> bool:
-	return (value is float or value is int) and is_finite(float(value)) and float(value) >= 0.9 and float(value) <= 1.0
+static func manual_reward_for(snapshot: Dictionary) -> int:
+	var debris: Variant = snapshot.get("unique_clearance")
+	var surface: Variant = snapshot.get("surface_clearance")
+	if not _valid_clearance(debris) or not _valid_clearance(surface):
+		return 0
+	# The dirtier layer determines completion, regardless of the finish trigger.
+	return PERFECT_REWARD if minf(float(debris), float(surface)) >= PERFECT_COMPLETION_THRESHOLD else MANUAL_REWARD
+
+
+static func _valid_clearance(value: Variant) -> bool:
+	return (value is float or value is int) and is_finite(float(value)) and float(value) >= MANUAL_COMPLETION_THRESHOLD and float(value) <= 1.0
 
 
 func _refresh_blueprints() -> void:

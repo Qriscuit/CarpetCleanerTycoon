@@ -1,14 +1,17 @@
 extends SceneTree
-## Production UI must exist before _ready and retain authored transforms/copy.
+## The sparse cleaning HUD stays authored, touch-safe, and responsive.
 var failures := 0
+
 
 func check(condition: bool, message: String) -> void:
 	if not condition:
 		failures += 1
 		push_error("EDITABLE HUD: " + message)
 
+
 func _initialize() -> void:
 	call_deferred("run")
+
 
 func touch(index: int, point: Vector2, pressed: bool, canceled: bool = false) -> void:
 	var event := InputEventScreenTouch.new()
@@ -18,96 +21,99 @@ func touch(index: int, point: Vector2, pressed: bool, canceled: bool = false) ->
 	event.canceled = canceled
 	root.push_input(event, true)
 
+
 func drag(index: int, point: Vector2) -> void:
 	var event := InputEventScreenDrag.new()
 	event.index = index
 	event.position = point
 	root.push_input(event, true)
 
+
 func run() -> void:
 	if not "--shop-test" in OS.get_cmdline_user_args():
 		push_error("Use -- --shop-test for an isolated UI run.")
 		quit(2)
 		return
-	for scene_path in ["res://scenes/production/rug_cleaning.tscn", "res://scenes/test/starter_workshop.tscn"]:
+	for scene_path in ["res://scenes/production/rug_cleaning.tscn", "res://scenes/test/rug_cleaning_gym.tscn"]:
 		var authored := (load(scene_path) as PackedScene).instantiate()
 		var hud: CanvasLayer = authored.get_node("GymUI")
-		check(hud.get_node("%HomeButton") is Button, "Home exists in the local scene before gameplay starts")
-		check(hud.get_node("%RugButton2") is Button and hud.get_node("%FinishJobButton") is Button, "Practice and paid menus are both authored")
-		check(hud.get_node("%NextRugButton") is Button, "Completion button is editor-selectable")
+		check(hud.get_node("%HomeButton") is Button and hud.get_node("%HomeButton").text.is_empty(), "Back is an authored icon-only button")
+		check(hud.get_node("%ProgressBar") is ProgressBar and hud.get_node("%ProgressValue") is Label, "The one progress bar and number are authored")
+		check(hud.get_node("%FinishJobButton") is Button, "Finish job is editor-selectable")
+		check(hud.get_node_or_null("%Heading") == null and hud.get_node_or_null("%LeftRail") == null and hud.get_node_or_null("%ToolRail") == null and hud.get_node_or_null("%CompletionCard") == null, "Text panels, side rails, and the completion prompt were removed")
 		authored.free()
+
 	var game := (load("res://scenes/production/rug_cleaning.tscn") as PackedScene).instantiate()
-	var pre_hud: CanvasLayer = game.get_node("GymUI")
-	var heading: Control = pre_hud.control("Heading")
-	heading.position += Vector2(0, 5)
-	var edited_position := heading.position
-	(pre_hud.control("HomeButton") as Button).text = "Edited home label"
-	var brush_caption: Label = pre_hud.get_node("HUD/ToolRail/BrushButton/Caption")
-	brush_caption.text = "My brush"
+	game.animate_rug_changes = false
 	root.add_child(game)
 	await process_frame
 	await process_frame
-	check(heading.position == edited_position, "Runtime preserves an edited top-level UI position")
-	check(game.hud.control("HomeButton").text == "Edited home label" and brush_caption.text == "My brush", "Runtime preserves authored button and icon-caption text")
 	for button in game.touch_buttons:
-		check(button.custom_minimum_size.y >= 56, "Every cleaning action has a minimum 56 logical-pixel target")
-	var target: Button = game.tool_buttons[1]
+		check(button.custom_minimum_size.y >= 56.0, "Every cleaning action has a 56-pixel touch target")
+	for viewport_size in [Vector2i(360, 800), Vector2i(800, 360), Vector2i(720, 1000)]:
+		root.content_scale_size = viewport_size
+		root.size = viewport_size
+		await process_frame
+		game.hud._layout()
+		game.frame_carpet()
+		var bounds := Rect2(Vector2.ZERO, Vector2(viewport_size))
+		for name in ["HomeButton", "CleaningProgress", "FinishJobButton"]:
+			var control: Control = game.hud.control(name)
+			check(bounds.encloses(control.get_global_rect()), name + " stays on-screen at " + str(viewport_size))
+		check(is_zero_approx(game.camera.position.x), "The rug remains horizontally centered at " + str(viewport_size))
+		if "--capture" in OS.get_cmdline_user_args() and viewport_size in [Vector2i(360, 800), Vector2i(800, 360)]:
+			await RenderingServer.frame_post_draw
+			var orientation := "portrait" if viewport_size.y > viewport_size.x else "landscape"
+			root.get_texture().get_image().save_png(ProjectSettings.globalize_path("res://../art/renders/cleaning_minimal_" + orientation + ".png"))
+
+	# The single number uses the less-clean of debris and dust.
+	game.soil.remaining = 0
+	game.soil.surface_coverage_total = float(game.soil.surface_pixel_count) * 0.16
+	game.update_contract_status()
+	check(game.state_label.text == "84%" and not game.finish_button.visible, "Finish stays hidden below 85%")
+	game.soil.surface_coverage_total = float(game.soil.surface_pixel_count) * 0.15
+	game.update_contract_status()
+	check(game.state_label.text == "85%" and game.finish_button.visible, "Finish appears at 85%")
+	if "--capture" in OS.get_cmdline_user_args():
+		await RenderingServer.frame_post_draw
+		root.get_texture().get_image().save_png(ProjectSettings.globalize_path("res://../art/renders/cleaning_finish_85.png"))
+
+	var target: Button = game.finish_button
+	target.pressed.disconnect(game.finish_contract)
 	var point := target.get_global_rect().get_center()
 	touch(0, point, true)
-	check(game.selected_tool == 0 and not game.brush_dragging, "Finger down does not select or paint")
+	check(game.hud_button == target and not game.brush_dragging, "Finger down owns the button without painting")
 	touch(0, point, false)
-	check(game.selected_tool == 1 and not game.brush_dragging, "Finger release selects exactly the intended tool")
-	game.select_tool(0)
+	check(target.has_focus() and not game.brush_dragging, "Finger release activates the intended button only")
+	target.pressed.connect(game.finish_contract)
+	# Use the Back button for cancellation checks; Finish may have started takeaway.
+	target = game.hud.control("HomeButton") as Button
+	point = target.get_global_rect().get_center()
+	target.release_focus()
 	touch(0, point, true)
 	drag(0, point + Vector2(0, 35))
 	drag(0, point)
 	touch(0, point, false)
-	check(game.selected_tool == 0 and not game.brush_dragging, "Drag out and back permanently cancels a button gesture")
+	check(not target.has_focus() and not game.brush_dragging, "Dragging away permanently cancels a HUD tap")
 	touch(0, point, true)
-	touch(1, point + Vector2(5, 5), true)
+	touch(1, point + Vector2(4, 4), true)
 	touch(1, point, false)
 	touch(0, point, false)
-	check(game.selected_tool == 0 and not game.brush_dragging, "A second finger cancels the pending menu tap")
-	var carpet_point: Vector2 = game.camera.unproject_position(Vector3.ZERO) - game.TOUCH_CONTACT_OFFSET
-	touch(0, carpet_point, true)
-	check(game.brush_dragging, "An unblocked finger starts a carpet stroke")
-	touch(1, point, true)
-	check(not game.brush_dragging, "A second finger ends cleaning before a UI gesture can interfere")
-	drag(0, carpet_point + Vector2(0, 20))
-	touch(1, point, false)
-	touch(0, carpet_point, false)
-	check(not game.brush_dragging and game.selected_tool == 0, "Multitouch never leaves a ghost stroke or activates a tool")
-	game.select_rug(0)
-	var rail: ScrollContainer = game.hud.control("LeftRail")
-	var old_height := rail.offset_bottom
-	rail.offset_bottom = -500
-	await process_frame
-	point = game.rug_buttons[1].get_global_rect().get_center()
-	touch(0, point, true)
-	drag(0, point - Vector2(0, 65))
-	touch(0, point - Vector2(0, 65), false)
-	check(game.selected_rug == 0 and not game.brush_dragging, "Swipe starting on a rug option cannot switch rugs or clean")
-	check(rail.scroll_vertical > 0, "The left rail scrolls under a touch swipe")
-	rail.offset_bottom = old_height
-	rail.scroll_vertical = 0
-	game.soil.start_vacuum(true)
-	for tick in 150:
-		game.soil._physics_process(1.0 / 60.0)
-	check(game.hud.control("CompletionCard").visible, "Completed practice presents a next-rug choice")
-	game.next_rug()
-	check(game.selected_rug == 1 and not game.soil.completion_started, "Next rug advances practice without a trip through the shop")
-	await process_frame
-	await RenderingServer.frame_post_draw
-	root.get_texture().get_image().save_png(ProjectSettings.globalize_path("res://../art/renders/editable_cleaning_hud.png"))
+	check(not target.has_focus() and not game.brush_dragging, "A second finger cancels the pending HUD tap")
+
+	# A practice scene avoids the completed paid rug and verifies clear carpet input.
 	game.free()
-	var studio := (load("res://scenes/test/carpet_studio.tscn") as PackedScene).instantiate()
-	check(studio.get_node("StudioUI/%TurntableButton") is Button, "Art studio controls are authored too")
-	root.add_child(studio)
+	var practice := (load("res://scenes/test/rug_cleaning_gym.tscn") as PackedScene).instantiate()
+	practice.animate_rug_changes = false
+	root.add_child(practice)
 	await process_frame
-	studio._toggle_turntable()
-	check(studio.turn and studio.ui.get_node("%TurntableButton").button_pressed, "Art studio binds its editable controls")
-	studio._reset()
-	check(not studio.turn and not studio.ui.get_node("%TurntableButton").button_pressed, "Reset clears the turntable selection")
-	studio.free()
-	print("EDITABLE HUD CHECKS COMPLETE: ", failures, " failures; preauthored hierarchy, preserved edits, tap release, drag cancellation, multitouch, scrolling, progression and studio.")
+	var carpet_point: Vector2 = practice.camera.unproject_position(Vector3.ZERO) - practice.TOUCH_CONTACT_OFFSET
+	touch(0, carpet_point, true)
+	check(practice.brush_dragging, "An unblocked finger starts a carpet stroke")
+	touch(0, carpet_point, false)
+	check(not practice.brush_dragging, "Release ends the carpet stroke")
+	practice.free()
+	root.content_scale_size = Vector2i(720, 1000)
+	root.size = Vector2i(720, 1000)
+	print("EDITABLE HUD CHECKS COMPLETE: ", failures, " failures; sparse authored controls, phone layouts, thresholds and touch routing.")
 	quit(0 if failures == 0 else 1)

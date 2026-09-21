@@ -837,6 +837,11 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_focus_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_pressed_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_hover_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_disabled_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 button_pressed = true
 text = "Animate shop"
 
@@ -852,6 +857,8 @@ theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_colors/font_focus_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_colors/font_pressed_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_colors/font_hover_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_disabled_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_font_sizes/font_size = 16
 text = "Reset progress"
 
@@ -861,6 +868,11 @@ custom_minimum_size = Vector2(0, 48)
 layout_mode = 2
 theme_override_styles/normal = SubResource("StyleBoxFlat_6sk8m")
 theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_focus_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_pressed_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_hover_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_disabled_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 text = "Done"
 
 [node name="ResetReview" type="VBoxContainer" parent="SettingsSheet/SettingsPanel/SettingsContents" unique_id=110680016]
@@ -897,6 +909,8 @@ theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_colors/font_focus_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_colors/font_pressed_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_colors/font_hover_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_disabled_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_font_sizes/font_size = 16
 text = "Keep playing"
 
@@ -912,6 +926,8 @@ theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_colors/font_focus_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_colors/font_pressed_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_colors/font_hover_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_colors/font_disabled_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_font_sizes/font_size = 16
 text = "Reset"
 

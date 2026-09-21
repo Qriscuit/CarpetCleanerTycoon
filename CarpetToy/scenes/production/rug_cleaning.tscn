@@ -377,7 +377,7 @@ _surfaces = [{
 blend_shape_mode = 0
 shadow_mesh = SubResource("ArrayMesh_nn11o")
 
-[node name="RugCleaningGym" type="Node3D" unique_id=854304108]
+[node name="RugCleaningWindow" type="Node3D" unique_id=854304108]
 script = ExtResource("1_a8y8r")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1430872018]

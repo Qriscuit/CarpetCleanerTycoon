@@ -55,6 +55,12 @@ func run() -> void:
 	tap(home.management.get_node("%CloseSheet"))
 	tap(home.get_node("%Settings"))
 	await settle()
+	var readable_blue := Color(0.20784314,0.34509805,0.4627451,1)
+	for node_name: String in ["MotionToggle","ResetProgress","CloseSettings","CancelReset","ConfirmReset"]:
+		var control: Button = home.get_node("%"+node_name)
+		for color_name: String in ["font_color","font_focus_color","font_pressed_color","font_hover_color","font_hover_pressed_color","font_disabled_color"]:
+			check(control.get_theme_color(color_name).is_equal_approx(readable_blue), "%s keeps readable %s text" % [node_name,color_name])
+	root.get_texture().get_image().save_png("res://../art/renders/home_settings.png")
 	var before: int = state.cash
 	for dimensions: Vector2i in [Vector2i(320,568),Vector2i(390,844),Vector2i(844,390)]:
 		root.size = dimensions
