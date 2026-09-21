@@ -1,118 +1,107 @@
 # Mint Meadow — carpet cleaning prototype
 
-## Android APK
+## Run and build
 
-Save your game changes and double-click **Build APK.cmd**. It uses the bundled standard Godot 4.7.2, checks dependencies, exports a signed debug APK, verifies its signature, and writes **build/CarpetCleaner.apk**. Use **Open Game Editor.cmd** to open the matching editor. See [APK recovery checklist](design/Android_APK.md) for exact SDK paths and fixes for template, SDK, and signing errors.
+Open **Open Game Editor.cmd**, then press **F5** for the floating-store main menu. The project uses the bundled standard Godot 4.7.2; no .NET SDK is required.
 
-## Floating shop main menu
+To export, save changes and double-click **Build APK.cmd**. The launcher checks dependencies, exports a signed debug APK, verifies its signature, and writes **build/CarpetCleaner.apk**. See the [APK recovery checklist](design/Android_APK.md) for SDK, template and signing fixes. **No APK was built for the current progression implementation.** Phone performance and touch feel still need device testing.
 
-Press **F5** to launch `CarpetToy/scenes/production/floating_home.tscn`, the light-blue main menu. Pressing the 3D shop squashes it, then releases with a small pop before starting/resuming a rug. The dock opens compact **Shop**, **Tools**, **Plans**, and **Bonzi** sheets. They show short item/status rows and review price, benefit and remaining cash before any purchase. It adapts to portrait and landscape with safe-area layout. Editable assets are in `art/blender/floating_shop.blend`; exports are in `CarpetToy/assets/floating_shop/`. See [floating home implementation](design/home-screen/IMPLEMENTATION.md) for editing, rebuilding, and validation details. Desktop layout/input checks pass; mobile device testing remains outstanding.
+## Current game loop
 
-## Current design and economy
+Tap the floating store to clean or resume its rug. Swipe it left or right to preview stores. The bottom dock opens **Shop**, **Tools**, **Stores** and **Bonzi** sheets. Owned stores keep their own unfinished rug and upgrades; visiting another store preserves them. The main menu and rug-cleaning window are separate production scenes, driven by the selected store's data.
 
-Production entry scenes live in `CarpetToy/scenes/production/`; the old menu, free gym, and art previews live in `CarpetToy/scenes/test/` and are excluded from Android builds. Both rug Home buttons always open the floating main menu. See [scene layout and navigation](design/Scene_Navigation.md) for the routing rules and regression check.
+Clean a rug, collect coins, then choose a higher payout or a stronger tool. The cleaning HUD keeps a progress bar, persistent gold wallet, Back control, bottom payout card and left tool drawer. **Finish job** appears at 85%; at 99% the job finishes automatically. Rugs roll in, starter rocks appear, and the brush enters. On completion, debris is sucked away and the rug rolls out before the next rug arrives. There is no new-rug prompt or scene reload between jobs.
 
-The brush-first metagame is documented in [GDD v0.2](Carpet_Cleaner_Tycoon_GDD_v0_2.docx) and [Economy workbook v0.2](Carpet_Cleaner_Economy_v0_2.xlsx). The Neighborhood Shop is now playable: paid rugs, permanent blueprints, item builds, Bonzi automation, optional upgrades, and saved progress. Later shops remain design proposals. The editable design source is [design/Metagame_v0_2.md](design/Metagame_v0_2.md); its “not implemented” passages describe the earlier baseline. The v0.1 GDD remains historical context.
+| Store | Cleaning | Starting early / full payout | Opening price |
+| --- | --- | ---: | ---: |
+| Neighborhood | Brush | 20 / 40 | Free |
+| High Street | Stronger brushes | 160 / 320 | 2,000 |
+| Wash House | Brush → water → squeegee | 1,280 / 2,560 | 16,000 |
+| Restoration Studio | Stronger wet tools | 10,240 / 20,480 | 128,000 |
 
-Open **Open Godot Project.lnk**, then press **F5** for the floating main menu. The original detailed hub remains available at `CarpetToy/scenes/test/shop_hub.tscn` for development and practice-gym access. Customer jobs use the production `rug_cleaning.tscn` scene; the free gym inherits its cleaning world.
+These are four authored stores, using shared building geometry with palette changes. Extra payout levels continue beyond the initial 20-level tuning range, subject to a **9,000,000,000,000,000** currency guard. There is no fifth-store purchase or literal infinite-number system.
 
-## Neighborhood Shop
+For store scale `S = 8^(store - 1)` and payout level `L`, early reward is `S × round(20 × 1.10^L)` and the next payout upgrade costs `S × round(25 × 1.15^L)`. A full clean always pays twice the early reward. Prices and pacing are prototype balance values; definitions live in [progression.gd](CarpetToy/scripts/progression.gd). See the [progression draft](design/Store_Progression_v0_3_Draft.md) and [implementation coverage](design/Implementation_Coverage.md) for scope and remaining work. The v0.2 GDD and workbook are historical; the workbook remains unchanged while the user's replacement source is pending.
 
-Bonzi's bar shows its actual reward and cycle: **10 coins every 120s**, **90s** with Mk II, or **80s** with both automation upgrades. Coins arrive once per finished bar. In the main menu, **Settings → Reset progress → Reset** starts fresh after confirmation; **Keep playing** cancels. Reset removes earned coins, items, milestones and the active rug while preserving the free starter brush.
+## Tools, Bonzi and travel
 
-The floating home routes **Shop** to upgrades, **Tools** to brush equipment, **Plans** to blueprint progress, and **Bonzi** to automation and income. The building is the primary clean/resume action. Close a sheet or press Back/Escape to return home; Back dismisses a purchase review first. Controls and cards are saved in editable scene hierarchies. Menus support mouse and touch; a swipe over a build button scrolls without purchasing.
+Each store has four local tool upgrades costing **80S, 200S, 500S and 1,000S**. Store 1 increases brush width through **1.44×, 1.55×, 1.65× and 1.75×**, with later tiers also increasing cleaning strength. Store 2 improves strength while retaining the 1.75× width cap. Nine distinct matte brush models cover the starter and eight dry-tool upgrades. Stores 3–4 upgrade water and extraction strength. The strongest owned tool power travels with the player; returning to an earlier store does not downgrade it.
 
-Start with a free shop, hand brush and 0 cash. Tapping the floating store opens one resumable customer rug in the separate cleaning scene. Its single percentage is the lower of debris clearance and surface-dust clearance. **Finish job** appears at 85%; finishing below 99% pays **20 coins**, while reaching 99% finishes automatically and pays **40 coins**. Both layers must meet the reward threshold. The reward and the next rug are committed in the same save transaction. Earlier economy assumptions based on 20 coins per manual rug still describe early finishes.
+The bottom payout card separates current/next earnings from the purchase price. A purchase updates the unfinished rug's saved quote immediately without resetting its dirt. The tool drawer shows current and next equipment and their effects. Opening the drawer pauses cleaning, dirt motion and rug transitions; Close or Back resumes the same phase. Purchases wait for reward coins to reach the displayed wallet. The first-use payout teaching animation is still planned polish.
 
-Debris is sucked away and the clean rug rolls out. A reusable 2D coin burst lingers briefly, then flies into the persistent gold wallet at the top-right. Each arriving coin adds its exact value to the displayed total; the saved balance already includes the whole reward. Leaving or interrupting the animation cannot duplicate or lose earnings. There is no new-rug prompt or scene reload between jobs. The icon Back control remains available during every transition and preserves the current rug or the already-reserved next job. The inherited test gym is free practice and never grants money. Paid jobs use owned tools; building the Wide Brush gives its visible model and real cleaning footprint 44% more width.
+| Bonzi tier | Incremental price | Coins per bar | Bar duration |
+| --- | ---: | ---: | ---: |
+| Basic | 100 in Store 1; included in later stores | 10S | 120 seconds |
+| Improved | 300S | 20S | 90 seconds |
+| Final | 900S | 40S | 60 seconds |
 
-The cleaning window's **Upgrade** button opens a centered placeholder menu; purchases are not available there yet. Opening it pauses brushing, dirt motion and rug transitions. Close or Back dismisses it and resumes the same rug phase.
+Bonzi becomes purchasable after three paid Store 1 rugs. Every owned store earns independently, including during manual cleaning and while away. Fractional deliveries carry forward; offline credit is capped at eight hours per absence. Manual payout upgrades do not alter Bonzi's displayed rate.
 
-| Build | Blueprint milestone | Cash | Effect |
-| --- | --- | --- | --- |
-| Bonzi | 3 customer rugs | 100 | Routine lane: 30 completed orders/hour at 10 cash each |
-| Wide Brush | 8 customer rugs | 80 | Wider manual brush |
-| Bonzi Mk II | 10 customer rugs + Bonzi | 120 | Capacity 30 → 45/hour; initial demand caps output at 40 |
-| Welcome Sign | 10 customer rugs + Bonzi | 100 | Demand 40 → 60/hour; with Mk II output becomes 45 |
+Opening the next store requires three things: local Bonzi earnings of **100S**, the final local tool used on **three paid rugs begun after its purchase**, and **2,000S** in the shared wallet. Only the opening price is spent. Spending never reverses the cumulative Bonzi milestone. Later stores include their basic Bonzi and required starter equipment. Reaching payout level 19 is not a travel gate.
 
-Bonzi's lane continues during manual cleaning and across menu changes. Orders pay when completed; fractional order progress carries forward. Return earnings use the same rates, capped at eight hours per absence. The return summary shows money already credited. Blueprint ownership is permanent; built personal tools and branch modules cannot be purchased twice. High Street is a clearly marked preview, with no purchase enabled. Wet cleaning and additional shops are future work.
+**Settings → Reset progress → Reset** clears the wallet, stores, tools, automation and active rugs after confirmation. **Keep playing** cancels. A fresh save retains the free starter brush and Neighborhood store.
 
-Versioned JSON saves live at Godot's `user://neighborhood_shop_v1.json`. Purchases, paid jobs and routine deliveries are committed atomically. Failed writes roll back transactions; unreadable or unsupported saves are preserved. Local time supports this prototype's offline production, without an anti-cheat claim.
+**Settings → Gym** opens free practice from the main menu. Click or tap outside Settings to dismiss it, or use Back/Escape. In the gym, **Rug 1 · Brush** tests surface dust and dirt pellets with the brush. On **Rug 2 · Wet tools**, hold or drag the water hose to drop blobs that merge into glossy puddles with gently moving edges. Squeegee displacement and water-driven dirt removal come later. Switch exercises or use **Reset rug** to start fresh. Finishing Rug 1 repeats that exercise. Practice awards no coins and preserves the active paid rug; Back returns to the main menu.
 
-Implementation: `scenes/test/shop_hub.tscn`, `scenes/ui/`, `resources/ui/mint_theme.tres`, `scripts/shop_hub.gd`, `scripts/ui/`, and `scripts/shop_state.gd`; paid mode and snapshots are in `scripts/workshop.gd` and `scripts/dirt_controller.gd`. Rug variants are reusable resources under `resources/rugs/`. Both owned brushes can be equipped in Items, with selection persisted across sessions. Cleaning completion automatically carries the player into the next rug, while the icon Back control can return to the main menu at any time.
+The water prototype uses a fixed **32-drop GPU mesh pool** and a **192 × 320 density texture**, updated only when new drops land. The carpet shader draws the merged surface in its existing opaque pass. The controller stops processing once released drops have landed; there are no water physics bodies or per-frame CPU image uploads. See [water architecture and verification](design/Water_Blobs.md). These are bounded implementation costs, not a measured phone performance claim.
 
-Run the three management checks with the portable Godot executable and `--path CarpetToy --script ../tools/validate_shop_state.gd -- --shop-test`, then substitute `validate_contract.gd` and `validate_shop_ui.gd`. `--shop-test` isolates saves from player progress. The state suite supports `--headless`; the contract and menu suites use the graphics renderer. Menu captures are `art/renders/shop_*.png`; paid-job captures are `art/renders/contract_*.png`.
+## Cleaning and rewards
 
-## Current feel pass
+For dry rugs, the meter uses the lower of debris clearance and surface-dust clearance. Wet rugs average dry, water and extraction progress. Water starts after 99% dry clearance; squeegeeing starts after 99% water coverage. The tool advances between stages. Early completion at 85% therefore permits some remaining extraction; 99% completes the whole job automatically. The ledger validates the required stages rather than trusting a displayed percentage.
 
-The rug rolls in from below the screen already carrying its dirt texture and unrolls at world (0,0,0). After it settles, 25 small starter rocks grow from nothing at randomly scattered positions, then the brush slides in and cleaning input becomes available. The same scene, rug meshes and 560-slot GPU dirt pool serve every subsequent rug. Each refill randomizes the clump positions while retaining the existing clump shapes, materials and resources. The remaining slots stay invisible until brushed out of the dust. Reset preserves that rug's scatter for repeatable playtesting. Contact grows a clump to its full size over approximately 0.18 seconds, then launches it. It never grows beyond 1.0 or repeats its growth until reset. The pale warm dust blend stays at 58% strength throughout arrival; it does not fade in with the rocks.
+Hold the left mouse button or one finger and drag once the brush arrives. Touch uses a 72 viewport-pixel offset above the finger. One finger owns the stroke; release, cancellation, tool changes and loss of focus end it. Placement never sweeps an unintended path from the previous position. Sweep beyond the rug edges to throw clumps onto the surrounding tile.
 
-Surface cleaning takes two passes: the first removes half the dust opacity and the second restores the original material in the brush's core. The boundary is softly feathered. Many mouse/touch events in one pass do not multiply cleaning. Release and drag again, or reverse direction for at least 8 cm while holding, to begin another pass. The soft fringe of a stroke blends gradually rather than ending in a hard cut.
+The starter brush removes surface dust over two core passes with feathered edges. Many events in one pass do not multiply cleaning; releasing or reversing direction begins another pass. Upgraded strength improves this action. Wet recipes add water coverage and extraction masks, with their progress saved alongside the dry state.
 
-Density is set by CLUMP_COUNT in tools/assemble_workshop.gd. The dust_strength and dust_tint uniforms in soil_surface.gdshader control surface appearance. The dirt mesh totals 11,200 triangles in one batch; active flags avoid searching the moving-clump list for every brush contact.
+The reward and the next rug are saved atomically before the takeaway animation. Reusable 2D coins linger, then fly into the top-right wallet; each adds its exact value to the **displayed** total. Actual earnings are already durable. Leaving during the animation cannot duplicate or lose them. Back remains available during arrival, cleaning, suction and departure; it closes an open drawer first. The legacy test gym awards no money.
 
-## Play
+Optional rewarded-ad integration is prepared, but **no ad SDK, provider or IDs are configured**, as requested. Its offer stays hidden without an available provider. A verified provider completion can add one extra completed-rug payout, once per job; skipped or failed ads cannot remove earned money. Ads are not required for upgrades or travel. Real ad playback is not yet tested.
 
-Equip an owned brush in the main menu's **Tools** sheet. Once the rug has unrolled, the dirt has appeared and the brush has entered, hold the left mouse button or one finger and drag to brush. The bristles follow the rug or surrounding tile height. Practice tool selection remains available through test code; there are no tool-picker buttons in the cleaning window.
+## Saved progress and navigation
 
-With the brush selected, sweep beyond the carpet edges to throw dirt onto the surrounding white tiles. Strokes fling clumps mainly along positive/negative Z, with a small X spread; stroke speed affects throw strength.
+Version 2 JSON data uses the existing `user://neighborhood_shop_v1.json` path. Migration preserves existing cash, tools, Bonzi, the current rug and fractional automation progress without reducing owned power or output. Purchases, rewards and travel use atomic saves with rollback on failure. Offline income uses local time; this prototype makes no anti-cheat claim.
 
-The single bar reports the lower of debris clearance and surface-dust clearance, with its percentage centered inside. Each clump awards debris progress only once; both layers must reach 85% for **Finish job** or 99% for automatic completion. Early finishes pay 20 coins; 99% or higher pays 40. The bar transitions from red through yellow and green to blue with a matching glow. On completion the brush disappears, dirt lifts and accelerates toward suction above the screen over 1.8 seconds, and remaining surface dust fades away. The clean carpet then rolls up and exits before the same scene presents the next rug. Reward coins briefly linger before flying into the persistent top-right wallet, which counts their values as they arrive. Input resumes after the replacement rug, starter rocks and brush finish entering. Reset remains available through the internal `reset_rug()` method for testing.
+Production entry scenes are `CarpetToy/scenes/production/floating_home.tscn` and `rug_cleaning.tscn`. The reachable gym remains at `CarpetToy/scenes/test/rug_cleaning_gym.tscn` and is included in Android exports. The old detailed hub and asset previews remain excluded. Gameplay Back controls return to the floating home. See [scene navigation](design/Scene_Navigation.md).
 
-Touch uses a 72 viewport-pixel offset above the finger. A single finger owns the stroke. Releasing over UI, touch cancellation, switching tool and losing focus stop dragging. Clicking to place the brush does not sweep a path from its previous location. The cleaning HUD contains an icon Back control, the percentage bar, a persistent gold wallet, an **Upgrade** button and the conditional **Finish job** button. Actions use release-based touch handling while mouse emulation remains disabled. Back closes the Upgrade menu first; otherwise it returns to the main menu, including during arrival, suction and departure. Squeegee and jet spray model selection remains available to test code, but their water/wiping effects are future gameplay and they do not invoke the brush's cleaning behavior.
+## Reused assets and simulation
 
-## Mobile-conscious implementation
+- The same rug scene, meshes and **560-slot dirt pool** serve successive jobs. Scatter is randomized per new rug; snapshots preserve existing scatter. No dirt node instances are recreated per refill.
+- Rugs enter already dust-textured. After unrolling, **25 starter rocks** grow; the other slots remain invisible until brushing brings them out. Reveal animation does not change earned progress. The brush enters after the starter rocks.
+- Dirt uses one 20-triangle mesh in a `MultiMeshInstance3D`. Only moving clumps simulate; visible instances are compacted into the existing batch. No clump rigid bodies or per-clump collision nodes are used.
+- The existing rug shader uses a 256 × 416 opacity mask. Wet recipes add reusable coverage/extraction masks. Contact checks follow the rounded rug and fringe rather than an oversized rectangle.
+- The tile floor uses one static MultiMesh; brush variants are instantiated once and switched by visibility. Reward coins are also reused.
 
-- Dirt: a fixed pool of 560 instances of one 20-triangle mesh in one `MultiMeshInstance3D`; no rigid bodies, individual collision nodes or particle emitters. The same slots, mesh, mask texture and materials are reused for each rug, with a fresh scatter after takeaway. Only moving clumps receive simple gravity/slide updates at the physics tick. Simulation stops when they settle. Visible clumps are compacted into the existing batch on changes; off-screen instances are not submitted, while their simulation positions and earned credit remain intact. This reduces submitted geometry, not the already-single dirt draw call. Camera resizing refreshes visibility. The completion animation sleeps after finishing.
-- Carpet: one opaque shader per existing mesh blends clean and dusty albedo using a 256 × 416 single-channel opacity mask (104 KiB). It updates only when stroke pixels change, at most once per rendered frame. Three CPU float arrays track coverage and the maximum contribution per pass (about 1.22 MiB). There is no extra transparent carpet layer.
-- Brush contact: swept rectangle checks catch clumps between distant mouse/touch events. Clearance intersects the clump's scaled convex footprint with the rounded binding and 26 individual fringe silhouettes; empty corners and tassel gaps count as outside. Bounds checks reject distant polygons before intersections. Points and strokes are converted into rug-local coordinates.
-- Floor: 576 shallow ceramic slabs with real bevel geometry and grout gaps, using one static MultiMesh batch. White material keeps the established soft studio lighting on the tools.
-- Reward coins: reusable 2D visuals briefly linger, then travel to the wallet. Their arrivals update only the displayed balance; the ledger awards the whole 20- or 40-coin reward once before the animation begins.
+These checks establish resource reuse and desktop behavior, not a phone frame-rate or memory benchmark. Clump motion remains a lightweight visual simulation without clump-to-clump collisions.
 
-Android APK export and device performance are not yet tested. Clumps do not collide with one another or the two display tools; their motion is an inexpensive visual simulation.
+## Source and assets
 
-## Code and assets
+| Area | Source |
+| --- | --- |
+| Definitions, save ledger and ad adapter | `CarpetToy/scripts/progression.gd`, `shop_state.gd`, `reward_ad_service.gd` |
+| Main menu and management sheets | `CarpetToy/scripts/floating_home.gd`, `compact_shop.gd` |
+| Rug flow, input and HUD | `CarpetToy/scripts/workshop.gd`, `cleaning_hud.gd` |
+| Dirt, wet layers and rug boundary | `CarpetToy/scripts/dirt_controller.gd`, `soil_surface.gdshader`, `rug_footprint.gd` |
+| Brush tiers | `CarpetToy/scripts/tool_progression_visual.gd`, `CarpetToy/assets/tools/progression/`, `tools/build_progression_tools.py` |
+| Blender sources | `art/blender/floating_shop.blend`, `mint_meadow.blend`, `starter_tools.blend`, `progression_tools.blend` |
 
-- Input, brush positioning and UI: `CarpetToy/scripts/workshop.gd`
-- Clump motion, progress and cleaning mask: `CarpetToy/scripts/dirt_controller.gd`
-- Surface blend: `CarpetToy/scripts/soil_surface.gdshader`
-- Rounded rug and fringe boundary: `CarpetToy/scripts/rug_footprint.gd`
-- Tile scene: `CarpetToy/scenes/tiled_floor.tscn`
-- Scene authoring: `tools/assemble_workshop.gd`
-- Blender carpet source: `art/blender/mint_meadow.blend`
-- Blender tools source: `art/blender/starter_tools.blend`
-- Portable GLBs: `CarpetToy/assets/carpet/` and `CarpetToy/assets/tools/`
+The original rug is 2 × 3 m plus fringe, with 3,176 triangles and 1024 × 1536 textures. The reusable clean rug remains `CarpetToy/scenes/carpet.tscn`; its inspection scene is in `scenes/test/`. See [floating-home implementation](design/home-screen/IMPLEMENTATION.md) for the original menu asset workflow.
 
-The original mint/cream/coral rug has 3,176 triangles across binding, pile and fringe. Its body measures 2 × 3 m; fringe extends to about 3.32 m. Albedo and woven normal maps are 1024 × 1536. The brush has 2,108 triangles, squeegee 500 and jet spray 868; each tool has one mesh surface and palette material. Source generation scripts are `tools/build_carpet.py` and `tools/build_tools.py`.
+## Verify
 
-The original carpet-only inspection scene remains `CarpetToy/scenes/test/carpet_studio.tscn`; its Turntable/Top/Reset controls are separate from gameplay. `CarpetToy/scenes/carpet.tscn` provides the original reusable clean rug and coarse collider.
-
-## Rebuild and verify
-
-Use the portable standard Godot executable in `tools/godot/`. The previous desktop .NET build required a missing .NET SDK; this GDScript project does not need it.
-
-From this workspace in PowerShell:
+Use the portable Godot executable and isolated saves. In PowerShell:
 
 ```powershell
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/assemble_workshop.gd
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_cleaning.gd
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_workshop.gd
+& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --headless --path CarpetToy --script ../tools/validate_progression.gd -- --shop-test
+& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --headless --path CarpetToy --script ../tools/validate_wet_cleaning.gd -- --shop-test
+& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_store_loop.gd -- --shop-test
+& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_gym.gd -- --shop-test
+& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_water_blobs.gd -- --shop-test
 ```
 
-Use the graphics renderer for scene assembly and MultiMesh validation: the installed headless dummy renderer does not preserve saved instance buffers. Rebuilding replaces the authored workshop scene. Reload external changes in Godot; if its resource hot-reloader logs an instance-format warning, restart the editor to clear its old cached MultiMeshes.
+The progression suite covers prices, travel, migration, offline income, transaction failures, numerical limits and verified-ad receipt handling. Wet checks cover stage gates, strokes, masks and saved progress. Store-loop checks exercise production scenes, purchases, swipes, tools and wet recipes.
 
-`validate_cleaning.gd` checks mouse/touch projection, slow and fast strokes, both fling directions, touch ownership, release/focus handling, tile and carpet contact heights, whole-clump clearance, full-560 clearance, reset and idle sleep. `validate_brush_input.gd` forwards to this suite. Live mouse sweeps were also verified in the local editor.
+The gym check exercises Settings entry/dismissal, both rug selectors, tool restrictions, reset and transition cancellation, touch input, portrait/landscape layouts, and preservation of the existing paid rug/save. It captures both exercises under `art/renders/`. Use the graphics renderer for this check.
 
-Run `validate_rug_transition.gd` and `validate_dirt_pool.gd` with `--path CarpetToy --script ../tools/<suite>.gd -- --shop-test` using the graphics renderer. The transition suite exercises the production roll-in, dirt growth, brush entry, suction, departure, reward and next-rug sequence, plus Back during transitions. The pool suite checks resource identity across twelve refills, randomized scatter, saved-state restoration and reveal behavior. Both require the renderer because their assertions use MultiMesh data. The existing contract, vacuum, cleaning, feel, dirt re-entry, tool-selection and editable-HUD suites set `animate_rug_changes = false` before entering the scene so their physics, input and save checks remain independent of animation timing; production defaults to animated transitions.
+Run `validate_rug_transition.gd`, `validate_dirt_pool.gd`, `validate_coin_rewards.gd` and `validate_cleaning.gd` with the graphics renderer and the same isolated-save arguments for transitions, resource reuse, wallet animation and input regressions. The headless dummy renderer does not preserve MultiMesh instance data. Logs and captures are under `art/`; see [implementation coverage](design/Implementation_Coverage.md) for which evidence supports each feature.
 
-Run `validate_coin_rewards.gd` with the same renderer and isolated-save arguments to check both reward amounts, exact per-coin increments, automation income during flight, phone rotation, safe areas, the Upgrade modal, save failure, and leaving during a celebration. Its screenshots are `art/renders/coins_*.png`.
-
-Validation log: `art/cleaning_validation.log`. Updated renders: `art/renders/starter_workshop_dirty.png`, `cleaning_partial.png`, and `cleaning_complete.png`.
-
-Edge re-entry regression: run Godot with `--path CarpetToy --script ../tools/validate_dirt_reentry.gd`. It covers both fringe edges, rebrushing returned dirt, persistent completion, unique progress credit and idle sleep. Log: `art/dirt_reentry_validation.log`.
-
-Feel checks: run Godot with `--path CarpetToy --script ../tools/validate_feel.gd`. It verifies two-pass opacity, frame-independent pass strength, feathered edges, reversal passes, one-time growth, origin placement, rounded corners, fringe gaps, combined progress, reset, overhead camera locking and progress colors. Log: `art/feel_validation.log`. Comparison renders: `art/renders/two_pass_first.png`, `two_pass_second.png`, and `cleanliness_meter_0.png` through `cleanliness_meter_3.png`.
-
-Tool selection checks: run Godot with `--path CarpetToy --script ../tools/validate_tool_selection.gd`. It verifies the hidden picker, selection through gameplay code, exclusive model visibility, actual mesh contact heights, floor placement, switching during drags, reset behavior and top-view touch placement. Log: `art/tool_selection_validation.log`. Pose renders: `art/renders/equipped_0.png`, `equipped_1.png`, `equipped_2.png`.
-
-UI / vacuum checks: run Godot with `--path CarpetToy --script ../tools/validate_vacuum.gd`. Covers the 85% Finish action, lift then suction, off-screen culling and re-entry, automatic practice-rug replacement, idle sleep, and reset during suction. Desktop graphics validation passed; mobile GPU performance has not been benchmarked.
+`tools/assemble_workshop.gd` rebuilds authored scene content; it is not needed for ordinary play or tests. It replaces the generated workshop scene, so only run it intentionally. Reload external changes in Godot, or restart the editor if a cached MultiMesh reports an instance-format warning.

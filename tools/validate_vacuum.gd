@@ -62,7 +62,7 @@ func run() -> void:
 	check(not soil.is_physics_processing(), "Completed vacuum sleeps")
 	check(game.hud.get_node_or_null("%CompletionCard") == null and game.hud.get_node_or_null("%NextRugButton") == null, "No completion prompt interrupts the rug loop")
 	await process_frame
-	check(game.selected_rug == 1 and not soil.completion_started and soil.batch.visible_instance_count == 25, "A fresh practice rug appears automatically with only its starter rocks")
+	check(game.selected_rug == 0 and not soil.completion_started and soil.batch.visible_instance_count == 25, "The brush exercise repeats automatically with only its starter rocks")
 	check(game.brush.visible, "The new rug restores tool interaction")
 
 	soil.start_vacuum(true)

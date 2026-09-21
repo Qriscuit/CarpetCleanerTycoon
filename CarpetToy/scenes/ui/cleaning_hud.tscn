@@ -7,10 +7,10 @@
 [ext_resource type="Texture2D" path="res://assets/ui/nav_items.svg" id="5_upgrade"]
 
 [sub_resource type="StyleBoxFlat" id="UpgradesPanel"]
-content_margin_left = 24.0
-content_margin_top = 24.0
-content_margin_right = 24.0
-content_margin_bottom = 24.0
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
 bg_color = Color(0.96, 0.99, 0.96, 1)
 border_width_left = 2
 border_width_top = 2
@@ -214,7 +214,7 @@ offset_left = 572.0
 offset_top = 16.0
 offset_right = 704.0
 offset_bottom = 72.0
-mouse_filter = 2
+mouse_filter = 1
 theme_override_styles/panel = SubResource("RewardPanel")
 
 [node name="WalletRow" type="HBoxContainer" parent="HUD/Wallet"]
@@ -244,11 +244,12 @@ vertical_alignment = 1
 
 [node name="UpgradeButton" type="Button" parent="HUD"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(116, 56)
-offset_left = 588.0
-offset_top = 924.0
-offset_right = 704.0
-offset_bottom = 980.0
+custom_minimum_size = Vector2(64, 64)
+offset_left = 16.0
+offset_top = 84.0
+offset_right = 80.0
+offset_bottom = 148.0
+tooltip_text = "Brush upgrades"
 theme_type_variation = &"SecondaryButton"
 theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
 theme_override_colors/font_hover_color = Color(0.12, 0.25, 0.23, 1)
@@ -256,7 +257,132 @@ theme_override_colors/font_pressed_color = Color(0.12, 0.25, 0.23, 1)
 theme_override_colors/font_hover_pressed_color = Color(0.12, 0.25, 0.23, 1)
 theme_override_colors/font_focus_color = Color(0.12, 0.25, 0.23, 1)
 theme_override_font_sizes/font_size = 17
-text = "Upgrade"
+theme_override_styles/normal = SubResource("BackNormal")
+theme_override_styles/hover = SubResource("BackHover")
+theme_override_styles/pressed = SubResource("BackPressed")
+theme_override_styles/focus = SubResource("BackFocus")
+icon = ExtResource("5_upgrade")
+icon_max_width = 54
+expand_icon = true
+action_mode = 1
+
+[node name="PayoutCard" type="PanelContainer" parent="HUD"]
+unique_name_in_owner = true
+offset_left = 50.0
+offset_top = 900.0
+offset_right = 532.0
+offset_bottom = 984.0
+mouse_filter = 2
+tooltip_text = "Coins per rug: finish at 85%, complete at 99%."
+theme_override_styles/panel = SubResource("ProgressPanel")
+
+[node name="Values" type="HBoxContainer" parent="HUD/PayoutCard"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="RugValueIcon" type="TextureRect" parent="HUD/PayoutCard/Values"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 40)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("4_coin")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Early" type="VBoxContainer" parent="HUD/PayoutCard/Values"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="Threshold" type="Label" parent="HUD/PayoutCard/Values/Early"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.38, 0.48, 0.42, 1)
+theme_override_font_sizes/font_size = 14
+text = "85%"
+horizontal_alignment = 1
+
+[node name="EarlyValue" type="Label" parent="HUD/PayoutCard/Values/Early"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 1
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 18
+text = "20"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="Full" type="VBoxContainer" parent="HUD/PayoutCard/Values"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="Threshold" type="Label" parent="HUD/PayoutCard/Values/Full"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.38, 0.48, 0.42, 1)
+theme_override_font_sizes/font_size = 14
+text = "99%"
+horizontal_alignment = 1
+
+[node name="FullValue" type="Label" parent="HUD/PayoutCard/Values/Full"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 1
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 18
+text = "40"
+horizontal_alignment = 1
+clip_text = true
+
+[node name="PayoutUpgradeButton" type="Button" parent="HUD"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(128, 56)
+offset_left = 542.0
+offset_top = 914.0
+offset_right = 670.0
+offset_bottom = 970.0
+tooltip_text = "Increase rug earnings"
+theme_type_variation = &"PrimaryButton"
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_hover_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_pressed_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_focus_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 16
+disabled = true
+text = "Buy 80"
+icon = ExtResource("4_coin")
+icon_max_width = 22
+expand_icon = true
+action_mode = 1
+
+[node name="AdRewardButton" type="Button" parent="HUD"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(128, 56)
+offset_left = 576.0
+offset_top = 84.0
+offset_right = 704.0
+offset_bottom = 140.0
+tooltip_text = "Watch an ad for coins"
+theme_type_variation = &"SecondaryButton"
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_hover_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_pressed_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_focus_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 16
+text = "▶  +20"
+icon = ExtResource("4_coin")
+icon_max_width = 22
+expand_icon = true
 action_mode = 1
 
 [node name="CoinLayer" type="Control" parent="HUD"]
@@ -290,48 +416,147 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.09, 0.20, 0.22, 0.38)
+color = Color(0.09, 0.20, 0.22, 0.18)
 
 [node name="UpgradesPanel" type="PanelContainer" parent="HUD/UpgradeSheet"]
 unique_name_in_owner = true
-offset_left = 180.0
-offset_top = 360.0
-offset_right = 540.0
-offset_bottom = 640.0
+offset_left = 16.0
+offset_top = 315.0
+offset_right = 288.0
+offset_bottom = 685.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("UpgradesPanel")
 
 [node name="Contents" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 8
 alignment = 1
 
-[node name="UpgradeIcon" type="TextureRect" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
-custom_minimum_size = Vector2(56, 56)
+[node name="Heading" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="ToolDrawerTitle" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/Heading"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 22
+text = "Brush"
+
+[node name="CloseUpgradesButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/Heading"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(70, 56)
+layout_mode = 2
+theme_type_variation = &"SecondaryButton"
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_hover_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_pressed_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_focus_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 16
+text = "Done"
+action_mode = 1
+
+[node name="CurrentToolCard" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="CurrentToolPreview" type="TextureRect" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/CurrentToolCard"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 80)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("5_upgrade")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Title" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
+[node name="Words" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/CurrentToolCard"]
 layout_mode = 2
+size_flags_horizontal = 3
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
-theme_override_font_sizes/font_size = 28
-text = "Upgrades"
-horizontal_alignment = 1
+theme_override_constants/separation = 2
+alignment = 1
 
-[node name="Placeholder" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
+[node name="State" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/CurrentToolCard/Words"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
-theme_override_font_sizes/font_size = 18
-text = "Coming soon"
-horizontal_alignment = 1
+theme_override_font_sizes/font_size = 13
+text = "Using"
 
-[node name="CloseUpgradesButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
+[node name="CurrentToolName" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/CurrentToolCard/Words"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 16
+text = "Hand brush"
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="CurrentToolStats" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/CurrentToolCard/Words"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 1
+tooltip_text = "Width and cleaning strength relative to the starter brush."
+theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
+theme_override_font_sizes/font_size = 15
+text = "↔ 1.00×\n✦ 1.00×"
+
+[node name="NextToolCard" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="NextToolPreview" type="TextureRect" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/NextToolCard"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 80)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("5_upgrade")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Words" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/NextToolCard"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="State" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/NextToolCard/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
+theme_override_font_sizes/font_size = 13
+text = "Next"
+
+[node name="NextToolName" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/NextToolCard/Words"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 16
+text = "Wide brush"
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="NextToolStats" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/NextToolCard/Words"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 1
+tooltip_text = "Width and cleaning strength relative to the starter brush."
+theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
+theme_override_font_sizes/font_size = 15
+text = "↔ 1.25×\n✦ 1.10×"
+
+[node name="ToolUpgradeButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
@@ -341,6 +566,10 @@ theme_override_colors/font_hover_color = Color(0.12, 0.25, 0.23, 1)
 theme_override_colors/font_pressed_color = Color(0.12, 0.25, 0.23, 1)
 theme_override_colors/font_hover_pressed_color = Color(0.12, 0.25, 0.23, 1)
 theme_override_colors/font_focus_color = Color(0.12, 0.25, 0.23, 1)
-theme_override_font_sizes/font_size = 18
-text = "Done"
+theme_override_font_sizes/font_size = 16
+disabled = true
+text = "Buy 80"
+icon = ExtResource("4_coin")
+icon_max_width = 22
+expand_icon = true
 action_mode = 1

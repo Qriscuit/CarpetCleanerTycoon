@@ -16,13 +16,21 @@ static func decorate(home: Control) -> void:
 	message.add_theme_font_size_override("font_size",16)
 	var timer := home.get_node_or_null("%StatusTimer")
 	if timer == null: home.get_node("%HintTimer").name = "StatusTimer"
-	for name: String in ["MotionToggle","CloseSettings","ResetProgress","CancelReset","ConfirmReset"]:
+	var column: VBoxContainer = home.get_node("SettingsSheet/SettingsPanel/SettingsContents")
+	var old_close := home.get_node_or_null("%CloseSettings")
+	if old_close != null:
+		old_close.free()
+	var gym := home.get_node_or_null("%OpenGym") as Button
+	if gym == null:
+		gym = _button(home,column,"OpenGym","Gym",Color("dbedce"))
+	column.move_child(gym,3 if home.get_node_or_null("%ResetProgress") != null else 2)
+	gym.tooltip_text = "Practice on two rugs"
+	for name: String in ["MotionToggle","OpenGym","ResetProgress","CancelReset","ConfirmReset"]:
 		var control := home.get_node_or_null("%"+name) as Control
 		if control != null:
 			_readable_button_text(control)
 	if home.get_node_or_null("%ResetProgress") != null:
 		return
-	var column: VBoxContainer = home.get_node("SettingsSheet/SettingsPanel/SettingsContents")
 	var reset := _button(home,column,"ResetProgress","Reset progress",Color("f5ded8"))
 	column.move_child(reset,2)
 	var review := VBoxContainer.new()

@@ -7,10 +7,12 @@ Press **F5** to play the production game. Use **F6** on a test scene for develop
 | `CarpetToy/scenes/production/` | `floating_home.tscn` | Main menu; building opens or resumes a paid rug |
 | `CarpetToy/scenes/production/` | `rug_cleaning.tscn` | Shared cleaning world and customer jobs |
 | `CarpetToy/scenes/test/` | `shop_hub.tscn` | Original detailed menu, retained for testing |
-| `CarpetToy/scenes/test/` | `rug_cleaning_gym.tscn` | Free practice; inherits the production world so art fixes stay shared |
+| `CarpetToy/scenes/test/` | `rug_cleaning_gym.tscn` | Reachable from Settings → Gym; two free exercises sharing the production world |
 | `CarpetToy/scenes/test/` | `starter_workshop.tscn`, `carpet_studio.tscn` | Earlier workshop and art inspection |
 
-Reusable rugs, floor and UI remain under `scenes/` and `scenes/ui/`. Android exports exclude `scenes/test/*` and the legacy menu controller.
+Reusable rugs, floor and UI remain under `scenes/` and `scenes/ui/`. Android exports include the gym and exclude the other three test scenes and the legacy menu controller.
+
+Settings has no Done button: click/tap outside the panel or use Back/Escape to dismiss it. **Gym** opens `Routes.GYM`. The gym uses `scripts/gym.gd` and the authored `scenes/ui/gym_hud.tscn` overlay. **Rug 1 · Brush** contains dust and dirt pellets and allows only the brush; completion repeats the same exercise. **Rug 2 · Wet tools** has surface dirt without loose pellets and allows only the hose and squeegee. Holding the hose emits falling blobs that merge into animated puddles; squeegee displacement and dirt removal are still pending. See [water prototype](Water_Blobs.md). Both exercises can be reset or switched without touching the player's paid job or balance.
 
 With no overlay open, the cleaning scene's icon Back control opens the floating production menu, including direct test-gym entry or entry through the old test menu. Returning during a paid job attempts to save first; if disk persistence is temporarily unavailable, the latest snapshot is retained in memory and navigation still works.
 

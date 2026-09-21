@@ -38,6 +38,12 @@ const HEAD_HALF := Vector2(0.305, 0.11)
 const RUG_Y := 0.067
 const GRAVITY := 9.8
 const SLIDE_FRICTION := 3.8
+const WET_STAGE_TARGET := 0.99
+const WATER_HALF := Vector2(0.19, 0.13)
+const SQUEEGEE_HALF := Vector2(0.34, 0.075)
+const WATER_RATE := 6.2
+const EXTRACTION_RATE := 7.4
+const MAX_TOOL_STRENGTH := 8.0
 
 var batch: MultiMesh
 var batch_node: MultiMeshInstance3D
@@ -72,6 +78,15 @@ var last_z_direction := 1.0
 var surface_pixels := PackedByteArray()
 var surface_pixel_count := 0
 var surface_coverage_total := 0.0
+var wet_recipe := false
+var tool_strength := 1.0
+var water_values := PackedFloat32Array()
+var extraction_values := PackedFloat32Array()
+var water_coverage_total := 0.0
+var extraction_coverage_total := 0.0
+var wet_mask: Image
+var wet_texture: ImageTexture
+var wet_mask_changed := false
 
 func setup(rug: Node3D) -> void:
 	assert(batch == null, "Dirt pool must be set up only once per cleaning scene")
@@ -110,6 +125,9 @@ func setup(rug: Node3D) -> void:
 	mask = Image.create(MASK_SIZE.x, MASK_SIZE.y, false, Image.FORMAT_L8)
 	mask.fill(Color.WHITE)
 	mask_texture = ImageTexture.create_from_image(mask)
+	wet_mask = Image.create(MASK_SIZE.x, MASK_SIZE.y, false, Image.FORMAT_L8)
+	wet_mask.fill(Color.BLACK)
+	wet_texture = ImageTexture.create_from_image(wet_mask)
 	# Empty rounded corners and fringe gaps are not dirty carpet surface.
 	surface_pixels.resize(MASK_SIZE.x * MASK_SIZE.y)
 	for y in MASK_SIZE.y:
@@ -125,6 +143,8 @@ func setup(rug: Node3D) -> void:
 		var material := ShaderMaterial.new()
 		material.shader = preload("res://scripts/soil_surface.gdshader")
 		material.set_shader_parameter("coverage", mask_texture)
+		material.set_shader_parameter("wetness", wet_texture)
+		material.set_shader_parameter("wet_recipe", wet_recipe)
 		material.set_shader_parameter("soil_map", preload("res://assets/dirt/dry_soil_albedo.png"))
 		material.set_shader_parameter("rug_origin", rug_origin)
 		material.set_shader_parameter("clean_color", clean.albedo_color)
@@ -188,6 +208,15 @@ func reset() -> void:
 	coverage_values.resize(MASK_SIZE.x * MASK_SIZE.y)
 	coverage_values.fill(1.0)
 	surface_coverage_total = float(surface_pixel_count)
+	water_values.resize(coverage_values.size())
+	water_values.fill(0.0)
+	extraction_values.resize(coverage_values.size())
+	extraction_values.fill(0.0)
+	water_coverage_total = 0.0
+	extraction_coverage_total = 0.0
+	wet_mask.fill(Color.BLACK)
+	wet_texture.update(wet_mask)
+	wet_mask_changed = false
 	pass_strength.resize(coverage_values.size())
 	pass_active = false
 	set_physics_process(false)
@@ -328,7 +357,7 @@ func stroke(world_from: Vector3, world_to: Vector3, elapsed: float) -> void:
 	# A rake throws forwards/backwards; sideways strokes add a bounded fan.
 	var direction := Vector2(clampf(travel.normalized().x * 0.38, -0.38, 0.38), last_z_direction).normalized()
 	var speed := clampf(travel.length() / maxf(elapsed, 0.016), 0.0, 10.0)
-	var impulse := clampf(1.9 + speed * 0.36, 2.0, 5.0)
+	var impulse := clampf(1.9 + speed * 0.36, 2.0, 5.0) * sqrt(tool_strength)
 	for i in positions.size():
 		# "Cleared" tracks progress, not whether a clump can still be brushed.
 		if cooldown[i] > 0.0 or positions[i].y > RUG_Y + 0.14:
@@ -386,7 +415,7 @@ func paint_stroke(start: Vector2, finish: Vector2) -> void:
 			if weight > pass_strength[index]:
 				pass_strength[index] = weight
 				var old_value := coverage_values[index]
-				coverage_values[index] = maxf(0.0, pass_base[index] - rug_definition.removal_per_pass * weight)
+				coverage_values[index] = maxf(0.0, pass_base[index] - rug_definition.removal_per_pass * weight * tool_strength)
 				var value := coverage_values[index]
 				if surface_pixels[index] == 1:
 					surface_coverage_total += value - old_value
@@ -397,9 +426,14 @@ func paint_stroke(start: Vector2, finish: Vector2) -> void:
 func _process(_delta: float) -> void:
 	if render_dirty:
 		refresh_visible_clumps()
+	var changed_surface := mask_changed or wet_mask_changed
 	if mask_changed:
 		mask_texture.update(mask)
 		mask_changed = false
+	if wet_mask_changed:
+		wet_texture.update(wet_mask)
+		wet_mask_changed = false
+	if changed_surface:
 		surface_changed.emit()
 	set_process(false)
 
@@ -459,6 +493,129 @@ func unique_clearance() -> float:
 func surface_clearance() -> float:
 	return clampf(1.0 - surface_coverage_total / maxf(surface_pixel_count, 1), 0.0, 1.0)
 
+func set_recipe(value: bool) -> void:
+	if wet_recipe == value:
+		_update_wet_materials()
+		return
+	wet_recipe = value
+	if not water_values.is_empty():
+		water_values.fill(0.0)
+		extraction_values.fill(0.0)
+		water_coverage_total = 0.0
+		extraction_coverage_total = 0.0
+		wet_mask.fill(Color.BLACK)
+		wet_mask_changed = true
+		set_process(true)
+	_update_wet_materials()
+
+func set_tool_strength(multiplier: float) -> void:
+	# Store 4 currently reaches 4.41x. Retain a finite ceiling with enough room
+	# for later tuning instead of silently weakening an earned capstone tier.
+	tool_strength = clampf(multiplier if is_finite(multiplier) else 1.0, 0.25, MAX_TOOL_STRENGTH)
+
+func water_clearance() -> float:
+	if not wet_recipe:
+		return 1.0
+	return clampf(water_coverage_total / maxf(surface_pixel_count, 1), 0.0, 1.0)
+
+func extraction_clearance() -> float:
+	if not wet_recipe:
+		return 1.0
+	return clampf(extraction_coverage_total / maxf(surface_pixel_count, 1), 0.0, 1.0)
+
+func overall_clearance() -> float:
+	var dry := minf(unique_clearance(), surface_clearance())
+	if not wet_recipe:
+		return dry
+	# Each required action owns one third of the visible progress. Stage gates
+	# below preserve the order while still rewarding the player's first stroke.
+	return clampf((dry + water_clearance() + extraction_clearance()) / 3.0, 0.0, 1.0)
+
+func make_progress_snapshot() -> Dictionary:
+	return {
+		"unique_clearance": unique_clearance(),
+		"surface_clearance": surface_clearance(),
+		"overall_clearance": overall_clearance(),
+		"wet_recipe": wet_recipe,
+		"water_clearance": water_clearance(),
+		"extraction_clearance": extraction_clearance(),
+	}
+
+func recommended_tool() -> int:
+	if not wet_recipe:
+		return 0
+	if minf(unique_clearance(), surface_clearance()) < WET_STAGE_TARGET:
+		return 0
+	if water_clearance() < WET_STAGE_TARGET:
+		return 2
+	return 1
+
+func apply_water_stroke(world_from: Vector3, world_to: Vector3, elapsed: float) -> void:
+	if not wet_recipe or minf(unique_clearance(), surface_clearance()) < WET_STAGE_TARGET:
+		return
+	_paint_wet_stroke(world_from, world_to, elapsed, WATER_HALF, true)
+
+func apply_squeegee_stroke(world_from: Vector3, world_to: Vector3, elapsed: float) -> void:
+	if not wet_recipe or water_clearance() < WET_STAGE_TARGET:
+		return
+	_paint_wet_stroke(world_from, world_to, elapsed, SQUEEGEE_HALF, false)
+
+func _paint_wet_stroke(world_from: Vector3, world_to: Vector3, elapsed: float, half: Vector2, applying_water: bool) -> void:
+	if completion_started or simulation_suspended or reveal_progress < 1.0:
+		return
+	var a3 := rug_node.to_local(world_from)
+	var b3 := rug_node.to_local(world_to)
+	var start := Vector2(a3.x, a3.z)
+	var finish := Vector2(b3.x, b3.z)
+	if start.distance_squared_to(finish) < 0.00000001:
+		return
+	var soft_half := half + Vector2.ONE * EDGE_FEATHER
+	var low := (start.min(finish) - soft_half + RUG_HALF) / (RUG_HALF * 2.0)
+	var high := (start.max(finish) + soft_half + RUG_HALF) / (RUG_HALF * 2.0)
+	var from_pixel := Vector2i((low * Vector2(MASK_SIZE)).floor()).clamp(Vector2i.ZERO, MASK_SIZE)
+	var to_pixel := Vector2i((high * Vector2(MASK_SIZE)).ceil()).clamp(Vector2i.ZERO, MASK_SIZE)
+	var seconds := clampf(elapsed if elapsed > 0.0 else 1.0 / 60.0, 1.0 / 240.0, 0.08)
+	var rate := WATER_RATE if applying_water else EXTRACTION_RATE
+	var amount := seconds * rate * tool_strength
+	var any_changed := false
+	for y in range(from_pixel.y, to_pixel.y):
+		for x in range(from_pixel.x, to_pixel.x):
+			var index := y * MASK_SIZE.x + x
+			if surface_pixels[index] == 0:
+				continue
+			var point := (Vector2(x + 0.5, y + 0.5) / Vector2(MASK_SIZE) - Vector2.ONE * 0.5) * RUG_HALF * 2.0
+			var closest := Geometry2D.get_closest_point_to_segment(point, start, finish)
+			var q := (point - closest).abs() - half
+			var distance := q.max(Vector2.ZERO).length() + minf(maxf(q.x, q.y), 0.0)
+			var weight := 1.0 - smoothstep(-EDGE_FEATHER, EDGE_FEATHER, distance)
+			if weight <= 0.0:
+				continue
+			var loosened := 1.0 - coverage_values[index]
+			if applying_water:
+				var old_water := water_values[index]
+				var new_water := minf(loosened, old_water + amount * weight)
+				if new_water <= old_water:
+					continue
+				water_values[index] = new_water
+				water_coverage_total += new_water - old_water
+			else:
+				var old_extracted := extraction_values[index]
+				var new_extracted := minf(water_values[index], old_extracted + amount * weight)
+				if new_extracted <= old_extracted:
+					continue
+				extraction_values[index] = new_extracted
+				extraction_coverage_total += new_extracted - old_extracted
+			var visible_water := clampf(water_values[index] - extraction_values[index], 0.0, 1.0)
+			wet_mask.set_pixel(x, y, Color(visible_water, visible_water, visible_water))
+			any_changed = true
+	if any_changed:
+		wet_mask_changed = true
+		set_process(true)
+
+func _update_wet_materials() -> void:
+	for material in surface_materials:
+		material.set_shader_parameter("wet_recipe", wet_recipe)
+
 func make_snapshot() -> Dictionary:
 	var saved_positions: Array = []
 	var saved_velocities: Array = []
@@ -471,15 +628,29 @@ func make_snapshot() -> Dictionary:
 	pixels.resize(coverage_values.size())
 	for i in coverage_values.size():
 		pixels[i] = clampi(roundi(coverage_values[i] * 255.0), 0, 255)
-	return {
+	var result: Dictionary = {
 		"version": 1, "positions": saved_positions, "velocities": saved_velocities,
 		"spawn_positions": spawn_positions,
 		"growth": growth.duplicate(), "awakened": awakened.duplicate(),
 		"credited": credited.duplicate(), "cleared": cleared.duplicate(),
 		"cooldown": cooldown.duplicate(), "moving": moving.duplicate(),
 		"coverage": Marshalls.raw_to_base64(pixels),
+		"wet_recipe": wet_recipe,
 		"unique_clearance": unique_clearance(), "surface_clearance": surface_clearance(),
+		"water_clearance": water_clearance(), "extraction_clearance": extraction_clearance(),
+		"overall_clearance": overall_clearance(),
 	}
+	if wet_recipe:
+		var water_pixels := PackedByteArray()
+		water_pixels.resize(water_values.size())
+		var extraction_pixels := PackedByteArray()
+		extraction_pixels.resize(extraction_values.size())
+		for i in water_values.size():
+			water_pixels[i] = clampi(roundi(water_values[i] * 255.0), 0, 255)
+			extraction_pixels[i] = clampi(roundi(extraction_values[i] * 255.0), 0, 255)
+		result["water"] = Marshalls.raw_to_base64(water_pixels)
+		result["extracted"] = Marshalls.raw_to_base64(extraction_pixels)
+	return result
 
 func restore_snapshot(snapshot: Dictionary) -> bool:
 	if int(snapshot.get("version", 0)) != 1:
@@ -489,6 +660,21 @@ func restore_snapshot(snapshot: Dictionary) -> bool:
 			return false
 	var pixels := Marshalls.base64_to_raw(str(snapshot.get("coverage", "")))
 	if pixels.size() != coverage_values.size():
+		return false
+	var has_water := snapshot.has("water") or snapshot.has("extracted")
+	var water_pixels := PackedByteArray()
+	var extraction_pixels := PackedByteArray()
+	if has_water:
+		if not snapshot.has("water") or not snapshot.has("extracted"):
+			return false
+		water_pixels = Marshalls.base64_to_raw(str(snapshot.get("water", "")))
+		extraction_pixels = Marshalls.base64_to_raw(str(snapshot.get("extracted", "")))
+		if water_pixels.size() != coverage_values.size() or extraction_pixels.size() != coverage_values.size():
+			return false
+		for i in water_pixels.size():
+			if extraction_pixels[i] > water_pixels[i]:
+				return false
+	if snapshot.has("wet_recipe") and not snapshot.wet_recipe is bool:
 		return false
 	# Older saves omit the scatter baseline; their live positions still restore.
 	var vector_keys := ["positions", "velocities"]
@@ -532,13 +718,24 @@ func restore_snapshot(snapshot: Dictionary) -> bool:
 		if moving[i]:
 			active.append(i)
 	surface_coverage_total = 0.0
+	water_coverage_total = 0.0
+	extraction_coverage_total = 0.0
+	wet_recipe = bool(snapshot.get("wet_recipe", wet_recipe))
+	_update_wet_materials()
 	for i in coverage_values.size():
 		coverage_values[i] = float(pixels[i]) / 255.0
 		mask.set_pixel(i % MASK_SIZE.x, i / MASK_SIZE.x, Color(coverage_values[i], coverage_values[i], coverage_values[i]))
+		water_values[i] = float(water_pixels[i]) / 255.0 if has_water else 0.0
+		extraction_values[i] = float(extraction_pixels[i]) / 255.0 if has_water else 0.0
+		var visible_water := clampf(water_values[i] - extraction_values[i], 0.0, 1.0)
+		wet_mask.set_pixel(i % MASK_SIZE.x, i / MASK_SIZE.x, Color(visible_water, visible_water, visible_water))
 		if surface_pixels[i] == 1:
 			surface_coverage_total += coverage_values[i]
+			water_coverage_total += water_values[i]
+			extraction_coverage_total += extraction_values[i]
 	end_pass()
 	mask_changed = true
+	wet_mask_changed = true
 	request_render()
 	set_physics_process(not simulation_suspended and not active.is_empty())
 	progress_changed.emit(remaining, initial.size())

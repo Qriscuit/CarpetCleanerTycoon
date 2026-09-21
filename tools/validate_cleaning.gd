@@ -67,9 +67,11 @@ func run() -> void:
 	check(workshop.brush_dragging and workshop.active_touch == 3, "Other fingers cannot release the active stroke")
 	var drag := InputEventScreenDrag.new()
 	drag.index = 3
-	drag.position = camera.unproject_position(Vector3(-0.1, 0.067, -2.8)) - workshop.TOUCH_CONTACT_OFFSET
+	# Cross the fringe into exposed floor. The old -2.8 target now projects
+	# onto the progress HUD with phone-safe camera framing and cancels input.
+	drag.position = camera.unproject_position(Vector3(-0.1, 0.067, -1.9)) - workshop.TOUCH_CONTACT_OFFSET
 	workshop._input(drag)
-	check(brush.position.z < -2.5, "Touch can move brush beyond the upper edge")
+	check(brush.position.z < -1.8, "Touch can move brush beyond the upper fringe onto exposed floor")
 	for i in soil.active:
 		check(soil.velocities[i].z < 0 and absf(soil.velocities[i].x) < absf(soil.velocities[i].z) * 0.6, "Negative Z fling with bounded X scatter")
 	press.pressed = false

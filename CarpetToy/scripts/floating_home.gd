@@ -21,6 +21,18 @@ var original_orientation := -1
 var reset_pending := false
 var shop_tween: Tween
 var shop_pressed := false
+var preview_store := 1
+var last_active_store := 1
+var mouse_store_drag := false
+var mouse_store_origin := Vector2.ZERO
+var touch_multitouch := false
+var touch_outside_settings := false
+var mouse_outside_settings := false
+var mouse_settings_origin := Vector2.ZERO
+var mouse_settings_dragged := false
+var store_materials: Array[StandardMaterial3D] = []
+var store_colors: Array[Color] = []
+const STORE_NAMES := ["Neighborhood", "High Street", "Wash House", "Restoration"]
 
 func _ready() -> void:
 	resized.connect(_layout)
@@ -37,6 +49,9 @@ func _ready() -> void:
 			original_orientation = DisplayServer.screen_get_orientation()
 			DisplayServer.screen_set_orientation(DisplayServer.SCREEN_SENSOR)
 		state = get_node("/root/ShopState")
+		preview_store = state.active_store
+		last_active_store = state.active_store
+		_prepare_store_materials()
 		state.contract_mode = false
 		state.changed.connect(_refresh)
 		animate_shop = bool(state.get_meta("home_animate", true))
@@ -45,11 +60,11 @@ func _ready() -> void:
 		%ShopTap.button_up.connect(_release_shop)
 		%ShopTap.mouse_exited.connect(_release_shop)
 		%ShopTap.focus_exited.connect(_release_shop)
-		for button in [%Settings,%NavShop,%NavItems,%NavPlans,%NavBonzi,%ReturnNotice,%MotionToggle,%CloseSettings,%ResetProgress,%CancelReset,%ConfirmReset]: Pop.bind(button)
+		for button in [%Settings,%NavShop,%NavItems,%NavPlans,%NavBonzi,%ReturnNotice,%MotionToggle,%OpenGym,%ResetProgress,%CancelReset,%ConfirmReset]: Pop.bind(button)
 		%Settings.pressed.connect(_open_settings)
 		%MotionToggle.toggled.connect(_toggle_motion)
 		%MotionToggle.set_pressed_no_signal(animate_shop)
-		%CloseSettings.pressed.connect(_close_settings)
+		%OpenGym.pressed.connect(enter_gym)
 		%ResetProgress.pressed.connect(_request_reset)
 		%CancelReset.pressed.connect(_cancel_reset)
 		%ConfirmReset.pressed.connect(_confirm_reset)
@@ -64,12 +79,16 @@ func _ready() -> void:
 		%CloseManagement.hide()
 		%ReturnNotice.pressed.connect(acknowledge_return)
 		%StatusTimer.timeout.connect(_clear_status)
+		%NavPlans.get_node("CaptionContent/Caption").text = "Stores"
 		_refresh()
+		_update_store_preview()
 		if not state.last_error.is_empty(): _show_error(state.last_error)
 	call_deferred("_layout")
 
 func _exit_tree() -> void:
 	if Engine.is_editor_hint() or original_scale_size == Vector2i.ZERO: return
+	if resized.is_connected(_layout): resized.disconnect(_layout)
+	if is_instance_valid(state) and state.changed.is_connected(_refresh): state.changed.disconnect(_refresh)
 	var window := get_window()
 	window.content_scale_size = original_scale_size
 	window.content_scale_aspect = original_scale_aspect
@@ -102,7 +121,7 @@ func _safe_rect() -> Rect2:
 	return Rect2(Vector2(inset.x, inset.y), Vector2(maxf(size.x-inset.x-inset.z,1), maxf(size.y-inset.y-inset.w,1)))
 
 func _layout() -> void:
-	if not is_node_ready(): return
+	if not is_node_ready() or get_node_or_null("%TopBar") == null: return
 	var safe := _safe_rect()
 	var margin := 18.0
 	var wide := safe.size.x > safe.size.y * 1.2
@@ -135,9 +154,12 @@ func _layout() -> void:
 
 func _open_settings() -> void:
 	if changing_scene: return
-	%SettingsSheet.visible = not %SettingsSheet.visible
-	_set_home_focus(not %SettingsSheet.visible)
-	if %SettingsSheet.visible: %CloseSettings.grab_focus()
+	if %SettingsSheet.visible:
+		_close_settings()
+		return
+	%SettingsSheet.show()
+	_set_home_focus(false)
+	%MotionToggle.grab_focus()
 
 func _close_settings() -> void:
 	_cancel_reset()
@@ -150,7 +172,7 @@ func _request_reset() -> void:
 	%SettingsTitle.text = "Reset progress?"
 	%MotionToggle.hide()
 	%ResetProgress.hide()
-	%CloseSettings.hide()
+	%OpenGym.hide()
 	%ResetReview.show()
 	%ResetError.hide()
 	%CancelReset.grab_focus()
@@ -163,7 +185,7 @@ func _cancel_reset() -> void:
 	%ResetError.hide()
 	%MotionToggle.show()
 	%ResetProgress.show()
-	%CloseSettings.show()
+	%OpenGym.show()
 	%ResetProgress.grab_focus()
 	_layout()
 
@@ -201,11 +223,57 @@ func _release_shop() -> void:
 func _refresh() -> void:
 	%Cash.text = _cash_text(state.cash)
 	%Cash.tooltip_text = "%d coins" % state.cash
-	%ShopTap.tooltip_text = "Open your rug" if state.active_job_id.is_empty() else "Resume your rug"
 	%ReturnNotice.visible = state.return_reward > 0 and not %StatusMessage.visible
 	%ReturnNotice.text = "+%s while away · Got it" % _cash_text(state.return_reward)
+	if last_active_store != state.active_store:
+		last_active_store = state.active_store
+		preview_store = state.active_store
+		_update_store_preview()
+	_refresh_store_caption()
+
+func _prepare_store_materials() -> void:
+	for mesh: MeshInstance3D in %ShopPivot.find_children("*", "MeshInstance3D", true, false):
+		if mesh.mesh == null: continue
+		for index in mesh.mesh.get_surface_count():
+			var original := mesh.get_active_material(index) as StandardMaterial3D
+			if original == null: continue
+			var material := original.duplicate() as StandardMaterial3D
+			mesh.set_surface_override_material(index, material)
+			store_materials.append(material)
+			store_colors.append(material.albedo_color)
+
+func _update_store_preview() -> void:
+	_refresh_store_caption()
+	var hues := [0.0, -0.16, 0.09, 0.22]
+	for index in store_materials.size():
+		var original := store_colors[index]
+		store_materials[index].albedo_color = Color.from_hsv(fposmod(original.h + hues[preview_store - 1], 1.0), original.s, original.v, original.a) if original.s > 0.15 else original
+	%ShopPivot.rotation.y = 0.0
+
+func _refresh_store_caption() -> void:
+	%StoreLabel.text = "%d · %s" % [preview_store, STORE_NAMES[preview_store - 1]]
+	var owned: Array = state.progression_view().owned_store_ids
+	%ShopTap.tooltip_text = "Open " + STORE_NAMES[preview_store - 1] if preview_store in owned else "View store milestones"
+
+func preview_location(id: int) -> void:
+	if changing_scene or id < 1 or id > 4: return
+	preview_store = id
+	var owned: Array = state.progression_view().owned_store_ids
+	if id in owned and state.active_store != id:
+		if not state.select_store(id):
+			preview_store = state.active_store
+			_show_error(state.last_error)
+	_update_store_preview()
+	_release_shop()
+
+func _swipe_store(delta: Vector2) -> bool:
+	if absf(delta.x) < 48 or absf(delta.x) < absf(delta.y) * 1.4: return false
+	preview_location(clampi(preview_store + (1 if delta.x < 0 else -1), 1, 4))
+	return true
 
 func _cash_text(amount: int) -> String:
+	if amount >= 1_000_000_000_000_000: return "%.1fQ" % (float(amount) / 1_000_000_000_000_000.0)
+	if amount >= 1_000_000_000_000: return "%.1fT" % (float(amount) / 1_000_000_000_000.0)
 	if amount >= 1_000_000_000: return "%.1fB" % (float(amount)/1_000_000_000.0)
 	if amount >= 1_000_000: return "%.1fM" % (float(amount)/1_000_000.0)
 	if amount >= 10_000: return "%.1fK" % (float(amount)/1_000.0)
@@ -229,6 +297,9 @@ func _show_error(message: String) -> void:
 
 func enter_cleaning() -> void:
 	if changing_scene: return
+	if preview_store not in state.progression_view().owned_store_ids:
+		open_management("plans")
+		return
 	changing_scene = true
 	shop_pressed = false
 	%ShopTap.disabled = true
@@ -248,6 +319,15 @@ func enter_cleaning() -> void:
 		%ShopTap.disabled = false
 		state.contract_mode = false
 		_show_error("Could not open the rug. Try again.")
+
+func enter_gym() -> void:
+	if changing_scene or reset_pending: return
+	changing_scene = true
+	state.contract_mode = false
+	var result := get_tree().change_scene_to_file(Routes.GYM)
+	if result != OK:
+		changing_scene = false
+		_show_error("Could not open the gym. Try again.")
 
 func open_management(tab: String) -> void:
 	if changing_scene: return
@@ -278,7 +358,7 @@ func _button_at(point: Vector2) -> Button:
 		return null
 	elif %SettingsSheet.visible:
 		if reset_pending: candidates = [%CancelReset, %ConfirmReset]
-		else: candidates = [%MotionToggle, %ResetProgress, %CloseSettings]
+		else: candidates = [%MotionToggle, %ResetProgress, %OpenGym]
 	else:
 		candidates = [%Settings, %NavShop, %NavItems, %NavPlans, %NavBonzi, %ReturnNotice, %ShopTap]
 	for button in candidates:
@@ -290,33 +370,81 @@ func _input(event: InputEvent) -> void:
 	if changing_scene:
 		get_viewport().set_input_as_handled()
 		return
+	# Keep the backdrop in place until release and consume the whole gesture.
+	# A drag or canceled touch must not dismiss the sheet or reach the home controls.
+	if mouse_outside_settings:
+		if event is InputEventMouseMotion:
+			mouse_settings_dragged = mouse_settings_dragged or event.position.distance_to(mouse_settings_origin) >= 12.0
+			get_viewport().set_input_as_handled()
+			return
+		if event is InputEventMouseButton:
+			get_viewport().set_input_as_handled()
+			if event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
+				mouse_outside_settings = false
+				if not mouse_settings_dragged and event.position.distance_to(mouse_settings_origin) < 12.0 and not %SettingsPanel.get_global_rect().has_point(event.position):
+					_close_settings()
+			return
+	if %SettingsSheet.visible and event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed and not %SettingsPanel.get_global_rect().has_point(event.position):
+		mouse_outside_settings = true
+		mouse_settings_origin = event.position
+		mouse_settings_dragged = false
+		get_viewport().set_input_as_handled()
+		return
 	if %Management.visible and is_instance_valid(management):
 		if event is InputEventScreenDrag or event is InputEventScreenTouch:
 			get_viewport().set_input_as_handled()
 			management.handle_touch(event)
 			return
+	if not %Management.visible and not %SettingsSheet.visible:
+		if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed and %ShopTap.get_global_rect().has_point(event.position):
+				mouse_store_drag = true
+				mouse_store_origin = event.position
+				_press_shop()
+				get_viewport().set_input_as_handled()
+				return
+			elif not event.pressed and mouse_store_drag:
+				mouse_store_drag = false
+				var delta: Vector2 = event.position - mouse_store_origin
+				_release_shop()
+				if not _swipe_store(delta) and delta.length() < 12: enter_cleaning()
+				get_viewport().set_input_as_handled()
+				return
+		elif event is InputEventMouseMotion and mouse_store_drag:
+			if event.position.distance_to(mouse_store_origin) > 12: _release_shop()
+			get_viewport().set_input_as_handled()
+			return
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			if touch_id != -1:
+				touch_multitouch = true
 				touch_dragged = true
 				_cancel_touch_feedback()
+				get_viewport().set_input_as_handled()
 				return
 			var candidate := _button_at(event.position)
-			if candidate == null: return
+			if candidate == null and not %SettingsSheet.visible: return
 			touch_id = event.index
 			touch_origin = event.position
 			touch_target = candidate
 			touch_dragged = false
+			touch_multitouch = false
+			touch_outside_settings = %SettingsSheet.visible and not %SettingsPanel.get_global_rect().has_point(event.position)
 			if candidate == %ShopTap: _press_shop()
-			else: Pop.press(candidate)
+			elif candidate != null: Pop.press(candidate)
 			get_viewport().set_input_as_handled()
 		elif event.index == touch_id:
 			var button := touch_target
+			var swiped: bool = button == %ShopTap and not event.canceled and not touch_multitouch and _swipe_store(event.position - touch_origin)
 			var activate: bool = not event.canceled and not touch_dragged and touch_origin.distance_to(event.position)<12.0 and _button_at(event.position)==button
+			var dismiss_settings: bool = touch_outside_settings and activate and not %SettingsPanel.get_global_rect().has_point(event.position)
 			touch_id = -1
 			touch_target = null
+			touch_outside_settings = false
 			get_viewport().set_input_as_handled()
-			if activate and is_instance_valid(button):
+			if dismiss_settings:
+				_close_settings()
+			elif activate and not swiped and is_instance_valid(button):
 				if button != %ShopTap: Pop.release(button)
 				if button.toggle_mode: button.button_pressed = not button.button_pressed
 				button.pressed.emit()
@@ -338,6 +466,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		_back()
 		get_viewport().set_input_as_handled()
+	elif not %Management.visible and not %SettingsSheet.visible:
+		if event.is_action_pressed("ui_left"): preview_location(maxi(1, preview_store - 1))
+		elif event.is_action_pressed("ui_right"): preview_location(mini(4, preview_store + 1))
 
 func _back() -> void:
 	if %SettingsSheet.visible:
@@ -348,6 +479,9 @@ func _back() -> void:
 func _notification(what: int) -> void:
 	if Engine.is_editor_hint(): return
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		mouse_store_drag = false
+		mouse_outside_settings = false
+		touch_outside_settings = false
 		_cancel_touch_feedback()
 		_release_shop()
 		touch_id = -1

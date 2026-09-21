@@ -1,6 +1,11 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/production/rug_cleaning.tscn" id="1_cleaning"]
+[ext_resource type="Script" path="res://scripts/gym.gd" id="2_gym"]
+[ext_resource type="Resource" path="res://resources/rugs/gym_brush.tres" id="3_brush"]
+[ext_resource type="Resource" path="res://resources/rugs/gym_water.tres" id="4_water"]
 
 [node name="RugCleaningGym" instance=ExtResource("1_cleaning")]
+script = ExtResource("2_gym")
 practice_only = true
+rugs = Array[Resource]([ExtResource("3_brush"), ExtResource("4_water")])

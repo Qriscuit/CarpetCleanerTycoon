@@ -57,6 +57,15 @@ var contract_save_failed := false
 var contract_job_id := ""
 var finish_button: Button
 var wide_brush := false
+var tool_width := 1.0
+var wet_recipe := false
+var tool_visuals: RefCounted
+var updating_progression := false
+var switching_tool := false
+var cached_progression: Dictionary = {}
+var applied_visual_tier := -1
+var applied_strength := -1.0
+var cached_purchase_state := false
 var snapshot_timer: Timer
 var rug_initialized := false
 @onready var hud: CanvasLayer = $GymUI
@@ -109,12 +118,15 @@ func _ready() -> void:
 	add_soft_accent_lights()
 	brush_home = brush.transform
 	tool_nodes = [brush, $StarterTools/Squeegee, $StarterTools/JetSpray]
+	tool_visuals = preload("res://scripts/tool_progression_visual.gd").new()
+	tool_visuals.setup(brush)
 	contact_point = brush.position + brush.basis * TOOL_PIVOTS[0]
 	last_brush_position = contact_point
 	bind_ui()
 	if shop_state != null:
 		hud.initialize_wallet(shop_state.cash)
 		shop_state.changed.connect(_sync_wallet)
+		shop_state.ad_reward_granted.connect(_show_ad_reward)
 	soil = preload("res://scripts/dirt_controller.gd").new()
 	# Workshop owns the 85% manual and 99% automatic rules for both modes.
 	soil.automatic_completion_enabled = false
@@ -125,11 +137,16 @@ func _ready() -> void:
 	soil.vacuum_started.connect(on_vacuum_started)
 	soil.vacuum_finished.connect(on_vacuum_finished)
 	soil.setup($RugDisplay)
+	wet_recipe = paid_contract and shop_state.active_store >= 3
+	soil.set_recipe(wet_recipe)
 	if animate_rug_changes:
 		rug_roll.setup($RugDisplay/Dirty/CarpetMesh)
 	select_rug(0)
+	_sync_progression()
 	if paid_contract and not shop_state.job_snapshot.is_empty():
 		soil.restore_snapshot(shop_state.job_snapshot)
+		applied_strength = -1.0
+		_sync_progression()
 	snapshot_timer = Timer.new()
 	snapshot_timer.one_shot = true
 	snapshot_timer.wait_time = 0.5
@@ -256,6 +273,8 @@ func end_stroke() -> void:
 	set_brush_instruction(false)
 	if was_dragging and not finish_requested:
 		save_contract_progress()
+	if wet_recipe and not switching_tool and rug_phase == RugPhase.CLEANING and not finish_requested:
+		_advance_wet_tool.call_deferred()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST and is_node_ready():
@@ -282,6 +301,66 @@ func back() -> void:
 
 func _sync_wallet() -> void:
 	hud.sync_wallet(shop_state.cash)
+	_sync_progression()
+
+func _sync_progression() -> void:
+	if updating_progression or shop_state == null or not paid_contract: return
+	updating_progression = true
+	var view: Dictionary = shop_state.progression_view()
+	var wider: bool = float(view.tool_width) > tool_width
+	tool_width = float(view.tool_width)
+	wide_brush = tool_width > 1.0
+	if soil != null:
+		soil.head_half = Vector2(0.305 * tool_width, 0.11)
+		if wider and not brush_dragging:
+			contact_point.x = clampf(contact_point.x, -1.0 + soil.head_half.x, 1.0 - soil.head_half.x)
+		var strength: float = float(view.get("wet_power", view.tool_power)) if wet_recipe and selected_tool != 0 else float(view.tool_power)
+		if strength != applied_strength:
+			soil.set_tool_strength(strength)
+			applied_strength = strength
+		if int(view.global_tool_tier) != applied_visual_tier:
+			tool_visuals.apply_tier(int(view.global_tool_tier), tool_width)
+			applied_visual_tier = int(view.global_tool_tier)
+		if rug_phase == RugPhase.CLEANING: place_selected_tool()
+	var allowed := rug_phase == RugPhase.CLEANING and not finish_requested and not leaving_scene
+	if cached_progression != view or cached_purchase_state != allowed:
+		hud.set_progression(view, allowed)
+		cached_progression = view
+		cached_purchase_state = allowed
+	var offer: Dictionary = shop_state.reward_offer()
+	hud.set_ad_offer(int(offer.get("amount", 0)), shop_state.reward_ad_available())
+	updating_progression = false
+
+func _purchase_payout() -> void:
+	if not _can_purchase(): return
+	end_stroke()
+	if shop_state.buy_payout_upgrade(): update_contract_status()
+	_sync_progression()
+
+func _purchase_tool() -> void:
+	if not _can_purchase(): return
+	end_stroke()
+	if shop_state.buy_tool_upgrade():
+		_sync_progression()
+		if not hud.upgrades_open(): select_tool(selected_tool)
+
+func _can_purchase() -> bool:
+	return paid_contract and rug_phase == RugPhase.CLEANING and not finish_requested and not leaving_scene and hud.pending_reward == 0
+
+func _request_rewarded_ad() -> void:
+	if not _can_purchase() or not shop_state.reward_ad_available(): return
+	end_stroke()
+	shop_state.request_reward_ad(str(shop_state.reward_offer().get("job_id", "")))
+
+func _show_ad_reward(amount: int) -> void:
+	if leaving_scene: return
+	hud.reserve_reward(amount)
+	hud.show_reward(amount, shop_state.cash)
+
+func _advance_wet_tool() -> void:
+	if not wet_recipe or brush_dragging or rug_phase != RugPhase.CLEANING or finish_requested: return
+	var next_tool: int = soil.recommended_tool()
+	if next_tool != selected_tool: select_tool(next_tool)
 
 func _on_upgrades_changed(open: bool) -> void:
 	end_stroke()
@@ -308,9 +387,14 @@ func move_brush_to_screen(screen_position: Vector2, touch_input: bool) -> void:
 	target.x = clampf(target.x, -BRUSH_X_LIMIT, BRUSH_X_LIMIT)
 	target.z = clampf(target.z, BRUSH_Z_MIN, BRUSH_Z_MAX)
 	target.y = soil.brush_surface_height(target, current_head_half())
-	if brush_dragging and selected_tool == 0:
+	if brush_dragging:
 		var now := Time.get_ticks_msec()
-		soil.stroke(last_brush_position, target, float(now - stroke_time) / 1000.0)
+		var dt := float(now - stroke_time) / 1000.0
+		if last_brush_position.distance_squared_to(target) > 0.00001:
+			if paid_contract: shop_state.note_current_tool_used()
+			if selected_tool == 0: soil.stroke(last_brush_position, target, dt)
+			elif wet_recipe and selected_tool == 2: soil.apply_water_stroke(last_brush_position, target, dt)
+			elif wet_recipe and selected_tool == 1: soil.apply_squeegee_stroke(last_brush_position, target, dt)
 		stroke_time = now
 	contact_point = target
 	place_selected_tool()
@@ -319,8 +403,9 @@ func move_brush_to_screen(screen_position: Vector2, touch_input: bool) -> void:
 func select_tool(index: int) -> void:
 	if soil.completion_started or index < 0 or index >= tool_nodes.size():
 		return
-	if paid_contract and index != 0:
+	if paid_contract and not wet_recipe and index != 0:
 		return
+	switching_tool = true
 	end_stroke()
 	selected_tool = index
 	for i in tool_nodes.size():
@@ -331,12 +416,14 @@ func select_tool(index: int) -> void:
 	place_selected_tool()
 	last_brush_position = contact_point
 	set_brush_instruction(false)
+	switching_tool = false
+	_sync_progression()
 
 func place_selected_tool() -> void:
 	var tool := tool_nodes[selected_tool]
 	var pose := Basis.IDENTITY.scaled(Vector3.ONE * 0.77)
-	if selected_tool == 0 and wide_brush:
-		pose = Basis.IDENTITY.scaled(Vector3(0.77 * 0.44 / 0.305, 0.77, 0.77))
+	if selected_tool == 0:
+		pose = Basis.IDENTITY.scaled(Vector3(0.77 * tool_width, 0.77, 0.77))
 	var hover := 0.0
 	if selected_tool == 2:
 		pose = Basis(Vector3.RIGHT, deg_to_rad(55.0)).scaled(Vector3.ONE * 1.12)
@@ -409,7 +496,7 @@ func update_contract_status() -> void:
 		return
 	# A rug is only as clean as its dirtier layer. One honest number now drives
 	# the bar, the Finish button, and automatic completion.
-	var fraction := 1.0 if contract_finished else minf(soil.unique_clearance(), soil.surface_clearance())
+	var fraction: float = 1.0 if contract_finished else soil.overall_clearance()
 	progress_fraction = clampf(fraction, 0.0, 1.0)
 	var percent := floori(progress_fraction * 100.0 + 0.0001)
 	dirty = not contract_finished and progress_fraction < AUTO_FINISH_TARGET
@@ -420,6 +507,11 @@ func update_contract_status() -> void:
 	progress_fill.shadow_color = Color(color, 0.42)
 	finish_button.visible = rug_phase == RugPhase.CLEANING and not hud.upgrades_open() and not contract_finished and not finish_requested and progress_fraction >= CONTRACT_TARGET and (progress_fraction < AUTO_FINISH_TARGET or contract_save_failed)
 	finish_button.disabled = not finish_button.visible
+	if paid_contract:
+		var payout: int = shop_state.reward_for_current_job(soil.make_progress_snapshot())
+		finish_button.text = "Finish · %s" % hud._money_text(payout) if payout > 0 else "Finish job"
+		finish_button.tooltip_text = "%d coins" % payout if payout > 0 else "Finish this rug"
+	_sync_progression()
 	if rug_phase == RugPhase.CLEANING and not hud.upgrades_open() and progress_fraction >= AUTO_FINISH_TARGET and not contract_finished and not finish_requested and not auto_finish_queued and not contract_save_failed:
 		auto_finish_queued = true
 		finish_rug.call_deferred()
@@ -443,6 +535,20 @@ func frame_carpet() -> void:
 	camera.keep_aspect = Camera3D.KEEP_HEIGHT
 	camera.size = maxf(4.35, 2.2 / aspect)
 	camera.position = Vector3(0.0, 9.0, -0.20)
+	# Reserve the earnings/Finish band even before Finish appears. A short
+	# phone must expose every fringe without zooming when the rug reaches85%.
+	if is_instance_valid(hud) and hud.is_node_ready():
+		hud._layout()
+		var safe: Rect2 = hud._safe_rect()
+		if safe.size.x <= safe.size.y * 1.35:
+			var ui_scale: float = hud.get_node("HUD").scale.y
+			var top: float = hud.control("UpgradeButton").get_global_rect().end.y + 8.0 * ui_scale
+			var bottom: float = hud.control("PayoutCard").get_global_rect().position.y - 80.0 * ui_scale
+			var available_height := maxf(bottom - top, viewport_size.y * 0.25)
+			var available_width := maxf(safe.size.x - 32.0 * ui_scale, viewport_size.x * 0.25)
+			camera.size = maxf(camera.size, maxf(3.48 * viewport_size.y / available_height, 2.20 * viewport_size.y / available_width))
+			camera.position.z = (0.5 - (top + bottom) * 0.5 / viewport_size.y) * camera.size
+			camera.position.x = (0.5 - safe.get_center().x / viewport_size.x) * camera.size * aspect
 	camera.rotation_degrees = Vector3(-90, 0, 0)
 	if soil != null:
 		soil.request_render()
@@ -513,6 +619,7 @@ func _grow_arriving_dirt() -> void:
 func _bring_in_tool() -> void:
 	rug_phase = RugPhase.TOOL_ENTERING
 	contact_point = brush_home.origin + brush_home.basis * TOOL_PIVOTS[0]
+	contact_point.x = clampf(contact_point.x, -1.0 + soil.head_half.x, 1.0 - soil.head_half.x)
 	place_selected_tool()
 	last_brush_position = contact_point
 	var tool := tool_nodes[selected_tool]
@@ -527,7 +634,7 @@ func _tool_arrival_finished() -> void:
 	if leaving_scene: return
 	rug_phase = RugPhase.CLEANING
 	soil.suspend_simulation(false)
-	select_tool(0)
+	select_tool(soil.recommended_tool() if wet_recipe else 0)
 	update_contract_status()
 
 func save_contract_progress() -> bool:
@@ -553,7 +660,7 @@ func finish_rug() -> void:
 	auto_finish_queued = false
 	if rug_phase != RugPhase.CLEANING or leaving_scene or hud.upgrades_open() or soil == null or soil.completion_started or contract_finished or finish_requested:
 		return
-	if minf(soil.unique_clearance(), soil.surface_clearance()) < CONTRACT_TARGET:
+	if soil.overall_clearance() < CONTRACT_TARGET:
 		return
 	finish_requested = true
 	end_stroke()
@@ -561,7 +668,7 @@ func finish_rug() -> void:
 		var completed_snapshot: Dictionary = soil.make_snapshot()
 		# Reserve only the visual count-up before the transaction emits changed.
 		# The ledger owns the payout; coin arrivals never grant actual currency.
-		completed_reward = ShopLedger.manual_reward_for(completed_snapshot)
+		completed_reward = shop_state.reward_for_current_job(completed_snapshot)
 		hud.reserve_reward(completed_reward)
 		replacement_job_id = shop_state.complete_and_start_next_job(contract_job_id, completed_snapshot)
 		if replacement_job_id.is_empty():
@@ -616,6 +723,8 @@ func return_to_shop() -> void:
 func _exit_tree() -> void:
 	if is_instance_valid(shop_state) and shop_state.changed.is_connected(_sync_wallet):
 		shop_state.changed.disconnect(_sync_wallet)
+	if is_instance_valid(shop_state) and shop_state.ad_reward_granted.is_connected(_show_ad_reward):
+		shop_state.ad_reward_granted.disconnect(_show_ad_reward)
 	save_contract_progress()
 	if original_scale_size != Vector2i.ZERO:
 		var window := get_window()
@@ -654,6 +763,10 @@ func bind_ui() -> void:
 	upgrade_button.pressed.connect(hud.open_upgrades)
 	close_upgrades.pressed.connect(hud.close_upgrades)
 	hud.upgrades_changed.connect(_on_upgrades_changed)
-	for button in [home_button, finish_button, upgrade_button, close_upgrades]:
+	hud.request_payout_upgrade.connect(_purchase_payout)
+	hud.request_tool_upgrade.connect(_purchase_tool)
+	hud.request_rewarded_ad.connect(_request_rewarded_ad)
+	for button in [home_button, finish_button] + hud.action_buttons():
+		if button in touch_buttons: continue
 		Pop.bind(button)
 		touch_buttons.append(button)

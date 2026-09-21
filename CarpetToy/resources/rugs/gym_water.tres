@@ -1,0 +1,10 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/rug_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+display_name = "Rug 2 · Wet tools"
+cleaning_hint = "Hold the water hose to pour merging blobs. Squeegee interaction comes next."
+surface_tint = Color(0.67, 0.82, 1.0, 1.0)
+dust_strength = 0.48

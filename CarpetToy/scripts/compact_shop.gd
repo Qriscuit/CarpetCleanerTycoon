@@ -1,9 +1,12 @@
 extends Control
-## Concise native sheets, backed by the existing transactional shop ledger.
+## Authored compact sheets for the active branch.
 signal closed
 const Pop = preload("res://scripts/ui/button_pop.gd")
-const NAMES := {"hand_brush":"Hand Brush", "wide_brush":"Wide Brush", "bonzi":"Bonzi", "bonzi_mk2":"Bonzi Mk II", "intake":"Welcome Sign"}
-const PAGES := {"shop":["bonzi","wide_brush","bonzi_mk2","intake"], "items":["hand_brush","wide_brush"], "plans":["bonzi","wide_brush","bonzi_mk2","intake"], "bonzi":["bonzi","bonzi_mk2","intake"]}
+const Coin = preload("res://assets/floating_shop/CoinIcon.png")
+const Brush = preload("res://assets/floating_shop/BrushIcon.png")
+const Buddy = preload("res://assets/floating_shop/BonziIcon.png")
+const Store = preload("res://assets/floating_shop/FloatingShop.png")
+const ROW_IDS := ["hand_brush", "wide_brush", "bonzi", "bonzi_mk2", "intake"]
 var current_tab := "shop"
 var ledger: Node
 var pending_item := ""
@@ -14,6 +17,10 @@ var dragged := false
 var scroll_start := 0
 var scrolling := false
 var rows: Dictionary = {}
+var actions: Dictionary = {}
+var view: Dictionary = {}
+var sheet_focus_modes: Dictionary = {}
+var focus_before_review: Control
 
 func _ready() -> void:
 	ledger = get_node("/root/ShopState")
@@ -21,7 +28,8 @@ func _ready() -> void:
 		var id := str(row.get_meta("item_id"))
 		rows[id] = row
 		action_for(id).pressed.connect(_item_action.bind(id))
-	for b in find_children("*","Button",true,false): Pop.bind(b)
+	for index in ROW_IDS.size(): %Rows.move_child(rows[ROW_IDS[index]], index)
+	for button in find_children("*", "Button", true, false): Pop.bind(button)
 	%CloseSheet.pressed.connect(_close)
 	%Backdrop.pressed.connect(_close)
 	%CancelBuild.pressed.connect(cancel_build)
@@ -33,122 +41,162 @@ func _ready() -> void:
 	ledger.changed.connect(refresh)
 	resized.connect(_layout)
 	show_tab("shop")
-	_layout()
 
 func action_for(id: String) -> Button:
 	return rows[id].get_node("Row/Action")
 
+func _row(index: int, title: String, detail: String, caption: String, action: String, enabled: bool, texture: Texture2D, price: bool = false) -> void:
+	var id: String = ROW_IDS[index]
+	var row: Control = rows[id]
+	row.show()
+	row.get_node("Row/Words/Title").text = title
+	row.get_node("Row/Words/Status").text = detail
+	row.get_node("Row/Artwork").texture = texture
+	var button := action_for(id)
+	button.text = caption
+	button.icon = Coin if price else null
+	button.disabled = not enabled
+	actions[id] = action
+
 func _layout() -> void:
-	var desired_height: float = 112 + PAGES[current_tab].size()*82 + (94 if %Routine.visible else 0) + (32 if %SheetNote.visible else 0)
-	var sheet_size := Vector2(minf(430,size.x-24), minf(desired_height,size.y-24))
-	%Sheet.position = (size-sheet_size)*.5
-	%Sheet.size = sheet_size
-	%ConfirmPanel.size = Vector2(minf(336,size.x-36),280)
-	%ConfirmPanel.position = (size-%ConfirmPanel.size)*.5
+	if not is_node_ready(): return
+	var count := 0
+	for row in rows.values():
+		if row.visible: count += 1
+	var desired := 112.0 + count * 88.0 + (94.0 if %Routine.visible else 0.0) + (44.0 if %SheetNote.visible else 0.0)
+	%Sheet.size = Vector2(minf(430, size.x - 24), minf(desired, size.y - 24))
+	%Sheet.position = (size - %Sheet.size) * 0.5
+	%ConfirmPanel.size = Vector2(minf(336, size.x - 36), 280)
+	%ConfirmPanel.position = (size - %ConfirmPanel.size) * 0.5
 
 func show_tab(tab: String) -> void:
-	if not PAGES.has(tab): return
-	%CloseSheet.grab_focus()
+	if tab not in ["shop", "items", "plans", "bonzi"]: return
 	current_tab = tab
-	%SheetTitle.text = {"shop":"Shop", "items":"Tools", "plans":"Blueprints", "bonzi":"Bonzi"}[tab]
-	%SheetNote.text = ""
+	%SheetTitle.text = {"shop":"Shop", "items":"Tools", "plans":"Stores", "bonzi":"Bonzi"}[tab]
 	%SheetNote.hide()
 	%MenuScroll.scroll_vertical = 0
 	cancel_build()
 	refresh()
 
 func refresh() -> void:
-	%SheetCash.text = str(ledger.cash) if ledger.cash < 10000 else "%.1fK" % (float(ledger.cash)/1000.0)
+	if ledger == null: return
+	var focused := get_viewport().gui_get_focus_owner()
+	view = ledger.progression_view()
+	%SheetCash.text = _amount(ledger.cash)
 	%SheetCash.tooltip_text = "%d coins" % ledger.cash
-	for id: String in rows:
-		var row: Control = rows[id]
-		row.visible = id in PAGES[current_tab]
-		if not row.visible: continue
-		var status: Label = row.get_node("Row/Words/Status")
-		var action := action_for(id)
-		var owned: bool = ledger.owns(id)
-		var known: bool = ledger.blueprint_known(id)
-		var cost: int = ledger.build_cost(id)
-		action.disabled = false
-		action.icon = null
-		if current_tab == "plans":
-			status.text = "Blueprint found" if known else _unlock_text(id)
-			action.text = "Built" if owned else ("Shop" if known else "Locked")
-			action.disabled = owned or not known
-		elif owned:
-			var tool: bool = id in ["hand_brush","wide_brush"]
-			var equipped: bool = tool and ledger.equipped_brush == id
-			status.text = "Ready to clean" if tool else "Installed"
-			action.text = "Using" if equipped else ("Equip" if tool else "Built")
-			action.disabled = not tool or equipped
-		else:
-			status.text = _unlock_text(id) if not known else ("Ready to build" if ledger.cash >= cost else "%d more coins" % (cost-ledger.cash))
-			action.text = str(cost)
-			action.icon = preload("res://assets/floating_shop/CoinIcon.png")
-			action.disabled = not known or ledger.cash < cost
-	%Routine.visible = current_tab == "bonzi" and ledger.owns("bonzi")
-	%RoutineRate.text = "%d coins every %ds" % [ledger.ROUTINE_REWARD, roundi(3600.0 / maxf(ledger.output_per_hour(), 1.0))]
+	for row in rows.values(): row.hide()
+	actions.clear()
+	%Routine.visible = current_tab == "bonzi" and int(view.bonzi_tier) >= 0
+	%RoutineRate.text = "%s coins / %ds" % [_amount(view.bonzi_reward), int(view.bonzi_seconds)]
+	if current_tab == "shop":
+		_row(0, "Rug value · %d" % view.payout_level, "85%% %s → %s\n99%% %s → %s" % [_amount(view.early_reward), _amount(view.next_early), _amount(view.full_reward), _amount(view.next_full)], _amount(view.payout_cost), "payout", _afford(view.payout_cost), Coin, true)
+		_tool_row(1)
+	elif current_tab == "items":
+		_row(0, str(view.tool_name), "Width ×%.2f · Power ×%.2f" % [view.tool_width, view.tool_power], "Using", "", false, Brush)
+		_tool_row(1)
+	elif current_tab == "bonzi":
+		var tier: int = view.bonzi_tier
+		var detail := "%s / %s earned" % [_amount(view.bonzi_earned), _amount(view.bonzi_target)]
+		var cost: int = view.bonzi_cost
+		if tier < 0: detail = "3 rugs to meet Bonzi" if int(view.local_jobs) < 3 else "10 coins / 120s"
+		_row(0, "Bonzi" if tier < 0 else "Bonzi · %d/3" % (tier + 1), detail, "Max" if cost < 0 else _amount(cost), "bonzi", bool(view.can_upgrade_bonzi), Buddy, cost >= 0)
+		if tier >= 0 and tier < 2:
+			var next_reward: int = (20 if tier == 0 else 40) * int(pow(8, int(view.store_id) - 1))
+			_row(1, "Next", "%s coins / %ds" % [_amount(next_reward), 90 if tier == 0 else 60], "", "", false, Buddy)
+	else:
+		var owned: Array = view.owned_store_ids
+		var titles := ["Neighborhood", "High Street", "Wash House", "Restoration"]
+		for index in 4:
+			var id := index + 1
+			var selected := id == int(view.store_id)
+			var available := id in owned
+			_row(index, "%d · %s" % [id, titles[index]], "Brush" if id <= 2 else "Water + squeegee", "Here" if selected else ("Visit" if available else "Locked"), "store:%d" % id, available and not selected, Store)
+		if bool(view.has_next_store):
+			_row(4, "Next store", "Bonzi %s/%s · Tool %d/4\nFinal rugs %d/%d" % [_amount(view.bonzi_earned), _amount(view.bonzi_target), view.tool_level, view.final_tool_jobs, view.final_tool_target], _amount(view.travel_cost), "travel", bool(view.can_travel), Store, true)
 	if not pending_item.is_empty(): _refresh_confirmation()
 	_layout()
+	if pending_item.is_empty() and is_instance_valid(focused) and %Sheet.is_ancestor_of(focused):
+		_restore_sheet_focus(focused)
 
-func _unlock_text(id: String) -> String:
-	if id in ["bonzi_mk2","intake"] and not ledger.owns("bonzi"): return "Build Bonzi first"
-	return "%d / %d rugs" % [mini(ledger.manual_jobs,ledger.unlock_requirement(id)),ledger.unlock_requirement(id)]
+func _tool_row(index: int) -> void:
+	var cost: int = view.tool_cost
+	_row(index, "Complete" if cost < 0 else str(view.next_tool_name), "%d/4 · %s" % [view.tool_level, "Wet tools" if int(view.store_id) >= 3 else "Brush"], "Max" if cost < 0 else _amount(cost), "tool", _afford(cost), Brush, cost >= 0)
+
+func _afford(cost: int) -> bool:
+	return cost >= 0 and ledger.cash >= cost
+
+func _amount(value: int) -> String:
+	if value < 0: return "—"
+	if value >= 1_000_000_000_000_000: return "%.1fQ" % (float(value) / 1_000_000_000_000_000.0)
+	if value >= 1_000_000_000_000: return "%.1fT" % (float(value) / 1_000_000_000_000.0)
+	if value >= 1_000_000_000: return "%.1fB" % (float(value) / 1_000_000_000.0)
+	if value >= 1_000_000: return "%.1fM" % (float(value) / 1_000_000.0)
+	if value >= 10_000: return "%.1fK" % (float(value) / 1_000.0)
+	return str(value)
 
 func _process(_delta: float) -> void:
-	if not is_visible_in_tree() or not %Routine.visible: return
-	var seconds := ceili(ledger.seconds_to_delivery())
-	%RoutineTime.text = "Next +%d in %d:%02d" % [ledger.ROUTINE_REWARD, seconds/60,seconds%60]
-	%RoutineProgress.value = ledger.routine_remainder*100
+	if not is_visible_in_tree() or not %Routine.visible or ledger == null: return
+	var seconds: float = ledger.seconds_to_delivery()
+	%RoutineProgress.value = 100.0 * (1.0 - seconds / maxf(float(view.bonzi_seconds), 1.0))
+	%RoutineTime.text = "%ds" % ceili(seconds)
 
 func _item_action(id: String) -> void:
-	if current_tab == "plans":
-		show_tab("shop")
-		%MenuScroll.ensure_control_visible(rows[id])
-	elif ledger.owns(id):
-		if id in ["hand_brush","wide_brush"]:
-			if ledger.equip_brush(id): _notice("%s equipped" % NAMES[id])
-			else: _notice(ledger.last_error)
-	else: request_build(id)
-
-func request_build(id: String) -> void:
-	if not NAMES.has(id) or ledger.owns(id) or not ledger.blueprint_known(id) or ledger.cash < ledger.build_cost(id): return
-	pending_item = id
-	_refresh_confirmation()
-	%PurchaseReview.show()
-	%ConfirmBuild.grab_focus()
-
-func _benefit(id: String) -> String:
-	if id == "wide_brush": return "44% wider cleaning"
-	var capacity: float = ledger.capacity_per_hour()
-	var demand: float = ledger.demand_per_hour()
-	if id == "bonzi": capacity = 30
-	elif id == "bonzi_mk2": capacity = 45
-	elif id == "intake": demand = 60
-	var rate := minf(capacity,demand)
-	return "%d coins every %ds" % [ledger.ROUTINE_REWARD, roundi(3600.0/rate)] if rate > ledger.output_per_hour() else "No extra income until Mk II"
+	var action: String = actions.get(id, "")
+	if action == "travel":
+		pending_item = "travel"
+		_refresh_confirmation()
+		focus_before_review = get_viewport().gui_get_focus_owner()
+		_set_review_focus(true)
+		%PurchaseReview.show()
+		%ConfirmBuild.grab_focus()
+		return
+	var success := false
+	match action:
+		"payout": success = ledger.buy_payout_upgrade()
+		"tool": success = ledger.buy_tool_upgrade()
+		"bonzi": success = ledger.buy_bonzi_upgrade()
+		_:
+			if action.begins_with("store:"): success = ledger.select_store(int(action.get_slice(":", 1)))
+	if not success and not action.is_empty(): _notice(ledger.last_error if not ledger.last_error.is_empty() else "Not available yet")
+	refresh()
 
 func _refresh_confirmation() -> void:
-	%BuildTitle.text = "Build %s?" % NAMES[pending_item]
-	%BuildBenefit.text = _benefit(pending_item)
-	var cost: int = ledger.build_cost(pending_item)
-	%BuildBalance.text = "%d coins  ·  %d left" % [cost, ledger.cash-cost]
-	%ConfirmBuild.text = "Build · %d" % cost
-	%ConfirmBuild.disabled = ledger.owns(pending_item) or not ledger.blueprint_known(pending_item) or ledger.cash < cost
+	%BuildTitle.text = "Open next store?"
+	%BuildBenefit.text = "Starter tools + Bonzi included"
+	%BuildBalance.text = "%s coins · %s left" % [_amount(view.travel_cost), _amount(ledger.cash - int(view.travel_cost))]
+	%ConfirmBuild.text = "Open · %s" % _amount(view.travel_cost)
+	%ConfirmBuild.disabled = not bool(view.can_travel)
 
 func confirm_build() -> void:
-	if pending_item.is_empty(): return
-	var id := pending_item
+	if pending_item != "travel": return
 	cancel_build()
-	if ledger.build(id): _notice("%s built" % NAMES[id])
-	else: _notice(ledger.last_error if not ledger.last_error.is_empty() else "Could not build yet")
+	if ledger.open_next_store(): _notice("Store opened")
+	else: _notice(ledger.last_error if not ledger.last_error.is_empty() else "Finish the store milestones first")
 	refresh()
 
 func cancel_build() -> void:
-	var id := pending_item
+	var was_open: bool = %PurchaseReview.visible
 	pending_item = ""
 	%PurchaseReview.hide()
-	if rows.has(id) and rows[id].is_visible_in_tree(): action_for(id).grab_focus()
+	_set_review_focus(false)
+	if was_open: _restore_sheet_focus(focus_before_review)
+	focus_before_review = null
+
+func _restore_sheet_focus(previous: Control) -> void:
+	if not is_visible_in_tree(): return
+	if is_instance_valid(previous) and previous.is_visible_in_tree() and previous.focus_mode != Control.FOCUS_NONE and (not previous is Button or not previous.disabled):
+		previous.grab_focus()
+	else:
+		%CloseSheet.grab_focus()
+
+func _set_review_focus(reviewing: bool) -> void:
+	for button: Button in %Sheet.find_children("*", "Button", true, false):
+		if reviewing:
+			sheet_focus_modes[button] = button.focus_mode
+			button.focus_mode = Control.FOCUS_NONE
+		elif sheet_focus_modes.has(button):
+			button.focus_mode = sheet_focus_modes[button]
+	if not reviewing: sheet_focus_modes.clear()
 
 func _notice(message: String) -> void:
 	%SheetNote.text = message
@@ -166,16 +214,14 @@ func back() -> void:
 
 func _button_at(point: Vector2) -> Button:
 	var candidates: Array[Button] = []
-	if %PurchaseReview.visible:
-		candidates.append(%CancelBuild)
-		candidates.append(%ConfirmBuild)
-	else: candidates.append(%CloseSheet)
-	if not %PurchaseReview.visible:
+	if %PurchaseReview.visible: candidates.assign([%CancelBuild, %ConfirmBuild])
+	else:
+		candidates.append(%CloseSheet)
 		for id: String in rows:
 			if rows[id].is_visible_in_tree() and %MenuScroll.get_global_rect().has_point(point): candidates.append(action_for(id))
 		if not %Sheet.get_global_rect().has_point(point): candidates.append(%Backdrop)
-	for b in candidates:
-		if b.is_visible_in_tree() and not b.disabled and b.get_global_rect().has_point(point): return b
+	for button in candidates:
+		if button.is_visible_in_tree() and not button.disabled and button.get_global_rect().has_point(point): return button
 	return null
 
 func handle_touch(event: InputEvent) -> void:
@@ -194,16 +240,16 @@ func handle_touch(event: InputEvent) -> void:
 			if is_instance_valid(touch_button): Pop.press(touch_button)
 		elif touch_id == event.index:
 			var target := touch_button
-			var activate: bool = not event.canceled and not dragged and touch_start.distance_to(event.position)<12 and _button_at(event.position)==target
+			var activate: bool = not event.canceled and not dragged and touch_start.distance_to(event.position) < 12 and _button_at(event.position) == target
 			reset_touch()
 			if activate and is_instance_valid(target):
 				Pop.release(target)
 				target.pressed.emit()
 	elif event is InputEventScreenDrag and event.index == touch_id:
-		if touch_start.distance_to(event.position)>=12:
+		if touch_start.distance_to(event.position) >= 12:
 			dragged = true
 			if is_instance_valid(touch_button): Pop.reset(touch_button)
-		if dragged and scrolling: %MenuScroll.scroll_vertical = scroll_start-roundi(event.position.y-touch_start.y)
+		if dragged and scrolling: %MenuScroll.scroll_vertical = scroll_start - roundi(event.position.y - touch_start.y)
 
 func reset_touch() -> void:
 	if is_instance_valid(touch_button): Pop.reset(touch_button)

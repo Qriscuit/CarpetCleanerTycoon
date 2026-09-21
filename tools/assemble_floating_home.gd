@@ -204,11 +204,12 @@ func build() -> void:
 	motion.button_pressed=true
 	motion.custom_minimum_size.y=48
 	readable_button_text(motion)
-	var close := add(column,Button.new(),"CloseSettings",true) as Button
-	close.text="Done"
-	close.custom_minimum_size.y=48
-	close.add_theme_stylebox_override("normal",style(Color("dbedce"),16))
-	readable_button_text(close)
+	var gym := add(column,Button.new(),"OpenGym",true) as Button
+	gym.text="Gym"
+	gym.tooltip_text="Practice on two rugs"
+	gym.custom_minimum_size.y=48
+	gym.add_theme_stylebox_override("normal",style(Color("dbedce"),16))
+	readable_button_text(gym)
 	var management := add(home,Control.new(),"Management",true) as Control
 	full(management)
 	management.visible=false
