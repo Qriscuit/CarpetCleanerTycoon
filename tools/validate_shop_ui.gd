@@ -70,7 +70,7 @@ func run() -> void:
 		quit(1)
 		return
 	var ledger: Node = root.get_node("ShopState")
-	hub = load("res://scenes/shop_hub.tscn").instantiate()
+	hub = load("res://scenes/test/shop_hub.tscn").instantiate()
 	# These must already exist before _ready: the local editor hierarchy is the UI.
 	check(hub.get_node_or_null("%CleanRugButton") is Button, "Paid cleaning button is authored in the packed scene")
 	check(hub.get_node_or_null("%PurchaseSheet") is Control, "Purchase sheet exists before runtime initialization")
@@ -264,7 +264,7 @@ func run() -> void:
 	await screenshot("shop_paid_rug")
 	current_scene.return_to_shop()
 	await frame()
-	check(current_scene.name == "ShopHub", "Return navigation reaches the hub")
+	check(current_scene.scene_file_path == "res://scenes/production/floating_home.tscn", "Legacy menu's paid rug returns to the production main menu")
 	check(not ledger.active_job_id.is_empty(), "Returning preserves the active customer rug")
 	print("SHOP UI: ", checks, " checks; ", failures, " failures")
 	quit(0 if failures == 0 else 1)

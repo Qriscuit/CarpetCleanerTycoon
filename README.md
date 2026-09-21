@@ -1,14 +1,26 @@
 # Mint Meadow — carpet cleaning prototype
 
+## Android APK
+
+Save your game changes and double-click **Build APK.cmd**. It uses the bundled standard Godot 4.7.2, checks dependencies, exports a signed debug APK, verifies its signature, and writes **build/CarpetCleaner.apk**. Use **Open Game Editor.cmd** to open the matching editor. See [APK recovery checklist](design/Android_APK.md) for exact SDK paths and fixes for template, SDK, and signing errors.
+
+## Floating shop main menu
+
+Press **F5** to launch `CarpetToy/scenes/production/floating_home.tscn`, the light-blue main menu. Pressing the 3D shop squashes it, then releases with a small pop before starting/resuming a rug. The dock opens compact **Shop**, **Tools**, **Plans**, and **Bonzi** sheets. They show short item/status rows and review price, benefit and remaining cash before any purchase. It adapts to portrait and landscape with safe-area layout. Editable assets are in `art/blender/floating_shop.blend`; exports are in `CarpetToy/assets/floating_shop/`. See [floating home implementation](design/home-screen/IMPLEMENTATION.md) for editing, rebuilding, and validation details. Desktop layout/input checks pass; mobile device testing remains outstanding.
+
 ## Current design and economy
+
+Production entry scenes live in `CarpetToy/scenes/production/`; the old menu, free gym, and art previews live in `CarpetToy/scenes/test/` and are excluded from Android builds. Both rug Home buttons always open the floating main menu. See [scene layout and navigation](design/Scene_Navigation.md) for the routing rules and regression check.
 
 The brush-first metagame is documented in [GDD v0.2](Carpet_Cleaner_Tycoon_GDD_v0_2.docx) and [Economy workbook v0.2](Carpet_Cleaner_Economy_v0_2.xlsx). The Neighborhood Shop is now playable: paid rugs, permanent blueprints, item builds, Bonzi automation, optional upgrades, and saved progress. Later shops remain design proposals. The editable design source is [design/Metagame_v0_2.md](design/Metagame_v0_2.md); its “not implemented” passages describe the earlier baseline. The v0.1 GDD remains historical context.
 
-Open **Open Godot Project.lnk**, then press **F5**. The main scene is `CarpetToy/scenes/shop_hub.tscn` (`ShopHub`). Its **Rug Cleaning Gym** button opens the existing `RugCleaningGym` test scene. Customer jobs use that cleaning scene in a separate paid mode.
+Open **Open Godot Project.lnk**, then press **F5** for the floating main menu. The original detailed hub remains available at `CarpetToy/scenes/test/shop_hub.tscn` for development and practice-gym access. Customer jobs use the cleaning gym scene in a separate paid mode.
 
 ## Neighborhood Shop
 
-The outside hub has four menus: **Shop**, **Items**, **Blueprints**, and **Bonzi**. UI controls and grouped artwork are saved in editable Godot scene hierarchies. See [Editing UI in Godot](design/Editing_UI_in_Godot.md) for scene locations, page previews, moving elements, shared styles and live text templates. Menus support mouse and touch; a swipe over a build button scrolls without purchasing. The Clean/Resume action stays available beneath scrolling pages, and purchases show their cost and cash remaining before confirmation.
+Bonzi's bar shows its actual reward and cycle: **10 coins every 120s**, **90s** with Mk II, or **80s** with both automation upgrades. Coins arrive once per finished bar. In the main menu, **Settings → Reset progress → Reset** starts fresh after confirmation; **Keep playing** cancels. Reset removes earned coins, items, milestones and the active rug while preserving the free starter brush.
+
+The floating home routes **Shop** to upgrades, **Tools** to brush equipment, **Plans** to blueprint progress, and **Bonzi** to automation and income. The building is the primary clean/resume action. Close a sheet or press Back/Escape to return home; Back dismisses a purchase review first. Controls and cards are saved in editable scene hierarchies. Menus support mouse and touch; a swipe over a build button scrolls without purchasing.
 
 Start with a free shop, hand brush and 0 cash. **Clean a rug** starts one resumable customer job. Clear at least 90% of unique debris **and** 90% of surface dust, then choose **Finish job** for 20 cash exactly once. Leaving for the shop preserves the rug. The gym is free practice and never grants money. Paid jobs use owned tools; building the Wide Brush gives its visible model and real cleaning footprint 44% more width.
 
@@ -23,7 +35,7 @@ Bonzi's lane continues during manual cleaning and across menu changes. Orders pa
 
 Versioned JSON saves live at Godot's `user://neighborhood_shop_v1.json`. Purchases, paid jobs and routine deliveries are committed atomically. Failed writes roll back transactions; unreadable or unsupported saves are preserved. Local time supports this prototype's offline production, without an anti-cheat claim.
 
-Implementation: `scenes/shop_hub.tscn`, `scenes/ui/`, `resources/ui/mint_theme.tres`, `scripts/shop_hub.gd`, `scripts/ui/`, and `scripts/shop_state.gd`; paid mode and snapshots are in `scripts/workshop.gd` and `scripts/dirt_controller.gd`. Rug variants are reusable resources under `resources/rugs/`. Both owned brushes can be equipped in Items, with selection persisted across sessions. Cleaning completion has direct Next rug and Visit shop actions.
+Implementation: `scenes/test/shop_hub.tscn`, `scenes/ui/`, `resources/ui/mint_theme.tres`, `scripts/shop_hub.gd`, `scripts/ui/`, and `scripts/shop_state.gd`; paid mode and snapshots are in `scripts/workshop.gd` and `scripts/dirt_controller.gd`. Rug variants are reusable resources under `resources/rugs/`. Both owned brushes can be equipped in Items, with selection persisted across sessions. Cleaning completion has direct Next rug and Visit shop actions.
 
 Run the three management checks with the portable Godot executable and `--path CarpetToy --script ../tools/validate_shop_state.gd -- --shop-test`, then substitute `validate_contract.gd` and `validate_shop_ui.gd`. `--shop-test` isolates saves from player progress. The state suite supports `--headless`; the contract and menu suites use the graphics renderer. Menu captures are `art/renders/shop_*.png`; paid-job captures are `art/renders/contract_*.png`.
 
@@ -67,7 +79,7 @@ Android APK export and device performance are not yet tested. Clumps do not coll
 
 The original mint/cream/coral rug has 3,176 triangles across binding, pile and fringe. Its body measures 2 × 3 m; fringe extends to about 3.32 m. Albedo and woven normal maps are 1024 × 1536. The brush has 2,108 triangles, squeegee 500 and jet spray 868; each tool has one mesh surface and palette material. Source generation scripts are `tools/build_carpet.py` and `tools/build_tools.py`.
 
-The original carpet-only inspection scene remains `CarpetToy/scenes/carpet_studio.tscn`; its Turntable/Top/Reset controls are separate from gameplay. `CarpetToy/scenes/carpet.tscn` provides the original reusable clean rug and coarse collider.
+The original carpet-only inspection scene remains `CarpetToy/scenes/test/carpet_studio.tscn`; its Turntable/Top/Reset controls are separate from gameplay. `CarpetToy/scenes/carpet.tscn` provides the original reusable clean rug and coarse collider.
 
 ## Rebuild and verify
 

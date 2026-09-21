@@ -144,7 +144,7 @@ func _initialize() -> void:
 	save_scene(dirty,OUTPUT+"dirty_carpet.tscn")
 	source.free()
 	# Reuse the established lighting, but provide a taller work area for the tool row.
-	var previous := (load(OUTPUT+"carpet_studio.tscn") as PackedScene).instantiate()
+	var previous := (load(OUTPUT+"test/carpet_studio.tscn") as PackedScene).instantiate()
 	var studio := Node3D.new()
 	for child_name in ["WorldEnvironment","Ground","KeyLight","FillLight","Camera3D"]:
 		var child := previous.get_node(child_name)
@@ -200,7 +200,7 @@ func _initialize() -> void:
 	var hud := (load("res://scenes/ui/cleaning_hud.tscn") as PackedScene).instantiate()
 	studio.add_child(hud)
 	studio.set_editable_instance(hud, true)
-	save_scene(studio,OUTPUT+"rug_cleaning_gym.tscn")
+	save_scene(studio,OUTPUT+"production/rug_cleaning.tscn")
 	print("WORKSHOP SAVED: white tiles, ", batch.instance_count, " batched soil clumps, light surface dust.")
 	studio.free()
 	quit.call_deferred()

@@ -7,7 +7,7 @@ func check(value: bool, message: String) -> void:
 func _initialize() -> void:
 	call_deferred("run")
 func run() -> void:
-	var game := (load("res://scenes/rug_cleaning_gym.tscn") as PackedScene).instantiate()
+	var game := (load("res://scenes/production/rug_cleaning.tscn") as PackedScene).instantiate()
 	root.add_child(game)
 	await process_frame
 	var soil: Node = game.soil

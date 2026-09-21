@@ -1,5 +1,6 @@
 @tool
 extends Control
+const Routes = preload("res://scripts/scene_routes.gd")
 ## Scenes own presentation. This controller binds data and routes user intent only.
 @export_enum("Shop", "Items", "Blueprints", "Bonzi", "Future shop") var editor_page := 0:
 	set(value):
@@ -234,11 +235,11 @@ func enter_cleaning() -> void:
 		toast(state.last_error)
 		return
 	state.contract_mode = true
-	get_tree().change_scene_to_file("res://scenes/rug_cleaning_gym.tscn")
+	get_tree().change_scene_to_file(Routes.CLEANING)
 
 func enter_gym() -> void:
 	state.contract_mode = false
-	get_tree().change_scene_to_file("res://scenes/rug_cleaning_gym.tscn")
+	get_tree().change_scene_to_file("res://scenes/test/rug_cleaning_gym.tscn")
 
 func show_expansion() -> void:
 	show_tab("expansion")

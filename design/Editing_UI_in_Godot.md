@@ -4,11 +4,15 @@ The UI is now saved as real scene nodes. Playing the game binds live values and 
 
 ## Start here
 
-Open `CarpetToy/project.godot`, then open `scenes/shop_hub.tscn` and select **2D**. Select the `ShopHub` root and change **Editor Page** in the Inspector to preview Shop, Items, Blueprints, Bonzi, or the future shop. These pages already exist under `Shell / Layout / Pages`; each has its own scroll container and content. Editor Page is only a preview choice; the game starts at the shop.
+For the current game, open `scenes/production/floating_home.tscn`; its dock sheets live in `scenes/ui/compact_shop.tscn`. **F5** starts this production menu. See [scene navigation](Scene_Navigation.md) for production/test organization. The detailed hub instructions below apply to the retained legacy test menu.
+
+Open `CarpetToy/project.godot`, then open `scenes/test/shop_hub.tscn` and select **2D**. Select the `ShopHub` root and change **Editor Page** in the Inspector to preview Shop, Items, Blueprints, Bonzi, or the future shop. These pages already exist under `Shell / Layout / Pages`; each has its own scroll container and content. Editor Page is only a preview choice; the game starts at the shop.
 
 | What to edit | Where |
 | --- | --- |
-| Shop menus, cards, words, navigation and purchase review | `scenes/shop_hub.tscn` |
+| Production main menu and navigation | `scenes/production/floating_home.tscn` |
+| Production shop sheets and purchase review | `scenes/ui/compact_shop.tscn` |
+| Legacy test shop menus and cards | `scenes/test/shop_hub.tscn` |
 | In-game rug HUD, progress card, tool buttons and completion actions | `scenes/ui/cleaning_hud.tscn` |
 | Art-review scene buttons | `scenes/ui/studio_hud.tscn` |
 | Storefront, Bonzi, brushes and other artwork | `scenes/ui/art/*.tscn` |

@@ -1,0 +1,32 @@
+{
+  "FloatingShop": {
+    "triangles": 30032,
+    "source_parts": 71,
+    "file": "FloatingShop.glb"
+  },
+  "BrushIcon": {
+    "triangles": 5100,
+    "source_parts": 16,
+    "file": "BrushIcon.glb"
+  },
+  "BlueprintIcon": {
+    "triangles": 1500,
+    "source_parts": 10,
+    "file": "BlueprintIcon.glb"
+  },
+  "BonziIcon": {
+    "triangles": 4180,
+    "source_parts": 13,
+    "file": "BonziIcon.glb"
+  },
+  "CoinIcon": {
+    "triangles": 2004,
+    "source_parts": 3,
+    "file": "CoinIcon.glb"
+  },
+  "SettingsIcon": {
+    "triangles": 3168,
+    "source_parts": 9,
+    "file": "SettingsIcon.glb"
+  }
+}

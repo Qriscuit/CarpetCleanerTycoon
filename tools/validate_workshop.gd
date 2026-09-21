@@ -1,7 +1,7 @@
 extends SceneTree
 
 func _initialize() -> void:
-	var workshop := (load("res://scenes/rug_cleaning_gym.tscn") as PackedScene).instantiate()
+	var workshop := (load("res://scenes/production/rug_cleaning.tscn") as PackedScene).instantiate()
 	var soil := workshop.get_node("RugDisplay/Dirty")
 	var clean := workshop.get_node("RugDisplay/Clean")
 	assert(soil.visible and not clean.visible, "Dirt is the default art view")

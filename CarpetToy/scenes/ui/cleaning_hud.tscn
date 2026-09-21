@@ -400,7 +400,7 @@ custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
 theme_type_variation = &"SecondaryButton"
 theme_override_font_sizes/font_size = 16
-text = "Visit shop"
+text = "Home"
 action_mode = 1
 
 [node name="ToolRail" type="VBoxContainer" parent="HUD"]

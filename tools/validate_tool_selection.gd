@@ -22,7 +22,7 @@ func _initialize() -> void:
 	call_deferred("run")
 
 func run() -> void:
-	var workshop := (load("res://scenes/rug_cleaning_gym.tscn") as PackedScene).instantiate()
+	var workshop := (load("res://scenes/production/rug_cleaning.tscn") as PackedScene).instantiate()
 	root.add_child(workshop)
 	await process_frame
 	await process_frame

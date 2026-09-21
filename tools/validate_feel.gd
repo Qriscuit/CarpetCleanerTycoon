@@ -15,7 +15,7 @@ func capture(filename: String) -> void:
 	root.get_texture().get_image().save_png(ProjectSettings.globalize_path("res://../art/renders/" + filename))
 
 func run() -> void:
-	var workshop := (load("res://scenes/rug_cleaning_gym.tscn") as PackedScene).instantiate()
+	var workshop := (load("res://scenes/production/rug_cleaning.tscn") as PackedScene).instantiate()
 	root.add_child(workshop)
 	await process_frame
 	var soil: Node = workshop.soil

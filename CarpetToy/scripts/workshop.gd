@@ -1,5 +1,7 @@
 extends Node3D
 ## Mouse/touch brush control over the rug and surrounding tiled work area.
+const Routes = preload("res://scripts/scene_routes.gd")
+@export var practice_only := false
 
 const CARPET_PLANE_Y := 0.067
 const BRUSH_X_LIMIT := 2.4
@@ -73,6 +75,8 @@ const CONTRACT_TARGET := 0.90
 
 func _ready() -> void:
 	shop_state = get_node_or_null("/root/ShopState")
+	if practice_only and shop_state != null:
+		shop_state.contract_mode = false
 	paid_contract = shop_state != null and shop_state.contract_mode and not str(shop_state.active_job_id).is_empty()
 	if paid_contract:
 		contract_job_id = shop_state.active_job_id
@@ -432,7 +436,7 @@ func next_rug() -> void:
 		return
 	next_job_pending = true
 	shop_state.contract_mode = true
-	get_tree().change_scene_to_file("res://scenes/rug_cleaning_gym.tscn")
+	get_tree().change_scene_to_file(Routes.CLEANING)
 
 func return_to_shop() -> void:
 	end_stroke()
@@ -440,7 +444,7 @@ func return_to_shop() -> void:
 		return
 	if shop_state != null:
 		shop_state.contract_mode = false
-	get_tree().change_scene_to_file("res://scenes/shop_hub.tscn")
+	get_tree().change_scene_to_file(Routes.MAIN_MENU)
 
 func _exit_tree() -> void:
 	save_contract_progress()

@@ -35,7 +35,7 @@ func run() -> void:
 	var job_id: String = state.start_job()
 	check(not job_id.is_empty(), "Job creation commits")
 	state.contract_mode = true
-	var scene := load("res://scenes/rug_cleaning_gym.tscn") as PackedScene
+	var scene := load("res://scenes/production/rug_cleaning.tscn") as PackedScene
 	var game := scene.instantiate()
 	root.add_child(game)
 	await process_frame

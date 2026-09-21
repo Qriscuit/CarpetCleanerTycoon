@@ -29,14 +29,14 @@ func run() -> void:
 		push_error("Use -- --shop-test for an isolated UI run.")
 		quit(2)
 		return
-	for scene_path in ["res://scenes/rug_cleaning_gym.tscn", "res://scenes/starter_workshop.tscn"]:
+	for scene_path in ["res://scenes/production/rug_cleaning.tscn", "res://scenes/test/starter_workshop.tscn"]:
 		var authored := (load(scene_path) as PackedScene).instantiate()
 		var hud: CanvasLayer = authored.get_node("GymUI")
 		check(hud.get_node("%HomeButton") is Button, "Home exists in the local scene before gameplay starts")
 		check(hud.get_node("%RugButton2") is Button and hud.get_node("%FinishJobButton") is Button, "Practice and paid menus are both authored")
 		check(hud.get_node("%NextRugButton") is Button, "Completion button is editor-selectable")
 		authored.free()
-	var game := (load("res://scenes/rug_cleaning_gym.tscn") as PackedScene).instantiate()
+	var game := (load("res://scenes/production/rug_cleaning.tscn") as PackedScene).instantiate()
 	var pre_hud: CanvasLayer = game.get_node("GymUI")
 	var heading: Control = pre_hud.control("Heading")
 	heading.position += Vector2(0, 5)
@@ -100,7 +100,7 @@ func run() -> void:
 	await RenderingServer.frame_post_draw
 	root.get_texture().get_image().save_png(ProjectSettings.globalize_path("res://../art/renders/editable_cleaning_hud.png"))
 	game.free()
-	var studio := (load("res://scenes/carpet_studio.tscn") as PackedScene).instantiate()
+	var studio := (load("res://scenes/test/carpet_studio.tscn") as PackedScene).instantiate()
 	check(studio.get_node("StudioUI/%TurntableButton") is Button, "Art studio controls are authored too")
 	root.add_child(studio)
 	await process_frame

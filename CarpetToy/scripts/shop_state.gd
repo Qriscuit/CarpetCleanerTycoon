@@ -33,6 +33,9 @@ var _checkpoint_ticks: int = 0
 var _save_path: String = ""
 var _save_enabled: bool = true
 var _application_paused: bool = false
+var _pause_wall: float = 0.0
+var _pause_ticks: int = 0
+var _pending_away_seconds: float = 0.0
 # These overrides are ignored unless the process explicitly opts into isolated tests.
 var _test_unix_time: float = -1.0
 var _test_ticks_msec: int = -1
@@ -57,22 +60,26 @@ func _process(_delta: float) -> void:
 	var old_automated_jobs := automated_jobs
 	var old_remainder := routine_remainder
 	var old_ticks := _last_ticks
+	var before_away := _capture_state() if _pending_away_seconds > 0.0 else {}
 	var deliveries := _settle_elapsed()
 	# Persist partial progress periodically and whole deliveries immediately.
-	if deliveries > 0 or _now_ticks() - _checkpoint_ticks >= 5000:
+	if deliveries > 0 or not before_away.is_empty() or _now_ticks() - _checkpoint_ticks >= 5000:
 		if not _commit():
 			cash = old_cash
 			automated_jobs = old_automated_jobs
 			routine_remainder = old_remainder
 			_last_ticks = old_ticks
+			if not before_away.is_empty(): _restore_state(before_away)
 			return
-	if deliveries > 0:
+	if deliveries > 0 or not before_away.is_empty():
 		changed.emit()
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_PAUSED:
+	if what == NOTIFICATION_APPLICATION_PAUSED and not _application_paused:
 		save_state()
+		_pause_wall = maxf(_saved_wall, _now_unix())
+		_pause_ticks = _now_ticks()
 		_application_paused = true
 	elif what == NOTIFICATION_APPLICATION_RESUMED and _application_paused:
 		_resume_application()
@@ -81,12 +88,13 @@ func _notification(what: int) -> void:
 
 
 func _resume_application() -> void:
-	var before := _capture_state()
-	# If a write fails, discarded hours must not reappear as uncapped online time.
-	var retry_ticks := maxi(_last_ticks, _now_ticks() - int(OFFLINE_CAP_SECONDS * 1000.0))
-	_settle_elapsed()
+	# The live monotonic clock can stop during device sleep. Use the same bounded
+	# wall-clock absence as a cold launch, then restart live accounting at now.
+	_pending_away_seconds += clampf(_now_unix() - _pause_wall, 0.0, OFFLINE_CAP_SECONDS)
+	var unsettled_live_ticks := maxi(0, _pause_ticks - _last_ticks)
+	_last_ticks = _now_ticks() - unsettled_live_ticks
 	_application_paused = false
-	_finish_transaction(before, retry_ticks)
+	save_state() # Failed writes retain the pending absence for a single retry.
 
 
 func owns(id: String) -> bool:
@@ -221,6 +229,32 @@ func acknowledge_return() -> bool:
 	return _finish_transaction(before, old_ticks)
 
 
+func reset_progress() -> bool:
+	var before := _capture_state()
+	var old_ticks := _last_ticks
+	var old_pending := _pending_away_seconds
+	var old_enabled := _save_enabled
+	_restore_state({
+		"cash": 0, "equipped_brush": "hand_brush", "manual_jobs": 0,
+		"automated_jobs": 0, "routine_remainder": 0.0,
+		"owned": {"hand_brush": true}, "blueprints": {"hand_brush": true},
+		"job_serial": 0, "active_job_id": "", "job_snapshot": {},
+		"return_reward": 0, "return_seconds": 0.0, "saved_wall": _now_unix(),
+	})
+	_last_ticks = _now_ticks()
+	_pending_away_seconds = 0.0
+	_save_enabled = true
+	if not _commit():
+		_restore_state(before)
+		_last_ticks = old_ticks
+		_pending_away_seconds = old_pending
+		_save_enabled = old_enabled
+		return false
+	contract_mode = false
+	changed.emit()
+	return true
+
+
 func _valid_clearance(value: Variant) -> bool:
 	return (value is float or value is int) and is_finite(float(value)) and float(value) >= 0.9 and float(value) <= 1.0
 
@@ -235,16 +269,16 @@ func _refresh_blueprints() -> void:
 
 
 func _settle_elapsed() -> int:
-	var now := _now_ticks()
+	# A late save while paused may retry older earnings, but cannot consume sleep
+	# as live time. The new absence is settled only by _resume_application.
+	var now := _pause_ticks if _application_paused else _now_ticks()
 	var seconds := maxf(0.0, float(now - _last_ticks) / 1000.0)
-	if _application_paused:
-		seconds = minf(seconds, OFFLINE_CAP_SECONDS)
 	_last_ticks = now
-	var delivered := _produce(seconds)
-	if _application_paused and owns("bonzi"):
-		return_reward += delivered * ROUTINE_REWARD
-		return_seconds += seconds
-	return delivered
+	var away_delivered := _produce(_pending_away_seconds)
+	if _pending_away_seconds > 0.0 and owns("bonzi"):
+		return_reward += away_delivered * ROUTINE_REWARD
+		return_seconds += _pending_away_seconds
+	return away_delivered + _produce(seconds)
 
 
 func _produce(seconds: float) -> int:
@@ -308,7 +342,7 @@ func _commit() -> bool:
 		return false
 	var data := _capture_state()
 	# Retain the wall-clock high water mark if the device clock moves backward.
-	data["saved_wall"] = maxf(_saved_wall, _now_unix())
+	data["saved_wall"] = maxf(_saved_wall, _pause_wall if _application_paused else _now_unix())
 	var temp_path := _save_path + ".tmp"
 	var file := FileAccess.open(temp_path, FileAccess.WRITE)
 	if file == null:
@@ -328,6 +362,7 @@ func _commit() -> bool:
 		return false
 	_saved_wall = float(data["saved_wall"])
 	_checkpoint_ticks = _now_ticks()
+	_pending_away_seconds = 0.0
 	last_error = ""
 	return true
 
