@@ -1,11 +1,14 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/production/rug_cleaning.tscn" id="1_cleaning"]
 [ext_resource type="Script" path="res://scripts/gym.gd" id="2_gym"]
 [ext_resource type="Resource" path="res://resources/rugs/gym_brush.tres" id="3_brush"]
 [ext_resource type="Resource" path="res://resources/rugs/gym_water.tres" id="4_water"]
+[ext_resource type="PackedScene" path="res://scenes/effects/squeegee_water.tscn" id="5_squeegee_water"]
 
 [node name="RugCleaningGym" instance=ExtResource("1_cleaning")]
 script = ExtResource("2_gym")
 practice_only = true
 rugs = Array[Resource]([ExtResource("3_brush"), ExtResource("4_water")])
+
+[node name="SqueegeeWater" parent="." instance=ExtResource("5_squeegee_water")]

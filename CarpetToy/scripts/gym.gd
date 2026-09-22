@@ -5,6 +5,7 @@ const WaterJet = preload("res://scripts/water_jet.gd")
 var water: Node3D
 var nozzle_socket: Marker3D
 var hose_upgrade_level := 0
+var squeegee_water: Node3D
 
 func _ready() -> void:
 	practice_only = true
@@ -28,6 +29,9 @@ func _ready() -> void:
 	water.water_contact.connect(_on_water_contact)
 	water.soak_contact.connect(_on_soak_contact)
 	water.set_enabled(selected_rug == 1)
+	squeegee_water = $SqueegeeWater
+	squeegee_water.setup(soil.footprint, soil.surface_pixels, soil.MASK_SIZE)
+	squeegee_water.set_enabled(selected_rug == 1)
 	set_hose_upgrade_level(hose_upgrade_level)
 
 func begin_stroke(screen_position: Vector2, touch_input: bool) -> void:
@@ -41,12 +45,16 @@ func move_brush_to_screen(screen_position: Vector2, touch_input: bool) -> void:
 func end_stroke() -> void:
 	super.end_stroke()
 	_sync_water_emitter()
+	if is_instance_valid(squeegee_water): squeegee_water.end_stroke()
 
 func apply_selected_tool_stroke(world_from: Vector3, world_to: Vector3, elapsed: float) -> void:
 	if selected_rug == 1:
 		# Coverage arrives at the stream's actual impact point after flight.
 		if selected_tool == 1:
+			var before: float = soil.extraction_coverage_total
 			soil.apply_squeegee_stroke(world_from, world_to, elapsed)
+			if is_instance_valid(squeegee_water):
+				squeegee_water.feed_stroke(world_from, world_to, elapsed, maxf(0.0, soil.extraction_coverage_total - before))
 		return
 	super.apply_selected_tool_stroke(world_from, world_to, elapsed)
 
@@ -132,6 +140,7 @@ func select_rug(index: int) -> void:
 	rug_initialized = true
 	if is_instance_valid(water):
 		water.set_enabled(index == 1)
+	if is_instance_valid(squeegee_water): squeegee_water.set_enabled(index == 1)
 	select_tool(0 if index == 0 else 2)
 	update_contract_status()
 	frame_carpet()
@@ -142,6 +151,7 @@ func select_tool(index: int) -> void:
 	if selected_rug == 1 and index == 1 and not soil.water_stage_complete(): return
 	if selected_rug == 1 and index == 2 and soil.water_stage_complete(): return
 	super.select_tool(index)
+	if is_instance_valid(squeegee_water) and index != 1: squeegee_water.reset()
 	hud.set_practice_tool(selected_tool)
 	_sync_water_emitter()
 
@@ -151,6 +161,7 @@ func reset_rug() -> void:
 	if selected_rug == 1:
 		soil.prepare_water_stage()
 	soil.batch_node.visible = selected_rug == 0
+	if is_instance_valid(squeegee_water): squeegee_water.reset()
 	if is_instance_valid(water):
 		water.reset()
 		water.set_enabled(selected_rug == 1)
@@ -188,6 +199,7 @@ func _tool_arrival_finished() -> void:
 
 func next_rug() -> void:
 	if leaving_scene or next_job_pending or not soil.vacuum_complete or not contract_finished: return
+	if is_instance_valid(squeegee_water): squeegee_water.reset()
 	# Completion repeats this exercise; changing exercises is always explicit.
 	next_job_pending = true
 	rug_phase = RugPhase.ARRIVING

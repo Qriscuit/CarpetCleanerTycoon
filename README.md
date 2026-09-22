@@ -47,6 +47,8 @@ Use the compact **Hose upgrades → Spout −/+** controls to compare five free 
 
 The Gym jet uses one permanent **16-ring × 10-side tube**, one opaque impact mesh and a **24-slot droplet MultiMesh**. A fixed 96-pose nozzle history drives its ballistic centerline; a vertex shader supplies gentle traveling surface waves. Carpet contact deposits water over a **0.26–0.46 m wet radius** at bounded 20 Hz cadence. Six reusable reservoirs add soft spreading at 10 Hz, approaching **0.52–0.90 m radius** with sustained contact. Both write to the existing **256 × 416 L8 wetness mask**, which the squeegee also clears. Resources are reused and processing stops after the tail, droplets and brief after-soak finish. See [continuous jet architecture and tuning](design/Water_Jet.md). These bounded costs are not a measured Android performance claim.
 
+The Gym squeegee now throws an **opaque, gently rippling water sheet** from its leading edge into a broad scalloped splash. Its thickness follows actual water removal; dry or stationary passes produce no new water. Released and turning strokes leave their previous water in flight. Landings follow the rug and tile heights without rewetting cleaned areas. The effect reuses three small closed meshes and 24 droplets, then stops updating when settled. For an immediate Godot art preview, open `CarpetToy/scenes/test/squeegee_water_preview.tscn` and press **F6**: **Space** pauses/resumes, **Tab** changes camera, and clicking returns to manual practice. Tune the Gym's **SqueegeeWater** node in the Inspector. See [squeegee visual design and implementation](design/Squeegee_Water_VFX.md).
+
 ## Cleaning and rewards
 
 For dry rugs, the meter uses the lower of debris clearance and surface-dust clearance. Wet rugs average dry, water and extraction progress. Water starts after 99% dry clearance; squeegeeing starts after 99% water coverage. The tool advances between stages. Early completion at 85% therefore permits some remaining extraction; 99% completes the whole job automatically. The ledger validates the required stages rather than trusting a displayed percentage.
@@ -98,6 +100,7 @@ Use the portable Godot executable and isolated saves. In PowerShell:
 & './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_store_loop.gd -- --shop-test
 & './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_gym.gd -- --shop-test
 & './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_water_jet.gd -- --shop-test
+& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_squeegee_water.gd -- --shop-test
 & './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_hose_upgrades.gd -- --shop-test
 ```
 
