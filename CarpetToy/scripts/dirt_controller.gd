@@ -44,6 +44,7 @@ const SQUEEGEE_HALF := Vector2(0.34, 0.075)
 const WATER_RATE := 6.2
 const EXTRACTION_RATE := 7.4
 const MAX_TOOL_STRENGTH := 8.0
+const WATER_BLOB_EDGE_FRACTION := 0.18
 
 var batch: MultiMesh
 var batch_node: MultiMeshInstance3D
@@ -508,6 +509,38 @@ func set_recipe(value: bool) -> void:
 		set_process(true)
 	_update_wet_materials()
 
+func prepare_water_stage() -> void:
+	# Gym Rug 2 starts at the water lesson. Reuse the production masks and stage
+	# logic, but begin after dry cleaning without simulating hundreds of strokes.
+	if not wet_recipe:
+		return
+	completion_started = false
+	vacuum_complete = false
+	active.clear()
+	for i in initial.size():
+		velocities[i] = Vector3.ZERO
+		cleared[i] = true
+		credited[i] = true
+		moving[i] = false
+		growth[i] = 0.0
+		awakened[i] = false
+	remaining = 0
+	coverage_values.fill(0.0)
+	surface_coverage_total = 0.0
+	mask.fill(Color.BLACK)
+	mask_changed = true
+	water_values.fill(0.0)
+	extraction_values.fill(0.0)
+	water_coverage_total = 0.0
+	extraction_coverage_total = 0.0
+	wet_mask.fill(Color.BLACK)
+	wet_mask_changed = true
+	pass_strength.fill(0.0)
+	pass_active = false
+	set_physics_process(false)
+	request_render()
+	progress_changed.emit(remaining, initial.size())
+
 func set_tool_strength(multiplier: float) -> void:
 	# Store 4 currently reaches 4.41x. Retain a finite ceiling with enough room
 	# for later tuning instead of silently weakening an earned capstone tier.
@@ -546,9 +579,64 @@ func recommended_tool() -> int:
 		return 0
 	if minf(unique_clearance(), surface_clearance()) < WET_STAGE_TARGET:
 		return 0
-	if water_clearance() < WET_STAGE_TARGET:
+	if not water_stage_complete():
 		return 2
 	return 1
+
+func water_stage_complete() -> bool:
+	return wet_recipe and water_clearance() >= WET_STAGE_TARGET
+
+func water_stage_progress() -> float:
+	return clampf(water_clearance() / WET_STAGE_TARGET, 0.0, 1.0) if wet_recipe else 1.0
+
+func extraction_stage_complete() -> bool:
+	return wet_recipe and extraction_clearance() >= WET_STAGE_TARGET
+
+func extraction_stage_progress() -> float:
+	return clampf(extraction_clearance() / WET_STAGE_TARGET, 0.0, 1.0) if wet_recipe else 1.0
+
+func apply_water_blob(world_center: Vector3, radius: float, strength: float = 1.0, edge_fraction: float = WATER_BLOB_EDGE_FRACTION) -> bool:
+	if not wet_recipe or minf(unique_clearance(), surface_clearance()) < WET_STAGE_TARGET:
+		return false
+	if completion_started or simulation_suspended or reveal_progress < 1.0 or radius <= 0.0:
+		return false
+	var center3 := rug_node.to_local(world_center)
+	var center := Vector2(center3.x, center3.z)
+	var low := (center - Vector2.ONE * radius + RUG_HALF) / (RUG_HALF * 2.0)
+	var high := (center + Vector2.ONE * radius + RUG_HALF) / (RUG_HALF * 2.0)
+	var from_pixel := Vector2i((low * Vector2(MASK_SIZE)).floor()).clamp(Vector2i.ZERO, MASK_SIZE)
+	var to_pixel := Vector2i((high * Vector2(MASK_SIZE)).ceil()).clamp(Vector2i.ZERO, MASK_SIZE)
+	var amount := clampf(strength, 0.0, 1.0)
+	# Direct impact keeps its readable core; capillary soaking uses a wide soft
+	# feather in the same authoritative mask, not an extra transparent overlay.
+	var inner_radius := radius * (1.0 - clampf(edge_fraction, 0.01, 1.0))
+	var any_changed := false
+	for y in range(from_pixel.y, to_pixel.y):
+		for x in range(from_pixel.x, to_pixel.x):
+			var index := y * MASK_SIZE.x + x
+			if surface_pixels[index] == 0:
+				continue
+			var loosened := 1.0 - coverage_values[index]
+			var old_water := water_values[index]
+			if old_water >= loosened:
+				continue
+			var point := (Vector2(x + 0.5, y + 0.5) / Vector2(MASK_SIZE) - Vector2.ONE * 0.5) * RUG_HALF * 2.0
+			var distance := point.distance_to(center)
+			if distance >= radius:
+				continue
+			var weight := 1.0 - smoothstep(inner_radius, radius, distance)
+			var new_water := minf(loosened, old_water + amount * weight)
+			if new_water <= old_water:
+				continue
+			water_values[index] = new_water
+			water_coverage_total += new_water - old_water
+			var visible_water := clampf(new_water - extraction_values[index], 0.0, 1.0)
+			wet_mask.set_pixel(x, y, Color(visible_water, visible_water, visible_water))
+			any_changed = true
+	if any_changed:
+		wet_mask_changed = true
+		set_process(true)
+	return any_changed
 
 func apply_water_stroke(world_from: Vector3, world_to: Vector3, elapsed: float) -> void:
 	if not wet_recipe or minf(unique_clearance(), surface_clearance()) < WET_STAGE_TARGET:
@@ -556,7 +644,7 @@ func apply_water_stroke(world_from: Vector3, world_to: Vector3, elapsed: float) 
 	_paint_wet_stroke(world_from, world_to, elapsed, WATER_HALF, true)
 
 func apply_squeegee_stroke(world_from: Vector3, world_to: Vector3, elapsed: float) -> void:
-	if not wet_recipe or water_clearance() < WET_STAGE_TARGET:
+	if not water_stage_complete():
 		return
 	_paint_wet_stroke(world_from, world_to, elapsed, SQUEEGEE_HALF, false)
 

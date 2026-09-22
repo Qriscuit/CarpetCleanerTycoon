@@ -5,6 +5,6 @@
 [resource]
 script = ExtResource("1")
 display_name = "Rug 2 · Wet tools"
-cleaning_hint = "Hold the water hose to pour merging blobs. Squeegee interaction comes next."
+cleaning_hint = "Hold the hose while the ring fills. Wet the whole rug, then pull the water out with the squeegee."
 surface_tint = Color(0.67, 0.82, 1.0, 1.0)
 dust_strength = 0.48

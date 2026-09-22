@@ -392,13 +392,19 @@ func move_brush_to_screen(screen_position: Vector2, touch_input: bool) -> void:
 		var dt := float(now - stroke_time) / 1000.0
 		if last_brush_position.distance_squared_to(target) > 0.00001:
 			if paid_contract: shop_state.note_current_tool_used()
-			if selected_tool == 0: soil.stroke(last_brush_position, target, dt)
-			elif wet_recipe and selected_tool == 2: soil.apply_water_stroke(last_brush_position, target, dt)
-			elif wet_recipe and selected_tool == 1: soil.apply_squeegee_stroke(last_brush_position, target, dt)
+			apply_selected_tool_stroke(last_brush_position, target, dt)
 		stroke_time = now
 	contact_point = target
 	place_selected_tool()
 	last_brush_position = target
+
+func apply_selected_tool_stroke(world_from: Vector3, world_to: Vector3, elapsed: float) -> void:
+	if selected_tool == 0:
+		soil.stroke(world_from, world_to, elapsed)
+	elif wet_recipe and selected_tool == 2:
+		soil.apply_water_stroke(world_from, world_to, elapsed)
+	elif wet_recipe and selected_tool == 1:
+		soil.apply_squeegee_stroke(world_from, world_to, elapsed)
 
 func select_tool(index: int) -> void:
 	if soil.completion_started or index < 0 or index >= tool_nodes.size():

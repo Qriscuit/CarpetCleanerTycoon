@@ -270,3 +270,103 @@ theme_override_styles/hover = SubResource("PracticeHover")
 theme_override_styles/pressed = SubResource("PracticeSelected")
 theme_override_styles/focus = SubResource("PracticeFocus")
 text = "Reset rug"
+
+[node name="GymHoseUpgrades" type="Control" parent="HUD/GymPracticePanel"]
+unique_name_in_owner = true
+visible = false
+offset_left = 16.0
+offset_top = 198.0
+offset_right = 672.0
+offset_bottom = 292.0
+mouse_filter = 1
+tooltip_text = "Free gym preview. Hold steady to let water spread."
+
+[node name="GymHoseUpgradeDivider" type="ColorRect" parent="HUD/GymPracticePanel/GymHoseUpgrades"]
+unique_name_in_owner = true
+offset_right = 656.0
+offset_bottom = 1.0
+mouse_filter = 2
+color = Color(0.74, 0.86, 0.8, 1)
+
+[node name="GymHoseUpgradeTitle" type="Label" parent="HUD/GymPracticePanel/GymHoseUpgrades"]
+unique_name_in_owner = true
+offset_top = 6.0
+offset_right = 656.0
+offset_bottom = 30.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.16, 0.3, 0.35, 1)
+theme_override_font_sizes/font_size = 17
+text = "Hose upgrades · Spout Lv 1 / 5"
+
+[node name="GymHoseUpgradeStats" type="Label" parent="HUD/GymPracticePanel/GymHoseUpgrades"]
+unique_name_in_owner = true
+offset_top = 36.0
+offset_right = 524.0
+offset_bottom = 60.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.20, 0.39, 0.43, 1)
+theme_override_font_sizes/font_size = 15
+text = "Width 0.38 m · Soak 1.0×"
+
+[node name="GymHoseUpgradeHint" type="Label" parent="HUD/GymPracticePanel/GymHoseUpgrades"]
+unique_name_in_owner = true
+offset_top = 66.0
+offset_right = 524.0
+offset_bottom = 90.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.28, 0.45, 0.47, 1)
+theme_override_font_sizes/font_size = 14
+text = "Spread radius 0.70 m · Hold to grow"
+
+[node name="GymHoseLess" type="Button" parent="HUD/GymPracticePanel/GymHoseUpgrades"]
+unique_name_in_owner = true
+offset_left = 536.0
+offset_top = 34.0
+offset_right = 592.0
+offset_bottom = 90.0
+tooltip_text = "Preview previous spout level · free in the gym"
+theme_override_colors/font_color = Color(0.16, 0.3, 0.35, 1)
+theme_override_colors/font_hover_color = Color(0.16, 0.3, 0.35, 1)
+theme_override_colors/font_pressed_color = Color(0.16, 0.3, 0.35, 1)
+theme_override_colors/font_focus_color = Color(0.16, 0.3, 0.35, 1)
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("PracticeNormal")
+theme_override_styles/hover = SubResource("PracticeHover")
+theme_override_styles/pressed = SubResource("PracticeSelected")
+theme_override_styles/focus = SubResource("PracticeFocus")
+theme_override_styles/disabled = SubResource("PracticeNormal")
+disabled = true
+text = "−"
+
+[node name="GymHoseMore" type="Button" parent="HUD/GymPracticePanel/GymHoseUpgrades"]
+unique_name_in_owner = true
+offset_left = 600.0
+offset_top = 34.0
+offset_right = 656.0
+offset_bottom = 90.0
+tooltip_text = "Preview next spout level · free in the gym"
+theme_override_colors/font_color = Color(0.16, 0.3, 0.35, 1)
+theme_override_colors/font_hover_color = Color(0.16, 0.3, 0.35, 1)
+theme_override_colors/font_pressed_color = Color(0.16, 0.3, 0.35, 1)
+theme_override_colors/font_focus_color = Color(0.16, 0.3, 0.35, 1)
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("PracticeNormal")
+theme_override_styles/hover = SubResource("PracticeHover")
+theme_override_styles/pressed = SubResource("PracticeSelected")
+theme_override_styles/focus = SubResource("PracticeFocus")
+theme_override_styles/disabled = SubResource("PracticeNormal")
+text = "+"
+
+[node name="WaterDropCharge" type="TextureProgressBar" parent="HUD" index="11"]
+unique_name_in_owner = true
+visible = false
+z_index = 20
+offset_right = 48.0
+offset_bottom = 48.0
+mouse_filter = 2
+step = 0.1
+fill_mode = 4
+radial_fill_degrees = 360.0
+radial_initial_angle = -90.0
+tint_under = Color(0.12, 0.25, 0.29, 0.58)
+tint_progress = Color(0.35, 0.84, 0.94, 1)
