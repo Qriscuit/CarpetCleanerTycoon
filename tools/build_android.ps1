@@ -46,6 +46,7 @@ function Normalize-ToolPath([string]$Path, [string]$SettingName) {
 }
 
 function Read-ToolPath([string]$Name) {
+    if (-not (Test-Path -LiteralPath $settingsFile -PathType Leaf)) { return '' }
     $pattern = '^' + [regex]::Escape($Name) + '\s*=\s*(".*")\s*$'
     foreach ($line in Get-Content -LiteralPath $settingsFile) {
         if ($line -match $pattern) {
@@ -84,7 +85,7 @@ function Set-GodotStringSetting([string]$Text, [string]$Name, [string]$Value) {
     return $Text.TrimEnd() + "`r`n" + $line + "`r`n"
 }
 
-function Prepare-BuildProfile([string]$SdkPath, [string]$JdkPath) {
+function Prepare-BuildProfile([string]$SdkPath, [string]$JdkPath, [string]$DebugKeystore) {
     $profileAppData = Join-Path $buildDirectory 'godot-build-profile\AppData\Roaming'
     $profileGodot = Join-Path $profileAppData 'Godot'
     $profileTemplates = Join-Path $profileGodot 'export_templates\4.7.2.stable'
@@ -104,16 +105,19 @@ function Prepare-BuildProfile([string]$SdkPath, [string]$JdkPath) {
         Copy-Item -LiteralPath $sourceTemplate -Destination $targetTemplate -Force
     }
 
-    $sourceKeystore = Normalize-ToolPath (Read-ToolPath 'export/android/debug_keystore') 'Android debug keystore'
-    Require-File $sourceKeystore 'Godot debug keystore is missing. Open the bundled editor once to recreate it.'
     $targetKeystore = Join-Path $profileKeystores 'debug.keystore'
-    Copy-Item -LiteralPath $sourceKeystore -Destination $targetKeystore -Force
+    Copy-Item -LiteralPath $DebugKeystore -Destination $targetKeystore -Force
 
     $profileSettings = Join-Path $profileGodot 'editor_settings-4.7.tres'
-    $settingsText = [IO.File]::ReadAllText($settingsFile)
+    if (Test-Path -LiteralPath $settingsFile -PathType Leaf) {
+        $settingsText = [IO.File]::ReadAllText($settingsFile)
+    } else {
+        $settingsText = "[gd_resource type=`"EditorSettings`" format=3]`r`n`r`n[resource]`r`n"
+    }
     $settingsText = Set-GodotStringSetting $settingsText 'export/android/android_sdk_path' $SdkPath
     $settingsText = Set-GodotStringSetting $settingsText 'export/android/java_sdk_path' $JdkPath
     $settingsText = Set-GodotStringSetting $settingsText 'export/android/debug_keystore' $targetKeystore
+    $settingsText = Set-GodotStringSetting $settingsText 'export/android/debug_keystore_pass' 'android'
     [IO.File]::WriteAllText($profileSettings, $settingsText, (New-Object Text.UTF8Encoding($false)))
     return $profileAppData
 }
@@ -126,7 +130,6 @@ try {
     Write-Host 'Checking Android export setup...' -ForegroundColor Cyan
     Require-File $engine 'The bundled standard Godot 4.7.2 is missing from tools/godot. Restore that version, not the Desktop Mono editor.'
     Require-File (Join-Path $project 'export_presets.cfg') 'Android export preset is missing. Restore CarpetToy/export_presets.cfg.'
-    Require-File $settingsFile 'Godot editor settings are missing. Open the bundled editor and set Editor Settings > Export > Android paths. See design/Android_APK.md.'
     Require-File (Join-Path $templateDirectory 'android_debug.apk') 'Standard 4.7.2 Android templates are missing or unreadable. Use Editor > Manage Export Templates in the bundled STANDARD editor. See design/Android_APK.md.'
 
     $version = (& $engine --version | Out-String).Trim()
@@ -134,13 +137,18 @@ try {
         throw "Unexpected editor version: $version. This project uses standard Godot 4.7.2."
     }
 
-    $configuredSdk = Normalize-ToolPath (Read-ToolPath 'export/android/android_sdk_path') 'Android SDK Path'
-    $jdk = Normalize-ToolPath (Read-ToolPath 'export/android/java_sdk_path') 'Java SDK Path'
-    Write-Host "Settings: $settingsFile"
-    Write-Host "Configured SDK: $configuredSdk"
+    $configuredSdkText = Read-ToolPath 'export/android/android_sdk_path'
+    $configuredSdk = if ([string]::IsNullOrWhiteSpace($configuredSdkText)) { '' } else { Normalize-ToolPath $configuredSdkText 'Android SDK Path' }
+    $settingsStatus = if (Test-Path -LiteralPath $settingsFile -PathType Leaf) { 'found' } else { 'not present; using detected defaults' }
+    Write-Host "Settings: $settingsFile ($settingsStatus)"
+    if ($configuredSdk) { Write-Host "Configured SDK: $configuredSdk" }
+    $userSdk = Join-Path $env:LOCALAPPDATA 'Android\Sdk'
     $fallbackSdk = 'C:\Program Files (x86)\Android\android-sdk'
     $sdkCandidates = @()
-    if (-not $ForceFallbackSdk) { $sdkCandidates += $configuredSdk }
+    if (-not $ForceFallbackSdk) {
+        if ($configuredSdk) { $sdkCandidates += $configuredSdk }
+        if ($userSdk -notin $sdkCandidates) { $sdkCandidates += $userSdk }
+    }
     if ($fallbackSdk -notin $sdkCandidates) { $sdkCandidates += $fallbackSdk }
     $selectedSdk = $null
     foreach ($candidate in $sdkCandidates) {
@@ -154,12 +162,14 @@ try {
     if ($null -eq $selectedSdk) { throw 'No readable, complete Android SDK was found. See the candidate errors above.' }
     $sdk = $selectedSdk.Sdk
     $buildTools = $selectedSdk.BuildTools
-    if ($sdk -ne $configuredSdk) {
+    if ($configuredSdk -and $sdk -ne $configuredSdk) {
         if ($ForceFallbackSdk) {
             Write-Host "Using the machine-wide SDK selected by Build APK.cmd: $sdk"
         } else {
             Write-Warning "The configured Local AppData SDK is not visible to this launcher. Using the installed Program Files SDK for this build only: $sdk"
         }
+    } elseif (-not $configuredSdk) {
+        Write-Host "Using detected Android SDK: $sdk"
     }
     $adb = Join-Path $sdk 'platform-tools\adb.exe'
     $adbAvailable = $true
@@ -169,9 +179,40 @@ try {
         $adbAvailable = $false
         Write-Warning ($_.Exception.Message + "`nContinuing without ADB: it is used to discover/deploy to connected phones, not to create this APK file.")
     }
+    $jdkCandidates = @()
+    $configuredJdkText = Read-ToolPath 'export/android/java_sdk_path'
+    if (-not [string]::IsNullOrWhiteSpace($configuredJdkText)) { $jdkCandidates += (Normalize-ToolPath $configuredJdkText 'Java SDK Path') }
+    if (-not [string]::IsNullOrWhiteSpace($originalJavaHome) -and $originalJavaHome -notin $jdkCandidates) { $jdkCandidates += $originalJavaHome }
+    $javaRoot = 'C:\Program Files\Java'
+    if (Test-Path -LiteralPath $javaRoot -PathType Container) {
+        Get-ChildItem -LiteralPath $javaRoot -Directory |
+            Sort-Object Name -Descending |
+            ForEach-Object { if ($_.FullName -notin $jdkCandidates) { $jdkCandidates += $_.FullName } }
+    }
+    $jdk = $null
+    foreach ($candidate in $jdkCandidates) {
+        try {
+            $candidatePath = Normalize-ToolPath $candidate 'Java SDK Path'
+            if ((Test-Path -LiteralPath (Join-Path $candidatePath 'bin\java.exe') -PathType Leaf) -and
+                (Test-Path -LiteralPath (Join-Path $candidatePath 'bin\keytool.exe') -PathType Leaf)) {
+                $jdk = $candidatePath
+                break
+            }
+        } catch { }
+    }
+    if ($null -eq $jdk) { throw 'No complete JDK was found. Install a JDK containing bin/java.exe and bin/keytool.exe, or configure Java SDK Path in Godot.' }
     $java = Join-Path $jdk 'bin\java.exe'
-    Require-File $java "Java SDK Path is invalid: $jdk. Choose the JDK folder containing bin/java.exe."
-    Require-File (Join-Path $jdk 'bin\keytool.exe') 'Java SDK Path points to a runtime rather than a full JDK; bin/keytool.exe is required.'
+
+    $debugKeystoreCandidates = @()
+    $configuredDebugKeystore = Read-ToolPath 'export/android/debug_keystore'
+    if (-not [string]::IsNullOrWhiteSpace($configuredDebugKeystore)) { $debugKeystoreCandidates += (Normalize-ToolPath $configuredDebugKeystore 'Android debug keystore') }
+    $androidDebugKeystore = Join-Path $env:USERPROFILE '.android\debug.keystore'
+    if ($androidDebugKeystore -notin $debugKeystoreCandidates) { $debugKeystoreCandidates += $androidDebugKeystore }
+    $godotDebugKeystore = Join-Path $env:APPDATA 'Godot\keystores\debug.keystore'
+    if ($godotDebugKeystore -notin $debugKeystoreCandidates) { $debugKeystoreCandidates += $godotDebugKeystore }
+    $debugKeystore = $debugKeystoreCandidates | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+    if ([string]::IsNullOrWhiteSpace($debugKeystore)) { throw 'No Android debug keystore was found. Open Godot once or create %USERPROFILE%\.android\debug.keystore.' }
+    Require-File $debugKeystore 'The selected Android debug keystore is unreadable.'
     $signerJar = Join-Path $buildTools.FullName 'lib\apksigner.jar'
     $env:JAVA_HOME = $jdk
     $env:PATH = (Join-Path $jdk 'bin') + ';' + $originalPath
@@ -180,6 +221,7 @@ try {
     Write-Host "Godot: $version"
     Write-Host "SDK:   $sdk"
     Write-Host "JDK:   $jdk"
+    Write-Host "Key:   $debugKeystore"
     Write-Host "Tools: $($buildTools.Name)"
     Write-Host "Platform: $($selectedSdk.Platform.Name)"
     Write-Host ('ADB:   ' + $(if ($adbAvailable) { 'available' } else { 'unavailable (APK export continues)' }))
@@ -191,7 +233,7 @@ try {
         $engineLog = Join-Path $buildDirectory 'android-build.log'
         $verifyLog = Join-Path $buildDirectory 'android-signature.log'
         Write-Host 'Building a signed debug APK from the files saved on disk...' -ForegroundColor Cyan
-        $buildAppData = Prepare-BuildProfile $sdk $jdk
+        $buildAppData = Prepare-BuildProfile $sdk $jdk $debugKeystore
         try {
             $env:APPDATA = $buildAppData
             & $engine --headless --path $project --log-file $engineLog --export-debug Android $stagingApk *> $consoleLog

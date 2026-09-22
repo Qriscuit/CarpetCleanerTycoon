@@ -41,9 +41,11 @@ Opening the next store requires three things: local Bonzi earnings of **100S**, 
 
 **Settings → Reset progress → Reset** clears the wallet, stores, tools, automation and active rugs after confirmation. **Keep playing** cancels. A fresh save retains the free starter brush and Neighborhood store.
 
-**Settings → Gym** opens free practice from the main menu. Click or tap outside Settings to dismiss it, or use Back/Escape. In the gym, **Rug 1 · Brush** tests surface dust and dirt pellets with the brush. On **Rug 2 · Wet tools**, hold or drag the water hose to drop blobs that merge into glossy puddles with gently moving edges. Squeegee displacement and water-driven dirt removal come later. Switch exercises or use **Reset rug** to start fresh. Finishing Rug 1 repeats that exercise. Practice awards no coins and preserves the active paid rug; Back returns to the main menu.
+**Settings → Gym** opens free practice from the main menu. Click or tap outside Settings to dismiss it, or use Back/Escape. In the gym, **Rug 1 · Brush** tests surface dust and dirt pellets with the brush. **Rug 2 · Wet tools** begins after the dry-cleaning stage: hold the hose to pour a continuous opaque cyan jet, then drag it across the rug. New water follows the nozzle while water already in flight trails behind; contact creates a scalloped splash crown, small droplets and a dark wet patch. Releasing drains the airborne tail. Wet 99% of the carpet to unlock the squeegee, then drag it to pull water from the same wetness display. Switch exercises or use **Reset rug** to start fresh. Practice awards no coins and preserves the active paid rug; Back returns to the main menu.
 
-The water prototype uses a fixed **32-drop GPU mesh pool** and a **192 × 320 density texture**, updated only when new drops land. The carpet shader draws the merged surface in its existing opaque pass. The controller stops processing once released drops have landed; there are no water physics bodies or per-frame CPU image uploads. See [water architecture and verification](design/Water_Blobs.md). These are bounded implementation costs, not a measured phone performance claim.
+Use the compact **Hose upgrades → Spout −/+** controls to compare five free Gym levels. The coherent column now begins widening above mid-flight, carries roughly half of its added width through the middle, and joins the larger landing without a pinched section. Upgrading also increases absorption speed and grows a larger wet fringe while you hold still. Wet spots stay on the carpet and briefly finish soaking after you move away. Your preview level survives rug resets during the visit; it costs no coins and does not change production upgrades.
+
+The Gym jet uses one permanent **16-ring × 10-side tube**, one opaque impact mesh and a **24-slot droplet MultiMesh**. A fixed 96-pose nozzle history drives its ballistic centerline; a vertex shader supplies gentle traveling surface waves. Carpet contact deposits water over a **0.26–0.46 m wet radius** at bounded 20 Hz cadence. Six reusable reservoirs add soft spreading at 10 Hz, approaching **0.52–0.90 m radius** with sustained contact. Both write to the existing **256 × 416 L8 wetness mask**, which the squeegee also clears. Resources are reused and processing stops after the tail, droplets and brief after-soak finish. See [continuous jet architecture and tuning](design/Water_Jet.md). These bounded costs are not a measured Android performance claim.
 
 ## Cleaning and rewards
 
@@ -51,7 +53,7 @@ For dry rugs, the meter uses the lower of debris clearance and surface-dust clea
 
 Hold the left mouse button or one finger and drag once the brush arrives. Touch uses a 72 viewport-pixel offset above the finger. One finger owns the stroke; release, cancellation, tool changes and loss of focus end it. Placement never sweeps an unintended path from the previous position. Sweep beyond the rug edges to throw clumps onto the surrounding tile.
 
-The starter brush removes surface dust over two core passes with feathered edges. Many events in one pass do not multiply cleaning; releasing or reversing direction begins another pass. Upgraded strength improves this action. Wet recipes add water coverage and extraction masks, with their progress saved alongside the dry state.
+The starter brush removes surface dust over two core passes with feathered edges. Many events in one pass do not multiply cleaning; releasing or reversing direction begins another pass. Upgraded strength improves this action. Wet recipes track applied water and extraction in reusable arrays, render their difference through one wetness mask, and save both progress layers alongside the dry state.
 
 The reward and the next rug are saved atomically before the takeaway animation. Reusable 2D coins linger, then fly into the top-right wallet; each adds its exact value to the **displayed** total. Actual earnings are already durable. Leaving during the animation cannot duplicate or lose them. Back remains available during arrival, cleaning, suction and departure; it closes an open drawer first. The legacy test gym awards no money.
 
@@ -68,7 +70,7 @@ Production entry scenes are `CarpetToy/scenes/production/floating_home.tscn` and
 - The same rug scene, meshes and **560-slot dirt pool** serve successive jobs. Scatter is randomized per new rug; snapshots preserve existing scatter. No dirt node instances are recreated per refill.
 - Rugs enter already dust-textured. After unrolling, **25 starter rocks** grow; the other slots remain invisible until brushing brings them out. Reveal animation does not change earned progress. The brush enters after the starter rocks.
 - Dirt uses one 20-triangle mesh in a `MultiMeshInstance3D`. Only moving clumps simulate; visible instances are compacted into the existing batch. No clump rigid bodies or per-clump collision nodes are used.
-- The existing rug shader uses a 256 × 416 opacity mask. Wet recipes add reusable coverage/extraction masks. Contact checks follow the rounded rug and fringe rather than an oversized rectangle.
+- The existing rug shader uses a 256 × 416 dirt-opacity mask. Wet recipes reuse one additional 256 × 416 L8 wetness mask for both application and extraction; contact checks follow the rounded rug and fringe rather than an oversized rectangle.
 - The tile floor uses one static MultiMesh; brush variants are instantiated once and switched by visibility. Reward coins are also reused.
 
 These checks establish resource reuse and desktop behavior, not a phone frame-rate or memory benchmark. Clump motion remains a lightweight visual simulation without clump-to-clump collisions.
@@ -95,7 +97,8 @@ Use the portable Godot executable and isolated saves. In PowerShell:
 & './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --headless --path CarpetToy --script ../tools/validate_wet_cleaning.gd -- --shop-test
 & './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_store_loop.gd -- --shop-test
 & './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_gym.gd -- --shop-test
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_water_blobs.gd -- --shop-test
+& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_water_jet.gd -- --shop-test
+& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_hose_upgrades.gd -- --shop-test
 ```
 
 The progression suite covers prices, travel, migration, offline income, transaction failures, numerical limits and verified-ad receipt handling. Wet checks cover stage gates, strokes, masks and saved progress. Store-loop checks exercise production scenes, purchases, swipes, tools and wet recipes.

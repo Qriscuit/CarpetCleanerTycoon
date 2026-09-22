@@ -6,7 +6,7 @@
 2. Double-click **Build APK.cmd** in the project folder.
 3. Wait for **SUCCESS**. Your phone-test build is **build/CarpetCleaner.apk**.
 
-The builder always uses this project's **standard Godot 4.7.2**, selects **debug export**, uses the machine-wide Android SDK listed below, and verifies the APK signature. It runs Godot with an isolated build profile under `build/godot-build-profile`, so it does not rewrite your normal editor settings. It only replaces the previous APK after success. It does not install software or replace your signing key. It builds saved files, so unsaved editor changes are not included.
+The builder always uses this project's **standard Godot 4.7.2**, selects **debug export**, auto-detects the configured or standard user Android SDK, and verifies the APK signature. It runs Godot with an isolated build profile under `build/godot-build-profile`, so it does not require or rewrite your normal editor settings. It only replaces the previous APK after success. It does not install software or replace your signing key. It builds saved files, so unsaved editor changes are not included.
 
 For editing, double-click **Open Game Editor.cmd**. This opens the correct bundled editor on the floating main menu. The separate **Mono/.NET editor on the Desktop** is not the editor used for these successful GDScript builds.
 
@@ -30,7 +30,7 @@ Use **Project → Export → Android → Export Project**. Keep **Export With De
 | Templates missing for `4.7.2.stable` | In the bundled editor, use **Editor → Manage Export Templates** and install the matching version. Don't mix engine/template versions. |
 | No Android SDK / invalid Android SDK Path | In **Editor → Editor Settings → Export → Android**, set the SDK root listed below. It must contain `platform-tools/adb.exe`; do not select `platform-tools` itself. |
 | Cannot read `platform-tools/adb.exe` | The builder records a warning and continues building the APK. ADB is needed for connected-phone discovery/deployment, not for creating the APK file. Check `build/android-build-launcher.log` before trying to deploy directly from Godot. |
-| The Local AppData SDK appears completely missing only from the launcher | The builder automatically uses the complete SDK at `C:\Program Files (x86)\Android\android-sdk` for this build. It runs Godot with an isolated profile under `build/godot-build-profile`, without changing normal editor settings. |
+| The configured SDK is missing or stale | The builder also checks `%LOCALAPPDATA%\Android\Sdk`, then the legacy machine-wide `C:\Program Files (x86)\Android\android-sdk` fallback. It reports every rejected candidate without changing normal editor settings. |
 | Java SDK / keytool not found | In the same screen, set the JDK root below, not its `bin` subfolder. |
 | Release keystore or release password missing | For phone testing, check **Export With Debug**. This helper always does that. |
 | Script, resource or import error | Read the first actual error in `build/android-build-console.log`. Fix that resource/code error; it isn't an SDK installation issue. |
@@ -39,11 +39,11 @@ Use **Project → Export → Android → Export Project**. Keep **Export With De
 SDK paths verified on this computer:
 
 ```text
-Build APK.cmd SDK: C:\Program Files (x86)\Android\android-sdk
-Godot editor SDK:  C:\Users\Hursh\AppData\Local\Android\Sdk
+Build APK.cmd SDK: C:\Users\Hurshuuuuuu\AppData\Local\Android\Sdk
+Godot editor SDK:  C:\Users\Hurshuuuuuu\AppData\Local\Android\Sdk
 Java SDK Path:    C:\Program Files\Java\jdk-21.0.12
 Templates:       %APPDATA%\Godot\export_templates\4.7.2.stable
-Builder tools:   35.0.0; Android platform 35
+Builder tools:   36.1.0; Android platform 36
 ```
 
 SDK/JDK paths are **user-wide Editor Settings**, not part of `project.godot`. When repairing them, first close older editor instances, then open one correct editor and set the paths there. Do not edit settings files externally while other editors may still save their cached settings. Do not regenerate the debug signing key to repair an SDK-path problem.
@@ -61,9 +61,9 @@ Logs and build identity:
 - `build/android-signature.log`: signature-verification result.
 - `build/android-build-info.txt`: engine version, APK size, build time and SHA-256.
 
-The reported `Android SDK Path is not a complete SDK` failure came from a split filesystem view. The SDK under Local AppData is visible from the Codex-managed environment, where it was installed and where exports succeeded, but an ordinary Explorer-launched `Hursh` process consistently sees both `platform-tools` and `build-tools` as missing. The path text, account, bitness and slash normalization are correct. The files were not deleted or quarantined. This is why checks from Codex passed while the user's double-click run failed against the same printed path.
+The current repair on 2026-09-21 installed a complete user SDK at the standard Local AppData path and removed the launcher's obsolete forced Program Files fallback. `Build APK.cmd` also supplies a process-scoped execution-policy override, because the machine policy otherwise blocked `build_android.ps1` before preflight began.
 
-`Build APK.cmd` now always selects the complete machine-wide Program Files SDK, whose permissions include ordinary and restricted desktop processes. Godot runs from an isolated build profile containing that SDK path, the matching template and a copy of the existing debug key. The normal Godot editor settings are never rewritten. Direct PowerShell use still detects the configured SDK and can fall back automatically. The launcher directly checks the build tools, platform, JDK, templates, export result and APK signature, and preserves timestamped diagnostics. No SDK reinstall or signing-key change was needed.
+Godot runs from an isolated build profile containing the detected SDK path, the matching template and a copy of the existing debug key. The normal Godot editor settings are never rewritten or required. The launcher directly checks the build tools, platform, JDK, templates, export result and APK signature, and preserves timestamped diagnostics.
 
 An end-to-end run of the `.cmd` also exposed a post-export `Get-FileHash` module-loading failure. Hashing now uses .NET directly and happens before the verified staged APK replaces the old output. The launcher no longer claims the old APK was kept for every possible post-export error.
 

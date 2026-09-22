@@ -1,32 +1,47 @@
-# Water blobs: first visual prototype
+# Water drops, charge, and extraction
 
-Open **Settings → Gym → Rug 2**, select the hose, then hold or drag over the carpet. Droplets fall, land, and join into gently moving puddles. Reset rug or switching exercises clears the water. This feature is limited to the gym; squeegee displacement and water-driven dirt removal are not implemented yet.
+Historical charged-drop prototype. The Gym now uses the [continuous water jet](Water_Jet.md); the implementation below remains unused for reference. The old validator command forwards to the current jet tests.
 
-## Rendering and CPU budget
+Open **Settings → Gym → Rug 2** and hold or drag the hose over the carpet. A radial ring beside the nozzle fills before every release. Each completed charge launches one large, connected three-lobed drop; it falls, produces a short broad splash, and is absorbed as a dark wet circle. Wet 99% of the carpet to lock the hose and unlock the squeegee, then drag the squeegee across the rug to pull the visible water back out. **Reset rug** or switching exercises clears the lesson.
 
-[water_blobs.gd](../CarpetToy/scripts/water_blobs.gd) owns two reusable MultiMeshes and one density texture:
+The Gym starts this exercise after dry cleaning, but it uses the same wetness, extraction, shader, and stage rules as a production wet job. Its actions remain local to the practice scene and never modify the player's paid rug, balance, or save.
 
-1. A 32-slot MultiMesh draws low-poly falling droplets. The [drop vertex shader](../CarpetToy/scripts/water_drop.gdshader) calculates flight and impact squash from birth time, duration, and landing position. CPU work handles emission and landing events; there are no per-drop nodes, physics bodies, collision queries, or pairwise fluid interactions.
-2. Each landing contributes three soft additive circles through the [density shader](../CarpetToy/scripts/water_density.gdshader). Only new landings are submitted to a **192×320** SubViewport. Its preserved texture stores the accumulated water, so old drops require no ongoing CPU work or redraw list. Production code performs no CPU image upload or GPU readback.
-3. The existing [carpet shader](../CarpetToy/scripts/soil_surface.gdshader) reads the density five times to produce a smooth merged boundary, edge highlights, wet color, and shallow edge normals. Sub-texel UV motion animates the edge. Water shading is integrated into the carpet's existing opaque pass; it adds no transparent surface pass.
+## Charge, fall, and splash
 
-The density texture's single RGBA8 color payload is **245,760 bytes (240 KiB)**. This excludes driver allocations, framebuffer bookkeeping, meshes, and other game resources.
+[water_blobs.gd](../CarpetToy/scripts/water_blobs.gd) owns only the timing and pooled presentation:
 
-Current limits are **16 drops/second**, **32 airborne slots**, **96 stamp slots** (three per landing), and **at most 30 density updates/second**. A frame creates at most two drops and clamps simulation advance to 0.1 seconds, preventing a large backlog after a stall. When emission, active drops, and queued landings are all finished, the water controller disables `_process()`. The last render-completion callback finishes once; settled water has no continuing water-controller CPU callbacks. Its carpet shader still runs on the GPU.
+1. The hose charges at **1.5 releases per second**, so the ring takes about **0.667 seconds** to fill. The first drop waits for a complete cycle just like every later drop; releasing early clears and hides the indicator. The authored [Gym HUD](../CarpetToy/scenes/ui/gym_hud.tscn) uses one radial `TextureProgressBar` whose ring texture is created once by [gym_hud.gd](../CarpetToy/scripts/gym_hud.gd).
+2. A **16-slot drop MultiMesh** draws low-poly falling drops with a **0.095–0.125 m** base radius. The [drop vertex shader](../CarpetToy/scripts/water_drop.gdshader) deforms each sphere into one watertight three-lobed shell. Broad bulges orbit inside the silhouette, the shell stretches during its 0.42-second fall, and it squashes near impact. This suggests three balls rolling under one membrane without cloth, soft-body, rigid-body, or fluid simulation.
+3. A **16-slot splash MultiMesh** reuses horizontal quads. The [splash shader](../CarpetToy/scripts/water_splash.gdshader) expands and fades a stylized crown for 0.30 seconds. Its footprint is 1.28 times the eventual **0.30–0.38 m** wet radius. Drops and splashes create no per-effect nodes and perform no collision or pairwise-fluid work.
+4. When the splash finishes, the visual controller emits its world position and radius. [gym.gd](../CarpetToy/scripts/gym.gd) forwards that result to `DirtController.apply_water_blob()`; the visual controller owns no carpet texture or gameplay wetness state.
 
-This uses a density field to suggest merging metaballs. Evaluating every historical sphere at every carpet pixel, especially with raymarching, would make fragment cost grow with drop count. Individual physical water bodies would add simulation and object-management work. Here, storage and shader sample count stay fixed. Density saturates; this is a visual effect, not a conserved-volume fluid simulation.
+The controller advances at most 0.1 seconds after a stalled frame and permits at most two queued births in one callback, so a long frame cannot replay an unbounded stream. Both MultiMeshes retain fixed capacity across resets and exercise changes. `_process()` stops after emission and all active falls and splashes finish.
+
+## One wetness mask for water and extraction
+
+[dirt_controller.gd](../CarpetToy/scripts/dirt_controller.gd) is the single authority for water. Its existing **256 × 416 L8 wetness texture** is approximately 104 KiB before driver bookkeeping and is already part of the production cleaning controller. The Gym does not allocate a separate absorption mask.
+
+For each absorbed blob, `apply_water_blob()` visits only the circle's pixel bounding box. A solid center and feathered edge add to the compact `water_values` array without exceeding the amount of cleaned carpet at that pixel. The corresponding L8 pixels darken through the existing [opaque carpet shader](../CarpetToy/scripts/soil_surface.gdshader). There is no second full-color wet albedo and no extra Gym wet-layer sample.
+
+The stage gate uses cumulative applied-water coverage. Before it reaches **99%**, the squeegee button is disabled, direct squeegee selection is rejected, and the dirt controller independently treats extraction strokes as no-ops. Once the threshold is reached, the hose locks and the squeegee unlocks. Extraction increases `extraction_values`; the displayed wetness is `water_values - extraction_values`, so each stroke clears the same L8 mask that the drops darkened. Applied coverage stays cumulative during extraction, preventing the squeegee from relocking midway through the stage.
+
+The wetness texture uploads only when application or extraction changes pixels. Settled water performs no water-visual callbacks, although ordinary input-driven squeegee strokes still update the shared production texture as needed.
+
+## Why a mask instead of another carpet texture
+
+A second full-color carpet texture would duplicate albedo memory and add a color-texture sample merely to show a darker version of the same fibers. The L8 mask stores only **where** water remains. One grayscale lookup controls darkness, roughness, and specular response against the carpet color already being rendered, so every rug retains its underlying fibers and palette.
+
+Using the production mask also keeps the visual result, the 99% gate, saved production progress, and squeegee extraction derived from the same data. The large charged-drop presentation is currently Gym-specific, but its absorption result follows the production wet-cleaning path.
 
 ## Maintenance
 
-Tune `EMISSION_RATE`, `DROP_CAPACITY`, `FIELD_SIZE`, `FIELD_INTERVAL`, `LAUNCH_HEIGHT`, and `FLIGHT_SECONDS` in the controller. Keep `STAMP_CAPACITY` at three times the pending-landing limit. If rug dimensions change, update `RUG_SIZE` and the carpet shader's matching world-to-UV mapping together.
+Tune `EMISSION_RATE`, `DROP_RADIUS_MIN`, `DROP_RADIUS_MAX`, `WET_RADIUS_MIN`, `WET_RADIUS_MAX`, `SPLASH_RADIUS_SCALE`, `LAUNCH_HEIGHT`, `FLIGHT_SECONDS`, and `SPLASH_SECONDS` in the water controller. The radial indicator derives its duration from `EMISSION_RATE`, so gameplay timing and UI cannot drift. Keep `DROP_CAPACITY` and `SPLASH_CAPACITY` fixed unless device profiling establishes a need to change them.
 
-The gym offsets the landing point 0.20 m forward from the hose with `HOSE_LANDING_OFFSET`; this makes the short falling arc readable from the overhead camera. Match the hose's visible lift to `LAUNCH_HEIGHT` when changing it.
+The Gym offsets landings 0.28 m forward from the hose through `HOSE_LANDING_OFFSET`, keeping the larger fall and splash visible from the overhead camera. Match the hose's visible lift to `LAUNCH_HEIGHT` when changing it. Tune the connected-shell motion and `drop_tint` in the drop shader, and tune `splash_tint`, crown shape, expansion, and fade in the splash shader.
 
-Tune `blob_threshold`, `blob_edge_softness`, `blob_tint`, `blob_tint_strength`, and `blob_edge_motion` in the carpet shader. Droplet color is `drop_tint`. Keep edge motion small compared with a density texel.
+`WET_STAGE_TARGET` in the dirt controller is the authoritative water-to-squeegee boundary. UI copy, button state, tool selection, and extraction all call the controller's stage helpers rather than maintaining another threshold. If rug dimensions change, update the dirt controller's `RUG_HALF` and the carpet shader's matching world-to-UV mapping together.
 
-The stamp batch must contain only new landings before each `UPDATE_ONCE`; replaying earlier stamps would keep increasing their density. Reset uses `CLEAR_MODE_ONCE` and waits for render completion before flushing new landings. Godot documents these [SubViewport modes](https://docs.godotengine.org/en/4.7/classes/class_subviewport.html).
-
-Droplet birth time wraps every eight seconds because Compatibility packs [MultiMesh custom data](https://docs.godotengine.org/en/4.7/classes/class_multimesh.html#class-multimesh-method-set-instance-custom-data) into 16-bit components. Keep the shader's matching period synchronized with `CLOCK_PERIOD`; landing clears each slot so clock wrapping cannot revive it. If trajectories expand, enlarge the custom AABB to prevent incorrect culling. Godot supports [vertex animation of MultiMeshes](https://docs.godotengine.org/en/stable/tutorials/performance/using_multimesh.html).
+Birth time wraps every eight seconds because Compatibility packs [MultiMesh custom data](https://docs.godotengine.org/en/4.7/classes/class_multimesh.html#class-multimesh-method-set-instance-custom-data) into 16-bit components. Keep both shaders' matching period synchronized with `CLOCK_PERIOD`; completion clears each slot so clock wrapping cannot revive it. If trajectories expand, enlarge the custom AABBs to prevent incorrect culling. Godot supports [vertex animation of MultiMeshes](https://docs.godotengine.org/en/stable/tutorials/performance/using_multimesh.html).
 
 ## Verification and device work
 
@@ -36,8 +51,6 @@ From the repository root, use the graphics renderer and isolated saves:
 & './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_water_blobs.gd -- --shop-test
 ```
 
-The dummy headless renderer cannot validate accumulated pixels or the visible result. Check merging, stationary pouring, reset, rug changes, idle behavior, and clock wrapping with the graphics renderer.
+The water validator covers the radial charge, delayed first birth, larger size ranges, ordered fall/splash/absorption lifecycle, shared wet-mask changes, the 99% squeegee lock, extraction from that same mask, reset and exercise switching, clock wrap, long-frame limits, resource reuse, and save preservation. `validate_gym.gd` covers the corresponding tool and HUD restrictions, while `validate_wet_cleaning.gd` protects the shared production stage rules. The dummy headless renderer cannot validate the visible drop and splash shaders, so inspect the generated `art/renders/water_*.png` captures as part of the graphics run.
 
-The September 21, 2026 rendered run passed **71 checks**, including density accumulation/connected blobs, stationary and moving input, reset, focus/HUD cancellation, clock wrap, long-frame limits, resource reuse and save preservation. The accompanying 100-frame moving-hose sample measured **52.5 μs average controller work per active callback** (5.671 ms across 108 callbacks, including final settling); the maximum across the run was 329 μs. This measures only the controller's `_process()` body on an Intel Iris Xe Windows desktop. It excludes other game CPU work, rendering-thread work, GPU time and startup. Full-frame p50/p95 were 31.9/33.8 ms with frame pacing and the existing scene included; these are not incremental water costs. Settled water produced no additional controller calls or field updates. Evidence: `art/renders/water_final_validation.log` and `water_blobs_*.png`.
-
-Mobile measurements have not been performed. The chosen limits bound work; they do not establish a phone frame-time or battery result. Godot specifically cautions that preserved render targets and viewport textures can be costly on [mobile tile renderers](https://docs.godotengine.org/en/stable/tutorials/performance/gpu_optimization.html#mobile-tiled-renderers). Profile idle, continuous pouring, and a fully covered rug on the target devices before increasing resolution or shader complexity.
+Fixed pools, one existing L8 wetness texture, one carpet lookup, and idle shutdown bound the design, but they are not phone frame-time or battery measurements. Profile charge, continuous pouring, a nearly saturated rug, and active extraction on target Android devices before increasing pool sizes, mask resolution, shader complexity, or effect cadence.
