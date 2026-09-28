@@ -179,6 +179,15 @@ func _initialize() -> void:
 		var tool_name: String = ["large_brush","squeegee","jet_spray"][i]
 		var tool := mesh_copy("res://assets/tools/"+tool_name+".glb")
 		tool.name = ["LargeBrush","Squeegee","JetSpray"][i]
+		if i == 1:
+			# Flip only the authored art about its blade pivot. Blender +Z-up
+			# imports as Godot +Y-up; a Godot Z turn would invert the handle.
+			# Keep the tool root/input/launch heading completely unchanged.
+			var pivot := Vector3(0, 0, 0.025)
+			var turn := Basis(Vector3.UP, PI)
+			var art_flip := Transform3D(turn, pivot - turn * pivot)
+			for child in tool.get_children():
+				if child is Node3D: child.transform = art_flip * child.transform
 		if i<2:
 			tool.position = Vector3(-0.85+i*0.85,0.18,1.28)
 			tool.rotation.x = deg_to_rad(111)

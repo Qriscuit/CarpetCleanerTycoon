@@ -745,6 +745,39 @@ theme_override_styles/background = SubResource("StyleBoxFlat_oth4l")
 theme_override_styles/fill = SubResource("StyleBoxFlat_vnf5g")
 show_percentage = false
 
+[node name="TravelGoals" type="PanelContainer" parent="Sheet/Content/MenuScroll/Stack"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_mc2ql")
+
+[node name="Contents" type="VBoxContainer" parent="Sheet/Content/MenuScroll/Stack/TravelGoals"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TravelTitle" type="Label" parent="Sheet/Content/MenuScroll/Stack/TravelGoals/Contents"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_font_sizes/font_size = 20
+text = "Open next store"
+autowrap_mode = 3
+
+[node name="TravelRequirements" type="Label" parent="Sheet/Content/MenuScroll/Stack/TravelGoals/Contents"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_font_sizes/font_size = 17
+theme_override_constants/line_spacing = 3
+autowrap_mode = 3
+
+[node name="TravelHelp" type="Label" parent="Sheet/Content/MenuScroll/Stack/TravelGoals/Contents"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
+
 [node name="Rows" type="VBoxContainer" parent="Sheet/Content/MenuScroll/Stack" unique_id=1637466778]
 unique_name_in_owner = true
 layout_mode = 2

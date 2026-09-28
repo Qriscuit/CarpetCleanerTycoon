@@ -1,6 +1,6 @@
 # Floating shop — Blender and Godot implementation
 
-**F5** launches `CarpetToy/scenes/production/floating_home.tscn`, now the main menu. Open that scene and use **F6** to preview it directly.
+Use **Open Game Editor.cmd** for the pinned **Godot 4.7.2 Mono/.NET** editor. **F5** launches `CarpetToy/scenes/production/floating_home.tscn`, now the main menu. Open that scene and use **F6** to preview it directly. The full Mono bundle includes `GodotSharp`; the installed .NET 8 SDK 8.0.400 supports the editor, while gameplay remains GDScript.
 
 ## Editable source and exported assets
 
@@ -41,14 +41,14 @@ Captures are saved under `art/renders/floating_home_*.png`. The graphics driver 
 
 ## Rebuild
 
-From the repository root:
+From the repository root, use the shared version-gated Mono/.NET runner for every Godot command:
 
 ```powershell
 & 'C:\Program Files\Blender Foundation\Blender 4.3\blender.exe' --background --python tools/build_floating_shop.py
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --headless --path CarpetToy --editor --import
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --headless --path CarpetToy --script ../tools/assemble_floating_home.gd
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --headless --path CarpetToy --script ../tools/assemble_compact_shop.gd
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_floating_home.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --headless --path CarpetToy --editor --import
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --headless --path CarpetToy --script ../tools/assemble_floating_home.gd
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --headless --path CarpetToy --script ../tools/assemble_compact_shop.gd
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --path CarpetToy --script ../tools/validate_floating_home.gd -- --shop-test
 ```
 
 The builders overwrite this new Blender source, its exports, and the new scene. They are reproducible authoring utilities; do not rerun them over manual edits you want to keep. Ordinary play never runs a builder. Tests use isolated saves and must include `-- --shop-test`.

@@ -10,9 +10,10 @@ const SAVE_VERSION := 2
 const SAVE_PATH := "user://neighborhood_shop_v1.json"
 const OFFLINE_CAP_SECONDS := 8.0 * 60.0 * 60.0
 const MANUAL_REWARD := 20
-const MANUAL_COMPLETION_THRESHOLD := 0.85
+const MANUAL_COMPLETION_THRESHOLD := 0.75
 const PERFECT_REWARD := 40
 const PERFECT_COMPLETION_THRESHOLD := 0.99
+const COMPLETION_EPSILON := 0.000000001
 const ROUTINE_REWARD := 10
 const COSTS := {"hand_brush": 0, "wide_brush": 80, "bonzi": 100, "bonzi_mk2": 120, "intake": 100}
 const GATES := {"hand_brush": 0, "wide_brush": 8, "bonzi": 3, "bonzi_mk2": 10, "intake": 10}
@@ -299,11 +300,17 @@ static func manual_reward_for(snapshot: Dictionary) -> int:
 	if not _valid_clearance(debris) or not _valid_clearance(surface):
 		return 0
 	# The dirtier layer determines completion, regardless of the finish trigger.
-	return PERFECT_REWARD if minf(float(debris), float(surface)) >= PERFECT_COMPLETION_THRESHOLD else MANUAL_REWARD
+	return PERFECT_REWARD if completion_reached(minf(float(debris), float(surface)), PERFECT_COMPLETION_THRESHOLD) else MANUAL_REWARD
+
+
+static func completion_reached(fraction: float, threshold: float) -> bool:
+	# Averaging three stages can represent exact 99% as 0.9899999999999999.
+	# This tolerance is far smaller than a mask texel or a displayed percent.
+	return is_finite(fraction) and fraction + COMPLETION_EPSILON >= threshold
 
 
 static func _valid_clearance(value: Variant) -> bool:
-	return (value is float or value is int) and is_finite(float(value)) and float(value) >= MANUAL_COMPLETION_THRESHOLD and float(value) <= 1.0
+	return (value is float or value is int) and completion_reached(float(value), MANUAL_COMPLETION_THRESHOLD) and float(value) <= 1.0
 
 
 func _refresh_blueprints() -> void:
@@ -409,6 +416,19 @@ func _restore_state(data: Dictionary) -> void:
 		stores = data.stores.duplicate(true)
 	else:
 		_migrate_legacy_branch()
+	# Existing wash-kit purchases paid for both tools. Add independent tracks
+	# without charging again or replacing an unfinished rug or its dry progress.
+	for key: String in stores:
+		var branch: Dictionary = stores[key]
+		var legacy_wet := int(branch.tool_level) if int(key) >= 3 else 0
+		if not branch.has("hose_level"): branch.hose_level = legacy_wet
+		if not branch.has("squeegee_level"): branch.squeegee_level = legacy_wet
+		# Store 2's old brush purchases now count toward its main hose track.
+		# Retain the original brush level/power; future hose buys do not alter it.
+		if int(key) >= Progression.WET_FIRST_STORE:
+			branch.hose_level = maxi(int(branch.hose_level), int(branch.tool_level))
+		if int(key) >= 3:
+			branch.tool_level = int(branch.hose_level)
 	completed_rewards = data.get("completed_rewards", {}).duplicate(true)
 	ad_receipts = data.get("ad_receipts", {}).duplicate(true)
 	_latest_reward_job = str(data.get("latest_reward_job", ""))
@@ -548,15 +568,21 @@ func _load_active_branch() -> void:
 func _prepare_job() -> void:
 	var branch := _branch()
 	branch.job_early_reward = Progression.early_reward(active_store, int(branch.payout_level))
-	branch.job_started_with_final_tool = int(branch.tool_level) == 4
+	branch.job_started_with_final_tool = _travel_tool_level(branch, active_store) == 4
 	branch.job_final_tool_used = false
 
 
-func note_current_tool_used() -> void:
-	# Saved with the next snapshot/completion. A purchase midway through an
-	# already-started rug cannot retroactively count toward the capstone gate.
-	if not active_job_id.is_empty() and bool(_branch().job_started_with_final_tool):
-		_branch().job_final_tool_used = true
+func note_current_tool_used(tool_index: int = -1) -> void:
+	# Use after a mid-job purchase counts; ownership or earlier activity alone
+	# never does. Runtime callers pass the tool that actually affected the rug.
+	var required_tool := 2 if active_store >= Progression.WET_FIRST_STORE else 0
+	if tool_index == -1: tool_index = required_tool
+	if active_job_id.is_empty() or tool_index != required_tool:
+		return
+	var branch := _branch()
+	if _travel_tool_level(branch, active_store) == 4:
+		branch.job_started_with_final_tool = true
+		branch.job_final_tool_used = true
 
 
 func _record_completed_job(job_id: String, reward: int) -> void:
@@ -571,22 +597,29 @@ func _record_completed_job(job_id: String, reward: int) -> void:
 func reward_for_current_job(snapshot: Dictionary) -> int:
 	if active_job_id.is_empty(): return 0
 	var fraction := _job_clearance(snapshot)
-	if fraction < MANUAL_COMPLETION_THRESHOLD: return 0
+	if not completion_reached(fraction, MANUAL_COMPLETION_THRESHOLD): return 0
 	var quote: int = int(_branch().job_early_reward)
 	if quote <= 0 or quote > Progression.MAX_MONEY / 2: return 0
-	return quote * 2 if fraction >= PERFECT_COMPLETION_THRESHOLD else quote
+	return quote * 2 if completion_reached(fraction, PERFECT_COMPLETION_THRESHOLD) else quote
 
 
 func _job_clearance(snapshot: Dictionary) -> float:
 	for key: String in ["unique_clearance", "surface_clearance"]:
 		if not _unit_fraction(snapshot.get(key)): return -1.0
 	var dry := minf(float(snapshot.unique_clearance), float(snapshot.surface_clearance))
-	if active_store < 3: return dry
+	if active_store < Progression.WET_FIRST_STORE: return dry
 	if snapshot.get("wet_recipe") != true: return -1.0
 	for key: String in ["water_clearance", "extraction_clearance"]:
 		if not _unit_fraction(snapshot.get(key)): return -1.0
 	var water := float(snapshot.water_clearance)
 	var extraction := float(snapshot.extraction_clearance)
+	# High Street is a water -> extract lesson. Its dry mask is preserved in
+	# snapshots but does not contribute to completion or unlock a third stage.
+	if active_store == Progression.WET_FIRST_STORE:
+		if snapshot.get("skip_dry_stage") != true: return -1.0
+		if extraction > 0.0 and not completion_reached(water, PERFECT_COMPLETION_THRESHOLD): return -1.0
+		return (water + extraction) / 2.0
+	if snapshot.get("skip_dry_stage", false) != false: return -1.0
 	# Wet work follows dry -> wash -> extract. Reject fabricated later-stage
 	# progress and recompute the meter rather than trusting an overall field.
 	if water > 0.0 and dry < PERFECT_COMPLETION_THRESHOLD: return -1.0
@@ -607,26 +640,54 @@ func _highest_dry_tier() -> int:
 	return mini(tier, 8)
 
 
+func _wet_level(branch: Dictionary, store_id: int, kind: String) -> int:
+	var legacy := int(branch.tool_level) if store_id >= 3 or (store_id >= Progression.WET_FIRST_STORE and kind == "hose") else 0
+	var level := int(branch.get(kind + "_level", legacy))
+	# tool_level is retained as the later stores' hose/travel compatibility key.
+	return maxi(level, legacy) if kind == "hose" else level
+
+
+func _travel_tool_level(branch: Dictionary, store_id: int) -> int:
+	return _wet_level(branch, store_id, "hose") if store_id >= Progression.WET_FIRST_STORE else int(branch.tool_level)
+
+
+func _wet_power(kind: String, proposed_store: int = -1, proposed_level: int = -1) -> float:
+	var power := 1.0
+	for key: String in stores:
+		var store_id := int(key)
+		if store_id < Progression.WET_FIRST_STORE: continue
+		var level := proposed_level if store_id == proposed_store else _wet_level(stores[key], store_id, kind)
+		power = maxf(power, float(Progression.WET_POWERS[level]) * Progression.wet_base_power(store_id))
+	return power
+
+
 func progression_view() -> Dictionary:
 	var branch := _branch()
 	var scale := Progression.scale_for(active_store)
 	var level := int(branch.payout_level)
-	var local_tool := int(branch.tool_level)
+	var local_tool := _travel_tool_level(branch, active_store)
 	var tier := _highest_dry_tier()
-	var next_tier := maxi(tier, mini(8, (active_store - 1) * 4 + mini(local_tool + 1, 4))) if active_store <= 2 else tier
+	var next_tier := maxi(tier, mini(local_tool + 1, 4)) if active_store < Progression.WET_FIRST_STORE else tier
 	var early := Progression.early_reward(active_store, level)
 	var next_early := Progression.early_reward(active_store, level + 1)
 	var payout_price := Progression.payout_cost(active_store, level) if next_early > 0 else -1
 	var tool_price := Progression.tool_cost(active_store, local_tool)
 	var bot_tier := int(branch.bonzi_tier)
 	var bot_price := Progression.bot_cost(active_store, bot_tier)
-	var wet_level := local_tool if active_store >= 3 else 0
-	var effective_wet := 1.0
+	var wet_unlocked := active_store >= Progression.WET_FIRST_STORE
+	var hose_level := _wet_level(branch, active_store, "hose")
+	var squeegee_level := _wet_level(branch, active_store, "squeegee")
+	var hose_cost := Progression.tool_cost(active_store, hose_level) if wet_unlocked else -1
+	var squeegee_cost := Progression.tool_cost(active_store, squeegee_level) if wet_unlocked else -1
+	var effective_hose_level := 0
 	for key: String in stores:
-		if int(key) >= 3:
-			var stage := int(stores[key].tool_level)
-			var stage_power: float = Progression.WET_POWERS[stage] * (2.1 if int(key) == 4 else 1.0)
-			effective_wet = maxf(effective_wet, stage_power)
+		if int(key) >= Progression.WET_FIRST_STORE:
+			effective_hose_level = maxi(effective_hose_level, _wet_level(stores[key], int(key), "hose"))
+	var hose_power := _wet_power("hose")
+	var squeegee_power := _wet_power("squeegee")
+	var next_hose_power := _wet_power("hose", active_store, mini(hose_level + 1, 4)) if wet_unlocked else hose_power
+	var next_squeegee_power := _wet_power("squeegee", active_store, mini(squeegee_level + 1, 4)) if wet_unlocked else squeegee_power
+	var hose_profile := preload("res://scripts/water_hose_profile.gd")
 	var owned: Array[int] = []
 	for key: String in stores: owned.append(int(key))
 	owned.sort()
@@ -634,7 +695,19 @@ func progression_view() -> Dictionary:
 	var target := 100 * scale
 	var travel := 2000 * scale
 	var gate := int(branch.bonzi_earned) >= target and local_tool == 4 and int(branch.final_tool_jobs) >= Progression.CAPSTONE_JOBS
-	var next_name: String = "Maxed" if local_tool == 4 else (Progression.WET_NAMES[local_tool + 1] if active_store >= 3 else Progression.TOOL_NAMES[(active_store - 1) * 4 + local_tool + 1])
+	var travel_tool_name := "Water hose" if wet_unlocked else "Brush"
+	var requirements: Array[String] = [
+		"%s upgrades: %d/4" % [travel_tool_name, local_tool],
+		"Paid rugs using the max %s: %d/%d" % [travel_tool_name.to_lower(), mini(int(branch.final_tool_jobs), Progression.CAPSTONE_JOBS), Progression.CAPSTONE_JOBS],
+		"Bonzi earned here: %d/%d coins" % [int(branch.bonzi_earned), target],
+		"Opening coins: %d/%d" % [cash, travel],
+	]
+	var blockers: Array[String] = []
+	if local_tool < 4: blockers.append(requirements[0])
+	if int(branch.final_tool_jobs) < Progression.CAPSTONE_JOBS: blockers.append(requirements[1])
+	if int(branch.bonzi_earned) < target: blockers.append(requirements[2])
+	if cash < travel: blockers.append(requirements[3])
+	var next_name: String = "Maxed" if local_tool == 4 else ("Water hose · Lv %d" % (hose_level + 2) if wet_unlocked else Progression.TOOL_NAMES[local_tool + 1])
 	return {
 		"store_id": active_store, "store_name": Progression.store_name(active_store), "owned_store_ids": owned,
 		"payout_level": level, "early_reward": early, "full_reward": early * 2,
@@ -642,13 +715,23 @@ func progression_view() -> Dictionary:
 		"payout_cost": payout_price, "can_upgrade_payout": payout_price >= 0 and cash >= payout_price,
 		"tool_level": local_tool, "global_tool_tier": tier,
 		"next_global_tool_tier": next_tier,
-		"tool_name": Progression.WET_NAMES[local_tool] if active_store >= 3 else Progression.TOOL_NAMES[tier],
+		"tool_name": "Water hose · Lv %d" % (hose_level + 1) if wet_unlocked else Progression.TOOL_NAMES[tier],
 		"next_tool_name": next_name, "tool_cost": tool_price,
 		"tool_width": Progression.TOOL_WIDTHS[tier], "tool_power": Progression.TOOL_POWERS[tier],
 		"next_tool_width": Progression.TOOL_WIDTHS[next_tier], "next_tool_power": Progression.TOOL_POWERS[next_tier],
 		"can_upgrade_tool": tool_price >= 0 and cash >= tool_price,
-		"wet_tool_level": wet_level, "wet_power": effective_wet,
-		"next_wet_power": maxf(effective_wet, float(Progression.WET_POWERS[mini(local_tool + 1, 4)]) * (2.1 if active_store == 4 else 1.0)) if active_store >= 3 else effective_wet,
+		"wet_unlocked": wet_unlocked,
+		"hose_level": hose_level, "squeegee_level": squeegee_level,
+		"effective_hose_level": effective_hose_level,
+		"hose_cost": hose_cost, "squeegee_cost": squeegee_cost,
+		"can_upgrade_hose": hose_cost >= 0 and cash >= hose_cost,
+		"can_upgrade_squeegee": squeegee_cost >= 0 and cash >= squeegee_cost,
+		"hose_power": hose_power, "next_hose_power": next_hose_power,
+		"hose_radius": hose_profile.WET_RADII[effective_hose_level],
+		"next_hose_radius": hose_profile.WET_RADII[maxi(effective_hose_level, mini(hose_level + 1, 4))],
+		"squeegee_power": squeegee_power, "next_squeegee_power": next_squeegee_power,
+		"wet_tool_level": hose_level, "wet_power": maxf(hose_power, squeegee_power),
+		"next_wet_power": maxf(next_hose_power, squeegee_power),
 		"bonzi_tier": bot_tier, "bonzi_reward": Progression.bot_reward(active_store, bot_tier),
 		"bonzi_seconds": Progression.bot_seconds(bot_tier), "bonzi_cost": bot_price,
 		"bonzi_earned": int(branch.bonzi_earned), "bonzi_target": target,
@@ -656,6 +739,8 @@ func progression_view() -> Dictionary:
 		"local_jobs": int(branch.manual_jobs), "final_tool_jobs": int(branch.final_tool_jobs), "final_tool_target": Progression.CAPSTONE_JOBS,
 		"travel_cost": travel, "can_travel": has_next and not stores.has(str(active_store + 1)) and gate and cash >= travel,
 		"has_next_store": has_next, "travel_ready": gate, "next_store_name": Progression.store_name(active_store + 1),
+		"travel_tool_name": travel_tool_name, "travel_tool_level": local_tool, "travel_tool_target": 4,
+		"travel_blockers": blockers, "travel_requirements": "\n".join(requirements),
 		"payout_level_target": Progression.TRAVEL_LEVEL_TARGET,
 	}
 
@@ -665,7 +750,15 @@ func buy_payout_upgrade() -> bool:
 
 
 func buy_tool_upgrade() -> bool:
-	return _buy_progression("tool")
+	return buy_hose_upgrade() if active_store >= Progression.WET_FIRST_STORE else _buy_progression("tool")
+
+
+func buy_hose_upgrade() -> bool:
+	return _buy_progression("hose")
+
+
+func buy_squeegee_upgrade() -> bool:
+	return _buy_progression("squeegee")
 
 
 func buy_bonzi_upgrade() -> bool:
@@ -696,6 +789,10 @@ func _buy_progression(kind: String) -> bool:
 		if active_store <= 2:
 			_owned.wide_brush = true
 			equipped_brush = "wide_brush"
+	elif kind in ["hose", "squeegee"]:
+		branch[kind + "_level"] = int(view[kind + "_level"]) + 1
+		if kind == "hose" and active_store >= 3:
+			branch.tool_level = int(branch.hose_level)
 	else:
 		branch.bonzi_tier = int(branch.bonzi_tier) + 1
 		if active_store == 1:
@@ -714,7 +811,12 @@ func open_next_store() -> bool:
 	if not bool(view.can_travel):
 		_restore_state(before)
 		_last_ticks = old_ticks
-		last_error = "Complete this store's travel goals and save the opening price."
+		if not bool(view.has_next_store):
+			last_error = "You already own the final store."
+		elif stores.has(str(active_store + 1)):
+			last_error = "%s is already open. Choose Visit to enter it." % str(view.next_store_name)
+		else:
+			last_error = "To open %s:\n%s" % [str(view.next_store_name), "\n".join(view.travel_blockers)]
 		return false
 	cash -= int(view.travel_cost)
 	_sync_active_branch()
@@ -840,6 +942,8 @@ func _valid_progression_save(data: Dictionary) -> bool:
 		var branch: Variant = data.stores[key]
 		if not branch is Dictionary: return false
 		if not _bounded_integer(branch.get("tool_level"), 0, 4) or not _bounded_integer(branch.get("bonzi_tier"), -1, 2): return false
+		for wet_field: String in ["hose_level", "squeegee_level"]:
+			if branch.has(wet_field) and not _bounded_integer(branch[wet_field], 0, 4): return false
 		for field: String in ["payout_level", "bonzi_earned", "manual_jobs", "automated_jobs", "final_tool_jobs", "banked_orders", "job_early_reward"]:
 			if not _bounded_integer(branch.get(field)): return false
 		if Progression.early_reward(int(key), int(branch.payout_level)) <= 0: return false

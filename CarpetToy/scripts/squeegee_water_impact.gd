@@ -1,7 +1,7 @@
 extends Node3D
 ## One shared splash batch and 24 world-space droplets, independent of tool pose.
 
-const PATCH_CAPACITY := 21
+const PATCH_CAPACITY := 7
 const DROP_CAPACITY := 24
 const RELEASE := 0.20
 const DROP_GRAVITY := 5.8
@@ -44,9 +44,9 @@ func setup(rug_footprint: RefCounted, texture: ImageTexture) -> void:
 	patch_batch.use_custom_data = true
 	patch_batch.mesh = _patch_mesh()
 	# One continuous strip per sheet, split into rug/tile layers by a fixed mask.
-	patch_batch.instance_count = 6
+	patch_batch.instance_count = 2
 	patch_node = MultiMeshInstance3D.new()
-	patch_node.name = "ContinuousLandingStrips6"
+	patch_node.name = "ContinuousLandingStrips2"
 	patch_node.multimesh = patch_batch
 	patch_node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	patch_node.custom_aabb = AABB(Vector3(-6, -0.1, -6), Vector3(12, 3, 12))
@@ -81,7 +81,7 @@ func setup(rug_footprint: RefCounted, texture: ImageTexture) -> void:
 	_origins.resize(DROP_CAPACITY)
 	_velocities.resize(DROP_CAPACITY)
 	_landing_points.resize(PATCH_CAPACITY)
-	_landing_sides.resize(3)
+	_landing_sides.resize(1)
 	reset()
 
 func reset() -> void:
@@ -95,7 +95,7 @@ func reset() -> void:
 	for slot in patches.size():
 		patches[slot].strength = 0.0
 		patches[slot].touched = false
-	for slot in 6:
+	for slot in 2:
 		_hide_instance(patch_batch, slot)
 	for slot in DROP_CAPACITY:
 		_durations[slot] = 0.0
@@ -141,7 +141,7 @@ func finish_frame(delta: float) -> void:
 			continue
 		active_patches += 1
 		if patch.touched: maximum_power = maxf(maximum_power, patch.power)
-	for segment in 3:
+	for segment in 1:
 		var reference := -1
 		for lane in 7:
 			if patches[segment * 7 + lane].strength > 0.0:

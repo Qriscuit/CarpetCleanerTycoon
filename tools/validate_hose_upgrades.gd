@@ -4,6 +4,7 @@ extends SceneTree
 
 const Routes = preload("res://scripts/scene_routes.gd")
 const Profile = preload("res://scripts/water_hose_profile.gd")
+const Soak = preload("res://scripts/water_soak.gd")
 const CONTROL_NAMES := ["HomeButton", "CleaningProgress", "FinishJobButton", "GymRug1", "GymRug2", "GymBrush", "GymHose", "GymSqueegee", "GymReset", "GymHoseLess", "GymHoseMore"]
 
 var checks := 0
@@ -17,6 +18,9 @@ func _initialize() -> void:
 	if "--shop-test" not in OS.get_cmdline_user_args():
 		push_error("Use -- --shop-test to keep player saves isolated")
 		quit(2)
+		return
+	if "--soak-only" in OS.get_cmdline_user_args():
+		call_deferred("run_soak_only")
 		return
 	if DisplayServer.get_name() == "headless":
 		push_error("Hose upgrade validation requires a real renderer for layout and captures")
@@ -140,8 +144,128 @@ func check_profiles() -> void:
 		if level == 0:
 			continue
 		var previous := Profile.for_level(level - 1)
-		for key in ["stream_tip_radius", "impact_radius", "wet_radius", "max_spread_radius", "soak_multiplier", "spread_speed"]:
+		for key in ["stream_tip_radius", "impact_radius", "wet_radius", "max_spread_radius", "soak_multiplier", "passive_soak_multiplier", "spread_speed"]:
 			check(float(profile[key]) > float(previous[key]), "%s increases at level %d" % [key, level])
+	check(Soak.HALO_STRENGTH_PER_SECOND >= 0.8 * 3.0 - 0.000001, "The base passive soak rate is at least three times the old 0.8/s rate")
+	check(Soak.CAPACITY == 6 and is_equal_approx(Soak.DEPOSIT_INTERVAL, 0.1), "Stronger soaking retains six reservoirs and the bounded 10 Hz cadence")
+	var maximum_rate: float = Soak.HALO_STRENGTH_PER_SECOND * float(Profile.for_level(Profile.MAX_LEVEL).passive_soak_multiplier) * Soak.HOLD_STRENGTH_BOOST
+	check(maximum_rate * Soak.DEPOSIT_INTERVAL < 1.0, "Even the strongest mature profile remains below the shared painter's strength-1 deposit cap")
+
+
+func clear_soak_test_mask() -> void:
+	soil.water_values.fill(0.0)
+	soil.extraction_values.fill(0.0)
+	soil.water_coverage_total = 0.0
+	soil.extraction_coverage_total = 0.0
+	soil.wet_mask.fill(Color.BLACK)
+
+
+func feed_soak(soak: RefCounted, seconds: float, position := Vector3.ZERO) -> void:
+	var remaining := seconds
+	while remaining > 0.000001:
+		var step := minf(remaining, 1.0 / 60.0)
+		soak.feed(position, step)
+		soak.update(step)
+		remaining -= step
+
+
+func check_passive_mask_progression() -> void:
+	# Exercise the real shared wet painter with only the passive contribution.
+	# No direct jet core can hide a weak halo, and no rendering awaits add time.
+	var previous_total := 0
+	var previous_halo := 0
+	var previous_radius := 0.0
+	for level in range(Profile.MAX_LEVEL + 1):
+		clear_soak_test_mask()
+		var profile := Profile.for_level(level)
+		var soak := Soak.new()
+		soak.setup(soil.footprint)
+		soak.set_profile(profile)
+		var emitted := {"peak": 0.0, "count": 0}
+		soak.soak_contact.connect(func(position: Vector3, radius: float, strength: float):
+			emitted.peak = maxf(float(emitted.peak), strength)
+			emitted.count = int(emitted.count) + 1
+			soil.apply_water_blob(position, radius, strength, 0.78)
+		)
+		feed_soak(soak, 0.3)
+		var early: Dictionary = soak.debug_stats()
+		feed_soak(soak, 1.2)
+		var held: Dictionary = soak.debug_stats()
+		var progress := mask_stats(Vector2.ZERO, 0.46)
+		check(float(held.max_strength_per_second) >= float(early.max_strength_per_second) * 1.34, "Level %d gently ramps passive intensity another 35%% while held" % (level + 1))
+		check(float(held.max_radius) > float(early.max_radius) + 0.1 and float(held.max_radius) <= float(profile.max_spread_radius), "Level %d grows a bounded halo during a stationary hold" % (level + 1))
+		check(int(emitted.count) == 15 and float(emitted.peak) <= 1.0, "Level %d deposits at 10 Hz without saturating the per-event strength cap" % (level + 1))
+		check(int(progress.outside) == 0 and int(progress.halo_total) > 0, "Level %d visibly wets outside the direct core but never outside the rug" % (level + 1))
+		if level > 0:
+			check(int(progress.total) > previous_total and int(progress.halo_total) > previous_halo and float(held.max_radius) > previous_radius, "Level %d measurably increases passive amount, halo wetness and spread at equal elapsed time" % (level + 1))
+		else:
+			check(water_at(Vector2(0.36, 0.0)) > 0.25, "The starter hose builds clearly visible passive wetness beyond its 0.26 m direct core within 1.5 seconds")
+		print("HOSE_PASSIVE_MASK level=%d seconds=1.5 total=%d halo=%d radius=%.3f held_rate=%.3f" % [level + 1, int(progress.total), int(progress.halo_total), float(held.max_radius), float(held.max_strength_per_second)])
+		previous_total = int(progress.total)
+		previous_halo = int(progress.halo_total)
+		previous_radius = float(held.max_radius)
+		var mature_rate: float = held.max_strength_per_second
+		feed_soak(soak, 0.5)
+		check(is_equal_approx(float(soak.debug_stats().max_strength_per_second), mature_rate), "Level %d hold ramp reaches a stable cap instead of growing indefinitely" % (level + 1))
+		for step in 48:
+			soak.update(1.0 / 60.0)
+		var retired := int(emitted.count)
+		soak.update(10.0)
+		check(not soak.is_alive() and int(emitted.count) == retired, "Level %d passive after-soak retires and remains idle" % (level + 1))
+	# Rounded-corner/fringe clipping must still hold at maximum radius/rate.
+	clear_soak_test_mask()
+	var edge_soak := Soak.new()
+	edge_soak.setup(soil.footprint)
+	edge_soak.set_profile(Profile.for_level(Profile.MAX_LEVEL))
+	edge_soak.soak_contact.connect(func(position: Vector3, radius: float, strength: float): soil.apply_water_blob(position, radius, strength, 0.78))
+	feed_soak(edge_soak, 2.5, Vector3(0.82, 0.0, 1.32))
+	check(int(mask_stats().outside) == 0 and int(mask_stats().total) > 0, "The strongest corner soak respects rounded edges and fringe gaps")
+	edge_soak.reset()
+	feed_soak(edge_soak, 1.0, Vector3(2.0, 0.0, 0.0))
+	check(not edge_soak.is_alive() and int(edge_soak.debug_stats().emitted_events) == 0, "Off-rug feeds cannot start passive soaking")
+	var uneven_soak := Soak.new()
+	uneven_soak.setup(soil.footprint)
+	uneven_soak.set_profile(Profile.for_level(Profile.MAX_LEVEL))
+	var uneven := {"count": 0, "peak": 0.0, "per_update": 0}
+	uneven_soak.soak_contact.connect(func(_position: Vector3, _radius: float, strength: float):
+		uneven.count = int(uneven.count) + 1
+		uneven.peak = maxf(float(uneven.peak), strength)
+	)
+	var elapsed_total := 0.0
+	for frame in 120:
+		var step: float = [0.016, 0.071, 0.033][frame % 3]
+		var before := int(uneven.count)
+		uneven_soak.feed(Vector3.ZERO, step)
+		uneven_soak.update(step)
+		elapsed_total += step
+		uneven.per_update = maxi(int(uneven.per_update), int(uneven.count) - before)
+	check(int(uneven.count) == floori((elapsed_total + 0.000001) / Soak.DEPOSIT_INTERVAL), "Uneven frame times retain the 10 Hz passive cadence without losing fractional time")
+	check(float(uneven.peak) <= 0.972001, "Frame-boundary overshoot cannot clip the strongest passive stamp")
+	check(int(uneven.per_update) <= 1, "Uneven timing never creates a burst of extra soaking updates")
+	clear_soak_test_mask()
+
+
+func run_soak_only() -> void:
+	check_profiles()
+	var rug := Node3D.new()
+	var dirty := (load("res://scenes/dirty_carpet.tscn") as PackedScene).instantiate()
+	dirty.name = "Dirty"
+	rug.add_child(dirty)
+	root.add_child(rug)
+	soil = preload("res://scripts/dirt_controller.gd").new()
+	root.add_child(soil)
+	soil.automatic_completion_enabled = false
+	soil.setup(rug)
+	soil.set_recipe(true)
+	soil.remaining = 0
+	soil.credited.fill(true)
+	soil.cleared.fill(true)
+	soil.coverage_values.fill(0.0)
+	soil.surface_coverage_total = 0.0
+	soil.mask.fill(Color.BLACK)
+	check_passive_mask_progression()
+	print("HOSE_SOAK_VALIDATION %d checks, %d failures" % [checks, failures])
+	quit(1 if failures else 0)
 
 
 func check_stationary_growth() -> void:
@@ -203,6 +327,9 @@ func check_upgrade_effects() -> void:
 		var level_lower: float = water.ring_data[11].w
 		check(is_equal_approx(water.ring_data[0].w, water.NOZZLE_RADIUS), "Spout level %d keeps an exact nozzle joint" % (level + 1))
 		check(is_equal_approx(water.ring_data[-1].w, water.profile.stream_tip_radius), "Spout level %d joins its authored contact radius exactly" % (level + 1))
+		var splash: Dictionary = water.impact.debug_stats()
+		check(is_equal_approx(float(splash.impact_radius), float(water.profile.stream_tip_radius)), "Spout level %d keeps its splash attached to the column edge" % (level + 1))
+		check(is_equal_approx(float(splash.impact_radius) + float(splash.outward_reach) - water.impact.APRON, float(water.profile.impact_radius)), "Spout level %d preserves its upgraded outer splash extent" % (level + 1))
 		var previous_ring := float(water.ring_data[0].w)
 		for ring in range(1, water.RING_COUNT):
 			var current_ring := float(water.ring_data[ring].w)
@@ -373,6 +500,7 @@ func run() -> void:
 	var soak_id: int = water.soak.get_instance_id()
 	var initial_nodes := node_count(water)
 	check(soil.wet_mask.get_format() == Image.FORMAT_L8 and soil.wet_mask.get_size() == Vector2i(256, 416), "All upgrade levels use the original compact authoritative L8 wet mask")
+	check_passive_mask_progression()
 	check_stationary_growth()
 	check_upgrade_effects()
 	check_movement_and_lifecycle()

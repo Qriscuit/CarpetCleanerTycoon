@@ -96,12 +96,12 @@ func run() -> void:
 	check(game.progress_fraction == 0.0 and game.contract_job_id != job_id,"Replacement rug starts a new job at zero")
 	root.size = Vector2i(844,390)
 	await process_frame
-	await finish_now(0.85)
+	await finish_now(0.75)
 	await create_timer(2.95).timeout
 	await capture("landscape_arrival")
 	await wait_ready()
 	await capture("landscape_ready")
-	check(game.get_instance_id() == scene_id and state.cash == 60,"Another orientation and 85% cycle keep scene and rewards stable")
+	check(game.get_instance_id() == scene_id and state.cash == 60,"Another orientation and 75% cycle keep scene and rewards stable")
 	# Leaving halfway through arrival must preserve its fresh job and pool data.
 	game.start_rug_arrival()
 	await create_timer(0.2).timeout

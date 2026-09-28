@@ -45,10 +45,10 @@ Birth time wraps every eight seconds because Compatibility packs [MultiMesh cust
 
 ## Verification and device work
 
-From the repository root, use the graphics renderer and isolated saves:
+From the repository root, use the **Godot 4.7.2 Mono/.NET-only** wrapper, graphics renderer and isolated saves. The command below follows the current pinned toolchain even though this document describes the historical charged-drop prototype:
 
 ```powershell
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_water_blobs.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --path CarpetToy --script ../tools/validate_water_blobs.gd -- --shop-test
 ```
 
 The water validator covers the radial charge, delayed first birth, larger size ranges, ordered fall/splash/absorption lifecycle, shared wet-mask changes, the 99% squeegee lock, extraction from that same mask, reset and exercise switching, clock wrap, long-frame limits, resource reuse, and save preservation. `validate_gym.gd` covers the corresponding tool and HUD restrictions, while `validate_wet_cleaning.gd` protects the shared production stage rules. The dummy headless renderer cannot validate the visible drop and splash shaders, so inspect the generated `art/renders/water_*.png` captures as part of the graphics run.

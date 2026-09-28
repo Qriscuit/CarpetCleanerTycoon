@@ -11,6 +11,7 @@ const TOOL_WIDTHS := [1.0, 1.44, 1.55, 1.65, 1.75, 1.75, 1.75, 1.75, 1.75]
 const TOOL_POWERS := [1.0, 1.0, 1.1, 1.25, 1.45, 1.6, 1.8, 2.0, 2.25]
 const WET_NAMES := ["Wash kit", "Fresh wash kit", "Deep wash kit", "Power wash kit", "Master wash kit"]
 const WET_POWERS := [1.0, 1.2, 1.45, 1.75, 2.1]
+const WET_FIRST_STORE := 2
 const BOT_REWARDS := [10, 20, 40]
 const BOT_SECONDS := [120.0, 90.0, 60.0]
 
@@ -19,6 +20,11 @@ static func scale_for(store_id: int) -> int:
 
 static func store_name(store_id: int) -> String:
 	return STORE_NAMES[store_id - 1] if store_id >= 1 and store_id <= STORE_COUNT else "Unknown store"
+
+static func wet_base_power(store_id: int) -> float:
+	# Each later wet store starts from the preceding store's capstone. Moving
+	# wet cleaning to Store 2 must not make Store 3 sell four no-op upgrades.
+	return pow(2.1, maxi(0, store_id - WET_FIRST_STORE))
 
 static func _scaled_value(base: float, growth: float, level: int, store_id: int) -> int:
 	if level < 0 or scale_for(store_id) == 0:
@@ -56,7 +62,8 @@ static func bot_seconds(tier: int) -> float:
 
 static func new_branch(store_id: int) -> Dictionary:
 	return {
-		"payout_level": 0, "tool_level": 0, "bonzi_tier": -1 if store_id == 1 else 0,
+		"payout_level": 0, "tool_level": 0, "hose_level": 0, "squeegee_level": 0,
+		"bonzi_tier": -1 if store_id == 1 else 0,
 		"bonzi_earned": 0, "manual_jobs": 0, "automated_jobs": 0,
 		"routine_remainder": 0.0, "banked_orders": 0, "final_tool_jobs": 0,
 		"active_job_id": "", "job_snapshot": {}, "job_early_reward": 0,

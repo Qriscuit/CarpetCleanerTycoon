@@ -1,5 +1,6 @@
 extends SceneTree
 ## Graphics-backed production integration; never touches player progress.
+const ShopLedger = preload("res://scripts/shop_state.gd")
 var checks := 0
 var failures := 0
 var state: Node
@@ -107,8 +108,8 @@ func run() -> void:
 	await capture("brush_drawer")
 	game.hud.close_upgrades()
 	await complete_rug()
-	check(state.progression_view().final_tool_jobs == 0, "Rug begun before final-tool purchase does not count toward travel use")
-	for index in 3: await complete_rug(0.85)
+	check(state.progression_view().final_tool_jobs == 1, "Current rug counts after the newly purchased final tool is used")
+	for index in 3: await complete_rug(0.75)
 	check(state.progression_view().final_tool_jobs == 3, "Three subsequent paid rugs count toward final-tool use")
 	var provider := TestAdProvider.new()
 	check(state.register_reward_ad_provider(provider), "Test-only provider attaches through the real ad adapter")
@@ -204,15 +205,20 @@ func run() -> void:
 		for pass_index in 3: game.soil.apply_water_stroke(Vector3(-1.15,0.067,z),Vector3(1.15,0.067,z),0.08)
 	game.end_stroke()
 	await frames()
-	check(game.selected_tool == 1 and game.progress_fraction > 0.65, "Water stage automatically equips the squeegee")
+	check(game.selected_tool == 1 and ShopLedger.completion_reached(game.soil.water_clearance(), ShopLedger.PERFECT_COMPLETION_THRESHOLD) and game.progress_fraction > 0.65, "Perfect water coverage automatically equips the squeegee")
 	await capture("wet_squeegee")
 	var wet_job: String = state.active_job_id
 	for pass_index in 3:
 		for z_step in 34:
 			var z := -1.65 + z_step * 0.10
 			game.soil.apply_squeegee_stroke(Vector3(-1.15,0.067,z),Vector3(1.15,0.067,z),0.08)
-	await frames()
-	check(game.contract_finished and state.active_job_id != wet_job, "Wet recipe completes and reserves the next rug automatically")
+	# These direct controller strokes bypass Workshop's normal input callback.
+	# Synchronize the recipe status explicitly, then allow its deferred finish.
+	game.update_contract_status()
+	for tick in 8:
+		if game.contract_finished and state.active_job_id != wet_job: break
+		await process_frame
+	check(game.contract_finished and state.active_job_id != wet_job, "Wet recipe completes and reserves the next rug automatically (overall %.4f, water %.4f, extraction %.4f)" % [game.soil.overall_clearance(), game.soil.water_clearance(), game.soil.extraction_clearance()])
 	game.free()
 	current_scene = null
 	state.cash = 2000000

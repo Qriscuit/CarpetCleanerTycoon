@@ -211,7 +211,7 @@ func run() -> void:
 	check(game.wet_recipe and soil.wet_recipe, "Hose feeds the shared wet-cleaning recipe")
 	check(soil.water_clearance() == 0.0 and soil.extraction_clearance() == 0.0, "Wet practice begins dry")
 	check(soil.wet_mask.get_format() == Image.FORMAT_L8 and soil.wet_mask.get_size() == Vector2i(256, 416), "Existing 256 x 416 L8 texture owns carpet wetness")
-	check((game.hud.control("GymSqueegee") as Button).disabled, "Squeegee begins locked")
+	check(not (game.hud.control("GymSqueegee") as Button).disabled, "Gym squeegee shortcut can instantly prepare a wet rug")
 	var socket := game.tool_nodes[2].find_child("NozzleSocket", true, false) as Marker3D
 	check(socket != null, "Hose provides an explicit 3D nozzle socket")
 	check(not game.hud.control("WaterDropCharge").visible, "Former discrete-drop charge UI is hidden")
@@ -237,6 +237,18 @@ func run() -> void:
 	check(int(steady.visible_rings) == int(steady.ring_count), "Sustained water spans the complete tube")
 	check(water.stream.visible and water.stream.material_override == water.stream_material, "One mesh renders the continuous water material")
 	check(int(steady.active_droplets) > 0, "Continuous carpet contact emits secondary splash droplets")
+	var splash: Dictionary = water.impact.debug_stats()
+	check(splash.shape == "circle" and splash.perimeter_only, "Hose uses the same low perimeter splash in its circular form")
+	check(is_equal_approx(float(splash.impact_radius), float(water.profile.stream_tip_radius)), "Hose splash begins at the actual column edge, not a detached outer ring")
+	for sample_index in 16:
+		var u := float(sample_index) / 16.0
+		var frame: Dictionary = water.impact.sample_perimeter(u)
+		var from_center: Vector3 = frame.point - steady.contact_position
+		from_center.y = 0.0
+		check(from_center.normalized().dot(frame.normal) > 0.999, "Hose splash faces radially outward at perimeter sample %d" % sample_index)
+		var inner: Vector3 = water.impact.sample_splash(u, 0.0) - steady.contact_position
+		inner.y = 0.0
+		check(inner.length() < float(water.profile.stream_tip_radius), "Splash apron overlaps the column at perimeter sample %d" % sample_index)
 	check(int(steady.history_count) <= int(steady.history_capacity), "Nozzle history uses a bounded buffer")
 	var centers: PackedVector3Array = steady.ring_centers
 	check(centers.size() == int(steady.ring_count), "Every tube ring has a centerline sample")
@@ -314,7 +326,7 @@ func run() -> void:
 	await settle()
 	game.update_contract_status()
 	check(soil.water_stage_complete() and soil.water_stage_progress() == 1.0, "The shared 99% wetness gate remains reachable")
-	check(water.emission_locked and (game.hud.control("GymHose") as Button).disabled, "Full wetness disables more hose emission")
+	check(water.emission_locked and not (game.hud.control("GymHose") as Button).disabled, "Full wetness locks emission but keeps the dry-rug hose shortcut available")
 	check(not (game.hud.control("GymSqueegee") as Button).disabled, "Full wetness unlocks extraction")
 	var fully_wet := mask_stats()
 	game.select_tool(1)

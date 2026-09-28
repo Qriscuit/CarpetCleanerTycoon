@@ -37,22 +37,31 @@ func _process(delta: float) -> void:
 		game.soil.apply_water_blob(Vector3.ZERO, 5.0)
 		game.update_contract_status()
 		game.select_tool(1)
-		previous = Vector3(0, 0.067, 0.95)
+		previous = Vector3(0, 0.067, -0.85)
 		game.contact_point = previous
 		game.place_selected_tool()
 		prepared = true
 		_frame()
 	var before := clock_seconds
 	clock_seconds += minf(delta, 0.08)
-	if clock_seconds >= 0.30 and clock_seconds <= 2.30:
-		var point := Vector3(0, 0.067, 0.95 - (clock_seconds - 0.30) * 0.72)
+	if clock_seconds >= 0.30 and clock_seconds <= 8.30:
+		# Repeated passes merge into one cleared channel. The final push carries
+		# its water ridge across the binding/fringe and down onto the floor.
+		var z := 0.0
+		if clock_seconds <= 2.80:
+			z = lerpf(-0.85, 1.40, (clock_seconds - 0.30) / 2.50)
+		elif clock_seconds <= 5.30:
+			z = lerpf(1.40, -0.85, (clock_seconds - 2.80) / 2.50)
+		else:
+			z = lerpf(-0.85, 1.68, (clock_seconds - 5.30) / 3.0)
+		var point := Vector3(0, 0.067, z)
 		game.apply_selected_tool_stroke(previous, point, minf(delta, 0.08))
 		game.contact_point = point
 		game.place_selected_tool()
 		previous = point
-	elif before <= 2.30 and clock_seconds > 2.30:
+	elif before <= 8.30 and clock_seconds > 8.30:
 		game.squeegee_water.end_stroke()
-	if clock_seconds > 3.50:
+	if clock_seconds > 12.0:
 		clock_seconds = 0.0
 		prepared = false
 
@@ -61,30 +70,30 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_SPACE:
 			autoplay = not autoplay
+			oblique_camera = game.camera_oblique
 			if not autoplay: game.squeegee_water.end_stroke()
 			_frame()
 			get_viewport().set_input_as_handled()
 		elif event.keycode == KEY_TAB:
-			oblique_camera = not oblique_camera
+			oblique_camera = not game.camera_oblique
+			game.set_camera_angle(oblique_camera)
 			_frame()
 			get_viewport().set_input_as_handled()
-	elif (event is InputEventMouseButton or event is InputEventScreenTouch) and event.pressed:
+	elif (event is InputEventMouseButton or event is InputEventScreenTouch) and event.pressed and autoplay:
 		autoplay = false
-		game.squeegee_water.end_stroke()
-		oblique_camera = false
+		game.end_stroke()
+		# Keep the view the player chose; manual play is no longer top-only.
 		_frame()
 
 func _frame() -> void:
 	if not is_instance_valid(label): return
-	label.text = "Squeegee water  /  Space: play-pause\nTab: camera  /  Click: try it"
-	label.visible = oblique_camera
-	game.hud.visible = not oblique_camera
-	if oblique_camera:
+	if not autoplay: oblique_camera = game.camera_oblique
+	label.text = "Water ridges + runoff  /  Space: play-pause\nTab: camera  /  Click: try it"
+	label.visible = oblique_camera and autoplay
+	game.hud.visible = not (oblique_camera and autoplay)
+	game.set_camera_angle(oblique_camera)
+	if oblique_camera and autoplay:
 		game.camera.position = Vector3(1.65, 2.15, 2.5)
 		game.camera.look_at(Vector3(0, 0.08, 0.0))
 		var viewport_size: Vector2 = game.get_viewport().get_visible_rect().size
 		game.camera.size = maxf(3.25, 3.45 * viewport_size.y / maxf(1.0, viewport_size.x))
-	else:
-		game.camera.rotation_degrees = Vector3(-90, 0, 0)
-		game.camera.position = Vector3(0, 7, 0)
-		game.frame_carpet()

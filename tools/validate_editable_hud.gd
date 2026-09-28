@@ -68,15 +68,15 @@ func run() -> void:
 
 	# The single number uses the less-clean of debris and dust.
 	game.soil.remaining = 0
-	game.soil.surface_coverage_total = float(game.soil.surface_pixel_count) * 0.16
+	game.soil.surface_coverage_total = float(game.soil.surface_pixel_count) * 0.26
 	game.update_contract_status()
-	check(game.state_label.text == "84%" and not game.finish_button.visible, "Finish stays hidden below 85%")
-	game.soil.surface_coverage_total = float(game.soil.surface_pixel_count) * 0.15
+	check(game.state_label.text == "74%" and not game.finish_button.visible, "Finish stays hidden below 75%")
+	game.soil.surface_coverage_total = float(game.soil.surface_pixel_count) * 0.25
 	game.update_contract_status()
-	check(game.state_label.text == "85%" and game.finish_button.visible, "Finish appears at 85%")
+	check(game.state_label.text == "75%" and game.finish_button.visible, "Finish appears at 75%")
 	if "--capture" in OS.get_cmdline_user_args():
 		await RenderingServer.frame_post_draw
-		root.get_texture().get_image().save_png(ProjectSettings.globalize_path("res://../art/renders/cleaning_finish_85.png"))
+		root.get_texture().get_image().save_png(ProjectSettings.globalize_path("res://../art/renders/cleaning_finish_75.png"))
 
 	var target: Button = game.finish_button
 	target.pressed.disconnect(game.finish_contract)

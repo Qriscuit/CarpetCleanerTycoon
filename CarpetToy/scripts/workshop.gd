@@ -3,6 +3,11 @@ extends Node3D
 const Routes = preload("res://scripts/scene_routes.gd")
 const Pop = preload("res://scripts/ui/button_pop.gd")
 const ShopLedger = preload("res://scripts/shop_state.gd")
+const Progression = preload("res://scripts/progression.gd")
+const WaterJet = preload("res://scripts/water_jet.gd")
+const HoseProfile = preload("res://scripts/water_hose_profile.gd")
+const SqueegeeMotion = preload("res://scripts/squeegee_motion.gd")
+const SQUEEGEE_WATER_SCENE = preload("res://scenes/effects/squeegee_water.tscn")
 @export var practice_only := false
 @export var animate_rug_changes := true
 enum RugPhase { ARRIVING, GROWING, TOOL_ENTERING, CLEANING, VACUUMING, DEPARTING }
@@ -59,15 +64,27 @@ var finish_button: Button
 var wide_brush := false
 var tool_width := 1.0
 var wet_recipe := false
+var water_only_recipe := false
 var tool_visuals: RefCounted
 var updating_progression := false
 var switching_tool := false
 var cached_progression: Dictionary = {}
 var applied_visual_tier := -1
 var applied_strength := -1.0
+var dry_tool_power := 1.0
+var hose_upgrade_level := 0
+var hose_direct_power := 1.0
+var hose_direct_scale := 1.0
+var squeegee_upgrade_level := 0
+var squeegee_power := 1.0
+var water: Node3D
+var nozzle_socket: Marker3D
+var squeegee_water: Node3D
+var squeegee_motion := SqueegeeMotion.new()
 var cached_purchase_state := false
 var snapshot_timer: Timer
 var rug_initialized := false
+var last_dry_remaining := -1
 @onready var hud: CanvasLayer = $GymUI
 var hud_touch := -1
 var hud_button: Button
@@ -128,7 +145,7 @@ func _ready() -> void:
 		shop_state.changed.connect(_sync_wallet)
 		shop_state.ad_reward_granted.connect(_show_ad_reward)
 	soil = preload("res://scripts/dirt_controller.gd").new()
-	# Workshop owns the 85% manual and 99% automatic rules for both modes.
+	# Workshop owns the 75% manual and 99% automatic rules for both modes.
 	soil.automatic_completion_enabled = false
 	soil.head_half = Vector2(0.44, 0.11) if wide_brush else soil.HEAD_HALF
 	add_child(soil)
@@ -137,16 +154,25 @@ func _ready() -> void:
 	soil.vacuum_started.connect(on_vacuum_started)
 	soil.vacuum_finished.connect(on_vacuum_finished)
 	soil.setup($RugDisplay)
-	wet_recipe = paid_contract and shop_state.active_store >= 3
-	soil.set_recipe(wet_recipe)
+	wet_recipe = paid_contract and bool(shop_state.progression_view().get("wet_unlocked", false))
+	water_only_recipe = wet_recipe and int(shop_state.active_store) == Progression.WET_FIRST_STORE
+	soil.set_recipe(wet_recipe, water_only_recipe)
+	if wet_recipe:
+		_ensure_wet_runtime()
 	if animate_rug_changes:
 		rug_roll.setup($RugDisplay/Dirty/CarpetMesh)
 	select_rug(0)
 	_sync_progression()
 	if paid_contract and not shop_state.job_snapshot.is_empty():
-		soil.restore_snapshot(shop_state.job_snapshot)
+		# Normalize legacy Store 2 saves to its water-only recipe. Restoring clears
+		# only the obsolete dry layer while retaining any saved wet/extracted masks.
+		var restored_snapshot: Dictionary = shop_state.job_snapshot.duplicate(true)
+		restored_snapshot["wet_recipe"] = wet_recipe
+		restored_snapshot["skip_dry_stage"] = water_only_recipe
+		soil.restore_snapshot(restored_snapshot)
 		applied_strength = -1.0
 		_sync_progression()
+	_sync_wet_runtime_state()
 	snapshot_timer = Timer.new()
 	snapshot_timer.one_shot = true
 	snapshot_timer.wait_time = 0.5
@@ -262,6 +288,7 @@ func begin_stroke(screen_position: Vector2, touch_input: bool) -> void:
 	brush_dragging = true
 	stroke_time = Time.get_ticks_msec()
 	set_brush_instruction(true)
+	_sync_water_emitter()
 	get_viewport().set_input_as_handled()
 
 func end_stroke() -> void:
@@ -270,6 +297,10 @@ func end_stroke() -> void:
 		soil.end_pass()
 	brush_dragging = false
 	active_touch = -1
+	_sync_water_emitter()
+	if is_instance_valid(squeegee_water):
+		squeegee_water.end_stroke()
+	squeegee_motion.end_stroke()
 	set_brush_instruction(false)
 	if was_dragging and not finish_requested:
 		save_contract_progress()
@@ -281,6 +312,7 @@ func _notification(what: int) -> void:
 		back()
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
 		end_stroke()
+		_cancel_wet_runtime_effects()
 		if is_instance_valid(hud_button):
 			Pop.reset(hud_button)
 		hud_touch = -1
@@ -304,9 +336,16 @@ func _sync_wallet() -> void:
 	_sync_progression()
 
 func _sync_progression() -> void:
-	if updating_progression or shop_state == null or not paid_contract: return
+	# Snapshot persistence runs once more during _exit_tree. At that point the
+	# ledger still needs the mask, but UI/tool transforms are already detached.
+	if updating_progression or shop_state == null or not paid_contract or leaving_scene or not is_inside_tree(): return
 	updating_progression = true
 	var view: Dictionary = shop_state.progression_view()
+	dry_tool_power = float(view.get("tool_power", 1.0))
+	if wet_recipe:
+		_ensure_wet_runtime()
+		_configure_hose_upgrade(int(view.get("effective_hose_level", view.get("hose_level", 0))), float(view.get("hose_power", 1.0)))
+		_configure_squeegee_upgrade(int(view.get("squeegee_level", 0)), float(view.get("squeegee_power", 1.0)))
 	var wider: bool = float(view.tool_width) > tool_width
 	tool_width = float(view.tool_width)
 	wide_brush = tool_width > 1.0
@@ -314,10 +353,7 @@ func _sync_progression() -> void:
 		soil.head_half = Vector2(0.305 * tool_width, 0.11)
 		if wider and not brush_dragging:
 			contact_point.x = clampf(contact_point.x, -1.0 + soil.head_half.x, 1.0 - soil.head_half.x)
-		var strength: float = float(view.get("wet_power", view.tool_power)) if wet_recipe and selected_tool != 0 else float(view.tool_power)
-		if strength != applied_strength:
-			soil.set_tool_strength(strength)
-			applied_strength = strength
+		_apply_selected_tool_strength()
 		if int(view.global_tool_tier) != applied_visual_tier:
 			tool_visuals.apply_tier(int(view.global_tool_tier), tool_width)
 			applied_visual_tier = int(view.global_tool_tier)
@@ -344,6 +380,22 @@ func _purchase_tool() -> void:
 		_sync_progression()
 		if not hud.upgrades_open(): select_tool(selected_tool)
 
+
+func _purchase_hose() -> void:
+	if not _can_purchase(): return
+	end_stroke()
+	_cancel_wet_runtime_effects()
+	if shop_state.buy_hose_upgrade():
+		_sync_progression()
+
+
+func _purchase_squeegee() -> void:
+	if not _can_purchase(): return
+	end_stroke()
+	_cancel_wet_runtime_effects()
+	if shop_state.buy_squeegee_upgrade():
+		_sync_progression()
+
 func _can_purchase() -> bool:
 	return paid_contract and rug_phase == RugPhase.CLEANING and not finish_requested and not leaving_scene and hud.pending_reward == 0
 
@@ -362,9 +414,120 @@ func _advance_wet_tool() -> void:
 	var next_tool: int = soil.recommended_tool()
 	if next_tool != selected_tool: select_tool(next_tool)
 
+
+func _ensure_wet_runtime() -> void:
+	# Snapshot saving can refresh progression during _exit_tree. Preserve that
+	# save, but never recreate effects after the scene has begun teardown.
+	if leaving_scene or not is_inside_tree(): return
+	if not is_instance_valid(nozzle_socket):
+		nozzle_socket = Marker3D.new()
+		nozzle_socket.name = "NozzleSocket"
+		nozzle_socket.position = TOOL_PIVOTS[2]
+		tool_nodes[2].add_child(nozzle_socket)
+	if not is_instance_valid(water):
+		water = WaterJet.new()
+		water.name = "WaterJet"
+		add_child(water)
+		water.setup(soil.footprint)
+		water.water_contact.connect(_on_water_contact)
+		water.soak_contact.connect(_on_soak_contact)
+	if not is_instance_valid(squeegee_water):
+		squeegee_water = get_node_or_null("SqueegeeWater") as Node3D
+		if not is_instance_valid(squeegee_water):
+			squeegee_water = SQUEEGEE_WATER_SCENE.instantiate()
+			squeegee_water.name = "SqueegeeWater"
+			add_child(squeegee_water)
+		if squeegee_water.impact == null:
+			squeegee_water.setup(soil.footprint, soil.surface_pixels, soil.MASK_SIZE, soil)
+	_configure_hose_upgrade(hose_upgrade_level, hose_direct_power)
+	_configure_squeegee_upgrade(squeegee_upgrade_level, squeegee_power)
+	_sync_wet_runtime_state()
+
+
+func _configure_hose_upgrade(level: int, direct_power: float) -> void:
+	var next_level := clampi(level, 0, HoseProfile.MAX_LEVEL)
+	var next_power := direct_power if is_finite(direct_power) and direct_power > 0.0 else 1.0
+	var level_changed := next_level != hose_upgrade_level
+	hose_upgrade_level = next_level
+	hose_direct_power = next_power
+	# WaterJet's authored profile already includes a direct-flow multiplier.
+	# Normalize it out so the ledger's strongest global hose_power is the one
+	# authoritative direct-contact strength, without losing profile spread/soak.
+	var profile_power := float(HoseProfile.for_level(hose_upgrade_level).soak_multiplier)
+	hose_direct_scale = hose_direct_power / maxf(profile_power, 0.0001)
+	if is_instance_valid(water) and (level_changed or int(water.upgrade_level) != hose_upgrade_level):
+		water.set_upgrade_level(hose_upgrade_level)
+
+
+func _configure_squeegee_upgrade(level: int, power: float) -> void:
+	squeegee_upgrade_level = clampi(level, 0, Progression.WET_POWERS.size() - 1)
+	squeegee_power = power if is_finite(power) and power > 0.0 else 1.0
+	_apply_selected_tool_strength()
+
+
+func _apply_selected_tool_strength() -> void:
+	if not is_instance_valid(soil): return
+	var strength := squeegee_power if wet_recipe and selected_tool == 1 else dry_tool_power
+	if not is_equal_approx(strength, applied_strength):
+		soil.set_tool_strength(strength)
+		applied_strength = strength
+
+
+func _sync_wet_runtime_state() -> void:
+	if leaving_scene or not is_inside_tree(): return
+	if not is_instance_valid(water) or not is_instance_valid(squeegee_water): return
+	if bool(water.enabled) != wet_recipe:
+		water.set_enabled(wet_recipe)
+	if bool(squeegee_water.enabled) != wet_recipe:
+		squeegee_water.set_enabled(wet_recipe)
+	if wet_recipe and is_instance_valid(soil):
+		water.set_emission_locked(soil.water_stage_complete())
+	_sync_water_emitter()
+
+
+func _sync_water_emitter() -> void:
+	if leaving_scene or not is_inside_tree() or not is_instance_valid(water) or not is_instance_valid(nozzle_socket) or not nozzle_socket.is_inside_tree(): return
+	var spraying: bool = wet_recipe and selected_tool == 2 and not bool(soil.water_stage_complete()) and brush_dragging and rug_phase == RugPhase.CLEANING and not leaving_scene and not bool(soil.simulation_suspended)
+	water.set_emitter(spraying, nozzle_socket.global_position, nozzle_socket.global_basis.z.normalized())
+
+
+func _on_water_contact(world_position: Vector3, radius: float, strength: float) -> void:
+	_apply_hose_water(world_position, radius, strength * hose_direct_scale, soil.WATER_BLOB_EDGE_FRACTION)
+
+
+func _on_soak_contact(world_position: Vector3, radius: float, strength: float) -> void:
+	# Passive capillary flow keeps the selected hose profile's independent rate.
+	_apply_hose_water(world_position, radius, strength, 0.78)
+
+
+func _apply_hose_water(world_position: Vector3, radius: float, strength: float, edge_fraction: float) -> void:
+	if not wet_recipe or leaving_scene or not is_instance_valid(soil): return
+	if not soil.apply_water_blob(world_position, radius, strength, edge_fraction): return
+	# Credit the equipped hose only when contact actually changes the wet mask.
+	# This also catches stationary direct flow and passive soak contacts.
+	if paid_contract:
+		shop_state.note_current_tool_used(2)
+	var ready: bool = soil.water_stage_complete()
+	water.set_emission_locked(ready)
+	update_contract_status()
+	# The final in-flight parcel may complete the stage after pointer release.
+	if ready and not brush_dragging and selected_tool == 2:
+		_advance_wet_tool.call_deferred()
+
+
+func _cancel_wet_runtime_effects() -> void:
+	squeegee_motion.end_stroke()
+	if is_instance_valid(squeegee_water):
+		squeegee_water.reset()
+	if is_instance_valid(water):
+		water.reset()
+		if wet_recipe and is_instance_valid(soil):
+			water.set_emission_locked(soil.water_stage_complete())
+
 func _on_upgrades_changed(open: bool) -> void:
 	end_stroke()
 	if open:
+		_cancel_wet_runtime_effects()
 		soil.suspend_simulation(true)
 		if transition_tween != null and transition_tween.is_valid():
 			transition_tween.pause()
@@ -375,6 +538,9 @@ func _on_upgrades_changed(open: bool) -> void:
 	update_contract_status()
 
 func move_brush_to_screen(screen_position: Vector2, touch_input: bool) -> void:
+	var stroke_origin := last_brush_position
+	var stroke_started := stroke_time
+	var accumulate_squeegee := brush_dragging and wet_recipe and selected_tool == 1
 	var contact_position := screen_position + (TOUCH_CONTACT_OFFSET if touch_input else Vector2.ZERO)
 	var ray_origin := camera.project_ray_origin(contact_position)
 	var ray_direction := camera.project_ray_normal(contact_position)
@@ -391,25 +557,51 @@ func move_brush_to_screen(screen_position: Vector2, touch_input: bool) -> void:
 		var now := Time.get_ticks_msec()
 		var dt := float(now - stroke_time) / 1000.0
 		if last_brush_position.distance_squared_to(target) > 0.00001:
-			if paid_contract: shop_state.note_current_tool_used()
 			apply_selected_tool_stroke(last_brush_position, target, dt)
 		stroke_time = now
 	contact_point = target
 	place_selected_tool()
 	last_brush_position = target
+	if accumulate_squeegee:
+		var movement := Vector3(last_brush_position.x - stroke_origin.x, 0.0, last_brush_position.z - stroke_origin.z)
+		if movement.length_squared() <= 0.00001:
+			# Preserve sub-pixel travel and elapsed time until the squeegee has a
+			# meaningful direction; slow input must not repeatedly lose its motion.
+			last_brush_position = stroke_origin
+			stroke_time = stroke_started
+	_sync_water_emitter()
 
 func apply_selected_tool_stroke(world_from: Vector3, world_to: Vector3, elapsed: float) -> void:
 	if selected_tool == 0:
+		_apply_selected_tool_strength()
+		var dry_before: float = soil.surface_coverage_total
 		soil.stroke(world_from, world_to, elapsed)
+		if paid_contract and soil.surface_coverage_total < dry_before:
+			shop_state.note_current_tool_used(0)
 	elif wet_recipe and selected_tool == 2:
-		soil.apply_water_stroke(world_from, world_to, elapsed)
+		# The ballistic hose owns contact timing. Wetness is written only by its
+		# carpet-contact signals, never by the pointer's projected screen segment.
+		return
 	elif wet_recipe and selected_tool == 1:
-		soil.apply_squeegee_stroke(world_from, world_to, elapsed)
+		_apply_selected_tool_strength()
+		var previous_heading: Vector3 = squeegee_motion.heading
+		var was_tracking: bool = squeegee_motion.tracking
+		squeegee_motion.update(world_to - world_from, elapsed)
+		if not was_tracking:
+			previous_heading = squeegee_motion.heading
+		var before: float = soil.extraction_coverage_total
+		soil.apply_squeegee_stroke(world_from, world_to, elapsed, squeegee_motion.heading, previous_heading)
+		if is_instance_valid(squeegee_water):
+			var splash_contact := world_to
+			splash_contact.y = soil.squeegee_surface_height(world_to, squeegee_motion.heading)
+			squeegee_water.feed_stroke(world_from, splash_contact, elapsed, maxf(0.0, soil.extraction_coverage_total - before), squeegee_motion.heading, squeegee_motion.speed)
 
 func select_tool(index: int) -> void:
 	if soil.completion_started or index < 0 or index >= tool_nodes.size():
 		return
 	if paid_contract and not wet_recipe and index != 0:
+		return
+	if paid_contract and wet_recipe and index != soil.recommended_tool():
 		return
 	switching_tool = true
 	end_stroke()
@@ -422,6 +614,10 @@ func select_tool(index: int) -> void:
 	place_selected_tool()
 	last_brush_position = contact_point
 	set_brush_instruction(false)
+	if is_instance_valid(squeegee_water) and selected_tool != 1:
+		squeegee_water.reset()
+	_apply_selected_tool_strength()
+	_sync_water_emitter()
 	switching_tool = false
 	_sync_progression()
 
@@ -430,13 +626,21 @@ func place_selected_tool() -> void:
 	var pose := Basis.IDENTITY.scaled(Vector3.ONE * 0.77)
 	if selected_tool == 0:
 		pose = Basis.IDENTITY.scaled(Vector3(0.77 * tool_width, 0.77, 0.77))
+	elif wet_recipe and selected_tool == 1:
+		var heading: Vector3 = squeegee_motion.heading
+		pose = Basis(Vector3.UP, atan2(-heading.x, -heading.z)).scaled(Vector3.ONE * 0.77)
+		contact_point.y = soil.squeegee_surface_height(contact_point, heading)
 	var hover := 0.0
 	if selected_tool == 2:
 		pose = Basis(Vector3.RIGHT, deg_to_rad(55.0)).scaled(Vector3.ONE * 1.12)
 		hover = 0.14
 	tool.transform = Transform3D(pose, contact_point + Vector3.UP * hover - pose * TOOL_PIVOTS[selected_tool])
+	if wet_recipe and selected_tool == 2:
+		tool.position.y += WaterJet.LAUNCH_HEIGHT - 0.14
 
 func current_head_half() -> Vector2:
+	if wet_recipe and selected_tool == 1:
+		return squeegee_motion.projected_half_extents(TOOL_HEAD_HALVES[1])
 	return soil.head_half if selected_tool == 0 else TOOL_HEAD_HALVES[selected_tool]
 
 func set_brush_instruction(_active: bool) -> void:
@@ -447,6 +651,7 @@ func reset_rug() -> void:
 	if paid_contract:
 		return
 	end_stroke()
+	_cancel_wet_runtime_effects()
 	_cancel_transition()
 	finish_requested = false
 	auto_finish_queued = false
@@ -469,20 +674,28 @@ func select_rug(index: int) -> void:
 	if paid_contract and (index != 0 or rug_initialized):
 		return
 	end_stroke()
+	_cancel_wet_runtime_effects()
 	selected_rug = index
 	soil.configure_rug(rugs[index])
 	for i in rug_buttons.size():
 		rug_buttons[i].set_pressed_no_signal(i == index)
 	for button in tool_buttons:
 		button.disabled = false
+	var start_tool: int = soil.recommended_tool() if wet_recipe else 0
 	if paid_contract:
 		for i in tool_buttons.size():
-			tool_buttons[i].disabled = i != 0
+			tool_buttons[i].disabled = i != start_tool
 	contact_point = brush_home.origin + brush_home.basis * TOOL_PIVOTS[0]
-	select_tool(0)
+	select_tool(start_tool)
+	_sync_wet_runtime_state()
 	rug_initialized = true
 
-func update_progress(_remaining: int, _total: int) -> void:
+func update_progress(remaining: int, _total: int) -> void:
+	# Surface-mask changes are credited at stroke time. A clump may cross the
+	# carpet edge later under physics, so credit that real unique-dirt delta here.
+	if paid_contract and rug_phase == RugPhase.CLEANING and selected_tool == 0 and last_dry_remaining >= 0 and remaining < last_dry_remaining:
+		shop_state.note_current_tool_used(0)
+	last_dry_remaining = remaining
 	update_contract_status()
 	queue_snapshot_save()
 
@@ -500,25 +713,33 @@ func queue_snapshot_save() -> void:
 func update_contract_status() -> void:
 	if soil == null or state_label == null:
 		return
-	# A rug is only as clean as its dirtier layer. One honest number now drives
-	# the bar, the Finish button, and automatic completion.
+	# One recipe-aware number drives the bar, Finish button and auto-completion.
 	var fraction: float = 1.0 if contract_finished else soil.overall_clearance()
 	progress_fraction = clampf(fraction, 0.0, 1.0)
+	var contract_ready := ShopLedger.completion_reached(progress_fraction, CONTRACT_TARGET)
+	var auto_finish_ready := ShopLedger.completion_reached(progress_fraction, AUTO_FINISH_TARGET)
 	var percent := floori(progress_fraction * 100.0 + 0.0001)
-	dirty = not contract_finished and progress_fraction < AUTO_FINISH_TARGET
+	dirty = not contract_finished and not auto_finish_ready
 	state_label.text = "%d%%" % percent
 	var color := progress_color(progress_fraction)
 	progress_bar.value = progress_fraction * 100.0
 	progress_fill.bg_color = color
 	progress_fill.shadow_color = Color(color, 0.42)
-	finish_button.visible = rug_phase == RugPhase.CLEANING and not hud.upgrades_open() and not contract_finished and not finish_requested and progress_fraction >= CONTRACT_TARGET and (progress_fraction < AUTO_FINISH_TARGET or contract_save_failed)
+	finish_button.visible = rug_phase == RugPhase.CLEANING and not hud.upgrades_open() and not contract_finished and not finish_requested and contract_ready and (not auto_finish_ready or contract_save_failed)
 	finish_button.disabled = not finish_button.visible
+	if wet_recipe and is_instance_valid(water):
+		water.set_emission_locked(soil.water_stage_complete())
 	if paid_contract:
 		var payout: int = shop_state.reward_for_current_job(soil.make_progress_snapshot())
 		finish_button.text = "Finish · %s" % hud._money_text(payout) if payout > 0 else "Finish job"
 		finish_button.tooltip_text = "%d coins" % payout if payout > 0 else "Finish this rug"
-	_sync_progression()
-	if rug_phase == RugPhase.CLEANING and not hud.upgrades_open() and progress_fraction >= AUTO_FINISH_TARGET and not contract_finished and not finish_requested and not auto_finish_queued and not contract_save_failed:
+	# Mask updates change cleanliness, not prices or owned equipment. Wallet /
+	# purchase signals refresh those separately; only phase availability needs
+	# checking here. Avoid rebuilding the ledger view and tool poses per stroke.
+	var purchases_allowed := rug_phase == RugPhase.CLEANING and not finish_requested and not leaving_scene
+	if paid_contract and (cached_progression.is_empty() or cached_purchase_state != purchases_allowed):
+		_sync_progression()
+	if rug_phase == RugPhase.CLEANING and not hud.upgrades_open() and auto_finish_ready and not contract_finished and not finish_requested and not auto_finish_queued and not contract_save_failed:
 		auto_finish_queued = true
 		finish_rug.call_deferred()
 
@@ -542,7 +763,7 @@ func frame_carpet() -> void:
 	camera.size = maxf(4.35, 2.2 / aspect)
 	camera.position = Vector3(0.0, 9.0, -0.20)
 	# Reserve the earnings/Finish band even before Finish appears. A short
-	# phone must expose every fringe without zooming when the rug reaches85%.
+	# phone must expose every fringe without zooming when the rug reaches 75%.
 	if is_instance_valid(hud) and hud.is_node_ready():
 		hud._layout()
 		var safe: Rect2 = hud._safe_rect()
@@ -562,6 +783,7 @@ func frame_carpet() -> void:
 func on_vacuum_started() -> void:
 	rug_phase = RugPhase.VACUUMING
 	end_stroke()
+	_cancel_wet_runtime_effects()
 	for tool in tool_nodes:
 		tool.hide()
 	for button in tool_buttons:
@@ -596,6 +818,7 @@ func _cancel_transition() -> void:
 
 func start_rug_arrival() -> void:
 	_cancel_transition()
+	_cancel_wet_runtime_effects()
 	rug_phase = RugPhase.ARRIVING
 	soil.suspend_simulation(true)
 	soil.set_reveal_progress(0.0)
@@ -645,10 +868,14 @@ func _tool_arrival_finished() -> void:
 
 func save_contract_progress() -> bool:
 	if not paid_contract or contract_finished:
+		if is_instance_valid(snapshot_timer): snapshot_timer.stop()
 		return true
 	if is_instance_valid(soil) and is_instance_valid(shop_state) and shop_state.active_job_id == contract_job_id:
 		var snapshot: Dictionary = soil.make_snapshot()
 		if shop_state.save_job_snapshot(snapshot):
+			# A successful release/Back checkpoint supersedes the pending timer.
+			# Keep that existing retry opportunity if the immediate write fails.
+			if is_instance_valid(snapshot_timer): snapshot_timer.stop()
 			contract_save_failed = false
 			update_contract_status()
 			return true
@@ -666,7 +893,7 @@ func finish_rug() -> void:
 	auto_finish_queued = false
 	if rug_phase != RugPhase.CLEANING or leaving_scene or hud.upgrades_open() or soil == null or soil.completion_started or contract_finished or finish_requested:
 		return
-	if soil.overall_clearance() < CONTRACT_TARGET:
+	if not ShopLedger.completion_reached(soil.overall_clearance(), CONTRACT_TARGET):
 		return
 	finish_requested = true
 	end_stroke()
@@ -714,6 +941,9 @@ func next_rug() -> void:
 	auto_finish_queued = false
 	contract_save_failed = false
 	next_job_pending = false
+	_cancel_wet_runtime_effects()
+	select_tool(soil.recommended_tool() if wet_recipe else 0)
+	_sync_wet_runtime_state()
 	start_rug_arrival()
 
 func return_to_shop() -> void:
@@ -721,12 +951,15 @@ func return_to_shop() -> void:
 	leaving_scene = true
 	_cancel_transition()
 	end_stroke()
+	_cancel_wet_runtime_effects()
 	save_contract_progress()
 	if shop_state != null:
 		shop_state.contract_mode = false
 	get_tree().change_scene_to_file(Routes.MAIN_MENU)
 
 func _exit_tree() -> void:
+	leaving_scene = true
+	_cancel_wet_runtime_effects()
 	if is_instance_valid(shop_state) and shop_state.changed.is_connected(_sync_wallet):
 		shop_state.changed.disconnect(_sync_wallet)
 	if is_instance_valid(shop_state) and shop_state.ad_reward_granted.is_connected(_show_ad_reward):
@@ -771,6 +1004,10 @@ func bind_ui() -> void:
 	hud.upgrades_changed.connect(_on_upgrades_changed)
 	hud.request_payout_upgrade.connect(_purchase_payout)
 	hud.request_tool_upgrade.connect(_purchase_tool)
+	if hud.has_signal("request_hose_upgrade"):
+		hud.request_hose_upgrade.connect(_purchase_hose)
+	if hud.has_signal("request_squeegee_upgrade"):
+		hud.request_squeegee_upgrade.connect(_purchase_squeegee)
 	hud.request_rewarded_ad.connect(_request_rewarded_ad)
 	for button in [home_button, finish_button] + hud.action_buttons():
 		if button in touch_buttons: continue

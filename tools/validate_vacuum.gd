@@ -46,7 +46,7 @@ func run() -> void:
 
 	set_cleanliness(game, 0.5)
 	check(game.dirty and game.state_label.text == "50%" and not game.finish_button.visible, "Halfway is not complete")
-	set_cleanliness(game, 0.85)
+	set_cleanliness(game, 0.75)
 	game.finish_contract()
 	check(soil.completion_started and not game.brush_dragging and not game.brush.visible, "Finish ends input and starts automatic takeaway")
 	var origin: Vector3 = soil.positions[seed_slot]

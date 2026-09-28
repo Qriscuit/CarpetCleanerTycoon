@@ -1,5 +1,5 @@
 extends SceneTree
-## Renderer-backed checks for the production 85%/99% rug loop.
+## Renderer-backed checks for the production 75%/99% rug loop.
 var failures := 0
 
 
@@ -41,10 +41,10 @@ func run() -> void:
 	check(game.hud.get_node_or_null("%LeftRail") == null and game.hud.get_node_or_null("%ToolRail") == null and game.hud.get_node_or_null("%CompletionCard") == null, "Legacy rails and completion prompt are absent")
 	check(not game.finish_button.visible, "Untouched rug has no Finish button")
 
-	set_cleanliness(game, 1.0, 0.84)
-	check(game.state_label.text == "84%" and not game.finish_button.visible, "The bar uses the dirtier layer and stays locked below 85%")
-	set_cleanliness(game, 0.85, 0.85)
-	check(game.state_label.text == "85%" and game.finish_button.visible and not game.finish_button.disabled, "Finish job appears at 85%")
+	set_cleanliness(game, 1.0, 0.74)
+	check(game.state_label.text == "74%" and not game.finish_button.visible, "The bar uses the dirtier layer and stays locked below 75%")
+	set_cleanliness(game, 0.75, 0.75)
+	check(game.state_label.text == "75%" and game.finish_button.visible and not game.finish_button.disabled, "Finish job appears at 75%")
 
 	state._save_enabled = false
 	game.finish_contract()
@@ -111,11 +111,11 @@ func run() -> void:
 	root.add_child(practice)
 	await process_frame
 	var cash_before: int = state.cash
-	set_cleanliness(practice, 0.85, 0.85)
+	set_cleanliness(practice, 0.75, 0.75)
 	practice.finish_contract()
 	check(not practice.paid_contract and state.cash == cash_before, "The inherited test gym remains free practice")
 	practice.free()
 	state.set_process(false)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(state._save_path))
-	print("CONTRACT CHECKS COMPLETE: ", failures, " failures; minimal HUD, 85% Finish, 99% auto, exact-once reward and immediate replacement rug.")
+	print("CONTRACT CHECKS COMPLETE: ", failures, " failures; minimal HUD, 75% Finish, 99% auto, exact-once reward and immediate replacement rug.")
 	quit(0 if failures == 0 else 1)

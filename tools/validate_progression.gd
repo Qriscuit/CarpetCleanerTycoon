@@ -63,8 +63,9 @@ func complete(state: Node, use_final: bool = true) -> bool:
 	var id: String = state.start_job()
 	if use_final: state.note_current_tool_used()
 	var snapshot := {"unique_clearance": 1.0, "surface_clearance": 1.0}
-	if state.active_store >= 3:
+	if state.active_store >= 2:
 		snapshot.merge({"wet_recipe": true, "water_clearance": 1.0, "extraction_clearance": 1.0})
+		if state.active_store == 2: snapshot.skip_dry_stage = true
 	return not state.complete_and_start_next_job(id, snapshot).is_empty()
 
 func fund(state: Node, amount: int) -> void:
@@ -80,14 +81,14 @@ func run() -> void:
 	check(not state.buy_bonzi_upgrade() and not state.select_store(2) and not state.open_next_store(), "Locked automation and unowned stores cannot be bypassed")
 	var job: String = state.start_job()
 	state.save_job_snapshot({"unique_clearance": 0.2, "surface_clearance": 0.3, "pixels": [7, 8]})
-	for pair: Array in [[0.8499, 0], [0.85, 20], [0.9899, 20], [0.99, 40], [1.0, 40]]:
+	for pair: Array in [[0.7499, 0], [0.75, 20], [0.85, 20], [0.9899, 20], [0.99, 40], [1.0, 40]]:
 		check(state.reward_for_current_job({"unique_clearance": pair[0], "surface_clearance": pair[0]}) == pair[1], "Current quote respects completion tier " + str(pair[0]))
-	check(state.reward_for_current_job({"unique_clearance": 1.0, "surface_clearance": 0.84}) == 0, "Dry payout requires both layers")
+	check(state.reward_for_current_job({"unique_clearance": 1.0, "surface_clearance": 0.7499}) == 0, "Dry payout requires both layers")
 	fund(state, 100)
 	check(state.buy_payout_upgrade() and state.cash == 75 and state.active_job_id == job and state.job_snapshot.pixels == [7, 8], "Earnings upgrade atomically keeps rug and rebases unpaid quote")
 	check(state.reward_for_current_job({"unique_clearance": 1.0, "surface_clearance": 1.0}) == 44, "Already-present rug receives the purchased quote")
 	state = reload_state(state)
-	check(state.progression_view().payout_level == 1 and state.active_job_id == job and state.reward_for_current_job({"unique_clearance": 0.85, "surface_clearance": 0.85}) == 22, "Payout level and current quote survive reload")
+	check(state.progression_view().payout_level == 1 and state.active_job_id == job and state.reward_for_current_job({"unique_clearance": 0.75, "surface_clearance": 0.75}) == 22, "Payout level and 75% current quote survive reload")
 	var good_path: String = state._save_path
 	var before: Dictionary = state._capture_state()
 	state._save_path += "/cannot-write.json"
@@ -109,8 +110,8 @@ func run() -> void:
 	check(state.progression_view().bonzi_earned == 110 and not state.buy_bonzi_upgrade(), "Final cycles pay 40 and cumulative earned count never gets spent")
 	for index in 4: check(state.buy_tool_upgrade(), "Tool milestone " + str(index + 1))
 	check(state.progression_view().global_tool_tier == 4 and state.progression_view().tool_cost == -1 and not state.buy_tool_upgrade(), "Store's capstone is a one-time fourth tool purchase")
-	check(complete(state) and state.progression_view().final_tool_jobs == 0, "Rug begun before final-tool purchase cannot count retroactively")
-	check(complete(state, false) and state.progression_view().final_tool_jobs == 0, "Owning the final tool without using it cannot count")
+	check(complete(state) and state.progression_view().final_tool_jobs == 1, "Using the purchased final tool on the current rug counts without a throwaway job")
+	check(complete(state, false) and state.progression_view().final_tool_jobs == 1, "Owning the final tool without using it cannot count")
 	for index in 3: check(complete(state), "Final tool used on new paid rug " + str(index + 1))
 	check(state.progression_view().can_travel and state.progression_view().final_tool_jobs == 3, "All three travel goals are independently satisfied")
 	job = state.active_job_id
@@ -129,9 +130,9 @@ func run() -> void:
 	advance(state, 120.0)
 	check(state.cash == income_before + 160 and state.stores["1"].bonzi_earned == 190 and state.stores["2"].bonzi_earned == 80, "Old and active stores produce concurrently at their own cycles")
 	state.start_job()
-	for index in 4: check(state.buy_tool_upgrade(), "Store 2 higher global tool milestone")
-	check(state.progression_view().global_tool_tier == 8, "Dry brush progression reaches global tier 8")
-	check(state.select_store(1) and state.progression_view().global_tool_tier == 8 and state.progression_view().tool_width == 1.75, "Returning to old stores never downgrades the global brush")
+	for index in 4: check(state.buy_tool_upgrade(), "Store 2 water hose milestone")
+	check(state.progression_view().hose_level == 4 and state.progression_view().global_tool_tier == 4, "Store 2's main track upgrades the hose without rewriting brush ownership")
+	check(state.select_store(1) and state.progression_view().global_tool_tier == 4 and state.progression_view().tool_width == 1.75, "Returning to old stores never downgrades the global brush")
 	state.select_store(2)
 	complete(state)
 	for index in 3: complete(state)
@@ -144,14 +145,14 @@ func run() -> void:
 	check(state.reward_for_current_job({"wet_recipe": true, "unique_clearance": 0.5, "surface_clearance": 1.0, "water_clearance": 1.0, "extraction_clearance": 1.0, "overall_clearance": 1.0}) == 0, "Out-of-sequence wet progress and forged overall meters cannot pay")
 	check(state.reward_for_current_job({"wet_recipe": true, "unique_clearance": 1.0, "surface_clearance": 1.0, "water_clearance": 1.0, "extraction_clearance": 1.0}) == 2560, "Wet full reward remains exactly double")
 	state = reload_state(state)
-	check(state.active_store == 3 and state.stores.size() == 3 and state.progression_view().global_tool_tier == 8, "All stores, selection and permanent tools survive reload")
+	check(state.active_store == 3 and state.stores.size() == 3 and state.progression_view().global_tool_tier == 4, "All stores, selection and permanent tools survive reload")
 	fund(state, 5000000)
 	for index in 4: check(state.buy_tool_upgrade(), "Wet kit milestone " + str(index + 1))
 	complete(state)
 	for index in 3: complete(state)
 	advance(state, 1200.0)
 	check(state.progression_view().can_travel and state.open_next_store() and state.active_store == 4, "Store 4 is reachable through wet capstone jobs and its own Bonzi earnings")
-	check(state.progression_view().wet_power >= 2.1 and state.progression_view().global_tool_tier == 8 and not state.progression_view().has_next_store, "Final authored store inherits every tool and has no imaginary next-store purchase")
+	check(state.progression_view().wet_power >= 2.1 and state.progression_view().global_tool_tier == 4 and not state.progression_view().has_next_store, "Final authored store inherits every tool and has no imaginary next-store purchase")
 	check(state.buy_tool_upgrade() and state.progression_view().next_wet_power > state.progression_view().wet_power, "Later wet upgrades improve real wet power and preview the next gain")
 	var power: float = state.progression_view().wet_power
 	check(state.select_store(3) and state.progression_view().wet_power == power, "Earlier wet stores retain the strongest owned wet kit")

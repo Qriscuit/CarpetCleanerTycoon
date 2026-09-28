@@ -1,21 +1,27 @@
 # Mint Meadow — carpet cleaning prototype
 
+For a detailed explanation of the current systems, save format, equations and file locations, see the [Game Systems Reference](design/Game_Systems_Reference.md).
+
+The [mobile performance pass](design/Mobile_Performance.md) documents the squeegee optimizations and reproducible before/after desktop timings. Phone frame-time testing remains necessary.
+
 ## Run and build
 
-Open **Open Game Editor.cmd**, then press **F5** for the floating-store main menu. The project uses the bundled standard Godot 4.7.2; no .NET SDK is required.
+Open **Open Game Editor.cmd**, then press **F5** for the floating-store main menu. Opening, validation and exporting are pinned to **Godot 4.7.2 Mono/.NET**, using the complete bundle at `tools/godot/Godot_v4.7.2-stable_mono_win64/`, including its adjacent `GodotSharp` folder. The editor and APK launchers share a strict version/flavor check and do not fall back to a standard build or another Godot version.
 
-To export, save changes and double-click **Build APK.cmd**. The launcher checks dependencies, exports a signed debug APK, verifies its signature, and writes **build/CarpetCleaner.apk**. See the [APK recovery checklist](design/Android_APK.md) for SDK, template and signing fixes. **No APK was built for the current progression implementation.** Phone performance and touch feel still need device testing.
+Gameplay remains **GDScript**; this toolchain change does not port scripts to C#. The installed **.NET 8 SDK 8.0.400** supports this Mono editor. Android C# compilation has separate SDK/workload requirements to resolve if a C# port is requested later.
+
+To export, save changes and double-click **Build APK.cmd**. The launcher checks dependencies and matching **4.7.2.stable.mono** templates, exports a signed debug APK, verifies its signature, and writes **build/CarpetCleaner.apk**. See the [APK recovery checklist](design/Android_APK.md) for SDK, template and signing fixes. **A fresh Mono APK was exported and signature-verified on 2026-09-25**; its exact engine, template version and SHA-256 are recorded in `build/android-build-info.txt`. Phone performance and touch feel still need device testing.
 
 ## Current game loop
 
 Tap the floating store to clean or resume its rug. Swipe it left or right to preview stores. The bottom dock opens **Shop**, **Tools**, **Stores** and **Bonzi** sheets. Owned stores keep their own unfinished rug and upgrades; visiting another store preserves them. The main menu and rug-cleaning window are separate production scenes, driven by the selected store's data.
 
-Clean a rug, collect coins, then choose a higher payout or a stronger tool. The cleaning HUD keeps a progress bar, persistent gold wallet, Back control, bottom payout card and left tool drawer. **Finish job** appears at 85%; at 99% the job finishes automatically. Rugs roll in, starter rocks appear, and the brush enters. On completion, debris is sucked away and the rug rolls out before the next rug arrives. There is no new-rug prompt or scene reload between jobs.
+Clean a rug, collect coins, then choose a higher payout or a stronger tool. The cleaning HUD keeps a progress bar, persistent gold wallet, Back control, bottom payout card and left tool drawer. **Finish job** appears at 75%; at 99% the job finishes automatically for exactly twice the normal reward. The bottom upgrade offer shows only the 75% reward's current → next amount and the purchase price, without a second 99% value row. Rugs roll in, starter rocks appear, and the brush enters. On completion, debris is sucked away and the rug rolls out before the next rug arrives. There is no new-rug prompt or scene reload between jobs.
 
 | Store | Cleaning | Starting early / full payout | Opening price |
 | --- | --- | ---: | ---: |
 | Neighborhood | Brush | 20 / 40 | Free |
-| High Street | Stronger brushes | 160 / 320 | 2,000 |
+| High Street | Water → squeegee only | 160 / 320 | 2,000 |
 | Wash House | Brush → water → squeegee | 1,280 / 2,560 | 16,000 |
 | Restoration Studio | Stronger wet tools | 10,240 / 20,480 | 128,000 |
 
@@ -25,7 +31,7 @@ For store scale `S = 8^(store - 1)` and payout level `L`, early reward is `S × 
 
 ## Tools, Bonzi and travel
 
-Each store has four local tool upgrades costing **80S, 200S, 500S and 1,000S**. Store 1 increases brush width through **1.44×, 1.55×, 1.65× and 1.75×**, with later tiers also increasing cleaning strength. Store 2 improves strength while retaining the 1.75× width cap. Nine distinct matte brush models cover the starter and eight dry-tool upgrades. Stores 3–4 upgrade water and extraction strength. The strongest owned tool power travels with the player; returning to an earlier store does not downgrade it.
+Each tool track has four local upgrades costing **80S, 200S, 500S and 1,000S**. Store 1 increases brush width through **1.44×, 1.55×, 1.65× and 1.75×**, with later tiers also increasing cleaning strength. Store 2 now uses **hose → squeegee only**, without brushing or brush-upgrade offers. Stores 2–4 include the starter hose and squeegee and sell their upgrades separately: hose upgrades improve spread/absorption; squeegee upgrades increase extraction per pass. Squeegee offers sit beneath hose offers in portrait and beside them in the short landscape drawer. The strongest owned tool power travels with the player. Existing combined wash-kit purchases migrate to both tracks; old Store 2 brush purchases retain their dry strength and also provide equivalent hose-upgrade credit. Nine brush models remain available for existing saves and previews.
 
 The bottom payout card separates current/next earnings from the purchase price. A purchase updates the unfinished rug's saved quote immediately without resetting its dirt. The tool drawer shows current and next equipment and their effects. Opening the drawer pauses cleaning, dirt motion and rug transitions; Close or Back resumes the same phase. Purchases wait for reward coins to reach the displayed wallet. The first-use payout teaching animation is still planned polish.
 
@@ -37,21 +43,27 @@ The bottom payout card separates current/next earnings from the purchase price. 
 
 Bonzi becomes purchasable after three paid Store 1 rugs. Every owned store earns independently, including during manual cleaning and while away. Fractional deliveries carry forward; offline credit is capped at eight hours per absence. Manual payout upgrades do not alter Bonzi's displayed rate.
 
-Opening the next store requires three things: local Bonzi earnings of **100S**, the final local tool used on **three paid rugs begun after its purchase**, and **2,000S** in the shared wallet. Only the opening price is spent. Spending never reverses the cumulative Bonzi milestone. Later stores include their basic Bonzi and required starter equipment. Reaching payout level 19 is not a travel gate.
+Opening the next store requires local Bonzi earnings of **100S**, all four local brush upgrades in Store 1 or hose upgrades in Stores 2–3, **three paid rugs using that max-level tool**, and **2,000S** in the wallet. The current rug counts if you buy the final upgrade and then use it; stationary hose contact counts too. Only the opening price is spent. The Stores sheet lists each requirement and its current count. Shop 3 specifically needs the max hose, three qualifying Shop 2 jobs, 800 local Bonzi coins and 16,000 opening coins. Squeegee upgrades and payout level 19 are not travel gates. Existing completed-job credit is retained.
 
 **Settings → Reset progress → Reset** clears the wallet, stores, tools, automation and active rugs after confirmation. **Keep playing** cancels. A fresh save retains the free starter brush and Neighborhood store.
 
-**Settings → Gym** opens free practice from the main menu. Click or tap outside Settings to dismiss it, or use Back/Escape. In the gym, **Rug 1 · Brush** tests surface dust and dirt pellets with the brush. **Rug 2 · Wet tools** begins after the dry-cleaning stage: hold the hose to pour a continuous opaque cyan jet, then drag it across the rug. New water follows the nozzle while water already in flight trails behind; contact creates a scalloped splash crown, small droplets and a dark wet patch. Releasing drains the airborne tail. Wet 99% of the carpet to unlock the squeegee, then drag it to pull water from the same wetness display. Switch exercises or use **Reset rug** to start fresh. Practice awards no coins and preserves the active paid rug; Back returns to the main menu.
+**Settings → Gym** opens free practice from the main menu. Click or tap outside Settings to dismiss it, or use Back/Escape. In the gym, **Rug 1 · Brush** tests surface dust and dirt pellets with the brush. **Rug 2 · Wet tools** begins after the dry-cleaning stage: hold the hose to pour a continuous opaque cyan jet, then drag it across the rug. New water follows the nozzle while water already in flight trails behind; contact creates a scalloped splash crown, small droplets and a dark wet patch. Releasing drains the airborne tail. Tap **Squeegee** to instantly wet the entire rug and practice extraction; tap **Water hose** to clear wetness/extraction and start watering again. Tapping the equipped tool repeats its setup. Natural watering still advances to extraction at 99%; production stage gates are unchanged. Switch exercises or use **Reset rug** to start fresh. Practice awards no coins and preserves the active paid rug; Back returns to the main menu.
 
-Use the compact **Hose upgrades → Spout −/+** controls to compare five free Gym levels. The coherent column now begins widening above mid-flight, carries roughly half of its added width through the middle, and joins the larger landing without a pinched section. Upgrading also increases absorption speed and grows a larger wet fringe while you hold still. Wet spots stay on the carpet and briefly finish soaking after you move away. Your preview level survives rug resets during the visit; it costs no coins and does not change production upgrades.
+Use the compact **Hose upgrades → Spout −/+** controls to compare five free Gym levels. The **Squeegee −/+** controls directly below independently preview five extraction strengths. The coherent column begins widening above mid-flight, carries roughly half of its added width through the middle, and joins the larger landing without a pinched section. Passive soaking starts at **3× its previous base rate**, gains nonlinear level multipliers of **1 / 1.35 / 1.8 / 2.35 / 3**, and smoothly builds another **35%** during a 1.5-second hold. The HUD's Soak multiplier compares passive rates to the new Lv 1. Upgrades also increase direct absorption and spread growth speed. Wet spots stay on the carpet and briefly finish soaking after you move away. Your preview levels and camera survive tool-button resets during the visit; it costs no coins and does not change production upgrades.
 
-The Gym jet uses one permanent **16-ring × 10-side tube**, one opaque impact mesh and a **24-slot droplet MultiMesh**. A fixed 96-pose nozzle history drives its ballistic centerline; a vertex shader supplies gentle traveling surface waves. Carpet contact deposits water over a **0.26–0.46 m wet radius** at bounded 20 Hz cadence. Six reusable reservoirs add soft spreading at 10 Hz, approaching **0.52–0.90 m radius** with sustained contact. Both write to the existing **256 × 416 L8 wetness mask**, which the squeegee also clears. Resources are reused and processing stops after the tail, droplets and brief after-soak finish. See [continuous jet architecture and tuning](design/Water_Jet.md). These bounded costs are not a measured Android performance claim.
+The Gym jet uses one permanent **16-ring × 10-side tube**, one opaque impact mesh and a **24-slot droplet MultiMesh**. A fixed 96-pose nozzle history drives its ballistic centerline; a vertex shader supplies gentle traveling surface waves. Carpet contact deposits water over a **0.26–0.46 m wet radius** at bounded 20 Hz cadence. Six reusable reservoirs add soft spreading at 10 Hz, approaching **0.70–1.20 m radius** with sustained contact. Both write to the existing **256 × 416 L8 wetness mask**, which the squeegee also clears. Resources are reused and processing stops after the tail, droplets and brief after-soak finish. See [continuous jet architecture and tuning](design/Water_Jet.md). These bounded costs are not a measured Android performance claim.
 
-The Gym squeegee now throws an **opaque, gently rippling water sheet** from its leading edge into a broad scalloped splash. Its thickness follows actual water removal; dry or stationary passes produce no new water. Released and turning strokes leave their previous water in flight. Landings follow the rug and tile heights without rewetting cleaned areas. The effect reuses three small closed meshes and 24 droplets, then stops updating when settled. For an immediate Godot art preview, open `CarpetToy/scenes/test/squeegee_water_preview.tscn` and press **F6**: **Space** pauses/resumes, **Tab** changes camera, and clicking returns to manual practice. Tune the Gym's **SqueegeeWater** node in the Inspector. See [squeegee visual design and implementation](design/Squeegee_Water_VFX.md).
+The Gym squeegee has a **low, outward-curling splash around all four edges of its head**—no airborne water column or forward sheet. The opaque cyan rim gently undulates, with small droplets leaving the perimeter. The blade, extraction footprint and rectangular splash follow the same smoothed drag heading; the model's 180° front/back correction remains in place. Actual newly extracted water drives the effect, so dry or stationary passes produce no new splash. The moving head still uses one fixed perimeter mesh and 24 pooled droplets.
+
+A **low water ridge now lingers around the cleared path**, outlining the combined cleaned area rather than drawing a separate border around every swipe. Overlapping passes merge, so an old ridge does not remain across the middle of the newly cleared area. Carpet ridges linger for eight seconds after the latest sampled extraction increase, then gently fade over two seconds. At the carpet boundary, a short joining apron feeds **broad matte-blue floor streams** with rounded ends, gentle curves and moving cyan accents. Streams rush outward at **5.2 m/s**, travel up to **12.6 m**, and thin away during the final **0.85 seconds** of their **2.5-second** lifetime. This longer range preserves full-camera exit with the expanded Gym upgrade panel. The trailing edge follows the water outward; no permanent floor pattern remains. Cleaning elsewhere cannot renew an old exit: only fresh local extraction supplies it.
+
+A fixed sampled grid and reused strip batch update the carpet contour only when dirty, at most 10 times per second. A 128-bin perimeter map groups adjacent exits into broad mouths; **one extra MultiMesh with 16 reusable streams** handles the long flow, using **18 × 7 vertices per stream**. Streams stay world-anchored, use an opaque matte shader, and need no fluid solver, refraction or new nodes per swipe. All of this is visual only: it never rewets the carpet, redistributes water or changes extraction progress. The hose retains its falling column and circular impact. These are bounded implementation costs, not measured phone performance.
+
+Tap **Angle / Top** to switch between angled and overhead orthographic views with the same mouse/touch controls. For an immediate Godot preview, open `CarpetToy/scenes/test/squeegee_water_preview.tscn` and press **F6**: a 12-second loop makes back-and-forth passes through one channel, then pushes its end beyond the tasselled edge to show runoff. **Space** pauses/resumes, **Tab** changes camera, and clicking returns to manual practice without changing your view. Tune the moving head's **SqueegeeWater → Splash Reach** (default 0.17 m) and **Splash Height** (default 0.085 m) in the Inspector. See [squeegee visual design and implementation](design/Squeegee_Water_VFX.md).
 
 ## Cleaning and rewards
 
-For dry rugs, the meter uses the lower of debris clearance and surface-dust clearance. Wet rugs average dry, water and extraction progress. Water starts after 99% dry clearance; squeegeeing starts after 99% water coverage. The tool advances between stages. Early completion at 85% therefore permits some remaining extraction; 99% completes the whole job automatically. The ledger validates the required stages rather than trusting a displayed percentage.
+Store 1 uses dry rugs: its meter is the lower of debris and surface-dust clearance. Store 2 starts clean and dry with the hose, then the squeegee; its meter is `(water + extraction) / 2`. Stores 3–4 retain brushing, watering and extraction, with a three-stage average. In those stores watering requires 99% dry clearance; in every wet store extraction requires 99% water coverage. The tool advances between stages. Early completion at 75% permits some remaining extraction; 99% automatically pays double. The ledger validates the recipe and stage order rather than trusting a displayed percentage. Existing Store 2 snapshots retain water/extraction progress and remove only the obsolete dry stage.
 
 Hold the left mouse button or one finger and drag once the brush arrives. Touch uses a 72 viewport-pixel offset above the finger. One finger owns the stroke; release, cancellation, tool changes and loss of focus end it. Placement never sweeps an unintended path from the previous position. Sweep beyond the rug edges to throw clumps onto the surrounding tile.
 
@@ -92,16 +104,26 @@ The original rug is 2 × 3 m plus fringe, with 3,176 triangles and 1024 × 1536 
 
 ## Verify
 
-Use the portable Godot executable and isolated saves. In PowerShell:
+Use the shared **4.7.2 Mono/.NET-only** runner and isolated saves. In PowerShell:
 
 ```powershell
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --headless --path CarpetToy --script ../tools/validate_progression.gd -- --shop-test
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --headless --path CarpetToy --script ../tools/validate_wet_cleaning.gd -- --shop-test
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_store_loop.gd -- --shop-test
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_gym.gd -- --shop-test
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_water_jet.gd -- --shop-test
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_squeegee_water.gd -- --shop-test
-& './tools/godot/Godot_v4.7.2-stable_win64_console.exe' --path CarpetToy --script ../tools/validate_hose_upgrades.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --headless --path CarpetToy --script ../tools/validate_progression.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --headless --path CarpetToy --script ../tools/validate_store_unlock.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --headless --path CarpetToy --script ../tools/validate_wet_cleaning.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --headless --path CarpetToy --script ../tools/validate_wet_upgrades.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --path CarpetToy --script ../tools/validate_second_store_wet.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --path CarpetToy --script ../tools/validate_wet_upgrade_ui.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --path CarpetToy --script ../tools/validate_store_loop.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --path CarpetToy --script ../tools/validate_gym.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --path CarpetToy --script ../tools/validate_water_jet.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --path CarpetToy --script ../tools/validate_squeegee_water.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --path CarpetToy --script ../tools/validate_squeegee_trail.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --path CarpetToy --script ../tools/validate_squeegee_runoff.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --path CarpetToy --script ../tools/validate_long_runoff.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --path CarpetToy --script ../tools/validate_runoff_pool.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --path CarpetToy --script ../tools/validate_squeegee_controls.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --headless --path CarpetToy --script ../tools/validate_rotated_squeegee.gd -- --shop-test
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File ./tools/run_godot.ps1 --path CarpetToy --script ../tools/validate_hose_upgrades.gd -- --shop-test
 ```
 
 The progression suite covers prices, travel, migration, offline income, transaction failures, numerical limits and verified-ad receipt handling. Wet checks cover stage gates, strokes, masks and saved progress. Store-loop checks exercise production scenes, purchases, swipes, tools and wet recipes.

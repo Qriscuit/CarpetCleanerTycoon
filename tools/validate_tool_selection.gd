@@ -22,6 +22,10 @@ func saturate_wet_rug(workshop: Node, soil: Node) -> void:
 
 
 func _initialize() -> void:
+	if "--shop-test" not in OS.get_cmdline_user_args():
+		push_error("Use -- --shop-test to protect the player's save")
+		quit(2)
+		return
 	call_deferred("run")
 
 
@@ -59,7 +63,7 @@ func run() -> void:
 	var extraction_before_gate: PackedFloat32Array = soil.extraction_values.duplicate()
 	var wet_mask_before_gate := hash(soil.wet_mask.get_data())
 	workshop.select_tool(1)
-	check(workshop.selected_tool == 2 and workshop.hud.control("GymSqueegee").disabled, "The squeegee cannot be selected before full water coverage")
+	check(workshop.selected_tool == 2 and not workshop.hud.control("GymSqueegee").disabled, "Internal selection stays gated while the explicit Gym wet-rug shortcut is available")
 	soil.apply_squeegee_stroke(Vector3(0.0, 0.067, -1.2), Vector3(0.0, 0.067, 1.2), 0.08)
 	check(soil.extraction_values == extraction_before_gate and hash(soil.wet_mask.get_data()) == wet_mask_before_gate, "A pre-gate squeegee request is a complete no-op")
 
@@ -83,7 +87,7 @@ func run() -> void:
 	check(soil.extraction_clearance() > extraction_at_gate and hash(soil.wet_mask.get_data()) != wet_mask_at_gate, "An enabled squeegee removes water through the shared wet mask")
 	workshop.reset_rug()
 	check(workshop.selected_tool == 2 and not workshop.brush_dragging, "Reset returns the wet exercise to the hose")
-	check(soil.water_clearance() == 0.0 and soil.extraction_clearance() == 0.0 and workshop.hud.control("GymSqueegee").disabled, "Reset clears wet progress and gates the squeegee again")
+	check(soil.water_clearance() == 0.0 and soil.extraction_clearance() == 0.0 and not workshop.hud.control("GymSqueegee").disabled, "Reset clears wet progress and keeps the Gym wet-rug shortcut available")
 	workshop.select_rug(0)
 	workshop.begin_stroke(camera.unproject_position(Vector3.ZERO), false)
 	workshop.select_rug(1)

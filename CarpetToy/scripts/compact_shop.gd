@@ -2,6 +2,7 @@ extends Control
 ## Authored compact sheets for the active branch.
 signal closed
 const Pop = preload("res://scripts/ui/button_pop.gd")
+const Progression = preload("res://scripts/progression.gd")
 const Coin = preload("res://assets/floating_shop/CoinIcon.png")
 const Brush = preload("res://assets/floating_shop/BrushIcon.png")
 const Buddy = preload("res://assets/floating_shop/BonziIcon.png")
@@ -63,8 +64,8 @@ func _layout() -> void:
 	var count := 0
 	for row in rows.values():
 		if row.visible: count += 1
-	var desired := 112.0 + count * 88.0 + (94.0 if %Routine.visible else 0.0) + (44.0 if %SheetNote.visible else 0.0)
-	%Sheet.size = Vector2(minf(430, size.x - 24), minf(desired, size.y - 24))
+	var desired := 112.0 + count * 88.0 + (94.0 if %Routine.visible else 0.0) + (130.0 if %TravelGoals.visible else 0.0) + (44.0 if %SheetNote.visible else 0.0)
+	%Sheet.size = Vector2(minf(500 if current_tab == "plans" else 430, size.x - 24), minf(desired, size.y - 24))
 	%Sheet.position = (size - %Sheet.size) * 0.5
 	%ConfirmPanel.size = Vector2(minf(336, size.x - 36), 280)
 	%ConfirmPanel.position = (size - %ConfirmPanel.size) * 0.5
@@ -86,14 +87,18 @@ func refresh() -> void:
 	%SheetCash.tooltip_text = "%d coins" % ledger.cash
 	for row in rows.values(): row.hide()
 	actions.clear()
+	%TravelGoals.hide()
 	%Routine.visible = current_tab == "bonzi" and int(view.bonzi_tier) >= 0
 	%RoutineRate.text = "%s coins / %ds" % [_amount(view.bonzi_reward), int(view.bonzi_seconds)]
 	if current_tab == "shop":
-		_row(0, "Rug value · %d" % view.payout_level, "85%% %s → %s\n99%% %s → %s" % [_amount(view.early_reward), _amount(view.next_early), _amount(view.full_reward), _amount(view.next_full)], _amount(view.payout_cost), "payout", _afford(view.payout_cost), Coin, true)
+		_row(0, "Rug value · %d" % view.payout_level, "75%% clean · %s → %s" % [_amount(view.early_reward), _amount(view.next_early)], "Max" if int(view.payout_cost) < 0 else _amount(view.payout_cost), "payout", _afford(view.payout_cost), Coin, int(view.payout_cost) >= 0)
 		_tool_row(1)
+		_wet_rows(2)
 	elif current_tab == "items":
-		_row(0, str(view.tool_name), "Width ×%.2f · Power ×%.2f" % [view.tool_width, view.tool_power], "Using", "", false, Brush)
+		var current_detail := "Soak ×%.2f · Width %.2f m" % [float(view.get("hose_power", 1.0)), float(view.get("hose_radius", 0.19)) * 2.0] if int(view.store_id) >= 2 else "Width ×%.2f · Power ×%.2f" % [view.tool_width, view.tool_power]
+		_row(0, str(view.tool_name), current_detail, "Using", "", false, Brush)
 		_tool_row(1)
+		_wet_rows(2)
 	elif current_tab == "bonzi":
 		var tier: int = view.bonzi_tier
 		var detail := "%s / %s earned" % [_amount(view.bonzi_earned), _amount(view.bonzi_target)]
@@ -110,9 +115,29 @@ func refresh() -> void:
 			var id := index + 1
 			var selected := id == int(view.store_id)
 			var available := id in owned
-			_row(index, "%d · %s" % [id, titles[index]], "Brush" if id <= 2 else "Water + squeegee", "Here" if selected else ("Visit" if available else "Locked"), "store:%d" % id, available and not selected, Store)
-		if bool(view.has_next_store):
-			_row(4, "Next store", "Bonzi %s/%s · Tool %d/4\nFinal rugs %d/%d" % [_amount(view.bonzi_earned), _amount(view.bonzi_target), view.tool_level, view.final_tool_jobs, view.final_tool_target], _amount(view.travel_cost), "travel", bool(view.can_travel), Store, true)
+			var recipe := "Brush" if id == 1 else ("Water + squeegee" if id == 2 else "Brush + water + squeegee")
+			_row(index, "%d · %s" % [id, titles[index]], recipe, "Here" if selected else ("Visit" if available else "Locked"), "store:%d" % id, available and not selected, Store)
+		if bool(view.has_next_store) and int(view.store_id) + 1 not in owned:
+			%TravelGoals.show()
+			%TravelTitle.text = "Open %s" % str(view.next_store_name)
+			%TravelRequirements.text = "%s %d/4 · Rugs %d/%d\nBonzi here %d/%d · Coins %d/%d" % [str(view.travel_tool_name), int(view.travel_tool_level), mini(int(view.final_tool_jobs), int(view.final_tool_target)), int(view.final_tool_target), mini(int(view.bonzi_earned), int(view.bonzi_target)), int(view.bonzi_target), mini(int(ledger.cash), int(view.travel_cost)), int(view.travel_cost)]
+			%TravelRequirements.tooltip_text = str(view.get("travel_requirements", ""))
+			%TravelHelp.text = "Paid rugs must use the max-level %s." % ("hose" if int(view.store_id) >= 2 else "brush")
+			%TravelHelp.tooltip_text = "Upgrading during a rug counts once you use the upgraded tool. Stationary watering counts too."
+			_row(4, "Open next store", "All requirements met" if bool(view.can_travel) else "Complete the checklist above", _amount(view.travel_cost), "travel", bool(view.can_travel), Store, true)
+			action_for("intake").tooltip_text = "\n".join(view.get("travel_blockers", []))
+		elif owned.size() < Progression.STORE_COUNT:
+			# Visiting an older shop must not hide how to reach the next opening.
+			var latest_store := int(owned.back())
+			var latest_name := Progression.store_name(latest_store)
+			%TravelGoals.show()
+			%TravelTitle.text = "Open %s" % Progression.store_name(latest_store + 1)
+			%TravelRequirements.text = "Visit %s to see its requirements." % latest_name
+			%TravelRequirements.tooltip_text = ""
+			%TravelHelp.text = "Requirements are tracked per store."
+			%TravelHelp.tooltip_text = ""
+			_row(4, "Next store requirements", "Visit " + latest_name, "View", "store:%d" % latest_store, true, Store)
+			action_for("intake").tooltip_text = "View " + latest_name + " requirements"
 	if not pending_item.is_empty(): _refresh_confirmation()
 	_layout()
 	if pending_item.is_empty() and is_instance_valid(focused) and %Sheet.is_ancestor_of(focused):
@@ -120,7 +145,23 @@ func refresh() -> void:
 
 func _tool_row(index: int) -> void:
 	var cost: int = view.tool_cost
-	_row(index, "Complete" if cost < 0 else str(view.next_tool_name), "%d/4 · %s" % [view.tool_level, "Wet tools" if int(view.store_id) >= 3 else "Brush"], "Max" if cost < 0 else _amount(cost), "tool", _afford(cost), Brush, cost >= 0)
+	var wet := int(view.store_id) >= 2
+	var detail := "Soak %.2f× → %.2f×" % [float(view.get("hose_power", 1.0)), float(view.get("next_hose_power", 1.0))] if wet else "%d/4 · Brush" % view.tool_level
+	_row(index, "Water hose · Max" if wet and cost < 0 else ("Complete" if cost < 0 else str(view.next_tool_name)), detail, "Max" if cost < 0 else _amount(cost), "tool", _afford(cost), Brush, cost >= 0)
+
+func _wet_rows(start: int) -> void:
+	if not bool(view.get("wet_unlocked", false)): return
+	var index := start
+	for kind in ["hose", "squeegee"]:
+		if kind == "hose" and int(view.store_id) >= 2: continue
+		var cost := int(view.get(kind + "_cost", -1))
+		var level := int(view.get(kind + "_level", 0))
+		var power := float(view.get(kind + "_power", 1.0))
+		var next_power := float(view.get("next_" + kind + "_power", power))
+		var title := ("Water hose" if kind == "hose" else "Squeegee") + " · Lv %d / 5" % (level + 1)
+		var detail := ("Soak" if kind == "hose" else "Extraction") + (" %.2f× → %.2f×" % [power, next_power] if cost >= 0 else " %.2f× · Maximum" % power)
+		_row(index, title, detail, "Max" if cost < 0 else _amount(cost), kind, bool(view.get("can_upgrade_" + kind, false)), Brush, cost >= 0)
+		index += 1
 
 func _afford(cost: int) -> bool:
 	return cost >= 0 and ledger.cash >= cost
@@ -154,6 +195,8 @@ func _item_action(id: String) -> void:
 	match action:
 		"payout": success = ledger.buy_payout_upgrade()
 		"tool": success = ledger.buy_tool_upgrade()
+		"hose": success = ledger.buy_hose_upgrade()
+		"squeegee": success = ledger.buy_squeegee_upgrade()
 		"bonzi": success = ledger.buy_bonzi_upgrade()
 		_:
 			if action.begins_with("store:"): success = ledger.select_store(int(action.get_slice(":", 1)))

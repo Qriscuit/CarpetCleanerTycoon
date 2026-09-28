@@ -36,6 +36,8 @@ func run() -> void:
 	check(soil.wet_recipe and soil.overall_clearance() == 0.0 and soil.recommended_tool() == 0, "Wet jobs begin with the brush stage at zero progress")
 	soil.set_tool_strength(4.41)
 	check(is_equal_approx(soil.tool_strength, 4.41), "Store 4 capstone power is applied without clipping")
+	soil.set_tool_strength(9.261)
+	check(is_equal_approx(soil.tool_strength, 9.261), "The three-store wet upgrade ladder applies its final strength without clipping")
 	soil.set_tool_strength(1.0)
 	soil.apply_water_stroke(Vector3(-1, 0.067, 0), Vector3(1, 0.067, 0), 0.08)
 	soil.apply_squeegee_stroke(Vector3(-1, 0.067, 0), Vector3(1, 0.067, 0), 0.08)

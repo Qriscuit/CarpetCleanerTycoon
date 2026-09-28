@@ -2,13 +2,18 @@ extends "res://scripts/cleaning_hud.gd"
 ## Authored practice controls layered over the shared cleaning HUD.
 
 signal hose_level_requested(level: int)
+signal squeegee_level_requested(level: int)
+signal camera_angle_requested(oblique: bool)
 
 var practice_rug := 0
 var wet_fraction := 0.0
 var extraction_fraction := 0.0
 var wet_ready := false
 var hose_upgrade_level := 0
+var squeegee_upgrade_level := 0
+var squeegee_upgrade_power := 1.0
 var _hose_upgrade_profile: Dictionary = {}
+var camera_oblique := false
 
 
 func _ready() -> void:
@@ -16,15 +21,33 @@ func _ready() -> void:
 	control("WaterDropCharge").hide()
 	(control("GymHoseLess") as Button).pressed.connect(_request_hose_level.bind(-1))
 	(control("GymHoseMore") as Button).pressed.connect(_request_hose_level.bind(1))
+	(control("GymSqueegeeLess") as Button).pressed.connect(_request_squeegee_level.bind(-1))
+	(control("GymSqueegeeMore") as Button).pressed.connect(_request_squeegee_level.bind(1))
+	(control("GymCameraAngle") as Button).pressed.connect(_request_camera_angle)
+	set_camera_angle(camera_oblique)
 	set_hose_upgrade(hose_upgrade_level, _hose_upgrade_profile)
+	set_squeegee_upgrade(squeegee_upgrade_level, squeegee_upgrade_power)
 	set_practice_rug(practice_rug)
 
 
 func action_buttons() -> Array[Button]:
 	var buttons: Array[Button] = []
-	for node_name in ["GymRug1", "GymRug2", "GymBrush", "GymHose", "GymSqueegee", "GymReset", "GymHoseLess", "GymHoseMore"]:
+	for node_name in ["GymRug1", "GymRug2", "GymBrush", "GymHose", "GymSqueegee", "GymReset", "GymHoseLess", "GymHoseMore", "GymSqueegeeLess", "GymSqueegeeMore", "GymCameraAngle"]:
 		buttons.append(control(node_name) as Button)
 	return buttons
+
+
+func set_camera_angle(oblique: bool) -> void:
+	camera_oblique = oblique
+	if not is_node_ready(): return
+	var button := control("GymCameraAngle") as Button
+	button.set_pressed_no_signal(oblique)
+	button.text = "Top" if oblique else "Angle"
+	button.tooltip_text = "Switch to top-down view" if oblique else "Switch to angled view · drag tools the same way"
+
+
+func _request_camera_angle() -> void:
+	camera_angle_requested.emit(not camera_oblique)
 
 
 func set_practice_rug(index: int) -> void:
@@ -41,7 +64,10 @@ func set_practice_rug(index: int) -> void:
 	control("GymBrush").visible = not wet
 	control("GymHose").visible = wet
 	control("GymSqueegee").visible = wet
+	control("GymHose").tooltip_text = "Dry the entire rug and equip the hose. Tap again for a fresh dry rug."
+	control("GymSqueegee").tooltip_text = "Instantly wet the entire rug and equip the squeegee. Tap again to refill."
 	control("GymHoseUpgrades").visible = wet
+	control("GymSqueegeeUpgrades").visible = wet
 	control("CleaningProgress").visible = true
 	control("WaterDropCharge").hide()
 	if wet:
@@ -54,8 +80,9 @@ func set_hose_upgrade(level: int, profile: Dictionary) -> void:
 	_hose_upgrade_profile = profile.duplicate()
 	if not is_node_ready(): return
 	(control("GymHoseUpgradeTitle") as Label).text = "Hose upgrades · Spout Lv %d / 5" % (hose_upgrade_level + 1)
-	(control("GymHoseUpgradeStats") as Label).text = "Width %.2f m · Soak %.1f×" % [float(profile.get("impact_radius", 0.19)) * 2.0, float(profile.get("soak_multiplier", 1.0))]
-	control("GymHoseUpgradeHint").tooltip_text = "Hold steady: water gradually spreads up to %.2f m from the impact point." % float(profile.get("max_spread_radius", 0.70))
+	(control("GymHoseUpgradeStats") as Label).text = "Width %.2f m · Soak %.1f×" % [float(profile.get("impact_radius", 0.19)) * 2.0, float(profile.get("passive_soak_multiplier", 1.0))]
+	control("GymHoseUpgradeStats").tooltip_text = "Passive soaking %.2f× versus Lv 1. Direct absorption %.2f×. Hold steady to build another 35%% passive flow." % [float(profile.get("passive_soak_multiplier", 1.0)), float(profile.get("soak_multiplier", 1.0))]
+	control("GymHoseUpgradeHint").tooltip_text = "Hold steady: stronger passive soaking spreads up to %.2f m from the impact point." % float(profile.get("max_spread_radius", 0.70))
 	(control("GymHoseLess") as Button).disabled = hose_upgrade_level <= 0
 	(control("GymHoseMore") as Button).disabled = hose_upgrade_level >= 4
 	control("GymHoseUpgrades").tooltip_text = "Free gym preview. A wider spout wets more carpet and soaks it faster. Hold steady to let water spread."
@@ -68,8 +95,25 @@ func _request_hose_level(step: int) -> void:
 		hose_level_requested.emit(next_level)
 
 
+func set_squeegee_upgrade(level: int, power: float) -> void:
+	squeegee_upgrade_level = clampi(level, 0, 4)
+	squeegee_upgrade_power = maxf(power, 1.0)
+	if not is_node_ready(): return
+	(control("GymSqueegeeUpgradeTitle") as Label).text = "Squeegee · Lv %d / 5" % (squeegee_upgrade_level + 1)
+	(control("GymSqueegeeUpgradeStats") as Label).text = "Extraction %.2f×" % squeegee_upgrade_power
+	(control("GymSqueegeeLess") as Button).disabled = squeegee_upgrade_level <= 0
+	(control("GymSqueegeeMore") as Button).disabled = squeegee_upgrade_level >= 4
+	_layout()
+
+
+func _request_squeegee_level(step: int) -> void:
+	var next_level := clampi(squeegee_upgrade_level + step, 0, 4)
+	if next_level != squeegee_upgrade_level:
+		squeegee_level_requested.emit(next_level)
+
+
 func blocks_point(point: Vector2) -> bool:
-	for node_name in ["GymPracticePanel", "HomeButton", "CleaningProgress", "FinishJobButton"]:
+	for node_name in ["GymPracticePanel", "HomeButton", "CleaningProgress", "FinishJobButton", "GymCameraAngle"]:
 		var node := control(node_name)
 		if node.is_visible_in_tree() and node.get_global_rect().has_point(point):
 			return true
@@ -81,9 +125,9 @@ func set_practice_tool(index: int) -> void:
 		if extraction_fraction >= 0.99:
 			(control("GymDescription") as Label).text = "Water removed"
 		elif index == 1:
-			(control("GymDescription") as Label).text = "Pull the water out"
+			(control("GymDescription") as Label).text = "Push to scrape · Tap Hose to dry"
 		else:
-			(control("GymDescription") as Label).text = "Hold and drag to water"
+			(control("GymDescription") as Label).text = "Hold to water · Squeegee fills rug"
 
 
 func set_wet_progress(water: float, extracted: float, ready: bool) -> void:
@@ -93,8 +137,9 @@ func set_wet_progress(water: float, extracted: float, ready: bool) -> void:
 	if practice_rug != 1:
 		return
 	var complete := extraction_fraction >= 0.99
-	(control("GymHose") as Button).disabled = ready
-	(control("GymSqueegee") as Button).disabled = not ready or complete
+	# Gym buttons are repeatable setup shortcuts, not production stage gates.
+	(control("GymHose") as Button).disabled = false
+	(control("GymSqueegee") as Button).disabled = false
 	(control("GymStatus") as Label).text = (
 		"Water removed" if complete
 		else "Removed %d%%" % floori(extraction_fraction * 100.0 + 0.0001) if ready
@@ -149,10 +194,15 @@ func _layout() -> void:
 	var panel := control("GymPracticePanel")
 	var landscape := _landscape(safe)
 	# A side panel leaves enough height to clean a full-sized rug on a phone
-	# held sideways. The hose preview adds only one compact equipment section.
+	# held sideways. Two compact rows preview the wet tools independently.
 	var panel_width := clampf(safe.size.x * 0.45, 420.0, 500.0) if landscape else minf(720.0, safe.size.x - 32.0)
-	panel.size = Vector2(panel_width, 304.0 if practice_rug == 1 else 200.0)
+	panel.size = Vector2(panel_width, 348.0 if practice_rug == 1 else 200.0)
 	panel.position = Vector2(safe.end.x - panel_width - 16.0, safe.get_center().y - panel.size.y * 0.5) if landscape else Vector2(safe.get_center().x - panel_width * 0.5, safe.end.y - panel.size.y - 16.0)
+	# Centering the taller wet panel on a 320px-high phone put it over the
+	# camera button. Keep a 12-unit gap below the 56-unit toolbar when it fits.
+	var toolbar_bottom := safe.position.y + 84.0
+	if landscape and toolbar_bottom + panel.size.y <= safe.end.y - 16.0:
+		panel.position.y = maxf(panel.position.y, toolbar_bottom)
 	var inside := panel_width - 32.0
 	var compact := inside < 400.0
 	(control("GymHose") as Button).text = "Hose" if compact else "Water hose"
@@ -181,25 +231,42 @@ func _layout() -> void:
 	_place("GymReset", Vector2(panel_width - 16.0 - reset_width, 132.0), Vector2(reset_width, 56.0))
 	# Apply compact copy and font sizes before placement; Label's intrinsic
 	# minimum width would otherwise preserve a wider size from the old layout.
-	control("GymHoseUpgradeTitle").add_theme_font_size_override("font_size", 16 if inside < 360.0 else 17)
-	control("GymHoseUpgradeStats").add_theme_font_size_override("font_size", 13 if compact else 15)
-	control("GymHoseUpgradeHint").add_theme_font_size_override("font_size", 12 if compact else 14)
-	(control("GymHoseUpgradeHint") as Label).text = ("Up to %.2f m · Hold to grow" if compact else "Spread radius %.2f m · Hold to grow") % float(_hose_upgrade_profile.get("max_spread_radius", 0.70))
-	_place("GymHoseUpgrades", Vector2(16.0, 198.0), Vector2(inside, 94.0))
+	control("GymHoseUpgradeTitle").add_theme_font_size_override("font_size", 16)
+	control("GymHoseUpgradeStats").add_theme_font_size_override("font_size", 13)
+	control("GymHoseUpgradeHint").add_theme_font_size_override("font_size", 12)
+	(control("GymHoseUpgradeTitle") as Label).text = "Hose · Spout Lv %d / 5" % (hose_upgrade_level + 1)
+	(control("GymHoseUpgradeHint") as Label).text = "Spread %.2f m · Hold to grow" % float(_hose_upgrade_profile.get("max_spread_radius", 0.70))
+	_place("GymHoseUpgrades", Vector2(16.0, 198.0), Vector2(inside, 68.0))
 	_place("GymHoseUpgradeDivider", Vector2.ZERO, Vector2(inside, 1.0))
-	_place("GymHoseUpgradeTitle", Vector2(0.0, 6.0), Vector2(inside, 24.0))
-	_place("GymHoseUpgradeStats", Vector2(0.0, 36.0), Vector2(inside - 132.0, 24.0))
-	_place("GymHoseUpgradeHint", Vector2(0.0, 66.0), Vector2(inside - 132.0, 24.0))
-	_place("GymHoseLess", Vector2(inside - 120.0, 34.0), Vector2(56.0, 56.0))
-	_place("GymHoseMore", Vector2(inside - 56.0, 34.0), Vector2(56.0, 56.0))
+	_place("GymHoseUpgradeTitle", Vector2(0.0, 4.0), Vector2(inside - 132.0, 20.0))
+	_place("GymHoseUpgradeStats", Vector2(0.0, 25.0), Vector2(inside - 132.0, 20.0))
+	_place("GymHoseUpgradeHint", Vector2(0.0, 46.0), Vector2(inside - 132.0, 20.0))
+	_place("GymHoseLess", Vector2(inside - 120.0, 8.0), Vector2(56.0, 56.0))
+	_place("GymHoseMore", Vector2(inside - 56.0, 8.0), Vector2(56.0, 56.0))
+	_place("GymSqueegeeUpgrades", Vector2(16.0, 272.0), Vector2(inside, 64.0))
+	_place("GymSqueegeeUpgradeDivider", Vector2.ZERO, Vector2(inside, 1.0))
+	_place("GymSqueegeeUpgradeTitle", Vector2(0.0, 7.0), Vector2(inside - 132.0, 24.0))
+	_place("GymSqueegeeUpgradeStats", Vector2(0.0, 33.0), Vector2(inside - 132.0, 24.0))
+	_place("GymSqueegeeLess", Vector2(inside - 120.0, 6.0), Vector2(56.0, 56.0))
+	_place("GymSqueegeeMore", Vector2(inside - 56.0, 6.0), Vector2(56.0, 56.0))
 	var progress := control("CleaningProgress")
 	var play_width := panel.position.x - safe.position.x - 32.0 if landscape else safe.size.x - 32.0
-	var progress_width := minf(340.0, play_width - 72.0)
+	# The view toggle stays outside the play rectangle and has a full 44px
+	# touch target after scaling, including on short landscape phones.
+	var camera_left := safe.end.x - 104.0
+	if landscape and panel.position.y < toolbar_bottom:
+		# A very short/notched safe area cannot lower the panel. Keep the view
+		# button in the free left toolbar, narrowing progress instead of overlap.
+		camera_left = panel.position.x - 104.0
+	_place("GymCameraAngle", Vector2(camera_left, safe.position.y + 16.0), Vector2(88.0, 56.0))
+	var progress_left := safe.position.x + 88.0
+	var progress_right := minf(safe.position.x + 16.0 + play_width, control("GymCameraAngle").position.x - 12.0)
+	var progress_width := minf(340.0, maxf(1.0, progress_right - progress_left))
 	var play_center := safe.position.x + 16.0 + play_width * 0.5
-	progress.position = Vector2(maxf(play_center - progress_width * 0.5, safe.position.x + 88.0), safe.position.y + 16.0)
+	progress.position = Vector2(clampf(play_center - progress_width * 0.5, progress_left, progress_right - progress_width), safe.position.y + 16.0)
 	progress.size = Vector2(progress_width, 56.0)
 	var finish := control("FinishJobButton")
-	finish.position = Vector2(panel.get_rect().get_center().x - finish.size.x * 0.5, panel.position.y + panel.size.y + 12.0) if landscape else Vector2(safe.get_center().x - finish.size.x * 0.5, panel.position.y - 68.0)
+	finish.position = Vector2(safe.position.x + 16.0, safe.end.y - finish.size.y - 16.0) if landscape else Vector2(safe.get_center().x - finish.size.x * 0.5, panel.position.y - 68.0)
 
 
 func _landscape(safe: Rect2) -> bool:

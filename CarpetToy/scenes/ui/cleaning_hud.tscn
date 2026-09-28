@@ -273,7 +273,7 @@ offset_top = 900.0
 offset_right = 532.0
 offset_bottom = 984.0
 mouse_filter = 2
-tooltip_text = "Coins per rug: finish at 85%, complete at 99%."
+tooltip_text = "Rug earnings at 75% clean. Complete the rug for double."
 theme_override_styles/panel = SubResource("ProgressPanel")
 
 [node name="Values" type="HBoxContainer" parent="HUD/PayoutCard"]
@@ -303,7 +303,7 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.38, 0.48, 0.42, 1)
 theme_override_font_sizes/font_size = 14
-text = "85%"
+text = "75% rug value"
 horizontal_alignment = 1
 
 [node name="EarlyValue" type="Label" parent="HUD/PayoutCard/Values/Early"]
@@ -317,6 +317,7 @@ horizontal_alignment = 1
 clip_text = true
 
 [node name="Full" type="VBoxContainer" parent="HUD/PayoutCard/Values"]
+visible = false
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
@@ -418,7 +419,7 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.09, 0.20, 0.22, 0.18)
 
-[node name="UpgradesPanel" type="PanelContainer" parent="HUD/UpgradeSheet"]
+[node name="UpgradesPanel" type="Panel" parent="HUD/UpgradeSheet"]
 unique_name_in_owner = true
 offset_left = 16.0
 offset_top = 315.0
@@ -428,7 +429,11 @@ mouse_filter = 2
 theme_override_styles/panel = SubResource("UpgradesPanel")
 
 [node name="Contents" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel"]
-layout_mode = 2
+layout_mode = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 256.0
+offset_bottom = 354.0
 mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
@@ -571,5 +576,106 @@ disabled = true
 text = "Buy 80"
 icon = ExtResource("4_coin")
 icon_max_width = 22
+expand_icon = true
+action_mode = 1
+
+[node name="WetUpgradeRows" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+offset_left = 16.0
+offset_top = 366.0
+offset_right = 324.0
+offset_bottom = 544.0
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="HoseUpgradeRow" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 84)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Words" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/HoseUpgradeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+alignment = 1
+
+[node name="HoseUpgradeTitle" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/HoseUpgradeRow/Words"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 16
+text = "Hose · Lv 1 / 5"
+clip_text = true
+
+[node name="HoseUpgradeStats" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/HoseUpgradeRow/Words"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
+theme_override_font_sizes/font_size = 12
+text = "Flow 1.00× → 1.50×"
+clip_text = true
+
+[node name="HoseUpgradeButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/HoseUpgradeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(104, 56)
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"PrimaryButton"
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 14
+text = "Buy 80"
+icon = ExtResource("4_coin")
+icon_max_width = 18
+expand_icon = true
+action_mode = 1
+
+[node name="SqueegeeUpgradeRow" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 84)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Words" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/SqueegeeUpgradeRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+alignment = 1
+
+[node name="SqueegeeUpgradeTitle" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/SqueegeeUpgradeRow/Words"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 16
+text = "Squeegee · Lv 1 / 5"
+clip_text = true
+
+[node name="SqueegeeUpgradeStats" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/SqueegeeUpgradeRow/Words"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
+theme_override_font_sizes/font_size = 12
+text = "Power 1.00× → 1.50×"
+clip_text = true
+
+[node name="SqueegeeUpgradeButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/SqueegeeUpgradeRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(104, 56)
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"PrimaryButton"
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 14
+text = "Buy 80"
+icon = ExtResource("4_coin")
+icon_max_width = 18
 expand_icon = true
 action_mode = 1

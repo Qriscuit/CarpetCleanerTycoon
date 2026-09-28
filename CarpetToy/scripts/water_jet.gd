@@ -85,7 +85,7 @@ func setup(rug_footprint: RefCounted) -> void:
 	impact = ImpactEffect.new()
 	impact.name = "WaterImpact"
 	add_child(impact)
-	impact.setup()
+	impact.setup(footprint)
 	soak = SoakEffect.new()
 	soak.setup(footprint)
 	soak.set_profile(profile)
@@ -269,7 +269,7 @@ func _process(delta: float) -> void:
 		previous_nozzle = nozzle
 		previous_velocity = direction * EXIT_SPEED
 	_update_stream()
-	impact.update_contact(contact_active, contact_position, float(profile.impact_radius), step)
+	impact.update_contact(contact_active, contact_position, float(profile.stream_tip_radius), step, float(profile.impact_radius))
 	_update_wetting(step)
 	if not emission_locked:
 		soak.update(step)

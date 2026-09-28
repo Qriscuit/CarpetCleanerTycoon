@@ -3,8 +3,8 @@ render_mode unshaded, cull_disabled;
 
 uniform float water_clock = 0.0;
 uniform sampler2D rug_surface : filter_nearest, repeat_disable;
-uniform vec4 landing_points[21];
-uniform vec4 landing_sides[3];
+uniform vec4 landing_points[7];
+uniform vec4 landing_sides[1];
 varying vec3 world_point;
 varying float rug_landing;
 varying float fullness;

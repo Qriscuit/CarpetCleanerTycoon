@@ -24,9 +24,9 @@ func _run() -> void:
 	var first: String = state.start_job()
 	_check(not first.is_empty() and state.start_job() == first, "One resumable active job")
 	_check(not state.complete_job(first), "Uncleaned carpet does not pay")
-	state.save_job_snapshot({"unique_clearance": 0.95, "surface_clearance": 0.84, "pixels": [1, 2, 3]})
+	state.save_job_snapshot({"unique_clearance": 0.95, "surface_clearance": 0.74, "pixels": [1, 2, 3]})
 	_check(not state.complete_job(first), "Both clearance thresholds are required")
-	state.save_job_snapshot({"unique_clearance": 0.85, "surface_clearance": 0.85, "pixels": [1, 2, 3]})
+	state.save_job_snapshot({"unique_clearance": 0.75, "surface_clearance": 0.75, "pixels": [1, 2, 3]})
 	state = _reload(state)
 	_check(state.active_job_id == first and state.job_snapshot["pixels"].size() == 3, "Active carpet persists across reload")
 	_check(state.complete_job(first) and state.cash == 20 and state.manual_jobs == 1, "Saved eligible carpet pays 20")
@@ -119,7 +119,7 @@ func _run() -> void:
 	# Finishing and reserving the next rug is atomic and rejects the old id twice.
 	var atomic := _new_state("atomic_next")
 	var old_job: String = atomic.start_job()
-	var next_job: String = atomic.complete_and_start_next_job(old_job, {"unique_clearance": 0.85, "surface_clearance": 0.85})
+	var next_job: String = atomic.complete_and_start_next_job(old_job, {"unique_clearance": 0.75, "surface_clearance": 0.75})
 	_check(not next_job.is_empty() and next_job != old_job and atomic.active_job_id == next_job, "Completion atomically reserves a fresh rug")
 	_check(atomic.cash == 20 and atomic.manual_jobs == 1 and atomic.job_snapshot.is_empty(), "Atomic completion pays once and starts the next rug clean")
 	_check(atomic.complete_and_start_next_job(old_job, {"unique_clearance": 1.0, "surface_clearance": 1.0}).is_empty() and atomic.cash == 20, "Repeated completion with the old id cannot pay twice")
@@ -222,21 +222,22 @@ func _advance(state: Node, seconds: float) -> void:
 
 func _finish_one(state: Node) -> void:
 	var id: String = state.start_job()
-	_check(state.save_job_snapshot({"unique_clearance": 0.85, "surface_clearance": 0.85}) and state.complete_job(id), "Complete an eligible manual commission")
+	_check(state.save_job_snapshot({"unique_clearance": 0.75, "surface_clearance": 0.75}) and state.complete_job(id), "Complete an eligible manual commission")
 
 
 func _check_manual_reward_tiers() -> void:
 	var cases: Array[Dictionary] = [
-		{"label": "84.99 percent", "snapshot": {"unique_clearance": 0.8499, "surface_clearance": 0.8499}, "reward": 0},
+		{"label": "74.99 percent", "snapshot": {"unique_clearance": 0.7499, "surface_clearance": 0.7499}, "reward": 0},
+		{"label": "75 percent", "snapshot": {"unique_clearance": 0.75, "surface_clearance": 0.75}, "reward": 20},
 		{"label": "85 percent", "snapshot": {"unique_clearance": 0.85, "surface_clearance": 0.85}, "reward": 20},
 		{"label": "98.99 percent", "snapshot": {"unique_clearance": 0.9899, "surface_clearance": 0.9899}, "reward": 20},
 		{"label": "99 percent", "snapshot": {"unique_clearance": 0.99, "surface_clearance": 0.99}, "reward": 40},
 		{"label": "100 percent", "snapshot": {"unique_clearance": 1.0, "surface_clearance": 1.0}, "reward": 40},
 		{"label": "integer full clearances", "snapshot": {"unique_clearance": 1, "surface_clearance": 1}, "reward": 40},
-		{"label": "dust below minimum", "snapshot": {"unique_clearance": 1.0, "surface_clearance": 0.8499}, "reward": 0},
-		{"label": "debris below minimum", "snapshot": {"unique_clearance": 0.8499, "surface_clearance": 1.0}, "reward": 0},
+		{"label": "dust below minimum", "snapshot": {"unique_clearance": 1.0, "surface_clearance": 0.7499}, "reward": 0},
+		{"label": "debris below minimum", "snapshot": {"unique_clearance": 0.7499, "surface_clearance": 1.0}, "reward": 0},
 		{"label": "dust limits early reward", "snapshot": {"unique_clearance": 1.0, "surface_clearance": 0.9899}, "reward": 20},
-		{"label": "debris limits early reward", "snapshot": {"unique_clearance": 0.85, "surface_clearance": 1.0}, "reward": 20},
+		{"label": "debris limits early reward", "snapshot": {"unique_clearance": 0.75, "surface_clearance": 1.0}, "reward": 20},
 		{"label": "unequal perfect layers", "snapshot": {"unique_clearance": 0.99, "surface_clearance": 1.0}, "reward": 40},
 		{"label": "missing layers", "snapshot": {}, "reward": 0},
 		{"label": "missing surface", "snapshot": {"unique_clearance": 1.0}, "reward": 0},

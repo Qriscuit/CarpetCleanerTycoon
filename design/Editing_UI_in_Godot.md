@@ -38,7 +38,7 @@ Edit ordinary `Label.text` and `Button.text` directly. Static authored text surv
 
 Shop text containing `{cash}`, `{cost}`, `{rugs_left}`, or similar braces is an editable **format template**. Keep the placeholder when you want the live number, and change the words around it. The braces may be visible in editor preview; playing substitutes the actual values. Item cards keep their own templates, and their root **Item Id** connects them to the existing economy. The `item_card.gd` **Editor State** selector previews the saved Locked, Need Cash, Ready, Owned and Equipped groups without purchasing anything; use **As authored** when arranging the normal scene.
 
-For the cleaning HUD, select `GymUI` to edit **Progress Colors** in the Inspector. `FinishJobButton` is saved hidden and appears at 85% combined cleanliness. There are no contract, tool, rug-picker, instruction, or completion-card groups in the production HUD.
+For the cleaning HUD, select `GymUI` to edit **Progress Colors** in the Inspector. `FinishJobButton` is saved hidden and appears at 75% combined cleanliness. The bottom offer shows only the early reward and purchase price. Hose and squeegee upgrade rows become available from High Street; the Gym has separate free preview controls. There are no contract, rug-picker, instruction, or completion-card groups in the production HUD.
 
 Some text is factual state: wallet totals, build cost, equipped item, delivery countdown and cleaning percentages. The game updates those fields deliberately. Prices and unlock requirements remain in `shop_state.gd`; changing a visual caption does not change the economy.
 

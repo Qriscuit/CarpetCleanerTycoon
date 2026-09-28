@@ -1,16 +1,14 @@
 [CmdletBinding()]
 param([switch]$CheckOnly, [switch]$ForceFallbackSdk)
 
-# Pins the standard editor and debug export, checks the actual configured tools,
+# Pins the 4.7.2 Mono editor and debug export, checks the actual configured tools,
 # and only replaces the last APK after successful export AND signature checking.
 # No installs, editor shutdowns, global settings edits, or signing-key changes.
 $ErrorActionPreference = 'Stop'
 $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $project = Join-Path $repository 'CarpetToy'
 $buildDirectory = Join-Path $repository 'build'
-$engine = Join-Path $repository 'tools\godot\Godot_v4.7.2-stable_win64_console.exe'
 $settingsFile = Join-Path $env:APPDATA 'Godot\editor_settings-4.7.tres'
-$templateDirectory = Join-Path $env:APPDATA 'Godot\export_templates\4.7.2.stable'
 $finalApk = Join-Path $buildDirectory 'CarpetCleaner.apk'
 $originalJavaHome = $env:JAVA_HOME
 $originalPath = $env:PATH
@@ -88,7 +86,7 @@ function Set-GodotStringSetting([string]$Text, [string]$Name, [string]$Value) {
 function Prepare-BuildProfile([string]$SdkPath, [string]$JdkPath, [string]$DebugKeystore) {
     $profileAppData = Join-Path $buildDirectory 'godot-build-profile\AppData\Roaming'
     $profileGodot = Join-Path $profileAppData 'Godot'
-    $profileTemplates = Join-Path $profileGodot 'export_templates\4.7.2.stable'
+    $profileTemplates = Join-Path $profileGodot ('export_templates\' + $toolchain.TemplateVersion)
     $profileKeystores = Join-Path $profileGodot 'keystores'
     New-Item -ItemType Directory -Path $profileTemplates,$profileKeystores -Force | Out-Null
 
@@ -128,13 +126,16 @@ try {
     $transcriptStarted = $true
     Write-Host "Launcher log: $launcherLog"
     Write-Host 'Checking Android export setup...' -ForegroundColor Cyan
-    Require-File $engine 'The bundled standard Godot 4.7.2 is missing from tools/godot. Restore that version, not the Desktop Mono editor.'
+    . (Join-Path $PSScriptRoot 'godot_toolchain.ps1')
+    $toolchain = Get-ProjectGodot
+    $engine = $toolchain.Editor
+    $version = $toolchain.Version
+    $templateDirectory = Join-Path $env:APPDATA ('Godot\export_templates\' + $toolchain.TemplateVersion)
     Require-File (Join-Path $project 'export_presets.cfg') 'Android export preset is missing. Restore CarpetToy/export_presets.cfg.'
-    Require-File (Join-Path $templateDirectory 'android_debug.apk') 'Standard 4.7.2 Android templates are missing or unreadable. Use Editor > Manage Export Templates in the bundled STANDARD editor. See design/Android_APK.md.'
-
-    $version = (& $engine --version | Out-String).Trim()
-    if ($LASTEXITCODE -ne 0 -or $version -notmatch '^4\.7\.2\.stable\.' -or $version -match 'mono') {
-        throw "Unexpected editor version: $version. This project uses standard Godot 4.7.2."
+    Require-File (Join-Path $templateDirectory 'android_debug.apk') 'Godot 4.7.2 Mono Android templates are missing or unreadable. Use Editor > Manage Export Templates in the pinned .NET editor. See design/Android_APK.md.'
+    Require-File (Join-Path $templateDirectory 'version.txt') 'The Mono template version manifest is missing.'
+    if ([IO.File]::ReadAllText((Join-Path $templateDirectory 'version.txt')).Trim() -ne $toolchain.TemplateVersion) {
+        throw "Export template version mismatch. Expected $($toolchain.TemplateVersion); do not rename or reuse standard/older templates."
     }
 
     $configuredSdkText = Read-ToolPath 'export/android/android_sdk_path'
@@ -219,6 +220,8 @@ try {
     & $java --version | ForEach-Object { Write-Host $_ }
     if ($LASTEXITCODE -ne 0) { throw 'The configured Java installation could not run.' }
     Write-Host "Godot: $version"
+    Write-Host "Engine: $engine"
+    Write-Host "Templates: $templateDirectory"
     Write-Host "SDK:   $sdk"
     Write-Host "JDK:   $jdk"
     Write-Host "Key:   $debugKeystore"
@@ -230,14 +233,24 @@ try {
         New-Item -ItemType Directory -Path $buildDirectory -Force | Out-Null
         $stagingApk = Join-Path $buildDirectory ('CarpetCleaner-building-' + [guid]::NewGuid().ToString('N') + '.apk')
         $consoleLog = Join-Path $buildDirectory 'android-build-console.log'
+        $stdoutLog = Join-Path $buildDirectory 'android-build-stdout.log'
+        $stderrLog = Join-Path $buildDirectory 'android-build-stderr.log'
         $engineLog = Join-Path $buildDirectory 'android-build.log'
         $verifyLog = Join-Path $buildDirectory 'android-signature.log'
+        $verifyStdoutLog = Join-Path $buildDirectory 'android-signature-stdout.log'
+        $verifyStderrLog = Join-Path $buildDirectory 'android-signature-stderr.log'
         Write-Host 'Building a signed debug APK from the files saved on disk...' -ForegroundColor Cyan
         $buildAppData = Prepare-BuildProfile $sdk $jdk $debugKeystore
         try {
             $env:APPDATA = $buildAppData
-            & $engine --headless --path $project --log-file $engineLog --export-debug Android $stagingApk *> $consoleLog
-            $exportExit = $LASTEXITCODE
+            # Run the actual engine, without the console wrapper or PowerShell
+            # 5.1's native stderr/ErrorRecord pipeline. Preserve both raw streams.
+            $exportArguments = '--headless --path "' + $project + '" --log-file "' + $engineLog + '" --export-debug Android "' + $stagingApk + '"'
+            $exportProcess = Start-Process -FilePath $engine -ArgumentList $exportArguments -WindowStyle Hidden -Wait -PassThru -RedirectStandardOutput $stdoutLog -RedirectStandardError $stderrLog
+            $exportExit = $exportProcess.ExitCode
+            Get-Content -LiteralPath $stdoutLog,$stderrLog |
+                ForEach-Object { $_ -replace '\x1B\[[0-9;]*[A-Za-z]', '' } |
+                Set-Content -LiteralPath $consoleLog -Encoding UTF8
         } finally {
             $env:APPDATA = $originalAppData
         }
@@ -245,11 +258,27 @@ try {
             Get-Content -LiteralPath $consoleLog -Tail 28 | ForEach-Object { Write-Host $_ }
             throw "Godot export failed (exit $exportExit). Full log: $consoleLog"
         }
-        if (Select-String -LiteralPath $consoleLog -Pattern 'SCRIPT ERROR:|ERROR:' -Quiet) {
+        # Observed in the pinned 4.7.2 Mono binary after a completed export:
+        # the ADB poll thread reads EditorSettings after editor teardown. Only
+        # this exact diagnostic is allowed, only with exit 0 and export DONE.
+        # Keep it in the logs/build identity; all other engine/script errors fail.
+        $adbShutdownDiagnostic = 'ERROR: EditorSettings not instantiated yet when getting setting "export/android/shutdown_adb_on_exit".'
+        $exportErrors = @(Select-String -LiteralPath $consoleLog -Pattern 'SCRIPT ERROR:|ERROR:' | ForEach-Object { $_.Line.Trim() })
+        $unexpectedErrors = @($exportErrors | Where-Object { $_ -cne $adbShutdownDiagnostic })
+        $hasAdbShutdownDiagnostic = $exportErrors -ccontains $adbShutdownDiagnostic
+        $exportCompleted = Select-String -LiteralPath $consoleLog -Pattern '\[ DONE \] export' -Quiet
+        if ($unexpectedErrors.Count -gt 0 -or ($hasAdbShutdownDiagnostic -and -not $exportCompleted)) {
             throw "Godot reported errors despite completing. The previous APK is preserved; inspect $consoleLog."
         }
-        & $java -jar $signerJar verify --verbose $stagingApk *> $verifyLog
-        if ($LASTEXITCODE -ne 0) { throw "APK signature verification failed. See $verifyLog. The previous APK was preserved." }
+        if ($hasAdbShutdownDiagnostic) {
+            Write-Warning 'Godot 4.7.2 Mono reported its ADB EditorSettings shutdown diagnostic after export completed. Exit was 0; proceeding with independent APK signature verification. See android-build-console.log.'
+        }
+        # As with export, a native warning must not prevent checking the actual
+        # verifier result on Windows PowerShell 5.1. A nonzero result still fails.
+        $verifyArguments = '-jar "' + $signerJar + '" verify --verbose "' + $stagingApk + '"'
+        $verifyProcess = Start-Process -FilePath $java -ArgumentList $verifyArguments -WindowStyle Hidden -Wait -PassThru -RedirectStandardOutput $verifyStdoutLog -RedirectStandardError $verifyStderrLog
+        Get-Content -LiteralPath $verifyStdoutLog,$verifyStderrLog | Set-Content -LiteralPath $verifyLog -Encoding UTF8
+        if ($verifyProcess.ExitCode -ne 0) { throw "APK signature verification failed. See $verifyLog. The previous APK was preserved." }
         # .NET is already required by Windows PowerShell. Avoid relying on
         # Get-FileHash module auto-loading, which can differ between launchers.
         $hashStream = [IO.File]::OpenRead($stagingApk)
@@ -269,9 +298,11 @@ try {
         }
         $apk = Get-Item -LiteralPath $finalApk
         @(
-            "Built: $(Get-Date -Format o)", "Engine: $version", 'Preset: Android (debug, signed)',
+            "Built: $(Get-Date -Format o)", "Engine: $version", "Engine executable: $engine",
+            "Templates: $($toolchain.TemplateVersion)", 'Preset: Android (debug, signed)',
             "SDK: $sdk", "Build tools: $($buildTools.Name)", "Platform: $($selectedSdk.Platform.Name)",
-            "APK: $finalApk", "Bytes: $($apk.Length)", "SHA256: $hash", 'Signature: verified'
+            "APK: $finalApk", "Bytes: $($apk.Length)", "SHA256: $hash", 'Signature: verified',
+            ('Engine shutdown diagnostic: ' + $(if ($hasAdbShutdownDiagnostic) { $adbShutdownDiagnostic } else { 'none' }))
         ) | Set-Content -LiteralPath (Join-Path $buildDirectory 'android-build-info.txt') -Encoding UTF8
         Write-Host "SUCCESS: $finalApk" -ForegroundColor Green
         Write-Host ('Signed and verified. {0:N1} MiB. Copy this APK to your phone.' -f ($apk.Length / 1MB))

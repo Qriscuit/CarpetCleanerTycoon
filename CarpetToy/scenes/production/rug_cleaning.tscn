@@ -462,6 +462,7 @@ mesh = SubResource("ArrayMesh_vl3xi")
 transform = Transform3D(0.77, 0, 0, 0, -0.2759433, -0.71885693, 0, 0.71885693, -0.2759433, 0, 0.18, 1.8)
 
 [node name="squeegee" type="MeshInstance3D" parent="StarterTools/Squeegee" unique_id=618493608]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 0.05)
 mesh = SubResource("ArrayMesh_qoamh")
 
 [node name="JetSpray" type="Node3D" parent="StarterTools" unique_id=1601534149]

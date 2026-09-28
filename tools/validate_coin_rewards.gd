@@ -88,8 +88,8 @@ func run() -> void:
 	await capture("upgrades_portrait")
 	game.back()
 	check(not game.hud.upgrades_open() and current_scene == game and not game.soil.simulation_suspended,"Back closes upgrades before leaving and resumes the rug")
-	await finish(0.85)
-	check(state.cash == 140 and game.hud.displayed_gold == 120 and game.hud.pending_reward == 20,"85% pays20 durably while the display waits for coins")
+	await finish(0.75)
+	check(state.cash == 140 and game.hud.displayed_gold == 120 and game.hud.pending_reward == 20,"75% pays20 durably while the display waits for coins")
 	await finish_suction()
 	await create_timer(0.24).timeout
 	check(game.hud.active_coin_count() > 0 and arrivals.is_empty(),"Coins burst and linger before any gold arrives")
@@ -119,7 +119,7 @@ func run() -> void:
 	check(total == 40 and arrivals.size() > early_count and state.cash == 190 and game.hud.displayed_gold == 190,"Full clean gives a larger burst worth exactly40")
 	# Failed durable payout must cancel its cosmetic reservation too.
 	state._save_enabled = false
-	await finish(0.85)
+	await finish(0.75)
 	check(state.cash == 190 and game.hud.pending_reward == 0 and game.hud.displayed_gold == 190,"Failed payout creates neither coins nor a hidden balance deduction")
 	state._save_enabled = true
 	# Check compact layouts and long balances with simulated notches.
@@ -141,7 +141,7 @@ func run() -> void:
 	game.hud.sync_wallet(state.cash)
 	last_display = state.cash
 	# Leaving during the final celebration keeps the reward exactly once.
-	await finish(0.85)
+	await finish(0.75)
 	await finish_suction()
 	await create_timer(0.2).timeout
 	check(game.hud.pending_reward > 0,"Interrupt an unfinished celebration")

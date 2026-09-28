@@ -6,6 +6,8 @@ signal coin_arrived(value: int)
 signal upgrades_changed(is_open: bool)
 signal request_payout_upgrade
 signal request_tool_upgrade
+signal request_hose_upgrade
+signal request_squeegee_upgrade
 signal request_rewarded_ad
 
 const COIN_POOL_SIZE := 24
@@ -41,6 +43,8 @@ func _ready() -> void:
 	set_process(false)
 	(control("PayoutUpgradeButton") as Button).pressed.connect(_on_payout_upgrade_pressed)
 	(control("ToolUpgradeButton") as Button).pressed.connect(_on_tool_upgrade_pressed)
+	(control("HoseUpgradeButton") as Button).pressed.connect(_on_wet_upgrade_pressed.bind("hose"))
+	(control("SqueegeeUpgradeButton") as Button).pressed.connect(_on_wet_upgrade_pressed.bind("squeegee"))
 	(control("AdRewardButton") as Button).pressed.connect(_on_ad_reward_pressed)
 	control("RugValueIcon").texture = _svg_texture('<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><g stroke="#4f8875" stroke-width="3" stroke-linecap="round"><path d="M11 5v5m9-5v5m9-5v5m9-5v5M11 38v5m9-5v5m9-5v5m9-5v5"/><rect x="7" y="10" width="34" height="28" rx="7" fill="#bee1c4"/><path d="M15 17h18v14H15z" fill="#f8f3db"/></g><circle cx="34" cy="33" r="10" fill="#ffd468" stroke="#d4a342" stroke-width="2"/><path d="m34 27 2 4 4 1-3 3v4l-3-2-4 2 1-4-3-3 4-1z" fill="#fff8d9"/></svg>')
 	set_progression({}, false)
@@ -54,7 +58,7 @@ func control(node_name: String) -> Control:
 
 func action_buttons() -> Array[Button]:
 	var buttons: Array[Button] = []
-	for node_name in ["UpgradeButton", "CloseUpgradesButton", "PayoutUpgradeButton", "ToolUpgradeButton", "AdRewardButton"]:
+	for node_name in ["UpgradeButton", "CloseUpgradesButton", "PayoutUpgradeButton", "ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton", "AdRewardButton"]:
 		buttons.append(control(node_name) as Button)
 	return buttons
 
@@ -78,7 +82,7 @@ func set_progression(view: Dictionary, purchases_allowed: bool = true) -> void:
 	payout_button.tooltip_text = "Increase rug earnings · %d coins" % int(view.get("payout_cost", 0)) if payout_available else "Maximum rug earnings"
 	payout_button.icon = COIN_TEXTURE if payout_available else null
 	var store_id := int(view.get("store_id", 1))
-	var wet := store_id >= 3
+	var wet := store_id >= 2
 	var tier := clampi(int(view.get("wet_tool_level", 0)) + (4 if store_id == 4 else 0), 0, 8) if wet else clampi(int(view.get("global_tool_tier", 0)), 0, 8)
 	var next_tier := mini(tier + 1, 8) if wet else clampi(maxi(tier, (store_id - 1) * 4 + int(view.get("tool_level", 0)) + 1), 0, 8)
 	var current_texture := _tool_texture(tier, wet)
@@ -87,14 +91,31 @@ func set_progression(view: Dictionary, purchases_allowed: bool = true) -> void:
 	control("NextToolPreview").texture = _tool_texture(next_tier, wet)
 	(control("CurrentToolName") as Label).text = str(view.get("tool_name", "Hand brush"))
 	(control("NextToolName") as Label).text = str(view.get("next_tool_name", "Wide brush"))
-	(control("CurrentToolStats") as Label).text = "✦ %.2f×" % float(view.get("wet_power", 1.0)) if wet else _tool_stats(float(view.get("tool_width", 1.0)), float(view.get("tool_power", 1.0)))
-	(control("NextToolStats") as Label).text = "✦ %.2f×" % float(view.get("next_wet_power", view.get("wet_power", 1.0))) if wet else _tool_stats(float(view.get("next_tool_width", view.get("tool_width", 1.0))), float(view.get("next_tool_power", view.get("tool_power", 1.0))))
-	(control("ToolDrawerTitle") as Label).text = "Wet tools" if wet else "Brush"
+	(control("CurrentToolStats") as Label).text = "Soak %.2f×\nWidth %.2f m" % [float(view.get("hose_power", 1.0)), float(view.get("hose_radius", 0.19)) * 2.0] if wet else _tool_stats(float(view.get("tool_width", 1.0)), float(view.get("tool_power", 1.0)))
+	(control("NextToolStats") as Label).text = "Soak %.2f×\nWidth %.2f m" % [float(view.get("next_hose_power", view.get("hose_power", 1.0))), float(view.get("next_hose_radius", view.get("hose_radius", 0.19))) * 2.0] if wet else _tool_stats(float(view.get("next_tool_width", view.get("tool_width", 1.0))), float(view.get("next_tool_power", view.get("tool_power", 1.0))))
+	(control("ToolDrawerTitle") as Label).text = "Hose" if wet else "Brush"
 	control("NextToolCard").visible = tool_available
 	var tool_button := control("ToolUpgradeButton") as Button
 	tool_button.text = "Buy %s" % _money_text(int(view.get("tool_cost", 0))) if tool_available else "Max"
 	tool_button.tooltip_text = "%s · %d coins" % [str(view.get("next_tool_name", "Upgrade brush")), int(view.get("tool_cost", 0))] if tool_available else "Maximum tool level"
 	tool_button.icon = COIN_TEXTURE if tool_available else null
+	var wet_unlocked := bool(view.get("wet_unlocked", store_id >= 2))
+	control("HoseUpgradeRow").visible = wet_unlocked and not wet
+	control("SqueegeeUpgradeRow").visible = wet_unlocked
+	control("WetUpgradeRows").visible = wet_unlocked
+	for kind in ["hose", "squeegee"]:
+		var prefix := "Hose" if kind == "hose" else "Squeegee"
+		var level := int(view.get(kind + "_level", 0))
+		var cost := int(view.get(kind + "_cost", -1))
+		(control(prefix + "UpgradeTitle") as Label).text = "%s · Lv %d / 5" % [prefix, level + 1]
+		var power := float(view.get(kind + "_power", 1.0))
+		var next_power := float(view.get("next_" + kind + "_power", power))
+		(control(prefix + "UpgradeStats") as Label).text = ("Soak" if kind == "hose" else "Extract") + (" %.2f× → %.2f×" % [power, next_power] if cost >= 0 else " %.2f× · Max" % power)
+		var button := control(prefix + "UpgradeButton") as Button
+		button.text = "Buy %s" % _money_text(cost) if cost >= 0 else "Max"
+		button.icon = COIN_TEXTURE if cost >= 0 else null
+		button.tooltip_text = ("Wider water + faster soaking" if kind == "hose" else "Remove more water with every pass") + (" · %d coins" % cost if cost >= 0 else " · Maximum level")
+	control("UpgradeButton").tooltip_text = "Hose + squeegee upgrades" if wet_unlocked else "Brush upgrades"
 	_refresh_availability()
 	_layout()
 
@@ -151,14 +172,20 @@ func _refresh_availability() -> void:
 	payout.disabled = not ready or upgrades_open() or not bool(_progression.get("can_upgrade_payout", payout_cost >= 0)) or payout_cost < 0 or _actual_balance < payout_cost
 	tool.disabled = not ready or not bool(_progression.get("can_upgrade_tool", tool_cost >= 0)) or tool_cost < 0 or _actual_balance < tool_cost
 	(control("AdRewardButton") as Button).disabled = not _ad_available or not _purchases_allowed or pending_reward > 0 or upgrades_open()
+	for kind in ["hose", "squeegee"]:
+		var button := control(("Hose" if kind == "hose" else "Squeegee") + "UpgradeButton") as Button
+		var cost := int(_progression.get(kind + "_cost", -1))
+		button.disabled = not ready or not bool(_progression.get("wet_unlocked", false)) or not bool(_progression.get("can_upgrade_" + kind, false)) or cost < 0 or _actual_balance < cost
 	var done := control("CloseUpgradesButton")
-	var next_focus := done.get_path_to(tool) if not tool.disabled else done.get_path_to(done)
-	done.focus_next = next_focus
-	done.focus_previous = next_focus
-	tool.focus_next = tool.get_path_to(done)
-	tool.focus_previous = tool.get_path_to(done)
-	if upgrades_open() and tool.disabled and tool.has_focus():
-		done.grab_focus()
+	var focusable: Array[Control] = [done]
+	for node_name in ["ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton"]:
+		var button := control(node_name) as Button
+		if button.is_visible_in_tree() and not button.disabled: focusable.append(button)
+		elif upgrades_open() and button.has_focus(): done.grab_focus()
+	for index in focusable.size():
+		var button := focusable[index]
+		button.focus_next = button.get_path_to(focusable[(index + 1) % focusable.size()])
+		button.focus_previous = button.get_path_to(focusable[(index + focusable.size() - 1) % focusable.size()])
 
 
 func _on_payout_upgrade_pressed() -> void:
@@ -169,6 +196,13 @@ func _on_payout_upgrade_pressed() -> void:
 func _on_tool_upgrade_pressed() -> void:
 	if upgrades_open() and not (control("ToolUpgradeButton") as Button).disabled:
 		request_tool_upgrade.emit()
+
+
+func _on_wet_upgrade_pressed(kind: String) -> void:
+	var button := control(("Hose" if kind == "hose" else "Squeegee") + "UpgradeButton") as Button
+	if not upgrades_open() or not button.is_visible_in_tree() or button.disabled: return
+	if kind == "hose": request_hose_upgrade.emit()
+	else: request_squeegee_upgrade.emit()
 
 
 func _on_ad_reward_pressed() -> void:
@@ -440,7 +474,7 @@ func blocks_point(point: Vector2) -> bool:
 
 func visible_button_at(point: Vector2, buttons: Array[Button]) -> Button:
 	for button in buttons:
-		if upgrades_open() and button not in [control("CloseUpgradesButton"), control("ToolUpgradeButton")]: continue
+		if upgrades_open() and button not in [control("CloseUpgradesButton"), control("ToolUpgradeButton"), control("HoseUpgradeButton"), control("SqueegeeUpgradeButton")]: continue
 		if button.is_visible_in_tree() and not button.disabled and button.get_global_rect().has_point(point):
 			return button
 	return null
@@ -524,7 +558,7 @@ func _layout() -> void:
 		var current := int(_progression.get("early_reward" if node_name == "EarlyValue" else "full_reward", 20 if node_name == "EarlyValue" else 40))
 		var next := int(_progression.get("next_early" if node_name == "EarlyValue" else "next_full", current))
 		var offered := int(_progression.get("payout_cost", -1)) >= 0
-		var available := maxf(48.0, (payout.size.x - 68.0) * 0.5)
+		var available := maxf(48.0, payout.size.x - 68.0)
 		var font := label.get_theme_font("font")
 		var preview := "%s → %s" % [_money_text(current), _money_text(next)] if offered else _money_text(current)
 		label.tooltip_text = "%d → %d coins" % [current, next] if offered else "%d coins" % current
@@ -541,6 +575,18 @@ func _layout() -> void:
 	ad.size = Vector2(maxf(128.0, ad.get_combined_minimum_size().x), 56.0)
 	ad.position = Vector2(safe.end.x - ad.size.x - edge, progress.position.y + progress.size.y + 12.0)
 	var panel := control("UpgradesPanel")
-	panel.size = Vector2(minf(272.0, safe.size.x - edge * 2.0), minf(370.0 if control("NextToolCard").visible else 260.0, safe.size.y - edge * 2.0))
+	var wet_rows := control("WetUpgradeRows")
+	var contents := panel.get_node("Contents") as Control
+	var has_wet := wet_rows.visible
+	var main_height := 338.0 if control("NextToolCard").visible else 228.0
+	var wet_height := 178.0 if control("HoseUpgradeRow").visible else 84.0
+	var side_by_side := has_wet and landscape
+	var panel_width := 584.0 if side_by_side else (340.0 if has_wet else 272.0)
+	var panel_height := maxf(main_height, wet_height) + 32.0 if side_by_side else main_height + 32.0 + (wet_height + 12.0 if has_wet else 0.0)
+	panel.size = Vector2(minf(panel_width, safe.size.x - edge * 2.0), minf(panel_height, safe.size.y - edge * 2.0))
+	contents.position = Vector2(16.0, 16.0)
+	contents.size = Vector2(240.0 if side_by_side else panel.size.x - 32.0, main_height)
+	wet_rows.position = Vector2(272.0, 80.0) if side_by_side else Vector2(16.0, main_height + 28.0)
+	wet_rows.size = Vector2(panel.size.x - 288.0 if side_by_side else panel.size.x - 32.0, wet_height)
 	panel.position = Vector2(safe.position.x + edge, clampf(safe.get_center().y - panel.size.y * 0.5, safe.position.y + edge, safe.end.y - panel.size.y - edge))
 	panel.pivot_offset = panel.size * 0.5
