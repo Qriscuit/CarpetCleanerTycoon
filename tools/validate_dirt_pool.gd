@@ -12,6 +12,15 @@ func check(value: bool, message: String) -> void:
 func _initialize() -> void:
 	call_deferred("run")
 
+func expose_source(soil: Node, position: Vector3) -> void:
+	# Mask-only passes expose a dormant source without touching its physical slot.
+	# Real contact must still release original dirt above an already-clean mask.
+	var point := Vector2(position.x, position.z)
+	for pass_number in ceili(1.0 / soil.rug_definition.removal_per_pass) + 1:
+		soil.begin_pass()
+		soil.paint_stroke(point, point + Vector2(0.0, 0.02))
+	soil.end_pass()
+
 func run() -> void:
 	var rug := Node3D.new()
 	var dirty := (load("res://scenes/dirty_carpet.tscn") as PackedScene).instantiate()
@@ -95,10 +104,22 @@ func run() -> void:
 	check(soil.make_snapshot() == before, "Restore keeps exact positions, growth, coverage and scatter baseline")
 	var old_snapshot: Dictionary = before.duplicate(true)
 	old_snapshot.erase("spawn_positions")
-	check(soil.restore_snapshot(old_snapshot), "Older version-1 saves remain loadable without scatter baseline")
+	old_snapshot.erase("recycled")
+	old_snapshot.erase("debris_age")
+	old_snapshot.erase("debris_policy")
+	old_snapshot.erase("floor_debris")
+	check(soil.restore_snapshot(old_snapshot), "Older version-1 saves remain loadable without scatter baseline or debris lifecycle")
 	var invalid: Dictionary = before.duplicate(true)
 	invalid.spawn_positions[0] = [0.0, "broken", 0.0]
 	check(not soil.restore_snapshot(invalid), "Malformed scatter baseline is rejected before changing the pool")
+	soil.restore_snapshot(before)
+	var before_invalid := soil.make_snapshot()
+	invalid = before.duplicate(true)
+	invalid.debris_age[seed_slot] = NAN
+	check(not soil.restore_snapshot(invalid) and soil.make_snapshot() == before_invalid, "Non-finite debris age is rejected without mutating the job")
+	invalid = before.duplicate(true)
+	invalid.erase("recycled")
+	check(not soil.restore_snapshot(invalid) and soil.make_snapshot() == before_invalid, "Incomplete lifecycle fields are rejected without mutating the job")
 	soil.restore_snapshot(before)
 	soil.reset()
 	var restored_baseline := true
@@ -106,13 +127,15 @@ func run() -> void:
 		var p: Array = before.spawn_positions[i]
 		restored_baseline = restored_baseline and soil.positions[i] == Vector3(p[0], p[1], p[2])
 	check(restored_baseline, "Reset preserves the restored rug's original scatter")
+	check(soil.timed_debris.is_empty() and soil.recycled.count(true) == 0 and soil.debris_age.count(-1.0) == soil.initial.size(), "Reset clears all recycled flags and debris timers")
 	soil.refresh_visible_clumps()
 	check(soil.batch.visible_instance_count == 25 and soil.growth[dormant_slot] == 0.0 and not soil.awakened[dormant_slot], "Dormant clumps remain absent after a new rug is ready to brush")
 	var dormant_position: Vector3 = soil.positions[dormant_slot]
+	expose_source(soil, dormant_position)
 	soil.stroke(dormant_position, dormant_position + Vector3(0, 0, 0.02), 0.1)
 	soil._physics_process(1.0 / 60.0)
 	soil.refresh_visible_clumps()
-	check(soil.awakened[dormant_slot] and soil.growth[dormant_slot] > 0.0 and soil.growth[dormant_slot] < 1.0 and soil.batch.visible_instance_count > 25, "Real brush contact grows a fresh dormant slot from zero")
+	check(soil.awakened[dormant_slot] and soil.growth[dormant_slot] > 0.0 and soil.growth[dormant_slot] < 1.0 and soil.batch.visible_instance_count > 25, "Contact grows original dormant dirt from zero after its surface mask has already been cleaned")
 	soil.reset()
 	# Older snapshots saved dormant clumps at 0.025. Keep their semantic state,
 	# but do not turn those hidden pool slots into a field of visible pellets.
@@ -121,10 +144,29 @@ func run() -> void:
 	soil.refresh_visible_clumps()
 	check(soil.batch.visible_instance_count == 25 and soil.make_snapshot() == legacy_before, "Legacy dormant pellets stay hidden without rewriting saved progress")
 	dormant_position = soil.positions[dormant_slot]
+	expose_source(soil, dormant_position)
 	soil.stroke(dormant_position, dormant_position + Vector3(0, 0, 0.02), 0.1)
 	soil._physics_process(1.0 / 60.0)
 	soil.refresh_visible_clumps()
 	check(soil.awakened[dormant_slot] and soil.growth[dormant_slot] > 0.025 and soil.growth[dormant_slot] < 1.0 and soil.batch.visible_instance_count > 25, "Real brush contact wakes a dormant pellet and grows it onto the rug")
+	# Legacy saves predate scatter baselines. Dormant slots still contain their
+	# original source positions, even when another rug has since refilled the pool.
+	soil.reset()
+	dormant_position = soil.positions[dormant_slot]
+	expose_source(soil, dormant_position)
+	var legacy_exposed := soil.make_snapshot()
+	legacy_exposed.erase("spawn_positions")
+	legacy_exposed.erase("recycled")
+	legacy_exposed.erase("debris_age")
+	legacy_exposed.erase("debris_policy")
+	legacy_exposed.erase("floor_debris")
+	soil.configure_rug(load("res://resources/rugs/mint_meadow.tres"))
+	check(soil.initial[dormant_slot].origin != dormant_position, "Legacy restore fixture replaces the original scatter before resuming")
+	check(soil.restore_snapshot(legacy_exposed), "Legacy exposed source restores over a different rug scatter")
+	check(soil.positions[dormant_slot] == dormant_position and soil.initial[dormant_slot].origin == dormant_position, "Legacy dormant slot recovers its source from its saved untouched position")
+	soil.stroke(dormant_position, dormant_position + Vector3(0, 0, 0.02), 0.1)
+	soil._physics_process(1.0 / 60.0)
+	check(soil.awakened[dormant_slot] and soil.growth[dormant_slot] > 0.0, "Legacy dormant dirt samples its own exposed patch and remains brushable after resume")
 	soil.reset()
 	var camera := Camera3D.new()
 	camera.position = Vector3(0, 9, 0)

@@ -67,7 +67,11 @@ Store 1 uses dry rugs: its meter is the lower of debris and surface-dust clearan
 
 Hold the left mouse button or one finger and drag once the brush arrives. Touch uses a 72 viewport-pixel offset above the finger. One finger owns the stroke; release, cancellation, tool changes and loss of focus end it. Placement never sweeps an unintended path from the previous position. Sweep beyond the rug edges to throw clumps onto the surrounding tile.
 
-The starter brush removes surface dust over two core passes with feathered edges. Many events in one pass do not multiply cleaning; releasing or reversing direction begins another pass. Upgraded strength improves this action. Wet recipes track applied water and extraction in reusable arrays, render their difference through one wetness mask, and save both progress layers alongside the dry state.
+Mint Meadow and the practice brush rug begin under a **dark brown soil layer at 94% strength**. The starter brush removes 10% per full pass, taking **ten core passes** to reveal the original color fully; feathered edges need overlapping coverage. Input event frequency does not multiply cleaning, and a reversal must travel at least the brush head's depth (0.22 rug units). Upgraded strength still helps: the strongest brush clears a fully covered spot in five passes.
+
+All hidden clumps are available immediately, and repeated dirty strokes can draw unused slots from across the **560-clump pool**. Settled debris stays on the floor indefinitely while supply is plentiful. New extraction demand that uses the **64-slot reserve** starts a **0.6-second shrink** on the oldest eligible floor clumps, then reuses those slots for fresh dirt. Pending emissions are bounded to 64; progress credit stays permanent. See [brush layers and recycling](design/Brush_Dirt_Layers.md).
+
+Wet recipes track applied water and extraction in reusable arrays, render their difference through one wetness mask, and save both progress layers alongside the dry state.
 
 The reward and the next rug are saved atomically before the takeaway animation. Reusable 2D coins linger, then fly into the top-right wallet; each adds its exact value to the **displayed** total. Actual earnings are already durable. Leaving during the animation cannot duplicate or lose them. Back remains available during arrival, cleaning, suction and departure; it closes an open drawer first. The legacy test gym awards no money.
 
@@ -83,7 +87,7 @@ Production entry scenes are `CarpetToy/scenes/production/floating_home.tscn` and
 
 - The same rug scene, meshes and **560-slot dirt pool** serve successive jobs. Scatter is randomized per new rug; snapshots preserve existing scatter. No dirt node instances are recreated per refill.
 - Rugs enter already dust-textured. After unrolling, **25 starter rocks** grow; the other slots remain invisible until brushing brings them out. Reveal animation does not change earned progress. The brush enters after the starter rocks.
-- Dirt uses one 20-triangle mesh in a `MultiMeshInstance3D`. Only moving clumps simulate; visible instances are compacted into the existing batch. No clump rigid bodies or per-clump collision nodes are used.
+- Dirt uses one 20-triangle mesh in a `MultiMeshInstance3D`. Only moving clumps simulate motion; a separate active list handles requested reclamation fades. Retained floor dirt has no idle timer or simulation cost. Visible instances are compacted into the existing batch. No clump rigid bodies or per-clump collision nodes are used.
 - The existing rug shader uses a 256 × 416 dirt-opacity mask. Wet recipes reuse one additional 256 × 416 L8 wetness mask for both application and extraction; contact checks follow the rounded rug and fringe rather than an oversized rectangle.
 - The tile floor uses one static MultiMesh; brush variants are instantiated once and switched by visibility. Reward coins are also reused.
 
@@ -130,6 +134,6 @@ The progression suite covers prices, travel, migration, offline income, transact
 
 The gym check exercises Settings entry/dismissal, both rug selectors, tool restrictions, reset and transition cancellation, touch input, portrait/landscape layouts, and preservation of the existing paid rug/save. It captures both exercises under `art/renders/`. Use the graphics renderer for this check.
 
-Run `validate_rug_transition.gd`, `validate_dirt_pool.gd`, `validate_coin_rewards.gd` and `validate_cleaning.gd` with the graphics renderer and the same isolated-save arguments for transitions, resource reuse, wallet animation and input regressions. The headless dummy renderer does not preserve MultiMesh instance data. Logs and captures are under `art/`; see [implementation coverage](design/Implementation_Coverage.md) for which evidence supports each feature.
+Run `validate_rug_transition.gd`, `validate_dirt_pool.gd`, `validate_brush_recycling.gd`, `validate_coin_rewards.gd` and `validate_cleaning.gd` with the graphics renderer and the same isolated-save arguments for transitions, resource reuse, demand-driven debris recycling, wallet animation and input regressions. The headless dummy renderer does not preserve MultiMesh instance data. Logs and captures are under `art/`; see [implementation coverage](design/Implementation_Coverage.md) for which evidence supports each feature.
 
 `tools/assemble_workshop.gd` rebuilds authored scene content; it is not needed for ordinary play or tests. It replaces the generated workshop scene, so only run it intentionally. Reload external changes in Godot, or restart the editor if a cached MultiMesh reports an instance-format warning.

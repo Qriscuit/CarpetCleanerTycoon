@@ -16,6 +16,10 @@ func settle(soil: Node) -> void:
 		soil._physics_process(1.0 / 60.0)
 
 func _initialize() -> void:
+	if "--shop-test" not in OS.get_cmdline_user_args():
+		push_error("Use -- --shop-test to keep player saves isolated")
+		quit(2)
+		return
 	call_deferred("run")
 
 func run() -> void:
@@ -24,6 +28,8 @@ func run() -> void:
 	root.add_child(workshop)
 	await process_frame
 	var soil: Node = workshop.soil
+	# Exercise the production starter recipe through the gym's input harness.
+	soil.configure_rug(load("res://resources/rugs/mint_meadow.tres"))
 	var camera: Camera3D = workshop.camera
 	var brush: Node3D = workshop.brush
 	check(soil.remaining == 560, "All 560 clumps initially dirty")
@@ -51,7 +57,10 @@ func run() -> void:
 	workshop.end_stroke()
 	settle(soil)
 	check(soil.remaining < 560, "Settled off-rug clumps count after the stroke")
-	check(absf(soil.mask.get_pixel(128, 208).r - 0.5) < 0.01, "First pass removes half the dust")
+	check(absf(soil.mask.get_pixel(128, 208).r - 0.9) < 0.01, "First pass removes one tenth of the dust")
+	check(not soil.floor_debris.is_empty() and soil.timed_debris.is_empty(), "First-pass floor debris remains visible after settling without pool pressure")
+	for i in soil.floor_debris:
+		check(soil.growth[i] > 0.0 and soil.debris_age[i] < 0.0, "Idle settled clumps have no automatic disappearance timer")
 	# A negative stroke and touch input use the same world projection.
 	workshop.reset_rug()
 	var screen: Vector2 = camera.unproject_position(Vector3(0.0, 0.067, 0.7)) - workshop.TOUCH_CONTACT_OFFSET
@@ -83,22 +92,27 @@ func run() -> void:
 	check(soil.is_fully_outside(Vector3(0, 0, 1.77), 0.10), "Whole clump beyond fringe is outside")
 	# Sweep all lanes; don't call any completion/debug shortcut.
 	workshop.reset_rug()
-	for lane in [-0.85, -0.42, 0.0, 0.42, 0.85]:
-		workshop.begin_stroke(camera.unproject_position(Vector3(lane, 0.067, -2.5)), false)
-		workshop.move_brush_to_screen(camera.unproject_position(Vector3(lane, 0.067, 1.85)), false)
-		workshop.end_stroke()
-		settle(soil)
-	check(soil.remaining == 0, "Every clump can be removed with real brush strokes")
+	# Retain the completed rug for inspection instead of scheduling its takeaway.
+	workshop.auto_finish_queued = true
+	for pass_number in 10:
+		for lane in [-0.85, -0.42, 0.0, 0.42, 0.85]:
+			workshop.begin_stroke(camera.unproject_position(Vector3(lane, 0.067, -2.5)), false)
+			workshop.move_brush_to_screen(camera.unproject_position(Vector3(lane, 0.067, 1.85)), false)
+			workshop.end_stroke()
+			settle(soil)
+	check(soil.remaining == 0, "All dirt sources can be removed during ten real brush sweeps")
 	workshop.update_contract_status()
 	var combined := minf(soil.unique_clearance(), soil.surface_clearance())
 	check(is_equal_approx(workshop.progress_fraction, combined) and workshop.state_label.text == "%d%%" % floori(combined * 100.0 + 0.0001), "The one meter reports the dirtier of debris and surface dust")
-	check(soil.active.is_empty() and not soil.is_physics_processing(), "Settled dirt costs no simulation ticks")
+	check(soil.active.is_empty() and soil.timed_debris.is_empty() and not soil.is_physics_processing(), "Settled retained debris and completed demand fades cost no idle simulation ticks")
 	for i in soil.positions.size():
-		check(soil.clump_is_outside(i), "All final clump footprints outside the rug")
+		check(soil.clump_is_outside(i) and soil.credited[i], "Every final dirt source retains credit after leaving the rug or returning to the pool")
 	workshop.reset_rug()
 	check(soil.remaining == 560 and workshop.dirty, "Reset restores dirt and progress")
 	check(soil.mask.get_pixel(64, 100).r > 0.9, "Reset restores full soil cover")
 	# Sub-pixel, slow strokes must still move dirt in the current direction.
+	soil.awakened[0] = true
+	soil.growth[0] = 1.0
 	var clump: Vector3 = soil.positions[0] + soil.rug_origin
 	soil.stroke(clump, clump + Vector3(0, 0, -0.001), 0.016)
 	check(soil.active.has(0) and soil.velocities[0].z < 0, "Slow negative stroke catches dirt and reverses direction")

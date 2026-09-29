@@ -32,6 +32,10 @@ func configure_rug(definition: Resource) -> void:
 const MASK_SIZE := Vector2i(256, 416)
 const EDGE_FEATHER := 0.045
 const GROW_SECONDS := 0.18
+const DEBRIS_FADE_SECONDS := 0.6
+const DEBRIS_POOL_BUFFER := 64
+const LEGACY_DEBRIS_LIFETIME := 3.6
+const COVERAGE_EPSILON := 0.000001
 const COMPLETION_FRACTION := 1.0
 const RUG_HALF := Vector2(1.0, 1.66) # Includes the fringe.
 const HEAD_HALF := Vector2(0.305, 0.11)
@@ -62,6 +66,16 @@ var growth: Array[float] = []
 var initial_growth := PackedFloat32Array()
 var awakened: Array[bool] = []
 var credited: Array[bool] = []
+# Physical slots can be reused; their original one-time progress credit cannot.
+var recycled: Array[bool] = []
+var debris_age: Array[float] = []
+var timed_debris: Array[int] = []
+var free_slots: Array[int] = []
+var floor_debris: Array[int] = []
+var pending_emissions: Array[Dictionary] = []
+# Source samples and visual identities can differ when borrowing a free slot.
+var source_emitted_pass: Array[int] = []
+var pass_serial := 0
 var clump_hulls: Array[PackedVector2Array] = []
 var footprint := preload("res://scripts/rug_footprint.gd").new()
 var rug_node: Node3D
@@ -199,7 +213,7 @@ func set_reveal_progress(value: float) -> void:
 func suspend_simulation(value: bool) -> void:
 	simulation_suspended = value
 	end_pass()
-	set_physics_process(not value and ((completion_started and not vacuum_complete) or not active.is_empty()))
+	set_physics_process(not value and ((completion_started and not vacuum_complete) or not active.is_empty() or not timed_debris.is_empty()))
 
 func update_surface_dust() -> void:
 	var vacuum_fade := 1.0 - smoothstep(0.15, 1.2, vacuum_elapsed) if completion_started else 1.0
@@ -225,6 +239,14 @@ func reset() -> void:
 	growth.resize(initial.size())
 	awakened.resize(initial.size())
 	credited.resize(initial.size())
+	recycled.resize(initial.size())
+	debris_age.resize(initial.size())
+	source_emitted_pass.resize(initial.size())
+	timed_debris.clear()
+	free_slots.clear()
+	floor_debris.clear()
+	pending_emissions.clear()
+	pass_serial = 0
 	for i in initial.size():
 		positions[i] = initial[i].origin
 		velocities[i] = Vector3.ZERO
@@ -234,6 +256,11 @@ func reset() -> void:
 		growth[i] = initial_growth[i]
 		awakened[i] = false
 		credited[i] = false
+		recycled[i] = false
+		debris_age[i] = -1.0
+		source_emitted_pass[i] = -1
+		if initial_growth[i] == 0.0:
+			free_slots.append(i)
 	remaining = initial.size()
 	last_z_direction = 1.0
 	mask.fill(Color.WHITE)
@@ -260,6 +287,7 @@ func reset() -> void:
 	progress_changed.emit(remaining, initial.size())
 
 func begin_pass() -> void:
+	pass_serial += 1
 	pass_base = coverage_values.duplicate()
 	pass_strength.fill(0.0)
 	pass_active = true
@@ -292,7 +320,7 @@ func refresh_visible_clumps() -> void:
 			continue
 		# Offset each seed's growth slightly so the rug fills in organically.
 		var delay := float((i * 37) % 101) / 100.0 * 0.32
-		var visible_growth := growth[i] * smoothstep(delay, delay + 0.68, reveal_progress)
+		var visible_growth := _visible_debris_growth(i) * smoothstep(delay, delay + 0.68, reveal_progress)
 		if visible_growth <= 0.0:
 			continue
 		var world := batch_node.to_global(positions[i])
@@ -320,7 +348,13 @@ func start_vacuum(accepted_contract: bool = false) -> void:
 	completion_started = true
 	end_pass()
 	vacuum_origins.assign(positions)
-	vacuum_growth.assign(growth)
+	for i in growth.size():
+		vacuum_growth[i] = _visible_debris_growth(i)
+		growth[i] = vacuum_growth[i]
+	timed_debris.clear()
+	floor_debris.clear()
+	pending_emissions.clear()
+	debris_age.fill(-1.0)
 	active.clear()
 	moving.fill(false)
 	velocities.fill(Vector3.ZERO)
@@ -351,6 +385,8 @@ func animate_vacuum(delta: float) -> void:
 		vacuum_finished.emit()
 
 func clump_is_outside(i: int) -> bool:
+	if recycled[i]:
+		return true # A hidden free slot has no physical footprint on the rug.
 	var polygon := PackedVector2Array()
 	for p in clump_hulls[i]:
 		polygon.append(p * growth[i] + Vector2(positions[i].x, positions[i].z))
@@ -397,7 +433,7 @@ func stroke(world_from: Vector3, world_to: Vector3, elapsed: float) -> void:
 		if reversal_distance == 0.0:
 			reversal_start = start
 		reversal_distance += travel.length()
-		if reversal_distance >= 0.08:
+		if reversal_distance >= maxf(0.22, head_half.y * 2.0):
 			paint_from = reversal_start
 			begin_pass()
 			pass_direction = travel.normalized()
@@ -409,22 +445,126 @@ func stroke(world_from: Vector3, world_to: Vector3, elapsed: float) -> void:
 	var direction := Vector2(clampf(travel.normalized().x * 0.38, -0.38, 0.38), last_z_direction).normalized()
 	var speed := clampf(travel.length() / maxf(elapsed, 0.016), 0.0, 10.0)
 	var impulse := clampf(1.9 + speed * 0.36, 2.0, 5.0) * sqrt(tool_strength)
+	paint_stroke(paint_from, finish)
 	for i in positions.size():
 		# "Cleared" tracks progress, not whether a clump can still be brushed.
-		if cooldown[i] > 0.0 or positions[i].y > RUG_Y + 0.14:
+		if recycled[i] or cooldown[i] > 0.0 or positions[i].y > RUG_Y + 0.14:
 			continue
 		var point := Vector2(positions[i].x, positions[i].z)
 		if not swept_head_hits(start, finish, point, head_half + Vector2.ONE * radii[i] * growth[i]):
 			continue
+		if not awakened[i] and not moving[i]:
+			# Original dirt is all available immediately, including a legacy
+			# source whose surface was already cleaned before physical contact.
+			source_emitted_pass[i] = pass_serial
+			free_slots.erase(i)
+		_cancel_debris_timer(i)
 		var fan := sin(float(i) * 7.13) * 0.09
-		velocities[i] = Vector3((direction.x + fan) * impulse, 0.45 + impulse * 0.10, direction.y * impulse)
-		cooldown[i] = 0.14
-		awakened[i] = true
-		if not moving[i]:
-			active.append(i)
-			moving[i] = true
-	paint_stroke(paint_from, finish)
-	set_physics_process(not active.is_empty())
+		_launch_debris(i, positions[i], Vector3((direction.x + fan) * impulse, 0.45 + impulse * 0.10, direction.y * impulse))
+	# Original scatter points sample fresh extraction, but any available visual
+	# may serve that demand. Repeated work in one stripe can use the entire pool.
+	for source in initial.size():
+		if source_emitted_pass[source] == pass_serial:
+			continue
+		var point := Vector2(initial[source].origin.x, initial[source].origin.z)
+		if not swept_head_hits(start, finish, point, head_half):
+			continue
+		var pixel := _source_pixel(source)
+		if pass_base[pixel] - coverage_values[pixel] <= COVERAGE_EPSILON:
+			continue
+		var fan := sin(float(source) * 7.13) * 0.09
+		var launch := Vector3((direction.x + fan) * impulse, 0.45 + impulse * 0.10, direction.y * impulse)
+		if _emit_from_pool(source, launch):
+			source_emitted_pass[source] = pass_serial
+	set_physics_process(not active.is_empty() or not timed_debris.is_empty())
+
+func _source_pixel(i: int) -> int:
+	var source := Vector2(initial[i].origin.x, initial[i].origin.z)
+	var pixel := Vector2i(((source + RUG_HALF) / (RUG_HALF * 2.0) * Vector2(MASK_SIZE)).floor())
+	pixel = pixel.clamp(Vector2i.ZERO, MASK_SIZE - Vector2i.ONE)
+	return pixel.y * MASK_SIZE.x + pixel.x
+
+func _source_dust(i: int) -> float:
+	return coverage_values[_source_pixel(i)]
+
+func _launch_debris(i: int, origin: Vector3, velocity: Vector3) -> void:
+	positions[i] = origin
+	velocities[i] = velocity
+	cleared[i] = false
+	recycled[i] = false
+	cooldown[i] = 0.14
+	awakened[i] = true
+	if not moving[i]:
+		active.append(i)
+		moving[i] = true
+
+func _emit_from_pool(source: int, velocity: Vector3) -> bool:
+	# Demand, never elapsed time, starts reclamation. The reserve covers the
+	# shrink animation while currently free slots supply immediate feedback.
+	_request_pool_space()
+	if free_slots.is_empty():
+		if timed_debris.is_empty() or pending_emissions.size() >= DEBRIS_POOL_BUFFER:
+			return false
+		pending_emissions.append({"source": source, "velocity": velocity})
+		return true
+	var i: int = source if free_slots.has(source) else free_slots.back()
+	free_slots.erase(i)
+	growth[i] = 0.0
+	_launch_debris(i, initial[source].origin, velocity)
+	_request_pool_space()
+	return true
+
+func _request_pool_space() -> void:
+	var needed := DEBRIS_POOL_BUFFER - free_slots.size() - timed_debris.size()
+	while needed > 0 and not floor_debris.is_empty():
+		var i: int = floor_debris.pop_front()
+		if moving[i] or not credited[i] or not cleared[i] or recycled[i] or debris_age[i] >= 0.0 or growth[i] <= 0.0 or not clump_is_outside(i):
+			continue
+		debris_age[i] = 0.0
+		timed_debris.append(i)
+		needed -= 1
+	if not timed_debris.is_empty():
+		set_physics_process(not simulation_suspended)
+
+func _visible_debris_growth(i: int) -> float:
+	var fade := smoothstep(0.0, DEBRIS_FADE_SECONDS, debris_age[i]) if debris_age[i] >= 0.0 else 0.0
+	return growth[i] * (1.0 - fade)
+
+func _cancel_debris_timer(i: int) -> void:
+	floor_debris.erase(i)
+	if debris_age[i] < 0.0:
+		return
+	debris_age[i] = -1.0
+	timed_debris.erase(i)
+	request_render()
+
+func _age_debris(delta: float) -> void:
+	for slot in range(timed_debris.size() - 1, -1, -1):
+		var i := timed_debris[slot]
+		debris_age[i] += delta
+		request_render()
+		if debris_age[i] < DEBRIS_FADE_SECONDS:
+			continue
+		# Return the same shape and permanent progress ID to global supply.
+		# Its next emission can serve fresh cleaning at any source on the rug.
+		positions[i] = initial[i].origin
+		velocities[i] = Vector3.ZERO
+		growth[i] = 0.0
+		awakened[i] = false
+		moving[i] = false
+		cleared[i] = true
+		cooldown[i] = 0.0
+		recycled[i] = true
+		debris_age[i] = -1.0
+		active.erase(i)
+		timed_debris.remove_at(slot)
+		free_slots.append(i)
+	# These were requested by real cleaning while the pool was full. They may
+	# finish after release; no new demand is manufactured by idle time.
+	while not free_slots.is_empty() and not pending_emissions.is_empty():
+		var request: Dictionary = pending_emissions.pop_front()
+		var i: int = free_slots.pop_back()
+		_launch_debris(i, initial[int(request.source)].origin, request.velocity)
 
 static func swept_head_hits(start: Vector2, finish: Vector2, point: Vector2, half: Vector2) -> bool:
 	# Segment versus expanded rectangle: fast swipes cannot tunnel between events.
@@ -467,6 +607,8 @@ func paint_stroke(start: Vector2, finish: Vector2) -> void:
 				pass_strength[index] = weight
 				var old_value := coverage_values[index]
 				coverage_values[index] = maxf(0.0, pass_base[index] - rug_definition.removal_per_pass * weight * tool_strength)
+				if coverage_values[index] <= COVERAGE_EPSILON:
+					coverage_values[index] = 0.0
 				var value := coverage_values[index]
 				if surface_pixels[index] == 1:
 					surface_coverage_total += value - old_value
@@ -498,6 +640,8 @@ func _physics_process(delta: float) -> void:
 		if not vacuum_complete:
 			animate_vacuum(delta)
 		return
+	# Only already-requested fades advance; settled dirt otherwise stays put.
+	_age_debris(delta)
 	var changed := false
 	for slot in range(active.size() - 1, -1, -1):
 		var i := active[slot]
@@ -513,6 +657,7 @@ func _physics_process(delta: float) -> void:
 		# Physical location is reversible; earned cleanliness is permanent.
 		if not outside:
 			cleared[i] = false
+			_cancel_debris_timer(i)
 		var surface := 0.0 if outside else RUG_Y
 		if positions[i].y <= surface:
 			positions[i].y = surface
@@ -531,11 +676,17 @@ func _physics_process(delta: float) -> void:
 		if velocities[i].length_squared() < 0.0001 and cooldown[i] <= 0.0:
 			moving[i] = false
 			active.remove_at(slot)
+			if outside and credited[i] and debris_age[i] < 0.0 and not floor_debris.has(i):
+				floor_debris.append(i)
+	# Re-hitting a fading clump can cancel a reclamation. Requests already made
+	# by cleaning still need supply once those clumps settle again.
+	if not pending_emissions.is_empty():
+		_request_pool_space()
 	if changed:
 		progress_changed.emit(remaining, initial.size())
 	if remaining == 0 and automatic_completion_enabled:
 		start_vacuum()
-	elif active.is_empty():
+	elif active.is_empty() and timed_debris.is_empty():
 		set_physics_process(false)
 
 func unique_clearance() -> float:
@@ -571,6 +722,12 @@ func _clear_dry_stage() -> void:
 	# shaders stay compatible, but their no-longer-required dry work is complete.
 	# Wet/extraction arrays are intentionally untouched during save migration.
 	active.clear()
+	timed_debris.clear()
+	free_slots.clear()
+	floor_debris.clear()
+	pending_emissions.clear()
+	debris_age.fill(-1.0)
+	recycled.fill(false)
 	for i in initial.size():
 		velocities[i] = Vector3.ZERO
 		cleared[i] = true
@@ -949,12 +1106,19 @@ func make_snapshot() -> Dictionary:
 	pixels.resize(coverage_values.size())
 	for i in coverage_values.size():
 		pixels[i] = clampi(roundi(coverage_values[i] * 255.0), 0, 255)
+	var saved_requests: Array = []
+	for request in pending_emissions:
+		var velocity: Vector3 = request.velocity
+		saved_requests.append({"source": request.source, "velocity": [velocity.x, velocity.y, velocity.z]})
 	var result: Dictionary = {
 		"version": 1, "positions": saved_positions, "velocities": saved_velocities,
 		"spawn_positions": spawn_positions,
 		"growth": growth.duplicate(), "awakened": awakened.duplicate(),
 		"credited": credited.duplicate(), "cleared": cleared.duplicate(),
 		"cooldown": cooldown.duplicate(), "moving": moving.duplicate(),
+		"recycled": recycled.duplicate(), "debris_age": debris_age.duplicate(),
+		"debris_policy": 2, "floor_debris": floor_debris.duplicate(),
+		"pending_emissions": saved_requests,
 		"coverage": Marshalls.raw_to_base64(pixels),
 		"wet_recipe": wet_recipe,
 		"skip_dry_stage": skip_dry_stage,
@@ -1021,7 +1185,58 @@ func restore_snapshot(snapshot: Dictionary) -> bool:
 		for value in snapshot[key]:
 			if not value is bool:
 				return false
+	# Additive version-1 fields preserve older rug saves. Validate every new
+	# value before mutating live progress, including impossible free-slot states.
+	var has_lifecycle := snapshot.has("recycled") or snapshot.has("debris_age")
+	var demand_policy := snapshot.has("debris_policy")
+	if demand_policy and (not snapshot.debris_policy is int and not snapshot.debris_policy is float):
+		return false
+	if demand_policy and (float(snapshot.debris_policy) != 2.0 or not has_lifecycle):
+		return false
+	if has_lifecycle:
+		for key in ["recycled", "debris_age"]:
+			if not snapshot.get(key) is Array or snapshot[key].size() != initial.size():
+				return false
+		for i in initial.size():
+			if not snapshot.recycled[i] is bool:
+				return false
+			var age: Variant = snapshot.debris_age[i]
+			var age_limit := DEBRIS_FADE_SECONDS if demand_policy else LEGACY_DEBRIS_LIFETIME
+			if not (age is float or age is int) or not is_finite(float(age)) or (float(age) < 0.0 and float(age) != -1.0) or float(age) > age_limit:
+				return false
+			if float(age) >= 0.0 and (snapshot.recycled[i] or not snapshot.credited[i] or not snapshot.cleared[i]):
+				return false
+			if demand_policy and float(age) >= 0.0 and (snapshot.moving[i] or float(snapshot.growth[i]) <= 0.0):
+				return false
+			if snapshot.recycled[i] and (not snapshot.credited[i] or not snapshot.cleared[i] or snapshot.awakened[i] or snapshot.moving[i] or float(snapshot.growth[i]) != 0.0):
+				return false
+	if demand_policy:
+		if not snapshot.get("floor_debris") is Array or snapshot.floor_debris.size() > initial.size() or not snapshot.get("pending_emissions") is Array or snapshot.pending_emissions.size() > DEBRIS_POOL_BUFFER:
+			return false
+		var seen: Dictionary = {}
+		for value in snapshot.floor_debris:
+			if not (value is int or value is float) or not is_finite(float(value)) or float(value) != floorf(float(value)) or float(value) < 0 or float(value) >= initial.size():
+				return false
+			var i := int(value)
+			if seen.has(i) or not snapshot.credited[i] or not snapshot.cleared[i] or snapshot.moving[i] or snapshot.recycled[i] or float(snapshot.debris_age[i]) >= 0.0 or float(snapshot.growth[i]) <= 0.0:
+				return false
+			seen[i] = true
+		for request in snapshot.pending_emissions:
+			if not request is Dictionary or not (request.get("source") is int or request.get("source") is float):
+				return false
+			var source := float(request.source)
+			if not is_finite(source) or source != floorf(source) or source < 0 or source >= initial.size() or not request.get("velocity") is Array or request.velocity.size() != 3:
+				return false
+			for component in request.velocity:
+				if not (component is float or component is int) or not is_finite(float(component)) or absf(float(component)) > 100.0:
+					return false
 	active.clear()
+	timed_debris.clear()
+	free_slots.clear()
+	floor_debris.clear()
+	pending_emissions.clear()
+	pass_serial = 0
+	source_emitted_pass.fill(-1)
 	remaining = initial.size()
 	for i in initial.size():
 		var p: Array = snapshot.positions[i]
@@ -1030,6 +1245,10 @@ func restore_snapshot(snapshot: Dictionary) -> bool:
 			var spawn: Array = snapshot.spawn_positions[i]
 			initial[i].origin = Vector3(float(spawn[0]), float(spawn[1]), float(spawn[2]))
 		positions[i] = Vector3(float(p[0]), float(p[1]), float(p[2]))
+		if not snapshot.has("spawn_positions") and not snapshot.awakened[i] and not snapshot.moving[i] and not snapshot.credited[i]:
+			# Old dormant sources never left their original spot. Recover that
+			# spot before dust-band checks use the newly randomized scatter.
+			initial[i].origin = positions[i]
 		velocities[i] = Vector3(float(v[0]), float(v[1]), float(v[2]))
 		growth[i] = float(snapshot.growth[i])
 		awakened[i] = snapshot.awakened[i]
@@ -1037,10 +1256,26 @@ func restore_snapshot(snapshot: Dictionary) -> bool:
 		cleared[i] = snapshot.cleared[i]
 		cooldown[i] = float(snapshot.cooldown[i])
 		moving[i] = snapshot.moving[i]
+		recycled[i] = snapshot.recycled[i] if has_lifecycle else false
+		# Old elapsed-time ages become retained debris. New saves resume only
+		# the fades that a real extraction request has already started.
+		debris_age[i] = float(snapshot.debris_age[i]) if demand_policy else -1.0
+		if debris_age[i] >= 0.0:
+			timed_debris.append(i)
+		if recycled[i] or (not awakened[i] and not moving[i] and not credited[i] and initial_growth[i] == 0.0 and growth[i] <= 0.025):
+			free_slots.append(i)
+		if not demand_policy and credited[i] and cleared[i] and not moving[i] and growth[i] > 0.0:
+			floor_debris.append(i)
 		if credited[i]:
 			remaining -= 1
 		if moving[i]:
 			active.append(i)
+	if demand_policy:
+		for value in snapshot.floor_debris:
+			floor_debris.append(int(value))
+		for request in snapshot.pending_emissions:
+			var velocity: Array = request.velocity
+			pending_emissions.append({"source": int(request.source), "velocity": Vector3(float(velocity[0]), float(velocity[1]), float(velocity[2]))})
 	surface_coverage_total = 0.0
 	water_coverage_total = 0.0
 	extraction_coverage_total = 0.0
@@ -1064,6 +1299,8 @@ func restore_snapshot(snapshot: Dictionary) -> bool:
 	mask_changed = true
 	wet_mask_changed = true
 	request_render()
-	set_physics_process(not simulation_suspended and not active.is_empty())
+	if not pending_emissions.is_empty():
+		_request_pool_space()
+	set_physics_process(not simulation_suspended and (not active.is_empty() or not timed_debris.is_empty() or (not pending_emissions.is_empty() and not free_slots.is_empty())))
 	progress_changed.emit(remaining, initial.size())
 	return true

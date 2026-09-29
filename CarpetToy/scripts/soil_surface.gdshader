@@ -8,9 +8,9 @@ uniform sampler2D soil_map : source_color, filter_linear_mipmap;
 uniform sampler2D coverage : filter_linear, repeat_disable, hint_default_white;
 uniform sampler2D wetness : filter_linear, repeat_disable, hint_default_black;
 uniform bool wet_recipe = false;
-// Prototype feel controls: retain the pattern under a pale, warm dust veil.
+// A dark soil layer reveals the original rug color continuously as it lifts.
 uniform float dust_strength : hint_range(0.0, 1.0) = 0.58;
-uniform vec4 dust_tint : source_color = vec4(0.86, 0.79, 0.67, 1.0);
+uniform vec4 dust_tint : source_color = vec4(0.30, 0.22, 0.14, 1.0);
 uniform vec3 rug_origin = vec3(0.0);
 uniform vec3 roll_mesh_offset = vec3(0.0);
 uniform bool roll_enabled = false;
@@ -46,8 +46,9 @@ void fragment() {
 	float soil = texture(coverage, rug_uv).r;
 	float water = wet_recipe ? texture(wetness, rug_uv).r : 0.0;
 	vec3 clean = texture(clean_map, UV).rgb * clean_color.rgb * surface_tint.rgb;
-	vec3 pale_dust = mix(texture(soil_map, rug_uv).rgb, dust_tint.rgb, 0.70);
-	vec3 dry_color = mix(clean, pale_dust, soil * dust_strength);
+	// Keep the soil's granules and mottling, but darken its sandy source texture.
+	vec3 dark_soil = mix(texture(soil_map, rug_uv).rgb * 0.28, dust_tint.rgb, 0.35);
+	vec3 dry_color = mix(clean, dark_soil, soil * dust_strength);
 	vec3 wet_color = mix(dry_color * vec3(0.58, 0.64, 0.68), vec3(0.28, 0.52, 0.60), 0.08);
 	ALBEDO = mix(dry_color, wet_color, water * 0.82);
 	ROUGHNESS = mix(0.96, 0.72, water);

@@ -1,6 +1,6 @@
 # Current game systems reference
 
-Updated: 27 September 2026. This document describes the implemented project, including the Store 2 recipe, Store 3 unlock fixes and mobile performance pass. It is a code reference, not a list of proposed features. Paths are relative to this document; `res://` in Godot refers to the `CarpetToy` directory.
+Updated: 28 September 2026. This document describes the implemented project, including the Store 2 recipe, Store 3 unlock fixes, mobile performance pass and ten-pass dark surface cleaning with demand-driven debris recycling. It is a code reference, not a list of proposed features. Paths are relative to this document; `res://` in Godot refers to the `CarpetToy` directory.
 
 ## 1. Start here
 
@@ -74,7 +74,7 @@ The payout upgrade UI shows only the normal **75%** payout, its current-to-next 
 
 [rug_definition.gd](../CarpetToy/scripts/rug_definition.gd) defines appearance and brush behavior: name, hint, tint, dust strength, removal per pass, grain direction and cross-grain efficiency. Resources are in [resources/rugs](../CarpetToy/resources/rugs):
 
-- `mint_meadow.tres`: default two-pass brush behavior.
+- `mint_meadow.tres`: ten full passes with the starter brush, removing 10% of surface dust each time; dark soil at 0.94 strength. `gym_brush.tres` uses the same removal rate and opacity.
 - `terracotta_flatweave.tres`: light dust, one pass.
 - `indigo_weave.tres`: three passes; lengthwise brushing is more effective.
 - `gym_brush.tres` and `gym_water.tres`: the two Gym exercises.
@@ -187,6 +187,8 @@ Purchases, store switches and rewards capture state before mutation. `_commit()`
 
 `dirt_controller.make_snapshot()` produces a version-1 **rug snapshot**, independent of the outer version-2 ledger. It contains clump positions, velocities, growth, clearing/credit state, original scatter positions, recipe flags and base64 byte masks for coverage and, when applicable, water and extracted water. Masks are quantized to 8-bit values for storage. `restore_snapshot()` validates lengths, finite values and `extracted <= water` before rebuilding the state.
 
+Paired fields `recycled` and `debris_age` preserve free slots and partially faded floor debris. The `debris_policy: 2` marker, ordered `floor_debris` indices and bounded `pending_emissions` preserve demand-driven reclamation. Validation rejects impossible free/fading states, invalid indices and malformed requests before modifying live progress. Old elapsed-time ages are discarded so old saves adopt indefinite retention; original positions and progress remain. For snapshots also missing scatter baselines, untouched uncredited sources recover their anchor from their saved position. Only already-requested fades and emissions continue after resume.
+
 Do not change the mask dimensions, pool size or snapshot fields without considering migration. Cosmetic splashes, trails, emitted parcels and runoff are not saved. On re-entry they restart; the authoritative carpet state persists.
 
 ### Test-save isolation
@@ -212,7 +214,9 @@ The mask is 256 × 416. [rug_footprint.gd](../CarpetToy/scripts/rug_footprint.gd
 
 The production dirt batch contains 560 pooled clumps, drawn as a `MultiMesh`. Brushing checks a swept head between input positions so fast input does not skip clumps. Surface cleaning is pass-based: each pixel takes the strongest coverage in a pass, rather than gaining extra cleaning merely because the input delivered more events. A meaningful reversal starts another pass. Removal is weighted by rug grain efficiency and tool strength.
 
-Debris uses bounded velocities, gravity, friction and an active list. Already-credited clumps can still move; they do not repeatedly add progress. Inactive simulation and unchanged mask uploads are disabled where possible.
+Debris uses bounded velocities, gravity, friction and an active list. All original dirt is brushable immediately, with 25 visible starter seeds. Fixed source positions also sample actual surface removal once per pass; when their own clump is already out, they can borrow any available slot. Visual identity and extraction location can therefore differ while each slot's progress credit stays permanent. Reversals require at least 0.22 rug units or twice the head's half-depth, whichever is larger.
+
+Landing fully outside earns a slot's one-time progress credit. Settled floor debris stays indefinitely. New dirty extraction demand that draws down the 64-slot reserve starts 0.6-second shrink animations on the oldest eligible settled, credited floor clumps. Free and currently fading slots together replenish the reserve; up to 64 pending requests bridge an exhausted pool. Completed fades return slots to supply and serve existing requests without awarding further credit. Clean strokes and idle time create no new demand. Rebrushing cancels reclamation; existing pending requests can request replacement supply after the clump settles again. Pause freezes work, vacuum starts from current visible sizes, and water-only recipes clear the dry queues. Settled retained debris requires no physics processing. See [implementation and validation](Brush_Dirt_Layers.md).
 
 `soil_surface.gdshader` combines the rug texture, tint, coverage and wetness. Wetness darkens the carpet and adjusts roughness/specular response. It also contains the roll deformation, so UVs remain associated with the undeformed rug during transitions.
 
@@ -331,7 +335,7 @@ The scripts below are regression entry points, not claims that every script was 
 | Store recipes and transitions | [validate_second_store_wet.gd](../tools/validate_second_store_wet.gd), [validate_store_loop.gd](../tools/validate_store_loop.gd), [validate_contract.gd](../tools/validate_contract.gd), [validate_rug_transition.gd](../tools/validate_rug_transition.gd) |
 | Saves, automation and rewards | [validate_shop_state.gd](../tools/validate_shop_state.gd), [validate_automation_reset.gd](../tools/validate_automation_reset.gd), [validate_coin_rewards.gd](../tools/validate_coin_rewards.gd) |
 | Layout, navigation and touch | [validate_wet_upgrade_ui.gd](../tools/validate_wet_upgrade_ui.gd), [validate_editable_hud.gd](../tools/validate_editable_hud.gd), [validate_shop_ui.gd](../tools/validate_shop_ui.gd), [validate_scene_routes.gd](../tools/validate_scene_routes.gd), [validate_home_settings.gd](../tools/validate_home_settings.gd), [validate_brush_input.gd](../tools/validate_brush_input.gd) |
-| Dirt and cleaning masks | [validate_cleaning.gd](../tools/validate_cleaning.gd), [validate_dirt_pool.gd](../tools/validate_dirt_pool.gd), [validate_dirt_reentry.gd](../tools/validate_dirt_reentry.gd), [validate_wet_cleaning.gd](../tools/validate_wet_cleaning.gd), [validate_rotated_squeegee.gd](../tools/validate_rotated_squeegee.gd) |
+| Dirt and cleaning masks | [validate_cleaning.gd](../tools/validate_cleaning.gd), [validate_brush_recycling.gd](../tools/validate_brush_recycling.gd), [validate_dirt_pool.gd](../tools/validate_dirt_pool.gd), [validate_dirt_reentry.gd](../tools/validate_dirt_reentry.gd), [validate_wet_cleaning.gd](../tools/validate_wet_cleaning.gd), [validate_rotated_squeegee.gd](../tools/validate_rotated_squeegee.gd) |
 | Gym, hose and squeegee | [validate_gym.gd](../tools/validate_gym.gd), [validate_hose_upgrades.gd](../tools/validate_hose_upgrades.gd), [validate_water_jet.gd](../tools/validate_water_jet.gd), [validate_squeegee_controls.gd](../tools/validate_squeegee_controls.gd) |
 | Ridges and runoff | [validate_squeegee_trail.gd](../tools/validate_squeegee_trail.gd), [validate_squeegee_runoff.gd](../tools/validate_squeegee_runoff.gd), [validate_runoff_pool.gd](../tools/validate_runoff_pool.gd), [validate_long_runoff.gd](../tools/validate_long_runoff.gd) |
 

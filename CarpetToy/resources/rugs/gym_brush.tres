@@ -4,5 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+dust_strength = 0.94
+removal_per_pass = 0.1
 display_name = "Rug 1 · Brush"
-cleaning_hint = "Brush away surface dust and dirt pellets."
+cleaning_hint = "Sweep repeatedly to lift each layer, then push loose dirt off the edge."

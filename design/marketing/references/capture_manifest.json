@@ -1,0 +1,73 @@
+{
+	"captures": [
+		{
+			"description": "Current production home, fresh isolated save.",
+			"file": "01_home.png",
+			"height": 1280,
+			"staged": true,
+			"width": 720
+		},
+		{
+			"description": "Current production Neighborhood rug and starter brush; arrival animation skipped for a still.",
+			"file": "02_dirty_starter.png",
+			"height": 1280,
+			"staged": true,
+			"width": 720
+		},
+		{
+			"description": "Actual starter-brush stroke API, four passes on the same stripe with debris pushed beyond the edge; current dust contrast.",
+			"file": "03_brushed_stripe.png",
+			"height": 1280,
+			"staged": true,
+			"width": 720
+		},
+		{
+			"description": "Actual FIRST Store 1 upgrade: Wide brush, 1.44x starter width. Bought through the real ledger for 80 seeded test coins; wallet now zero. Same partially cleaned rug.",
+			"file": "04_first_upgrade.png",
+			"height": 1280,
+			"staged": true,
+			"width": 720
+		},
+		{
+			"description": "Actual maximum Store 1 brush, 1.75x starter width; three additional upgrades purchased with 1700 seeded isolated-test coins after the first 80-coin upgrade. Same partially cleaned rug.",
+			"file": "04_upgraded_brush.png",
+			"height": 1280,
+			"staged": true,
+			"width": 720
+		},
+		{
+			"description": "Actual paid Store 2 hose and contact/soak VFX, selected using a staged unlocked-store ledger.",
+			"file": "05_hose.png",
+			"height": 1280,
+			"staged": true,
+			"width": 720
+		},
+		{
+			"description": "Actual production squeegee stroke/VFX; entire rug first wetted through the shared water painter as a staged capture setup.",
+			"file": "06_squeegee.png",
+			"height": 1280,
+			"staged": true,
+			"width": 720
+		},
+		{
+			"description": "Clean-rug material reference, staged by clearing dry/wet masks and hiding tools. The 100% HUD is a fixture; no natural full job or payout occurred.",
+			"file": "07_clean_rug_fixture.png",
+			"height": 1280,
+			"staged": true,
+			"width": 720
+		}
+	],
+	"engine": {
+		"build": "official",
+		"hash": "ed1daf0bf001b61586d9930840f2f1394092c079",
+		"hex": 263938,
+		"major": 4,
+		"minor": 7,
+		"patch": 2,
+		"status": "stable",
+		"string": "4.7.2-stable (official)",
+		"timestamp": 0
+	},
+	"isolated_shop_test": true,
+	"production_files_modified": false
+}
