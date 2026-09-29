@@ -31,7 +31,6 @@ func configure_rug(definition: Resource) -> void:
 
 const MASK_SIZE := Vector2i(256, 416)
 const EDGE_FEATHER := 0.045
-const GROW_SECONDS := 0.18
 const DEBRIS_FADE_SECONDS := 0.6
 const DEBRIS_POOL_BUFFER := 64
 const LEGACY_DEBRIS_LIFETIME := 3.6
@@ -72,7 +71,6 @@ var debris_age: Array[float] = []
 var timed_debris: Array[int] = []
 var free_slots: Array[int] = []
 var floor_debris: Array[int] = []
-var pending_emissions: Array[Dictionary] = []
 # Source samples and visual identities can differ when borrowing a free slot.
 var source_emitted_pass: Array[int] = []
 var pass_serial := 0
@@ -245,7 +243,6 @@ func reset() -> void:
 	timed_debris.clear()
 	free_slots.clear()
 	floor_debris.clear()
-	pending_emissions.clear()
 	pass_serial = 0
 	for i in initial.size():
 		positions[i] = initial[i].origin
@@ -353,7 +350,6 @@ func start_vacuum(accepted_contract: bool = false) -> void:
 		growth[i] = vacuum_growth[i]
 	timed_debris.clear()
 	floor_debris.clear()
-	pending_emissions.clear()
 	debris_age.fill(-1.0)
 	active.clear()
 	moving.fill(false)
@@ -490,6 +486,9 @@ func _source_dust(i: int) -> float:
 func _launch_debris(i: int, origin: Vector3, velocity: Vector3) -> void:
 	positions[i] = origin
 	velocities[i] = velocity
+	# Contact and extraction share one input event. No invisible growth period
+	# may leave a newly pulled clump behind a brush that has already moved on.
+	growth[i] = 1.0
 	cleared[i] = false
 	recycled[i] = false
 	cooldown[i] = 0.14
@@ -497,19 +496,18 @@ func _launch_debris(i: int, origin: Vector3, velocity: Vector3) -> void:
 	if not moving[i]:
 		active.append(i)
 		moving[i] = true
+	request_render()
 
 func _emit_from_pool(source: int, velocity: Vector3) -> bool:
 	# Demand, never elapsed time, starts reclamation. The reserve covers the
 	# shrink animation while currently free slots supply immediate feedback.
 	_request_pool_space()
 	if free_slots.is_empty():
-		if timed_debris.is_empty() or pending_emissions.size() >= DEBRIS_POOL_BUFFER:
-			return false
-		pending_emissions.append({"source": source, "velocity": velocity})
-		return true
+		# Never queue a birth at a historical brush position. Returned slots
+		# are available to subsequent contact, not to a delayed replay.
+		return false
 	var i: int = source if free_slots.has(source) else free_slots.back()
 	free_slots.erase(i)
-	growth[i] = 0.0
 	_launch_debris(i, initial[source].origin, velocity)
 	_request_pool_space()
 	return true
@@ -559,12 +557,6 @@ func _age_debris(delta: float) -> void:
 		active.erase(i)
 		timed_debris.remove_at(slot)
 		free_slots.append(i)
-	# These were requested by real cleaning while the pool was full. They may
-	# finish after release; no new demand is manufactured by idle time.
-	while not free_slots.is_empty() and not pending_emissions.is_empty():
-		var request: Dictionary = pending_emissions.pop_front()
-		var i: int = free_slots.pop_back()
-		_launch_debris(i, initial[int(request.source)].origin, request.velocity)
 
 static func swept_head_hits(start: Vector2, finish: Vector2, point: Vector2, half: Vector2) -> bool:
 	# Segment versus expanded rectangle: fast swipes cannot tunnel between events.
@@ -647,10 +639,9 @@ func _physics_process(delta: float) -> void:
 		var i := active[slot]
 		cooldown[i] = maxf(0.0, cooldown[i] - delta)
 		if growth[i] < 1.0:
-			growth[i] = move_toward(growth[i], 1.0, delta / GROW_SECONDS)
-			update_clump_transform(i)
-			if growth[i] < 1.0:
-				continue
+			# Legacy saves may contain a launch mid-growth. Resume its motion
+			# immediately, just like a new contact, instead of waiting in place.
+			growth[i] = 1.0
 		velocities[i].y -= GRAVITY * delta
 		positions[i] += velocities[i] * delta
 		var outside := clump_is_outside(i)
@@ -678,10 +669,6 @@ func _physics_process(delta: float) -> void:
 			active.remove_at(slot)
 			if outside and credited[i] and debris_age[i] < 0.0 and not floor_debris.has(i):
 				floor_debris.append(i)
-	# Re-hitting a fading clump can cancel a reclamation. Requests already made
-	# by cleaning still need supply once those clumps settle again.
-	if not pending_emissions.is_empty():
-		_request_pool_space()
 	if changed:
 		progress_changed.emit(remaining, initial.size())
 	if remaining == 0 and automatic_completion_enabled:
@@ -725,7 +712,6 @@ func _clear_dry_stage() -> void:
 	timed_debris.clear()
 	free_slots.clear()
 	floor_debris.clear()
-	pending_emissions.clear()
 	debris_age.fill(-1.0)
 	recycled.fill(false)
 	for i in initial.size():
@@ -1106,10 +1092,6 @@ func make_snapshot() -> Dictionary:
 	pixels.resize(coverage_values.size())
 	for i in coverage_values.size():
 		pixels[i] = clampi(roundi(coverage_values[i] * 255.0), 0, 255)
-	var saved_requests: Array = []
-	for request in pending_emissions:
-		var velocity: Vector3 = request.velocity
-		saved_requests.append({"source": request.source, "velocity": [velocity.x, velocity.y, velocity.z]})
 	var result: Dictionary = {
 		"version": 1, "positions": saved_positions, "velocities": saved_velocities,
 		"spawn_positions": spawn_positions,
@@ -1118,7 +1100,8 @@ func make_snapshot() -> Dictionary:
 		"cooldown": cooldown.duplicate(), "moving": moving.duplicate(),
 		"recycled": recycled.duplicate(), "debris_age": debris_age.duplicate(),
 		"debris_policy": 2, "floor_debris": floor_debris.duplicate(),
-		"pending_emissions": saved_requests,
+		# Keep the old save shape, but births now require current brush contact.
+		"pending_emissions": [],
 		"coverage": Marshalls.raw_to_base64(pixels),
 		"wet_recipe": wet_recipe,
 		"skip_dry_stage": skip_dry_stage,
@@ -1234,7 +1217,6 @@ func restore_snapshot(snapshot: Dictionary) -> bool:
 	timed_debris.clear()
 	free_slots.clear()
 	floor_debris.clear()
-	pending_emissions.clear()
 	pass_serial = 0
 	source_emitted_pass.fill(-1)
 	remaining = initial.size()
@@ -1273,9 +1255,8 @@ func restore_snapshot(snapshot: Dictionary) -> bool:
 	if demand_policy:
 		for value in snapshot.floor_debris:
 			floor_debris.append(int(value))
-		for request in snapshot.pending_emissions:
-			var velocity: Array = request.velocity
-			pending_emissions.append({"source": int(request.source), "velocity": Vector3(float(velocity[0]), float(velocity[1]), float(velocity[2]))})
+		# Older saves may carry validated cosmetic extraction requests. Drop
+		# them: replay would spawn dirt after the original contact has ended.
 	surface_coverage_total = 0.0
 	water_coverage_total = 0.0
 	extraction_coverage_total = 0.0
@@ -1299,8 +1280,6 @@ func restore_snapshot(snapshot: Dictionary) -> bool:
 	mask_changed = true
 	wet_mask_changed = true
 	request_render()
-	if not pending_emissions.is_empty():
-		_request_pool_space()
-	set_physics_process(not simulation_suspended and (not active.is_empty() or not timed_debris.is_empty() or (not pending_emissions.is_empty() and not free_slots.is_empty())))
+	set_physics_process(not simulation_suspended and (not active.is_empty() or not timed_debris.is_empty()))
 	progress_changed.emit(remaining, initial.size())
 	return true

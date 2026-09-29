@@ -21,6 +21,13 @@ func expose_source(soil: Node, position: Vector3) -> void:
 		soil.paint_stroke(point, point + Vector2(0.0, 0.02))
 	soil.end_pass()
 
+func is_full_clump_visible_at(soil: Node, position: Vector3, expected_scale: Vector3) -> bool:
+	for instance in soil.batch.visible_instance_count:
+		var pose: Transform3D = soil.batch.get_instance_transform(instance)
+		if pose.origin.is_equal_approx(position) and pose.basis.get_scale().is_equal_approx(expected_scale):
+			return true
+	return false
+
 func run() -> void:
 	var rug := Node3D.new()
 	var dirty := (load("res://scenes/dirty_carpet.tscn") as PackedScene).instantiate()
@@ -132,10 +139,13 @@ func run() -> void:
 	check(soil.batch.visible_instance_count == 25 and soil.growth[dormant_slot] == 0.0 and not soil.awakened[dormant_slot], "Dormant clumps remain absent after a new rug is ready to brush")
 	var dormant_position: Vector3 = soil.positions[dormant_slot]
 	expose_source(soil, dormant_position)
-	soil.stroke(dormant_position, dormant_position + Vector3(0, 0, 0.02), 0.1)
-	soil._physics_process(1.0 / 60.0)
 	soil.refresh_visible_clumps()
-	check(soil.awakened[dormant_slot] and soil.growth[dormant_slot] > 0.0 and soil.growth[dormant_slot] < 1.0 and soil.batch.visible_instance_count > 25, "Contact grows original dormant dirt from zero after its surface mask has already been cleaned")
+	soil.stroke(dormant_position, dormant_position + Vector3(0, 0, 0.02), 0.1)
+	check(soil.awakened[dormant_slot] and soil.growth[dormant_slot] == 1.0 and soil.render_dirty, "Contact immediately awakens full-sized original dirt and requests rendering before a physics tick")
+	soil.refresh_visible_clumps()
+	check(is_full_clump_visible_at(soil, dormant_position, soil.initial[dormant_slot].basis.get_scale()), "Original dormant dirt renders at its brush contact point even after the surface mask was cleaned")
+	soil._physics_process(1.0 / 60.0)
+	check(soil.positions[dormant_slot] != dormant_position, "Original dormant dirt moves on the first physics tick after contact")
 	soil.reset()
 	# Older snapshots saved dormant clumps at 0.025. Keep their semantic state,
 	# but do not turn those hidden pool slots into a field of visible pellets.
@@ -146,9 +156,10 @@ func run() -> void:
 	dormant_position = soil.positions[dormant_slot]
 	expose_source(soil, dormant_position)
 	soil.stroke(dormant_position, dormant_position + Vector3(0, 0, 0.02), 0.1)
-	soil._physics_process(1.0 / 60.0)
 	soil.refresh_visible_clumps()
-	check(soil.awakened[dormant_slot] and soil.growth[dormant_slot] > 0.025 and soil.growth[dormant_slot] < 1.0 and soil.batch.visible_instance_count > 25, "Real brush contact wakes a dormant pellet and grows it onto the rug")
+	check(soil.awakened[dormant_slot] and soil.growth[dormant_slot] == 1.0 and is_full_clump_visible_at(soil, dormant_position, soil.initial[dormant_slot].basis.get_scale()), "Legacy dormant dirt becomes fully visible during the brush-contact event without a growth delay")
+	soil._physics_process(1.0 / 60.0)
+	check(soil.positions[dormant_slot] != dormant_position, "Legacy dormant dirt moves on the first physics tick after contact")
 	# Legacy saves predate scatter baselines. Dormant slots still contain their
 	# original source positions, even when another rug has since refilled the pool.
 	soil.reset()

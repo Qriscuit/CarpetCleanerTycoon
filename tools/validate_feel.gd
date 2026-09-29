@@ -78,20 +78,29 @@ func run() -> void:
 		if soil.initial_growth[i] > 0.1:
 			seed_slot = i
 			break
-	check(seed_slot >= 0, "A visible seed is available for the growth fixture")
+	check(seed_slot >= 0, "A visible seed is available for the brush-contact fixture")
 	if seed_slot < 0:
 		workshop.free()
 		quit(1)
 		return
 	var p: Vector3 = soil.positions[seed_slot]
 	var original_size: float = soil.growth[seed_slot]
+	soil.refresh_visible_clumps()
 	soil.stroke(p, p + Vector3(0,0,0.02), 0.1)
+	check(soil.awakened[seed_slot] and soil.growth[seed_slot] == 1.0 and soil.render_dirty, "Brush contact makes the seeded clump full-sized and schedules its render before any physics tick")
+	check(soil.positions[seed_slot] == p, "Seeded dirt appears at the current brush contact point")
+	soil.refresh_visible_clumps()
+	var contact_visible := false
+	for instance in soil.batch.visible_instance_count:
+		var pose: Transform3D = soil.batch.get_instance_transform(instance)
+		if pose.origin.is_equal_approx(p) and pose.basis.get_scale().is_equal_approx(soil.initial[seed_slot].basis.get_scale()):
+			contact_visible = true
+	check(contact_visible, "The first render after brush contact contains the full-sized clump at its contact point")
 	soil._physics_process(1.0 / 60.0)
-	check(soil.growth[seed_slot] > original_size and soil.growth[seed_slot] < 1.0, "Touched seed grows smoothly")
-	check(soil.positions[seed_slot] == p, "Clump finishes growing before launch")
+	check(soil.growth[seed_slot] == 1.0 and soil.positions[seed_slot] != p, "Touched seed moves on the first physics tick without a growth delay")
 	for tick in 120:
 		soil._physics_process(1.0 / 60.0)
-	check(soil.growth[seed_slot] == 1.0 and soil.positions[seed_slot] != p, "Growth caps at 1 and clump moves without time-based retirement")
+	check(soil.growth[seed_slot] == 1.0 and soil.positions[seed_slot] != p, "Launched dirt stays full-sized without time-based retirement")
 	p = soil.positions[seed_slot]
 	soil.stroke(p, p + Vector3(0,0,-0.02), 0.1)
 	soil._physics_process(1.0 / 60.0)
@@ -121,7 +130,7 @@ func run() -> void:
 		await process_frame
 		check(workshop.progress_card.get_global_rect().encloses(workshop.state_label.get_global_rect()), "Stable top-left number remains inside its editor-authored card")
 		check(workshop.progress_fill.shadow_size > 0 and workshop.progress_fill.shadow_color.a > 0.0, "Progress fill has a matching glow")
-	print("FEEL CHECKS COMPLETE: ", failures, " failures; ten passes, jitter protection, input-rate independence, soft edges, seeded growth, rug silhouette and 100 percent completion.")
+	print("FEEL CHECKS COMPLETE: ", failures, " failures; ten passes, jitter protection, input-rate independence, soft edges, immediate brush contact, rug silhouette and 100 percent completion.")
 	workshop.free()
 	quit(0 if failures == 0 else 1)
 
