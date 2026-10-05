@@ -63,6 +63,30 @@ func action_buttons() -> Array[Button]:
 	return buttons
 
 
+func set_wet_stage(round_number: int, round_count: int, ready: bool, complete: bool = false) -> void:
+	if not is_node_ready(): return
+	var count := maxi(round_count, 1)
+	var current_round := clampi(round_number, 1, count)
+	var caption := "Clean" if complete else "%s · %d/%d" % ["Squeegee" if ready else "Wet", current_round, count]
+	var stage := control("ProgressStage") as Label
+	if stage.text == caption and stage.visible: return
+	stage.text = caption
+	stage.show()
+	var value := control("ProgressValue") as Label
+	value.offset_top = 14.0
+	value.add_theme_font_size_override("font_size", 18)
+	control("CleaningProgress").tooltip_text = "Clean water · carpet restored" if complete else "Wash %d of %d · %s" % [current_round, count, "Squeegee out the water" if ready else "Spray anywhere on the carpet to soak the whole rug"]
+
+
+func clear_wet_stage() -> void:
+	if not is_node_ready(): return
+	control("ProgressStage").hide()
+	var value := control("ProgressValue") as Label
+	value.offset_top = 0.0
+	value.add_theme_font_size_override("font_size", 20)
+	control("CleaningProgress").tooltip_text = ""
+
+
 func set_progression(view: Dictionary, purchases_allowed: bool = true) -> void:
 	if not view.is_empty() and view == _progression and purchases_allowed == _purchases_allowed:
 		return

@@ -1,0 +1,29 @@
+# Expanded carpet collection
+
+The shared collection contains 24 playable designs. Mint Meadow, Sunburst and Fox's Den retain their original IDs and order; Moonlit Owl, Koi Garden, Stillwater Pond, Woodland Hare, Peacock Palace, Tiger in Bloom, Mushroom Glade, Sun & Moon, and Wildflower Meadow follow them.
+
+The following eight designs take a calmer direction: Sunday Cat, River Daydream, Honey Bear, Red Panda Nap, Lemon Afternoon, Paper Boats, Desert Sunrise, and Moon Moth. Larger simple subjects, restrained palettes and open space give these carpets more breathing room alongside the earlier ornate collection. Their muted bindings and cream or sand fringe coordinate with the artwork. They append to the existing discovery order without replacing earlier designs.
+
+`CarpetToy/scripts/rug_catalog.gd` is the source of truth for IDs, display names and resource paths. Each new carpet has a definition in `CarpetToy/resources/rugs/` and its own portrait texture under `CarpetToy/assets/carpet/patterns/`. Definitions change the pile artwork, binding and fringe colors while retaining the existing geometry, dirt masks, ten-pass brush recipe, wet cleaning stages and completion reveal. Paid scenes load only the selected definition rather than preloading every texture.
+
+On 2026-10-05, the four soothing previews joined gameplay as **Stillwater Pond**, **Misty Tea Garden**, **Quiet Cove**, and **Moonlit Greenhouse**, together with the previously archived cat design **Ramen Neko**. Their original PNGs were copied byte-for-byte to `CarpetToy/assets/carpet/patterns/` and paired with definitions in `CarpetToy/resources/rugs/`. Godot import settings use mipmaps and the existing 1024-pixel size limit. The source previews and prompts remain under `design/art-explorations/`.
+
+Celestial Whale is retired from paid jobs and Gym practice. Stillwater Pond takes its discovery slot, preserving the other existing positions; the remaining new designs append after Moon Moth. Saves containing a reserved Whale job migrate to Stillwater Pond, retaining the job ID, dirt/water snapshot, wallet, rewards, and each store's independent progress. The removed ID is accepted only during save restoration and cannot be submitted as a current job snapshot.
+Every store offers the full collection. Paid jobs cycle through all designs without repetition, with each store maintaining its own sequence. An existing reserved job keeps its saved ID (or its explicit retired-design replacement) and partial dirt/water state, including when returning from another store; adding designs does not reroll unfinished work. Completed jobs use the existing payout and atomic reservation logic.
+
+The Gym uses a shuffled deck of the same designs, including designs from later paid jobs. **Reset carpet** replaces the current carpet with a freshly dirty random design and avoids repeating a design until the deck is exhausted. Brush and Wet practice retain their exercise recipes, camera and selected upgrade previews; switching exercises keeps the current artwork. Gym practice does not spend money, pay rewards or change paid-job progress.
+
+## Validation
+
+- `tools/validate_rug_identity.gd` covers stable earlier IDs, all 24 designs in every store, partial-work disk reload for every design, full-cycle payouts, migration and invalid identity recovery.
+- `tools/validate_rug_discovery.gd` exercises all 24 paid designs in the renderer: actual brush strokes, visible pattern differences, clean/before/after reveals, resume, original Mint restoration after a full cycle, and reuse of meshes, dirt pool, mask and material.
+- Gameplay checks must run through `tools/run_godot.ps1` with Godot 4.7.2 stable Mono/.NET and `-- --shop-test`, using an isolated test profile.
+
+The original 12-design collection passed identity 294/294, renderer discovery 495/495, Gym 791/791, and second-store wet recipe 61/61 with the pinned toolchain. Gym checks cover all catalog designs in both exercise modes, shuffled-deck boundaries, stale water/dirt effects, reset during arrival and vacuum, save isolation, and portrait/landscape layouts down to 320 × 568 and 568 × 320. The renderer discovery report is `art/rug_discovery_validation.json`; runtime screenshots are in `art/renders/`.
+
+The expanded 20-design collection passed **462 identity checks**, **1,043 renderer discovery checks**, and **951 renderer Gym checks** on 2026-10-01, with zero failures. That run produced 102 gameplay captures and 190 pairwise visual comparisons. Sunday Cat and Paper Boats were also visually inspected in their clean gameplay captures: their simple subjects and open backgrounds render correctly within the existing rug geometry. Gym validation exercised every design in both modes and confirmed phone controls do not overlap. Run its layout checks with a renderer as instructed in the validator; a headless run produced five display-scaling failures that did not reproduce in the supported renderer run.
+
+
+The current 24-design collection passed **557 identity/migration checks**, **1,389 renderer discovery checks**, and **1,031 renderer Gym checks** on 2026-10-05, with zero failures under Godot 4.7.2 stable Mono/.NET and isolated test saves. Discovery produced 122 captures and 276 pairwise visual comparisons. Clean gameplay captures of all five integrated designs were visually inspected. Migration coverage verifies active and inactive Whale reservations, exact serialized dry/wet progress, repeated entry, wallet/rewards, and existing completion payouts.
+Artwork was generated with the built-in Imagegen tool. Complete prompts and saved asset paths are in [Expanded_Carpet_Artwork_Prompts.md](Expanded_Carpet_Artwork_Prompts.md) for the ornate collection and [Open_Space_Carpet_Artwork_Prompts.md](Open_Space_Carpet_Artwork_Prompts.md) for the eight calmer designs. Source PNGs stay at 1024 × 1536, with mipmaps and a 1024-pixel import limit matching Fox's Den.
+

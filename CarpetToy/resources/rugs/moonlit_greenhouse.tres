@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/rug_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/carpet/patterns/moonlit_greenhouse.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+rug_id = "moonlit_greenhouse"
+display_name = "Moonlit Greenhouse"
+cleaning_hint = "Brush / ten passes\nUncover the cozy greenhouse beneath the crescent moon."
+pattern_texture = ExtResource("2")
+pile_color = Color(1, 1, 1, 1)
+binding_color = Color(0.22, 0.37, 0.36, 1)
+fringe_color = Color(0.92, 0.85, 0.68, 1)
+dust_strength = 0.94
+removal_per_pass = 0.1

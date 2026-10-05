@@ -1,0 +1,20 @@
+{
+  "recorded_gameplay": false,
+  "total_frames": 450,
+  "output_dir": "exports",
+  "filename": "Carpet_Cleaner_Find_the_Fox_15s_v1.mp4",
+  "target_lufs": -18,
+  "crf": 16,
+  "preset": "slow",
+  "music": {"source": "../ad_preproduction_v2/audio/quiet_shop_music_loop.wav", "gain": 0.32, "in": 0, "fade_out": 0.9},
+  "audio_events": [],
+  "clips": [
+    {"id": "fox_hook", "source": "raw/fox.mkv", "in": 0, "frames": 60, "overlay": "../ad_preproduction_v2/vectors/hook_discovery.svg", "audio": "source"},
+    {"id": "fox_work", "source": "raw/fox.mkv", "in": 2, "frames": 90, "overlay": "../ad_preproduction_v2/vectors/process.svg", "audio": "source"},
+    {"id": "fox_finish", "source": "raw/fox.mkv", "in": 5, "frames": 66, "audio": "source"},
+    {"id": "fox_reveal", "source": "raw/fox.mkv", "in": 7.2, "frames": 69, "overlay": "../ad_preproduction_v2/vectors/reveal.svg", "audio": "source"},
+    {"id": "mint_reveal", "source": "raw/mint.mkv", "in": 0, "frames": 38, "overlay": "../ad_preproduction_v2/vectors/next_rug.svg", "audio": "mute"},
+    {"id": "sunburst_reveal", "source": "raw/sunburst.mkv", "in": 0, "frames": 37, "overlay": "../ad_preproduction_v2/vectors/next_rug.svg", "audio": "mute"},
+    {"id": "google_play", "kind": "endcard", "source": "raw/fox.mkv", "in": 8.5, "frames": 90, "audio": "mute", "background": "../ad_preproduction_v2/vectors/endcard.svg", "hero_slot": [365, 505, 350, 565]}
+  ]
+}

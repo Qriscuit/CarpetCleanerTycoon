@@ -66,6 +66,6 @@ static func new_branch(store_id: int) -> Dictionary:
 		"bonzi_tier": -1 if store_id == 1 else 0,
 		"bonzi_earned": 0, "manual_jobs": 0, "automated_jobs": 0,
 		"routine_remainder": 0.0, "banked_orders": 0, "final_tool_jobs": 0,
-		"active_job_id": "", "job_snapshot": {}, "job_early_reward": 0,
+		"active_job_id": "", "active_rug_id": "mint_meadow", "job_snapshot": {}, "job_early_reward": 0,
 		"job_started_with_final_tool": false, "job_final_tool_used": false,
 	}

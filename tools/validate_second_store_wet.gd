@@ -1,5 +1,5 @@
 extends SceneTree
-## Focused production integration for Store 2's hose -> squeegee job.
+## Focused production integration for Store 2's three hose -> squeegee washes.
 ## Run through tools/run_godot.ps1 with: --path CarpetToy --script ../tools/validate_second_store_wet.gd -- --shop-test
 
 const Progression = preload("res://scripts/progression.gd")
@@ -74,11 +74,17 @@ func set_dry_clearance(soil: Node, fraction: float) -> void:
 	soil.request_render()
 
 
-func set_wet_clearances(soil: Node, water_fraction: float, extraction_fraction: float) -> void:
+func set_wet_clearances(soil: Node, water_fraction: float, extraction_fraction: float, cycle_index: int = -1) -> void:
 	var wet := clampf(water_fraction, 0.0, 1.0)
 	var extracted := clampf(extraction_fraction, 0.0, wet)
+	soil.global_water_level = wet
+	if cycle_index >= 0:
+		soil.wash_cycle = cycle_index
+		soil._update_wet_materials()
 	soil.water_coverage_total = 0.0
 	soil.extraction_coverage_total = 0.0
+	soil.wet_mask.fill(Color.BLACK)
+	soil.extraction_mask.fill(Color.BLACK)
 	for index in soil.water_values.size():
 		if soil.surface_pixels[index] == 0:
 			soil.water_values[index] = 0.0
@@ -90,7 +96,9 @@ func set_wet_clearances(soil: Node, water_fraction: float, extraction_fraction: 
 		soil.extraction_coverage_total += extracted
 		var visible := wet - extracted
 		soil.wet_mask.set_pixel(index % soil.MASK_SIZE.x, index / soil.MASK_SIZE.x, Color(visible, visible, visible))
+		soil.extraction_mask.set_pixel(index % soil.MASK_SIZE.x, index / soil.MASK_SIZE.x, Color(extracted, extracted, extracted))
 	soil.wet_mask_changed = true
+	soil.extraction_mask_changed = true
 	soil.request_render()
 
 
@@ -117,8 +125,8 @@ func run() -> void:
 	state.cash = 1000000
 	check(not state.start_job().is_empty(), "Store 2 has a paid job")
 
-	# A fresh High Street rug starts clean-dry on the hose: no brush stage or
-	# visible dirt reveal is allowed before the two wet actions.
+	# A fresh High Street rug starts on the hose: physical dry debris is
+	# already cleared, while its art is hidden by the wash grime.
 	game = await enter_cleaning()
 	var soil: Node = game.soil
 	check(game.paid_contract and game.wet_recipe and game.water_only_recipe and soil.wet_recipe and soil.skip_dry_stage, "High Street is a paid water-only recipe")
@@ -138,6 +146,8 @@ func run() -> void:
 	set_wet_clearances(game.soil, 1.0, 0.12)
 	var legacy_dry: Dictionary = game.soil.make_snapshot()
 	legacy_dry["skip_dry_stage"] = false
+	for new_key in ["wash_cycle_count", "wash_cycle", "global_water_level"]:
+		legacy_dry.erase(new_key)
 	var expected_water := float(legacy_dry.water_clearance)
 	var expected_extraction := float(legacy_dry.extraction_clearance)
 	leave_cleaning()
@@ -151,10 +161,10 @@ func run() -> void:
 	check(game.water.enabled and game.squeegee_water.enabled and game.water.stream != null and game.squeegee_water.trail != null, "both bounded VFX systems are configured and enabled")
 	check(soil.unique_clearance() == 1.0 and soil.surface_clearance() == 1.0 and soil.remaining == 0, "migration clears only the obsolete dry layer")
 	check(absf(soil.water_clearance() - expected_water) < 0.01 and absf(soil.extraction_clearance() - expected_extraction) < 0.01, "migration preserves saved water and extraction")
-	check(game.selected_tool == 1 and absf(game.progress_fraction - (soil.water_clearance() + soil.extraction_clearance()) * 0.5) < 0.0001, "migrated job resumes the saved squeegee stage with two-stage progress")
+	check(game.selected_tool == 1 and soil.wash_cycle == 2 and absf(game.progress_fraction - (4.0 + soil.water_clearance() + soil.extraction_clearance()) / 6.0) < 0.0001, "legacy one-wash job preserves its earned extraction on the final round")
 	# Continue the remaining checks from a partial hose stage in the same migrated
 	# job; this fixture change is not a recipe migration or runtime reset.
-	set_wet_clearances(soil, 0.36, 0.0)
+	set_wet_clearances(soil, 0.36, 0.0, 0)
 	game.update_contract_status()
 	game.end_stroke()
 	await settle()
@@ -189,7 +199,7 @@ func run() -> void:
 	game.update_contract_status()
 	game.end_stroke()
 	await settle()
-	check(game.selected_tool == 2 and game.progress_fraction > 0.17 and game.progress_fraction < 0.19, "partial legacy wet work resumes at its two-stage average")
+	check(game.selected_tool == 2 and absf(game.progress_fraction - soil.water_clearance() / 6.0) < 0.0001, "partial first-round wet work contributes one of six actions")
 	var hose_screen: Vector2 = game.camera.unproject_position(Vector3(0.0, 0.067, -0.25))
 	game.begin_stroke(hose_screen, false)
 	check(game.brush_dragging and game.water.emitting and game.water.nozzle.distance_to(game.nozzle_socket.global_position) < 0.001, "the paid tool starts emission from its 3D nozzle socket")
@@ -214,7 +224,11 @@ func run() -> void:
 
 	# Saturate through the shared contact painter, then exercise the production
 	# rotated blade path and its visual-only splash/trail companion.
-	check(soil.apply_water_blob(soil.rug_node.to_global(Vector3.ZERO), soil.RUG_HALF.length() * 2.0, 1.0, 0.01), "shared hose contact painter can finish the water stage")
+	var water_changed := false
+	for _contact in 20:
+		water_changed = soil.apply_water_blob(soil.rug_node.to_global(Vector3.ZERO), 0.19, 1.0) or water_changed
+		if soil.water_stage_complete(): break
+	check(water_changed and soil.water_stage_complete(), "repeated hose contact at one spot finishes the whole-carpet water stage")
 	game.update_contract_status()
 	game.end_stroke()
 	await settle()
@@ -229,21 +243,41 @@ func run() -> void:
 	check(int(squeegee_stats.emitted_strokes) > 0 and float(squeegee_stats.removed_water) > 0.0, "paid squeegee funds its real head splash and cleared-path trail")
 	check(is_equal_approx(soil.tool_strength, float(state.progression_view().squeegee_power)), "squeegee applies its independent global extraction strength")
 
-	# Water complete plus 50% extraction is exactly 75% overall. At 98%
-	# extraction the two-stage average is exact 99%, including float epsilon.
-	set_wet_clearances(soil, 1.0, 0.50)
-	game.update_contract_status()
-	check(ShopLedger.completion_reached(game.progress_fraction, ShopLedger.MANUAL_COMPLETION_THRESHOLD) and game.finish_button.visible, "two-stage 75% exposes manual Finish")
+	# Neither of the first two extracted rounds may expose Finish or earn a
+	# payout. Their completion automatically retires old water and equips the
+	# next hose while preserving the same paid job and allocations.
 	var full_job: String = state.active_job_id
+	for cycle in 2:
+		set_wet_clearances(soil, 1.0, 0.50, cycle)
+		game.update_contract_status()
+		check(not game.finish_button.visible and not game.auto_finish_queued and state.reward_for_current_job(soil.make_progress_snapshot()) == 0, "wash %d cannot finish early or quote a payout" % (cycle + 1))
+		set_wet_clearances(soil, 1.0, 1.0)
+		game.update_contract_status()
+		game._advance_wet_tool()
+		await settle()
+		check(soil.wash_cycle == cycle + 1 and game.selected_tool == 2 and soil.water_clearance() == 0.0 and soil.extraction_clearance() == 0.0, "finished wash %d opens a fresh whole-carpet hose round" % (cycle + 1))
+		check(state.active_job_id == full_job and not game.contract_finished and game.water.debug_stats().history_count == 0, "wash transition keeps the paid job and removes old water")
+
+	# Early Finish remains available only after 75% of the third extraction.
+	# A high overall meter cannot bypass the final rinse, and 98% extraction
+	# must not receive the automatic/full-restoration classification.
+	set_wet_clearances(soil, 1.0, 0.50, 2)
+	game.update_contract_status()
+	check(not game.finish_button.visible and state.reward_for_current_job(soil.make_progress_snapshot()) == 0, "half of the final extraction is not eligible for early Finish")
+	set_wet_clearances(soil, 1.0, 0.75)
+	game.update_contract_status()
+	check(game.finish_button.visible and state.reward_for_current_job(soil.make_progress_snapshot()) > 0 and not game.auto_finish_queued, "third-round 75% extraction exposes manual Finish")
 	set_wet_clearances(soil, 1.0, 0.98)
 	game.update_contract_status()
-	check(game.auto_finish_queued, "two-stage exact 99% queues automatic completion")
+	check(not game.auto_finish_queued and not soil.all_washes_complete(), "98% of the final extraction cannot bypass the 99% full-clean gate")
+	set_wet_clearances(soil, 1.0, 0.99)
+	game.update_contract_status()
+	check(game.auto_finish_queued, "third-round exact 99% extraction queues automatic completion")
 	await process_frame
 	check(game.contract_finished and state.active_job_id != full_job, "full Store 2 wet job pays once and reserves its replacement")
 	leave_cleaning()
-
-	# Later wet stores retain the original brush -> hose -> squeegee recipe and
-	# three-way progress arithmetic.
+	# Later wet stores retain their brush stage before the three required
+	# hose/squeegee rounds, with seven equally weighted actions.
 	for store_id in [3, 4]:
 		state._sync_active_branch()
 		state.stores[str(store_id)] = Progression.new_branch(store_id)
@@ -253,10 +287,10 @@ func run() -> void:
 		check(not state.start_job().is_empty(), "Store %d has a paid job" % store_id)
 		game = await enter_cleaning()
 		soil = game.soil
-		check(game.wet_recipe and not game.water_only_recipe and not soil.skip_dry_stage and game.selected_tool == 0, "Store %d retains the three-stage brush start" % store_id)
+		check(game.wet_recipe and not game.water_only_recipe and not soil.skip_dry_stage and game.selected_tool == 0, "Store %d retains the brush start before three washes" % store_id)
 		set_dry_clearance(soil, 0.50)
 		set_wet_clearances(soil, 0.40, 0.20)
-		check(absf(soil.overall_clearance() - (0.50 + 0.40 + 0.20) / 3.0) < 0.002, "Store %d retains three-stage progress averaging" % store_id)
+		check(absf(soil.overall_clearance() - (0.50 + 0.40 + 0.20) / 7.0) < 0.002, "Store %d averages its brush and six wet actions" % store_id)
 		check(not soil.apply_water_blob(Vector3.ZERO, 0.5, 1.0), "Store %d hose cannot bypass dry work" % store_id)
 		leave_cleaning()
 

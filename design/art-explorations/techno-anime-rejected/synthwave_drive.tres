@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/rug_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/carpet/patterns/synthwave_drive.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+rug_id = "synthwave_drive"
+display_name = "Midnight Drive"
+cleaning_hint = "Brush / ten passes\nUncover the midnight road beneath the dark soil."
+pattern_texture = ExtResource("2")
+pile_color = Color(1, 1, 1, 1)
+binding_color = Color(0.13, 0.15, 0.28, 1)
+fringe_color = Color(0.60, 0.53, 0.73, 1)
+dust_strength = 0.94
+removal_per_pass = 0.1
+

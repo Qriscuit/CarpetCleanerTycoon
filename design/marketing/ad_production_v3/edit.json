@@ -1,0 +1,25 @@
+{
+  "recorded_gameplay": true,
+  "total_frames": 540,
+  "output_dir": "exports",
+  "filename": "Carpet_Cleaner_Three_Tools_18s_v3.mp4",
+  "target_lufs": -18,
+  "crf": 16,
+  "preset": "slow",
+  "poster_time": 2.7,
+  "review_title": "CARPET CLEANER / THREE TOOLS",
+  "review_frame_times": [0.9, 3.7, 7.2, 10.7, 13.5, 16.3],
+  "music": {"source": "../ad_preproduction_v2/audio/quiet_shop_music_loop.wav", "gain": 0.32, "in": 0, "fade_out": 0.9},
+  "audio_events": [],
+  "clips": [
+    {"id": "three_tools", "source": "exports/Three_Tools_Triptych.mkv", "in": 0, "frames": 180, "audio": "source"},
+    {"id": "max_hose", "source": "../../../build/ad-capture-v3/wet-tools-002/restorations.avi", "in": 4.0, "frames": 90, "crop": [117,232,846,1504], "audio": "source", "overlay": "art/full_hose.svg", "overlay_motion": {"enter": 0.18, "exit": 0.08, "rise": 12}},
+    {"id": "squeegee", "source": "../../../build/ad-capture-v3/wet-tools-002/restorations.avi", "in": 21.6, "frames": 108, "crop": [117,232,846,1504], "audio": "source", "overlay": "art/full_squeegee.svg", "overlay_motion": {"enter": 0.18, "exit": 0.08, "rise": 12}},
+    {"id": "clean_reveal", "source": "../../../build/ad-capture-v3/wet-tools-002/restorations.avi", "in": 46.53333333333333, "frames": 72, "crop": [90,210,900,1600], "audio": "source", "overlay": "../ad_production_v2/captions/reveal.svg", "overlay_motion": {"enter": 0.22, "exit": 0.08, "rise": 14}},
+    {"id": "play_now", "kind": "freeze", "source": "../../../build/ad-capture-v3/wet-tools-002/restorations.avi", "in": 47.4, "frames": 90, "crop": [90,210,900,1600], "audio": "mute", "freeze_zoom": [1,1.02], "overlays": [
+      {"source": "../ad_production_v2/art/endcard_sparkles.svg", "at": 0.12, "until": 3, "motion": {"enter": 0.3, "exit": 0, "rise": 0, "float": 3, "period": 2.8}},
+      {"source": "../ad_production_v2/art/endcard_title.svg", "at": 0, "until": 3, "motion": {"enter": 0.22, "exit": 0, "rise": 16}},
+      {"source": "../ad_production_v2/art/endcard_cta.svg", "at": 0.2, "until": 3, "motion": {"enter": 0.22, "exit": 0, "rise": 14}}
+    ]}
+  ]
+}

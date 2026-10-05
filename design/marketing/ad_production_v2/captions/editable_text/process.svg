@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920"><title>BRUSH. REVEAL.</title><defs>
+  <linearGradient id="teal" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0" stop-color="#32636B"/><stop offset="0.48" stop-color="#204E58"/><stop offset="1" stop-color="#133C46"/>
+  </linearGradient>
+  <linearGradient id="mint" x1="0" y1="0" x2="1" y2="1">
+    <stop stop-color="#8DDCC5"/><stop offset="1" stop-color="#41AA93"/>
+  </linearGradient>
+  <linearGradient id="orange" x1="0" y1="0" x2="0" y2="1">
+    <stop stop-color="#F09A57"/><stop offset="1" stop-color="#DC7339"/>
+  </linearGradient>
+  <filter id="lift" x="-40%" y="-50%" width="180%" height="220%" color-interpolation-filters="sRGB">
+    <feDropShadow dx="0" dy="9" stdDeviation="5" flood-color="#153E44" flood-opacity="0.22"/>
+  </filter>
+</defs><g transform="rotate(-1.5 540 350)">
+      <g filter="url(#lift)"><g fill="#E7DCC0" stroke="#E7DCC0" stroke-width="25" stroke-linejoin="round" transform="translate(0 4)"><text x="540" y="384" font-family="Ad Rounded" font-size="99" text-anchor="middle" letter-spacing="-2.3">Brush. Reveal.</text></g><g fill="#FFFAEA" stroke="#FFFAEA" stroke-width="23" stroke-linejoin="round"><text x="540" y="384" font-family="Ad Rounded" font-size="99" text-anchor="middle" letter-spacing="-2.3">Brush. Reveal.</text></g><g fill="url(#teal)"><text x="540" y="384" font-family="Ad Rounded" font-size="99" text-anchor="middle" letter-spacing="-2.3">Brush. Reveal.</text></g></g>
+      <path d="M360 424 Q541 436 721 418" fill="none" stroke="#FFF9E6" stroke-width="21" stroke-linecap="round"/>
+      <path d="M360 423 Q541 435 721 417" fill="none" stroke="#77C9B1" stroke-width="7" stroke-linecap="round"/>
+      <g transform="translate(899 300) rotate(-7) scale(0.76)">
+    <path d="M0-29 C4-7 7-4 24 0 C7 4 4 8 0 29 C-4 8-7 4-24 0 C-7-4-4-7 0-29Z" fill="#FFF8DD" stroke="#FFF8DD" stroke-width="9" stroke-linejoin="round"/>
+    <path d="M0-29 C4-7 7-4 24 0 C7 4 4 8 0 29 C-4 8-7 4-24 0 C-7-4-4-7 0-29Z" fill="#FFEFAD" stroke="#E9B342" stroke-width="3" stroke-linejoin="round"/>
+  </g>
+    </g></svg>

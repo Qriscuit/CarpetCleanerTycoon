@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/rug_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/carpet/patterns/mushroom_glade.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+rug_id = "mushroom_glade"
+display_name = "Mushroom Glade"
+cleaning_hint = "Brush / ten passes\nUncover the enchanted mushroom glade beneath the dark soil."
+pattern_texture = ExtResource("2")
+pile_color = Color(1, 1, 1, 1)
+binding_color = Color(0.16, 0.24, 0.20, 1)
+fringe_color = Color(0.88, 0.80, 0.63, 1)
+dust_strength = 0.94
+removal_per_pass = 0.1
+

@@ -1,0 +1,2097 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-09-29T17:36:01.076054+00:00",
+  "purpose": "Source and completed raw-capture provenance for the first real Carpet Cleaner ad production pass. Final edited-video QA and publication are separate.",
+  "repository": {
+    "root": "S:\\Game Projects\\CarpetCleanerTycoon",
+    "head": "46e9ae8ff49e0388f4b93f587658e64cfb52df80",
+    "branch": "main",
+    "working_tree_status_porcelain_v1": [
+      " M CarpetToy/project.godot",
+      " M CarpetToy/resources/rugs/mint_meadow.tres",
+      " M CarpetToy/scenes/production/floating_home.tscn",
+      " M CarpetToy/scripts/dirt_controller.gd",
+      " M CarpetToy/scripts/floating_home.gd",
+      " M CarpetToy/scripts/gym.gd",
+      " M CarpetToy/scripts/progression.gd",
+      " M CarpetToy/scripts/rug_definition.gd",
+      " M CarpetToy/scripts/shop_state.gd",
+      " M CarpetToy/scripts/workshop.gd",
+      " M tools/home_settings_authoring.gd",
+      " M tools/validate_contract.gd",
+      " M tools/validate_dirt_pool.gd",
+      " M tools/validate_rug_transition.gd",
+      "?? CarpetToy/assets/audio/",
+      "?? CarpetToy/assets/carpet/patterns/",
+      "?? CarpetToy/resources/rugs/playful_fox.tres",
+      "?? CarpetToy/resources/rugs/sunburst_geometry.tres",
+      "?? CarpetToy/scenes/ui/completion_reveal.tscn",
+      "?? CarpetToy/scripts/completion_reveal.gd",
+      "?? CarpetToy/scripts/completion_reveal.gd.uid",
+      "?? CarpetToy/scripts/game_audio.gd",
+      "?? CarpetToy/scripts/game_audio.gd.uid",
+      "?? CarpetToy/scripts/rug_catalog.gd",
+      "?? CarpetToy/scripts/rug_catalog.gd.uid",
+      "?? CarpetToy/scripts/rug_comparison.gd",
+      "?? CarpetToy/scripts/rug_comparison.gd.uid",
+      "?? art/rug_discovery_validation.json",
+      "?? design/Completion_Payoff.md",
+      "?? design/Fiber_Audio_Pass.md",
+      "?? design/First_Session_Proposal.md",
+      "?? design/Rug_Artwork_Prompts.md",
+      "?? design/Rug_Discovery_Pass.md",
+      "?? design/audio_sketches/",
+      "?? design/marketing/ad_preproduction_v2/",
+      "?? tools/ad_capture_probe.gd",
+      "?? tools/synthesize_game_audio.py",
+      "?? tools/validate_completion_reveal.gd",
+      "?? tools/validate_game_audio.gd",
+      "?? tools/validate_rug_discovery.gd",
+      "?? tools/validate_rug_identity.gd"
+    ],
+    "status_scope": "Observed during this production turn before final take rendering. Gameplay modifications and untracked assets predate this provenance audit; capture helpers may already be from the active production turn. The source is intentionally not described as a clean committed release."
+  },
+  "toolchain": {
+    "required_version": "4.7.2.stable.mono",
+    "launcher": "tools/run_godot.ps1",
+    "runtime_version_executed_by_this_audit": false,
+    "version_validation": "Launcher fail-closed regex ^4\\.7\\.2\\.stable\\.mono\\.; runtime output must be verified by the capture operator.",
+    "files": [
+      {
+        "path": "tools/godot/Godot_v4.7.2-stable_mono_win64/Godot_v4.7.2-stable_mono_win64_console.exe",
+        "bytes": 198152,
+        "sha256": "2445d009a5e0474fc7064b9767100e9d2c09521890ac5625476bfb81cf03f2d4"
+      },
+      {
+        "path": "tools/godot/Godot_v4.7.2-stable_mono_win64/Godot_v4.7.2-stable_mono_win64.exe",
+        "bytes": 181449736,
+        "sha256": "45336315eb6f1a52a8923bc4f2ce8079a03dc4939dcb7d531047890f1f7cdfab"
+      },
+      {
+        "path": "tools/godot/Godot_v4.7.2-stable_mono_win64/GodotSharp/Tools/GodotTools.dll",
+        "bytes": 174080,
+        "sha256": "d9a463c71f98d67abf38569cbbdd13437bb236a798eaa8e31990ff98d7ca3322"
+      },
+      {
+        "path": "tools/godot/Godot_v4.7.2-stable_mono_win64/GodotSharp/Api/Debug/GodotSharp.dll",
+        "bytes": 6362112,
+        "sha256": "af104a6fdca648c2092b542ce49a773ee4c3a1388d065968bb42a80ace49e84e"
+      },
+      {
+        "path": "tools/godot/Godot_v4.7.2-stable_mono_win64/GodotSharp/Tools/nupkgs/Godot.NET.Sdk.4.7.2.nupkg",
+        "bytes": 6888,
+        "sha256": "75aad61e35072f903a800032caf361e7010e44bfa290be3e44dcde3453707118"
+      }
+    ],
+    "runtime_version_verified_from_capture_log": "Godot Engine v4.7.2.stable.mono.official.ed1daf0bf - https://godotengine.org",
+    "runtime_version_evidence": "build/ad-capture-v2/full-game-001/engine.log:1"
+  },
+  "capture_plan": {
+    "status": "Completed successfully; see capture_run. Final edited-video export is outside this audit.",
+    "writer": "Godot MovieWriter",
+    "scene": "res://scenes/production/rug_cleaning.tscn",
+    "target_fps": 30,
+    "input": "Normal production input path, with capture-only stroke timestamp correction to the 30 fps render clock when needed.",
+    "save_isolation": "-- --shop-test; isolated workspace APPDATA and LOCALAPPDATA. Actual user save must not be used.",
+    "prohibited_staging": [
+      "No dirty-mask seeding",
+      "No direct coverage or dirt-power changes",
+      "No reward or wallet seeding",
+      "No fake one-pass restoration",
+      "No older staged test stills represented as recorded gameplay"
+    ],
+    "remaining_verification": [
+      "Final ad hash and export settings",
+      "Editorial selected frame ranges and first-frame mapping",
+      "Final mixed audio/video sync and playback review",
+      "Google Play public listing and build match"
+    ]
+  },
+  "verified_source_facts": {
+    "paid_rug_order": {
+      "values": [
+        "mint_meadow",
+        "sunburst_geometry",
+        "playful_fox"
+      ],
+      "display_names": [
+        "Mint Meadow",
+        "Sunburst",
+        "Fox's Den"
+      ],
+      "source": [
+        "CarpetToy/scripts/rug_catalog.gd:5",
+        "CarpetToy/scripts/shop_state.gd:607"
+      ],
+      "scope": "Fresh paid-job branch, before repeated cycles; per-store manual job count selects the next identity."
+    },
+    "dry_cleaning": {
+      "removal_per_pass": 0.1,
+      "dust_strength": 0.94,
+      "scope": "Ten ideal full-strength passes at one fully contacted spot. Feathered edges and incomplete passes may need more; this is not a guaranteed full-rug duration.",
+      "source": [
+        "CarpetToy/resources/rugs/mint_meadow.tres",
+        "CarpetToy/resources/rugs/sunburst_geometry.tres",
+        "CarpetToy/resources/rugs/playful_fox.tres",
+        "CarpetToy/scripts/dirt_controller.gd:636"
+      ]
+    },
+    "starter_upgrade": {
+      "cost_coins": 80,
+      "width_before": 1.0,
+      "width_after": 1.44,
+      "power_before": 1.0,
+      "power_after": 1.0,
+      "scope": "Store 1 first tool upgrade with no payout/tool upgrades already applied.",
+      "source": [
+        "CarpetToy/scripts/progression.gd:7",
+        "CarpetToy/scripts/progression.gd:9",
+        "CarpetToy/scripts/progression.gd:10"
+      ]
+    },
+    "reward": {
+      "full_restoration_base_coins": 40,
+      "early_finish_base_coins": 20,
+      "scope": "Store 1 payout level zero; reward scales with store and payout upgrades.",
+      "source": [
+        "CarpetToy/scripts/progression.gd:37",
+        "CarpetToy/scripts/shop_state.gd:639"
+      ]
+    },
+    "completion": {
+      "full_threshold": 0.99,
+      "suction_seconds": 1.8,
+      "full_reveal_seconds": 2.4,
+      "early_reveal_seconds": 1.1,
+      "soil_polish": "Accepted full restoration fades shader dust_strength to zero over the suction. It does not rewrite saved coverage or award an extra reward. Early finish retains residual dirt.",
+      "source": [
+        "CarpetToy/scripts/shop_state.gd:16",
+        "CarpetToy/scripts/dirt_controller.gd:8",
+        "CarpetToy/scripts/dirt_controller.gd:225",
+        "CarpetToy/scripts/workshop.gd:986",
+        "CarpetToy/scripts/completion_reveal.gd:31"
+      ]
+    },
+    "debris": {
+      "pool_instances": 560,
+      "reserve": 64,
+      "fade_seconds": 0.6,
+      "policy": "Demand starts reclamation. New extraction uses the current contact; missed extraction is not queued at a historical brush position.",
+      "source": [
+        "CarpetToy/scenes/production/rug_cleaning.tscn:250",
+        "CarpetToy/scripts/dirt_controller.gd:38",
+        "CarpetToy/scripts/dirt_controller.gd:536"
+      ]
+    },
+    "stroke_clock": {
+      "clock": "Time.get_ticks_msec",
+      "source": [
+        "CarpetToy/scripts/workshop.gd:310",
+        "CarpetToy/scripts/workshop.gd:579"
+      ],
+      "implication": "Offline rendering may take a different wall-clock duration than the captured frame duration. A capture-only timestamp correction is required for faithful speed-dependent dirt impulse/audio."
+    },
+    "audio_test_mode": {
+      "default_muted": true,
+      "audition_flag": "--audition-audio",
+      "source": [
+        "CarpetToy/scripts/game_audio.gd:28"
+      ]
+    }
+  },
+  "store_listing": {
+    "availability": "Available on Google Play, confirmed by user",
+    "url": null,
+    "listing_identity_verified": false,
+    "public_build_matches_local_source": null,
+    "note": "Do not treat availability as proof that newly recorded local features are already in the public build."
+  },
+  "source_files": [
+    {
+      "path": "AGENTS.md",
+      "bytes": 810,
+      "sha256": "981ff7b51631f9034667ae3bb5a2617bc16008dd51fd6c3edd867b30e68c2e79"
+    },
+    {
+      "path": "CarpetToy/assets/audio/brush_fabric_loop.wav",
+      "bytes": 352844,
+      "sha256": "975e7a9d089a711850b6bb831e3e5fb7ef83828813a986307d789fe73b9d0d23"
+    },
+    {
+      "path": "CarpetToy/assets/audio/brush_fabric_loop.wav.import",
+      "bytes": 521,
+      "sha256": "0a7afdb24c7bfa6d42d8e4d94695ad55e9abe70ab6a1c3e52867a4d64df752b6"
+    },
+    {
+      "path": "CarpetToy/assets/audio/brush_soil_loop.wav",
+      "bytes": 352844,
+      "sha256": "5b349bc0c009ae80afd7a826a4eac67d2a73a43c1fa8ecd2cf5a9926ddef816b"
+    },
+    {
+      "path": "CarpetToy/assets/audio/brush_soil_loop.wav.import",
+      "bytes": 516,
+      "sha256": "bc432f7c48aaac800c7fcd8c5ccaebe8785c988236f62883f4bc2cd9629b5fd3"
+    },
+    {
+      "path": "CarpetToy/assets/audio/quiet_shop_music_loop.wav",
+      "bytes": 4233644,
+      "sha256": "3915a38a70818fd21849c4b752bc3782cb415c229f8adc231e15578a22faf69c"
+    },
+    {
+      "path": "CarpetToy/assets/audio/quiet_shop_music_loop.wav.import",
+      "bytes": 534,
+      "sha256": "713f7812d9d4d11c0db8ea7361c1df528d73756971f0bb2f8f0334fe639d6e06"
+    },
+    {
+      "path": "CarpetToy/assets/audio/restoration_complete.wav",
+      "bytes": 74132,
+      "sha256": "11990ab2482f6c1e6cee2f61639a3051e86760809b5bb458ef57e593faa79ea5"
+    },
+    {
+      "path": "CarpetToy/assets/audio/restoration_complete.wav.import",
+      "bytes": 531,
+      "sha256": "e1f473a51da6e7d5543c9d9de1c75a2ee3722d0bf18144c6aee9df07da5c3aa1"
+    },
+    {
+      "path": "CarpetToy/assets/carpet/mint_meadow_mint_meadow_albedo.png",
+      "bytes": 947655,
+      "sha256": "47a39f2e6ae614a2ec01c06fdadb17a98df8aa5ee949c007f499c5f253c0665c"
+    },
+    {
+      "path": "CarpetToy/assets/carpet/mint_meadow_mint_meadow_albedo.png.import",
+      "bytes": 1074,
+      "sha256": "f44612df44aa5f3cd001be5c05f04210ae78aebc171f16014e5a8053d52db2ed"
+    },
+    {
+      "path": "CarpetToy/assets/carpet/mint_meadow_mint_meadow_normal.png",
+      "bytes": 1470545,
+      "sha256": "97546b43da63abb02ee127f9a6754e1bdb2af687baefbbd031c06176c843ce19"
+    },
+    {
+      "path": "CarpetToy/assets/carpet/mint_meadow_mint_meadow_normal.png.import",
+      "bytes": 1127,
+      "sha256": "9b47f6a2c344668268f9dbdaf5ab6f4d9e70f3d8f3e10405e148bca3631ddb79"
+    },
+    {
+      "path": "CarpetToy/assets/carpet/patterns/playful_fox.png",
+      "bytes": 3255217,
+      "sha256": "95855adb41d236a4e3b69ad67b048de364e54d625be7650f4811a3cb635ba648"
+    },
+    {
+      "path": "CarpetToy/assets/carpet/patterns/playful_fox.png.import",
+      "bytes": 962,
+      "sha256": "a252f92162f402aeb8c9fe2dd6329be77c2159a3fb87f486691b5a44442ef4f2"
+    },
+    {
+      "path": "CarpetToy/assets/carpet/patterns/sunburst_geometry.png",
+      "bytes": 2607829,
+      "sha256": "976dae3b37d169e273b6bb17d02d4a97e8abb483622e5fbbbaef1b220ee8ee1f"
+    },
+    {
+      "path": "CarpetToy/assets/carpet/patterns/sunburst_geometry.png.import",
+      "bytes": 980,
+      "sha256": "6f16e64324280d99b55e047910a80badb8a02d9ccefe8d476001b106232cca21"
+    },
+    {
+      "path": "CarpetToy/assets/dirt/dry_soil_albedo.png",
+      "bytes": 521103,
+      "sha256": "f7e7c080dbdad45e98b6a8616b5d110922f236df87ebc658b7edbd96352ab27b"
+    },
+    {
+      "path": "CarpetToy/assets/dirt/dry_soil_albedo.png.import",
+      "bytes": 959,
+      "sha256": "9a9790bd262dba7241de9067e67548ec773f44f94b715166ba33ebe4f75f5d78"
+    },
+    {
+      "path": "CarpetToy/assets/floating_shop/BlueprintIcon.png",
+      "bytes": 67547,
+      "sha256": "b919d3ee161ab1d15b2a57c3f8ba3959a8d6cd6ae31d0a5a895d3bf8fc053ea8"
+    },
+    {
+      "path": "CarpetToy/assets/floating_shop/BlueprintIcon.png.import",
+      "bytes": 964,
+      "sha256": "653d341c2a4c080b3663f5f3f7e56b6c89d6c2b1a87c47607ca1e32f14c21fd3"
+    },
+    {
+      "path": "CarpetToy/assets/floating_shop/BonziIcon.png",
+      "bytes": 59883,
+      "sha256": "b63af80786eb8b7244d28b60a6bd5c81ac9d3dcd9e8a509e28d930ddc4760111"
+    },
+    {
+      "path": "CarpetToy/assets/floating_shop/BonziIcon.png.import",
+      "bytes": 952,
+      "sha256": "b147909fef5c70d5261a792cbe0987393477452d0fe87d6a1b8ba2db89f5aa27"
+    },
+    {
+      "path": "CarpetToy/assets/floating_shop/BrushIcon.png",
+      "bytes": 57813,
+      "sha256": "00587343cbad1974b902c53145212574220ee10caf8594f7b76f3ef925d34eb8"
+    },
+    {
+      "path": "CarpetToy/assets/floating_shop/BrushIcon.png.import",
+      "bytes": 952,
+      "sha256": "f0dd2db5b6e19efef95a0e5d2009f41a962e502ac09df247af748ce87b24032e"
+    },
+    {
+      "path": "CarpetToy/assets/floating_shop/CoinIcon.png",
+      "bytes": 71769,
+      "sha256": "14914c6dab758c50dbf01bb5d22c57c8cb2e97a975766ef8a78d4b65f882fb70"
+    },
+    {
+      "path": "CarpetToy/assets/floating_shop/CoinIcon.png.import",
+      "bytes": 949,
+      "sha256": "45f7dd04ef5c8433557301c6c633d4fdf5c4e93ceca7a12b5defad15bf609e19"
+    },
+    {
+      "path": "CarpetToy/assets/floating_shop/FloatingShop.glb",
+      "bytes": 782916,
+      "sha256": "7a5e9b9efabf0989fd83c3f378d48d947ad3d7ccdfd770adcf121edec8732b10"
+    },
+    {
+      "path": "CarpetToy/assets/floating_shop/FloatingShop.glb.import",
+      "bytes": 1063,
+      "sha256": "793fcb221de1befe48a712a6179e72c96729bdeb33518feab0501285e1f5565f"
+    },
+    {
+      "path": "CarpetToy/assets/floating_shop/FloatingShop.png",
+      "bytes": 562592,
+      "sha256": "4f5457bcb208585efb52b8ce426d5e2149b58649073ea0ae84a45b6dec5e6254"
+    },
+    {
+      "path": "CarpetToy/assets/floating_shop/FloatingShop.png.import",
+      "bytes": 961,
+      "sha256": "5d1fd753bfa0437109157e6a54eeecec9beb36e2758f900607a6624863fc4af8"
+    },
+    {
+      "path": "CarpetToy/assets/floating_shop/SettingsIcon.png",
+      "bytes": 62614,
+      "sha256": "d8115dde318aa5575d9ebcad5e757bce7ec81e5cae760b0739a59f757a81b9c3"
+    },
+    {
+      "path": "CarpetToy/assets/floating_shop/SettingsIcon.png.import",
+      "bytes": 961,
+      "sha256": "eaaa8544d26a656cc8cc8b868d4e085486418dd77212f691a63eb626ac359586"
+    },
+    {
+      "path": "CarpetToy/assets/tools/jet_spray_tool_palette.png",
+      "bytes": 250,
+      "sha256": "d30dcad5a77747ddaafcbee361c95e644ce316cd3847b3a51af9b40f962cf8fb"
+    },
+    {
+      "path": "CarpetToy/assets/tools/jet_spray_tool_palette.png.import",
+      "bytes": 1310,
+      "sha256": "1d8f7a6c5ea6c222faa2d4dedd292d8143ff1c0e9504d7fc7f90bc969faf4525"
+    },
+    {
+      "path": "CarpetToy/assets/tools/large_brush_tool_palette.png",
+      "bytes": 250,
+      "sha256": "d30dcad5a77747ddaafcbee361c95e644ce316cd3847b3a51af9b40f962cf8fb"
+    },
+    {
+      "path": "CarpetToy/assets/tools/large_brush_tool_palette.png.import",
+      "bytes": 1320,
+      "sha256": "c888e8a8a18af5b29ce5c9e15204443970df32a2f726dfd1823aed837b492039"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_0_current_plastic.glb",
+      "bytes": 130244,
+      "sha256": "985fc43521f7e9575ca66769b69d720f7780de90ab8a865b6d63f8ff161dc8b7"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_0_current_plastic.glb.import",
+      "bytes": 1096,
+      "sha256": "6cbf293e821b5ea453549ec94e8a47e0549d821a20fa6a4205feb55cdb152bca"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_1_wide_plastic.glb",
+      "bytes": 131264,
+      "sha256": "c5fa4308a2abc6d32464727b5dac15148b9d42242259f4d7d6a33601ba44c3bc"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_1_wide_plastic.glb.import",
+      "bytes": 1088,
+      "sha256": "1b9295f4f2cd33df82c9f07e39dfa31783d2bc3d3110845440f668ca3b1f708a"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_2_dense_plastic.glb",
+      "bytes": 219296,
+      "sha256": "5e0741971c21b97e2291eebf2366cbca0883e08d448150d6212edbe0722318ba"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_2_dense_plastic.glb.import",
+      "bytes": 1090,
+      "sha256": "4f4553a38d3f5451c95de998a37f1944da22fffc6348edea1205718b36db1245"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_3_crafted_wood.glb",
+      "bytes": 221248,
+      "sha256": "fa98744119c479d172722d53e6ff91ad84306ca6cb5d3e408fdce31f7b8295b3"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_3_crafted_wood.glb.import",
+      "bytes": 1088,
+      "sha256": "1c219d952f0c9ecb4a52b0581ea46284a11330dbe0d26c5f873da52be47387d9"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_4_engraved_wood.glb",
+      "bytes": 262028,
+      "sha256": "6e5be71d7d49b3051e2393261ca60bd764dc2cfc10408bc15e4053dd1857ecc6"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_4_engraved_wood.glb.import",
+      "bytes": 1090,
+      "sha256": "f34d72cbae600bc225f9e65fa75646bfe4f9a1dac0faa6806df4138ed2fe5093"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_5_cloud_lacquer.glb",
+      "bytes": 271792,
+      "sha256": "06fff3d1f6d20ac8830c119bf51cdc91508ddcdff5c0aa111559934f1744c9ef"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_5_cloud_lacquer.glb.import",
+      "bytes": 1090,
+      "sha256": "8d5a1245bc0cb4c137b012fff8b6623006f0d7e4a67b612387798cd60d74c26b"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_6_lattice_wood.glb",
+      "bytes": 304484,
+      "sha256": "73d643b24536c41aafbf2069d08bba68cb1dba27fd8985a9741fdc21604ef65d"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_6_lattice_wood.glb.import",
+      "bytes": 1088,
+      "sha256": "f5b3d495a81a587bb262d87a6c99fcb069bf375a13d85137d12471ef244354e9"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_7_jade_cloud.glb",
+      "bytes": 325480,
+      "sha256": "7cc642c308efcccdae7fea7c897980392363f6c3a21da6d9757089b3bb640d8f"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_7_jade_cloud.glb.import",
+      "bytes": 1081,
+      "sha256": "f6c96dd83c1af3909a0bab689277985c410836163f1ab412c5509278cf57d104"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_8_master_lattice.glb",
+      "bytes": 364072,
+      "sha256": "4c71b1c236d7d1b38081bd2c9026f939f04ee9a2d9d8d57d1047daec8e1f0452"
+    },
+    {
+      "path": "CarpetToy/assets/tools/progression/tier_8_master_lattice.glb.import",
+      "bytes": 1093,
+      "sha256": "f203ebdc9e8ee5372cc967dd6c50902f2e7d9bdb31a0558149850f6ed9e79a75"
+    },
+    {
+      "path": "CarpetToy/assets/tools/squeegee_tool_palette.png",
+      "bytes": 250,
+      "sha256": "d30dcad5a77747ddaafcbee361c95e644ce316cd3847b3a51af9b40f962cf8fb"
+    },
+    {
+      "path": "CarpetToy/assets/tools/squeegee_tool_palette.png.import",
+      "bytes": 1304,
+      "sha256": "7ef3f5463b0ada7da546e5c27d1a174c6d14b366e0d7b5acb25abb2766eda0eb"
+    },
+    {
+      "path": "CarpetToy/assets/ui/back.svg",
+      "bytes": 228,
+      "sha256": "634ca5627a10756f1342431fd73f5fe3481ae0aaf89dcaa37d02e111fde28102"
+    },
+    {
+      "path": "CarpetToy/assets/ui/back.svg.import",
+      "bytes": 1022,
+      "sha256": "11a8604148f9ffe9bcb8c755d6f958f5265ea1652b6659615c6dbc02aaf300d8"
+    },
+    {
+      "path": "CarpetToy/assets/ui/nav_items.svg",
+      "bytes": 263,
+      "sha256": "4e7846f526de26993f100379e876d3fec586443f6e70baf53e5a6c0e4a5fd2b3"
+    },
+    {
+      "path": "CarpetToy/assets/ui/nav_items.svg.import",
+      "bytes": 1038,
+      "sha256": "249aed7cacfa3a59fa606f1f0ac9d5bafb1823427762b71208a66aff5ecda26d"
+    },
+    {
+      "path": "CarpetToy/icon.svg",
+      "bytes": 461,
+      "sha256": "9eba5a7dde203db5206b2c20bac8a818da263f854d2d347301c067e97d1eac6d"
+    },
+    {
+      "path": "CarpetToy/icon.svg.import",
+      "bytes": 1012,
+      "sha256": "3c2aded22cd3d0982cc67557cbb0ed45e9f31c794604a4583bf161cb1d032ac7"
+    },
+    {
+      "path": "CarpetToy/project.godot",
+      "bytes": 1317,
+      "sha256": "c74bd445bc4283397ba5482ec1a251c5521a1e092d44afa726b53a17b639ff2b"
+    },
+    {
+      "path": "CarpetToy/resources/rugs/gym_brush.tres",
+      "bytes": 342,
+      "sha256": "0fe6523d2679b4832ea53eb955a777951d6cad9fde07ca463ccb1014eeff4e94"
+    },
+    {
+      "path": "CarpetToy/resources/rugs/gym_water.tres",
+      "bytes": 391,
+      "sha256": "63e9bc5e4ea678ce3281ed8762d9e186c48ef1490be11401d2fe8706586290e1"
+    },
+    {
+      "path": "CarpetToy/resources/rugs/indigo_weave.tres",
+      "bytes": 431,
+      "sha256": "d4e154f764dc1a0b8f0548f1b1b3c6068718f69c258ec871a05e01a89e0bcc0a"
+    },
+    {
+      "path": "CarpetToy/resources/rugs/mint_meadow.tres",
+      "bytes": 384,
+      "sha256": "5bf3d1165d32c2162750a2fef406f11c018d38de2b55ada9d7b5fe020395a223"
+    },
+    {
+      "path": "CarpetToy/resources/rugs/playful_fox.tres",
+      "bytes": 587,
+      "sha256": "5f3e4f9d7ada55fea214ce094d2fc440083b72529158b45b64dd31344baa74c4"
+    },
+    {
+      "path": "CarpetToy/resources/rugs/sunburst_geometry.tres",
+      "bytes": 610,
+      "sha256": "5250c3cd5380c6f1bc87d5d8b7d95a6905f0ab23115a5796cdf0e0f16ad7cac0"
+    },
+    {
+      "path": "CarpetToy/resources/rugs/terracotta_flatweave.tres",
+      "bytes": 374,
+      "sha256": "6071a5a0bd2bfe2b9d7af8173c0b0a6ff70de1b1bc9514c6fcf28d144bbcb175"
+    },
+    {
+      "path": "CarpetToy/resources/ui/mint_theme.tres",
+      "bytes": 8907,
+      "sha256": "d6e1aaf1f75653aacb75f553395612e3704010e6a178dc0de23d86df45a9921f"
+    },
+    {
+      "path": "CarpetToy/scenes/effects/squeegee_water.tscn",
+      "bytes": 190,
+      "sha256": "3c02acf3ac29d8318c0d98818abedd82cf9699247df9b25ae0e7bedce83cd61f"
+    },
+    {
+      "path": "CarpetToy/scenes/production/floating_home.tscn",
+      "bytes": 37132,
+      "sha256": "310d29d0fe4101d59fcc68a0e2ed25c9caf36fc6c181dcc748935a094d1ac151"
+    },
+    {
+      "path": "CarpetToy/scenes/production/rug_cleaning.tscn",
+      "bytes": 546441,
+      "sha256": "70cdbff55b8fd11cbc540ca64b575ecea3f68a6f3d2c4cc01bb7f1122cce6544"
+    },
+    {
+      "path": "CarpetToy/scenes/test/rug_cleaning_gym.tscn",
+      "bytes": 757,
+      "sha256": "51509abd41d56cb97f8c649ecf35ef397f04a2ae83348e18fcf354589a2a4698"
+    },
+    {
+      "path": "CarpetToy/scenes/ui/cleaning_hud.tscn",
+      "bytes": 22207,
+      "sha256": "bf56becc67604dfdc427f7c1eb3402299250ead75f9d72eed36336286c5d36c6"
+    },
+    {
+      "path": "CarpetToy/scenes/ui/compact_shop.tscn",
+      "bytes": 42868,
+      "sha256": "ad9e2260fc560b9fa18b2ac62dd03814eb29f3a42bb1e7fe4a855287b0b4657d"
+    },
+    {
+      "path": "CarpetToy/scenes/ui/completion_reveal.tscn",
+      "bytes": 4288,
+      "sha256": "01b2faba3e45719bf027dc234e2a90b45a5524852c89844be21559ccbff94140"
+    },
+    {
+      "path": "CarpetToy/scenes/ui/gym_hud.tscn",
+      "bytes": 17170,
+      "sha256": "66c938575e72a817853bcaa1ecc8e0f22666e10c6208fbd86c843a337364b718"
+    },
+    {
+      "path": "CarpetToy/scripts/cleaning_hud.gd",
+      "bytes": 30770,
+      "sha256": "ab4c8e1117dd54db4b58f49410e14b8d65ec68d5c142846cf11a97c453dd2972"
+    },
+    {
+      "path": "CarpetToy/scripts/cleaning_hud.gd.uid",
+      "bytes": 21,
+      "sha256": "6cecf768f15187146da9263a7c74bbc36d5ab8663e70e1fd6f2d7515ff8b3f8f"
+    },
+    {
+      "path": "CarpetToy/scripts/compact_shop.gd",
+      "bytes": 14559,
+      "sha256": "7ea6b18398969a77b8897f6ebfc44b9b3028a888f8d1de9daa88fe95c821baa7"
+    },
+    {
+      "path": "CarpetToy/scripts/compact_shop.gd.uid",
+      "bytes": 21,
+      "sha256": "03f5d490cda1d588ec86c263c8ab8c097985ff18473b264707a393320d00184b"
+    },
+    {
+      "path": "CarpetToy/scripts/completion_reveal.gd",
+      "bytes": 7682,
+      "sha256": "674002566baaf06b0f0323852bb9c78b4d9733353eabc431857eb3f55946a9a7"
+    },
+    {
+      "path": "CarpetToy/scripts/completion_reveal.gd.uid",
+      "bytes": 19,
+      "sha256": "5cc96d190db2f69ce7c3da3cbcf7560495f7951a58b12faa663c48a7016f607c"
+    },
+    {
+      "path": "CarpetToy/scripts/dirt_controller.gd",
+      "bytes": 56941,
+      "sha256": "6e3bf0b5a6e5c8bce98ed1416bb3f0f7a04e3aa8a01d6b4e8af5be1e7b0ea15b"
+    },
+    {
+      "path": "CarpetToy/scripts/dirt_controller.gd.uid",
+      "bytes": 21,
+      "sha256": "52bee5b16000e7d3609ac9dd171c01fa6c604068983f76e3cc710d7a199b0817"
+    },
+    {
+      "path": "CarpetToy/scripts/floating_home.gd",
+      "bytes": 20446,
+      "sha256": "f222562e5f3c331f1c2e36c5ef5b1ba152522592e042fade288e624f499bd7bc"
+    },
+    {
+      "path": "CarpetToy/scripts/floating_home.gd.uid",
+      "bytes": 21,
+      "sha256": "28a73643ef08178afff0bea5e1f3447deba3ddaa06476e174eed86ff1ff97bd5"
+    },
+    {
+      "path": "CarpetToy/scripts/game_audio.gd",
+      "bytes": 5679,
+      "sha256": "bbcd1db2b685cc94324121de581661f0836f0386ea893dd8738fd750e9fc089a"
+    },
+    {
+      "path": "CarpetToy/scripts/game_audio.gd.uid",
+      "bytes": 20,
+      "sha256": "71c428f2f539afffd89e8a4045bf8d03e36cda0a90da54de4cc03ad1cf58239c"
+    },
+    {
+      "path": "CarpetToy/scripts/gym.gd",
+      "bytes": 7909,
+      "sha256": "ce903ae1e6b5b11d90d4add29e74ffa8e87d0640f1723885b89da80263d7b65d"
+    },
+    {
+      "path": "CarpetToy/scripts/gym.gd.uid",
+      "bytes": 21,
+      "sha256": "15449fcd36f23a6907473fa799b077083dd003d4ccbcbc7f6fbf34e61851c1e3"
+    },
+    {
+      "path": "CarpetToy/scripts/gym_camera.gd",
+      "bytes": 2006,
+      "sha256": "d04c3ed6544ac1f8f7b29f7d0539761d7ce4f7307d97787444d8db6fd43c5882"
+    },
+    {
+      "path": "CarpetToy/scripts/gym_camera.gd.uid",
+      "bytes": 20,
+      "sha256": "00604b1eab893825028b47dc139bbf473469da8b88bef30291865dc4f18fa82e"
+    },
+    {
+      "path": "CarpetToy/scripts/gym_hud.gd",
+      "bytes": 14482,
+      "sha256": "931e1f26e7640fe4177ea531bd35594fccaa0b1e26380b92c1ef03a645121f05"
+    },
+    {
+      "path": "CarpetToy/scripts/gym_hud.gd.uid",
+      "bytes": 20,
+      "sha256": "1c48046eeff4be93280a83adba4c4d8ed90bfbd62a25cf2af10b8a4c0f44f6ab"
+    },
+    {
+      "path": "CarpetToy/scripts/progression.gd",
+      "bytes": 3322,
+      "sha256": "416ebf108198cd5deb15b220b21eca8ca71aaebd29ad0cbd5f5bd319d7d06864"
+    },
+    {
+      "path": "CarpetToy/scripts/progression.gd.uid",
+      "bytes": 20,
+      "sha256": "158b4ecb129d3620c503a94358e9eed8f36be1637798cda5ef6f9a15480e0e7c"
+    },
+    {
+      "path": "CarpetToy/scripts/reward_ad_service.gd",
+      "bytes": 1588,
+      "sha256": "75e4f7067870963181e06497fdc7eb71d2ff0d03aaf4fb1904c855ee324ed0e5"
+    },
+    {
+      "path": "CarpetToy/scripts/reward_ad_service.gd.uid",
+      "bytes": 21,
+      "sha256": "efd2bf60b726425c08eda6bfd6c903793aded2505275385a691bacbf6785de75"
+    },
+    {
+      "path": "CarpetToy/scripts/rug_catalog.gd",
+      "bytes": 1063,
+      "sha256": "d47e56f973622e83c493103a72f0a59aaf18d87f8761888eb831387476e71b33"
+    },
+    {
+      "path": "CarpetToy/scripts/rug_catalog.gd.uid",
+      "bytes": 20,
+      "sha256": "e4f02ee3e4ae6ca7a7b7cb412ecdfdee9219c760927371239ec4e31364d17994"
+    },
+    {
+      "path": "CarpetToy/scripts/rug_comparison.gd",
+      "bytes": 2334,
+      "sha256": "b2672a3ef9d349b6d66a53f4960472c9ef598dbfe1de07f6ec4ace661c5a2cc4"
+    },
+    {
+      "path": "CarpetToy/scripts/rug_comparison.gd.uid",
+      "bytes": 20,
+      "sha256": "248f09171450e14261804d358d0154a9f83de8e63709732e23b5def9bb1f2637"
+    },
+    {
+      "path": "CarpetToy/scripts/rug_definition.gd",
+      "bytes": 1113,
+      "sha256": "d3b71e31ede9cffb6c30f8d08aac44f0000543814e12d2af181787482ba5789b"
+    },
+    {
+      "path": "CarpetToy/scripts/rug_definition.gd.uid",
+      "bytes": 21,
+      "sha256": "f888cd6012ef76fd7ec46ebda2d2bf23982720bcc2f345f62bf56564404ace14"
+    },
+    {
+      "path": "CarpetToy/scripts/rug_footprint.gd",
+      "bytes": 2380,
+      "sha256": "a4d2782b0c902c7cd036be3327796c29e5c76e0f0e4271c9c246e380a1226086"
+    },
+    {
+      "path": "CarpetToy/scripts/rug_footprint.gd.uid",
+      "bytes": 21,
+      "sha256": "fddc7cb1cfd9822ac8f28be989704c92b146d9833acd646f2898b819c1315567"
+    },
+    {
+      "path": "CarpetToy/scripts/rug_roll.gd",
+      "bytes": 3031,
+      "sha256": "b465947bba1eb649acd3cae08fc3afc87af1cad63b4be36c43e95aebcbdd8d37"
+    },
+    {
+      "path": "CarpetToy/scripts/rug_roll.gd.uid",
+      "bytes": 20,
+      "sha256": "c129cba1878569d8998feae9f92afda3db5b06ba4ac775fa22dde06e91258950"
+    },
+    {
+      "path": "CarpetToy/scripts/scene_routes.gd",
+      "bytes": 289,
+      "sha256": "151cc8c9caf9ffbe173cf1ecd00f3eb6007916951c5578b507fc1118b88318af"
+    },
+    {
+      "path": "CarpetToy/scripts/scene_routes.gd.uid",
+      "bytes": 20,
+      "sha256": "f2a244be9f629f2c85f035b01dcfb63c5e2d9ea72c4105783f7782431ed1bd6e"
+    },
+    {
+      "path": "CarpetToy/scripts/shop_state.gd",
+      "bytes": 43167,
+      "sha256": "bfbb2b924c8640005b90bab74fee8c8de19044b8496b724588dc33eb0b360014"
+    },
+    {
+      "path": "CarpetToy/scripts/shop_state.gd.uid",
+      "bytes": 21,
+      "sha256": "56dea0bf4cc297082c4a7cde18b47480517191851e8f5051a35594fb084ba88b"
+    },
+    {
+      "path": "CarpetToy/scripts/soil_surface.gdshader",
+      "bytes": 2778,
+      "sha256": "489b3976b88b42bdb53f5f2c56549399bf8b0d553114f42ea4a838102df7b389"
+    },
+    {
+      "path": "CarpetToy/scripts/soil_surface.gdshader.uid",
+      "bytes": 20,
+      "sha256": "38fd3e3752d2d18a83b5ae28146754874f13e7c6827c6328d08cad548cb7a319"
+    },
+    {
+      "path": "CarpetToy/scripts/squeegee_motion.gd",
+      "bytes": 1748,
+      "sha256": "a991e13cfbdb73cc5d29e1b485b3ee43890875fe4ddd83589049778d6e78fc28"
+    },
+    {
+      "path": "CarpetToy/scripts/squeegee_motion.gd.uid",
+      "bytes": 20,
+      "sha256": "4cc679c1025a42cc90c307811f83928a0330550db337a43724f3ee33bbdf6a60"
+    },
+    {
+      "path": "CarpetToy/scripts/squeegee_runoff_streams.gd",
+      "bytes": 11327,
+      "sha256": "c5af544b522e2a4eaa87157867ad9cf0e370c58c9b8d246b88ede35810e2870c"
+    },
+    {
+      "path": "CarpetToy/scripts/squeegee_runoff_streams.gd.uid",
+      "bytes": 20,
+      "sha256": "4a9e3325e30127c031a723628f10b4486dba5736c18826572d4bb2558c3d4ca0"
+    },
+    {
+      "path": "CarpetToy/scripts/squeegee_runoff_streams.gdshader",
+      "bytes": 3326,
+      "sha256": "f196bd91eb59c0715dcf5e0fa2737c4925c7c07f08a53ef690380f9129495745"
+    },
+    {
+      "path": "CarpetToy/scripts/squeegee_runoff_streams.gdshader.uid",
+      "bytes": 20,
+      "sha256": "48d90adf05dc5586b0e7c90bf4717ec8b9f9213ac7ab802034b60dc82be7bfff"
+    },
+    {
+      "path": "CarpetToy/scripts/squeegee_water.gd",
+      "bytes": 5235,
+      "sha256": "de7efc27f4b120353564d8ff26d8af168d61734b8ac1ee4dbb808aba5bccdfac"
+    },
+    {
+      "path": "CarpetToy/scripts/squeegee_water.gd.uid",
+      "bytes": 20,
+      "sha256": "06d0fa08f5b9eb1bbff0aac3d44426a23b084f4f2511b51c07add280fdc085b6"
+    },
+    {
+      "path": "CarpetToy/scripts/squeegee_water_trail.gd",
+      "bytes": 28579,
+      "sha256": "a04f27b9d0915a4f015b0fe30ffa6620f133f36d065a64fa644329b99e50fb76"
+    },
+    {
+      "path": "CarpetToy/scripts/squeegee_water_trail.gd.uid",
+      "bytes": 19,
+      "sha256": "0b1fa0648bf139d9c0255251edfd8c1ee18e4049a05e0ddb48c07411ad7f29a6"
+    },
+    {
+      "path": "CarpetToy/scripts/tool_progression_visual.gd",
+      "bytes": 1999,
+      "sha256": "354105c94facea4a5d41203da34a3da85b80c4e35f7b46a3c66086e2114589c1"
+    },
+    {
+      "path": "CarpetToy/scripts/tool_progression_visual.gd.uid",
+      "bytes": 20,
+      "sha256": "12a1425cc648216b850c7bc6f39cbb94949620ebce341eca34416b21041d8a8e"
+    },
+    {
+      "path": "CarpetToy/scripts/ui/button_pop.gd",
+      "bytes": 1556,
+      "sha256": "befcc08f9535dbc0a906c739abc0c9df0be2d12936a04c51977f0961731946a2"
+    },
+    {
+      "path": "CarpetToy/scripts/ui/button_pop.gd.uid",
+      "bytes": 21,
+      "sha256": "039adf9c3e0e81991a5098a22b600757ee57909162142f1d98496cf7417d0480"
+    },
+    {
+      "path": "CarpetToy/scripts/ui/home_pattern.gd",
+      "bytes": 1030,
+      "sha256": "eb88c655b8392c4d3d00ed78b04d62dfba83b6a74b01536869e8db1c33e5b0e6"
+    },
+    {
+      "path": "CarpetToy/scripts/ui/home_pattern.gd.uid",
+      "bytes": 21,
+      "sha256": "66abc86db22efa8ab731d2d110ee145f30392f004469289561101abea5a1a800"
+    },
+    {
+      "path": "CarpetToy/scripts/water_hose_profile.gd",
+      "bytes": 1394,
+      "sha256": "afd31cb2aa09d13263cea98e5623e899f11e0e273e2392f5c05c341c4f66937c"
+    },
+    {
+      "path": "CarpetToy/scripts/water_hose_profile.gd.uid",
+      "bytes": 20,
+      "sha256": "a22b0cb8ec56abdceebd2f7ed9289a84c3f8063f4ce43aba0199c5b88fab2b25"
+    },
+    {
+      "path": "CarpetToy/scripts/water_jet.gd",
+      "bytes": 15738,
+      "sha256": "f1f1c42d991c7c4c03a47e447259a9a4326f38ac7cc72ef50bdee1ff7cfec039"
+    },
+    {
+      "path": "CarpetToy/scripts/water_jet.gd.uid",
+      "bytes": 19,
+      "sha256": "1e7228e8632650bc409a5135f200d31fe6461f5c3a42201c04b91d156aad4b9b"
+    },
+    {
+      "path": "CarpetToy/scripts/water_jet.gdshader",
+      "bytes": 1743,
+      "sha256": "109de9b1b87d0615b609232dae7b29914d33679cd8d65067368510ea78b383f4"
+    },
+    {
+      "path": "CarpetToy/scripts/water_jet.gdshader.uid",
+      "bytes": 20,
+      "sha256": "1d652dae7c26c82b7fa0059c0adb2c09f06be9f44d3a0ff9f9fd85e957cdc243"
+    },
+    {
+      "path": "CarpetToy/scripts/water_jet_droplet.gdshader",
+      "bytes": 332,
+      "sha256": "f3550e4e3f136502e5cfde13e3ad37c86c7241a80844c94071ff26445165a0c3"
+    },
+    {
+      "path": "CarpetToy/scripts/water_jet_droplet.gdshader.uid",
+      "bytes": 19,
+      "sha256": "f0caf921e8fc3eb585024deef258bbf0274df948cff787ffab8147c0ee3db89e"
+    },
+    {
+      "path": "CarpetToy/scripts/water_jet_impact.gd",
+      "bytes": 15880,
+      "sha256": "d561cdd6d6f9bfc9376ba72727bf76c476fd402f4042f1d363158c8eec389c1d"
+    },
+    {
+      "path": "CarpetToy/scripts/water_jet_impact.gd.uid",
+      "bytes": 20,
+      "sha256": "19365881914d67943eb31760bccfc63a3fe56cb1322df54cc73bef247290f326"
+    },
+    {
+      "path": "CarpetToy/scripts/water_jet_impact.gdshader",
+      "bytes": 7582,
+      "sha256": "e2bd17c460b5654f5a2fc127922e3a7e913383b8851ff22186752c90fa1f0115"
+    },
+    {
+      "path": "CarpetToy/scripts/water_jet_impact.gdshader.uid",
+      "bytes": 20,
+      "sha256": "aaf1a9ce7d1a14662e9689118e39525fd56e9723dd3be1addc977ee635fe42de"
+    },
+    {
+      "path": "CarpetToy/scripts/water_soak.gd",
+      "bytes": 7486,
+      "sha256": "a6219ca4195eac8c2582dcaca85565178d33afca3d045048fad5376b540547d9"
+    },
+    {
+      "path": "CarpetToy/scripts/water_soak.gd.uid",
+      "bytes": 20,
+      "sha256": "5642137364c9d5902c8192d33e9b59c743e28a5cc2213d592e5aad76fd97ac35"
+    },
+    {
+      "path": "CarpetToy/scripts/workshop.gd",
+      "bytes": 47255,
+      "sha256": "187ff807f011a65286e6b00ef55cbb46cec9e12658bc35acfdf5fc7f1e906e68"
+    },
+    {
+      "path": "CarpetToy/scripts/workshop.gd.uid",
+      "bytes": 21,
+      "sha256": "cc2ae3ab83ccf0d45eecce86e878962b8ec74c05742b1012f1dc6415bb71b0d8"
+    },
+    {
+      "path": "tools/godot_toolchain.ps1",
+      "bytes": 1969,
+      "sha256": "ab9066e76ea80fb1def4ab04d30fecd5cb141560b94d2bb442ee8528ad19fc20"
+    },
+    {
+      "path": "tools/run_godot.ps1",
+      "bytes": 355,
+      "sha256": "9022eb2182b1f1e1971a0211871315e47bfd4d66dd653682745aff5959f62833"
+    }
+  ],
+  "audio": [
+    {
+      "path": "CarpetToy/assets/audio/brush_fabric_loop.wav",
+      "sample_rate": 44100,
+      "channels": 1,
+      "sample_width_bytes": 2,
+      "frames": 176400,
+      "duration_seconds": 4.0
+    },
+    {
+      "path": "CarpetToy/assets/audio/brush_soil_loop.wav",
+      "sample_rate": 44100,
+      "channels": 1,
+      "sample_width_bytes": 2,
+      "frames": 176400,
+      "duration_seconds": 4.0
+    },
+    {
+      "path": "CarpetToy/assets/audio/quiet_shop_music_loop.wav",
+      "sample_rate": 44100,
+      "channels": 2,
+      "sample_width_bytes": 2,
+      "frames": 1058400,
+      "duration_seconds": 24.0
+    },
+    {
+      "path": "CarpetToy/assets/audio/restoration_complete.wav",
+      "sample_rate": 44100,
+      "channels": 1,
+      "sample_width_bytes": 2,
+      "frames": 37044,
+      "duration_seconds": 0.84
+    }
+  ],
+  "unresolved_dynamic_or_nonfile_references": [
+    "CarpetToy/../art/renders/",
+    "CarpetToy/.godot/audio_test_%d.cfg",
+    "CarpetToy/.godot/shop_test_%d.json",
+    "CarpetToy/resources/rugs/%s.tres"
+  ],
+  "exclusions": [
+    "Godot import cache and generated shader binaries",
+    "Local user saves and save credentials",
+    "APK/signing material",
+    "Unrelated Blender authoring projects",
+    "Marketing assets that may still be edited during production"
+  ],
+  "capture_snapshot": {
+    "path": "build/ad-capture-v2/session-001/project",
+    "viewport_probe": "Successful, reported by capture operator; not run by provenance audit",
+    "viewport": [
+      1080,
+      1920
+    ],
+    "preview_window": [
+      540,
+      960
+    ],
+    "fps": 30,
+    "movie_quality": 0.9,
+    "movie_audio_mix_rate": 48000,
+    "runtime_setup": "Capture harness restores Window.CONTENT_SCALE_MODE_VIEWPORT after workshop ready and before first draw. Original project source configuration remains unchanged.",
+    "comparison_utc": "2026-09-29T17:37:19.286738+00:00",
+    "compared_source_files": [
+      {
+        "path": "assets/audio/brush_fabric_loop.wav",
+        "source_sha256": "975e7a9d089a711850b6bb831e3e5fb7ef83828813a986307d789fe73b9d0d23",
+        "capture_sha256": "975e7a9d089a711850b6bb831e3e5fb7ef83828813a986307d789fe73b9d0d23",
+        "matches": true
+      },
+      {
+        "path": "assets/audio/brush_fabric_loop.wav.import",
+        "source_sha256": "0a7afdb24c7bfa6d42d8e4d94695ad55e9abe70ab6a1c3e52867a4d64df752b6",
+        "capture_sha256": "0a7afdb24c7bfa6d42d8e4d94695ad55e9abe70ab6a1c3e52867a4d64df752b6",
+        "matches": true
+      },
+      {
+        "path": "assets/audio/brush_soil_loop.wav",
+        "source_sha256": "5b349bc0c009ae80afd7a826a4eac67d2a73a43c1fa8ecd2cf5a9926ddef816b",
+        "capture_sha256": "5b349bc0c009ae80afd7a826a4eac67d2a73a43c1fa8ecd2cf5a9926ddef816b",
+        "matches": true
+      },
+      {
+        "path": "assets/audio/brush_soil_loop.wav.import",
+        "source_sha256": "bc432f7c48aaac800c7fcd8c5ccaebe8785c988236f62883f4bc2cd9629b5fd3",
+        "capture_sha256": "bc432f7c48aaac800c7fcd8c5ccaebe8785c988236f62883f4bc2cd9629b5fd3",
+        "matches": true
+      },
+      {
+        "path": "assets/audio/quiet_shop_music_loop.wav",
+        "source_sha256": "3915a38a70818fd21849c4b752bc3782cb415c229f8adc231e15578a22faf69c",
+        "capture_sha256": "3915a38a70818fd21849c4b752bc3782cb415c229f8adc231e15578a22faf69c",
+        "matches": true
+      },
+      {
+        "path": "assets/audio/quiet_shop_music_loop.wav.import",
+        "source_sha256": "713f7812d9d4d11c0db8ea7361c1df528d73756971f0bb2f8f0334fe639d6e06",
+        "capture_sha256": "713f7812d9d4d11c0db8ea7361c1df528d73756971f0bb2f8f0334fe639d6e06",
+        "matches": true
+      },
+      {
+        "path": "assets/audio/restoration_complete.wav",
+        "source_sha256": "11990ab2482f6c1e6cee2f61639a3051e86760809b5bb458ef57e593faa79ea5",
+        "capture_sha256": "11990ab2482f6c1e6cee2f61639a3051e86760809b5bb458ef57e593faa79ea5",
+        "matches": true
+      },
+      {
+        "path": "assets/audio/restoration_complete.wav.import",
+        "source_sha256": "e1f473a51da6e7d5543c9d9de1c75a2ee3722d0bf18144c6aee9df07da5c3aa1",
+        "capture_sha256": "e1f473a51da6e7d5543c9d9de1c75a2ee3722d0bf18144c6aee9df07da5c3aa1",
+        "matches": true
+      },
+      {
+        "path": "assets/carpet/mint_meadow_mint_meadow_albedo.png",
+        "source_sha256": "47a39f2e6ae614a2ec01c06fdadb17a98df8aa5ee949c007f499c5f253c0665c",
+        "capture_sha256": "47a39f2e6ae614a2ec01c06fdadb17a98df8aa5ee949c007f499c5f253c0665c",
+        "matches": true
+      },
+      {
+        "path": "assets/carpet/mint_meadow_mint_meadow_albedo.png.import",
+        "source_sha256": "f44612df44aa5f3cd001be5c05f04210ae78aebc171f16014e5a8053d52db2ed",
+        "capture_sha256": "f44612df44aa5f3cd001be5c05f04210ae78aebc171f16014e5a8053d52db2ed",
+        "matches": true
+      },
+      {
+        "path": "assets/carpet/mint_meadow_mint_meadow_normal.png",
+        "source_sha256": "97546b43da63abb02ee127f9a6754e1bdb2af687baefbbd031c06176c843ce19",
+        "capture_sha256": "97546b43da63abb02ee127f9a6754e1bdb2af687baefbbd031c06176c843ce19",
+        "matches": true
+      },
+      {
+        "path": "assets/carpet/mint_meadow_mint_meadow_normal.png.import",
+        "source_sha256": "9b47f6a2c344668268f9dbdaf5ab6f4d9e70f3d8f3e10405e148bca3631ddb79",
+        "capture_sha256": "9b47f6a2c344668268f9dbdaf5ab6f4d9e70f3d8f3e10405e148bca3631ddb79",
+        "matches": true
+      },
+      {
+        "path": "assets/carpet/patterns/playful_fox.png",
+        "source_sha256": "95855adb41d236a4e3b69ad67b048de364e54d625be7650f4811a3cb635ba648",
+        "capture_sha256": "95855adb41d236a4e3b69ad67b048de364e54d625be7650f4811a3cb635ba648",
+        "matches": true
+      },
+      {
+        "path": "assets/carpet/patterns/playful_fox.png.import",
+        "source_sha256": "a252f92162f402aeb8c9fe2dd6329be77c2159a3fb87f486691b5a44442ef4f2",
+        "capture_sha256": "a252f92162f402aeb8c9fe2dd6329be77c2159a3fb87f486691b5a44442ef4f2",
+        "matches": true
+      },
+      {
+        "path": "assets/carpet/patterns/sunburst_geometry.png",
+        "source_sha256": "976dae3b37d169e273b6bb17d02d4a97e8abb483622e5fbbbaef1b220ee8ee1f",
+        "capture_sha256": "976dae3b37d169e273b6bb17d02d4a97e8abb483622e5fbbbaef1b220ee8ee1f",
+        "matches": true
+      },
+      {
+        "path": "assets/carpet/patterns/sunburst_geometry.png.import",
+        "source_sha256": "6f16e64324280d99b55e047910a80badb8a02d9ccefe8d476001b106232cca21",
+        "capture_sha256": "6f16e64324280d99b55e047910a80badb8a02d9ccefe8d476001b106232cca21",
+        "matches": true
+      },
+      {
+        "path": "assets/dirt/dry_soil_albedo.png",
+        "source_sha256": "f7e7c080dbdad45e98b6a8616b5d110922f236df87ebc658b7edbd96352ab27b",
+        "capture_sha256": "f7e7c080dbdad45e98b6a8616b5d110922f236df87ebc658b7edbd96352ab27b",
+        "matches": true
+      },
+      {
+        "path": "assets/dirt/dry_soil_albedo.png.import",
+        "source_sha256": "9a9790bd262dba7241de9067e67548ec773f44f94b715166ba33ebe4f75f5d78",
+        "capture_sha256": "9a9790bd262dba7241de9067e67548ec773f44f94b715166ba33ebe4f75f5d78",
+        "matches": true
+      },
+      {
+        "path": "assets/floating_shop/BlueprintIcon.png",
+        "source_sha256": "b919d3ee161ab1d15b2a57c3f8ba3959a8d6cd6ae31d0a5a895d3bf8fc053ea8",
+        "capture_sha256": "b919d3ee161ab1d15b2a57c3f8ba3959a8d6cd6ae31d0a5a895d3bf8fc053ea8",
+        "matches": true
+      },
+      {
+        "path": "assets/floating_shop/BlueprintIcon.png.import",
+        "source_sha256": "653d341c2a4c080b3663f5f3f7e56b6c89d6c2b1a87c47607ca1e32f14c21fd3",
+        "capture_sha256": "653d341c2a4c080b3663f5f3f7e56b6c89d6c2b1a87c47607ca1e32f14c21fd3",
+        "matches": true
+      },
+      {
+        "path": "assets/floating_shop/BonziIcon.png",
+        "source_sha256": "b63af80786eb8b7244d28b60a6bd5c81ac9d3dcd9e8a509e28d930ddc4760111",
+        "capture_sha256": "b63af80786eb8b7244d28b60a6bd5c81ac9d3dcd9e8a509e28d930ddc4760111",
+        "matches": true
+      },
+      {
+        "path": "assets/floating_shop/BonziIcon.png.import",
+        "source_sha256": "b147909fef5c70d5261a792cbe0987393477452d0fe87d6a1b8ba2db89f5aa27",
+        "capture_sha256": "b147909fef5c70d5261a792cbe0987393477452d0fe87d6a1b8ba2db89f5aa27",
+        "matches": true
+      },
+      {
+        "path": "assets/floating_shop/BrushIcon.png",
+        "source_sha256": "00587343cbad1974b902c53145212574220ee10caf8594f7b76f3ef925d34eb8",
+        "capture_sha256": "00587343cbad1974b902c53145212574220ee10caf8594f7b76f3ef925d34eb8",
+        "matches": true
+      },
+      {
+        "path": "assets/floating_shop/BrushIcon.png.import",
+        "source_sha256": "f0dd2db5b6e19efef95a0e5d2009f41a962e502ac09df247af748ce87b24032e",
+        "capture_sha256": "f0dd2db5b6e19efef95a0e5d2009f41a962e502ac09df247af748ce87b24032e",
+        "matches": true
+      },
+      {
+        "path": "assets/floating_shop/CoinIcon.png",
+        "source_sha256": "14914c6dab758c50dbf01bb5d22c57c8cb2e97a975766ef8a78d4b65f882fb70",
+        "capture_sha256": "14914c6dab758c50dbf01bb5d22c57c8cb2e97a975766ef8a78d4b65f882fb70",
+        "matches": true
+      },
+      {
+        "path": "assets/floating_shop/CoinIcon.png.import",
+        "source_sha256": "45f7dd04ef5c8433557301c6c633d4fdf5c4e93ceca7a12b5defad15bf609e19",
+        "capture_sha256": "45f7dd04ef5c8433557301c6c633d4fdf5c4e93ceca7a12b5defad15bf609e19",
+        "matches": true
+      },
+      {
+        "path": "assets/floating_shop/FloatingShop.glb",
+        "source_sha256": "7a5e9b9efabf0989fd83c3f378d48d947ad3d7ccdfd770adcf121edec8732b10",
+        "capture_sha256": "7a5e9b9efabf0989fd83c3f378d48d947ad3d7ccdfd770adcf121edec8732b10",
+        "matches": true
+      },
+      {
+        "path": "assets/floating_shop/FloatingShop.glb.import",
+        "source_sha256": "793fcb221de1befe48a712a6179e72c96729bdeb33518feab0501285e1f5565f",
+        "capture_sha256": "793fcb221de1befe48a712a6179e72c96729bdeb33518feab0501285e1f5565f",
+        "matches": true
+      },
+      {
+        "path": "assets/floating_shop/FloatingShop.png",
+        "source_sha256": "4f5457bcb208585efb52b8ce426d5e2149b58649073ea0ae84a45b6dec5e6254",
+        "capture_sha256": "4f5457bcb208585efb52b8ce426d5e2149b58649073ea0ae84a45b6dec5e6254",
+        "matches": true
+      },
+      {
+        "path": "assets/floating_shop/FloatingShop.png.import",
+        "source_sha256": "5d1fd753bfa0437109157e6a54eeecec9beb36e2758f900607a6624863fc4af8",
+        "capture_sha256": "5d1fd753bfa0437109157e6a54eeecec9beb36e2758f900607a6624863fc4af8",
+        "matches": true
+      },
+      {
+        "path": "assets/floating_shop/SettingsIcon.png",
+        "source_sha256": "d8115dde318aa5575d9ebcad5e757bce7ec81e5cae760b0739a59f757a81b9c3",
+        "capture_sha256": "d8115dde318aa5575d9ebcad5e757bce7ec81e5cae760b0739a59f757a81b9c3",
+        "matches": true
+      },
+      {
+        "path": "assets/floating_shop/SettingsIcon.png.import",
+        "source_sha256": "eaaa8544d26a656cc8cc8b868d4e085486418dd77212f691a63eb626ac359586",
+        "capture_sha256": "eaaa8544d26a656cc8cc8b868d4e085486418dd77212f691a63eb626ac359586",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/jet_spray_tool_palette.png",
+        "source_sha256": "d30dcad5a77747ddaafcbee361c95e644ce316cd3847b3a51af9b40f962cf8fb",
+        "capture_sha256": "d30dcad5a77747ddaafcbee361c95e644ce316cd3847b3a51af9b40f962cf8fb",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/jet_spray_tool_palette.png.import",
+        "source_sha256": "1d8f7a6c5ea6c222faa2d4dedd292d8143ff1c0e9504d7fc7f90bc969faf4525",
+        "capture_sha256": "1d8f7a6c5ea6c222faa2d4dedd292d8143ff1c0e9504d7fc7f90bc969faf4525",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/large_brush_tool_palette.png",
+        "source_sha256": "d30dcad5a77747ddaafcbee361c95e644ce316cd3847b3a51af9b40f962cf8fb",
+        "capture_sha256": "d30dcad5a77747ddaafcbee361c95e644ce316cd3847b3a51af9b40f962cf8fb",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/large_brush_tool_palette.png.import",
+        "source_sha256": "c888e8a8a18af5b29ce5c9e15204443970df32a2f726dfd1823aed837b492039",
+        "capture_sha256": "c888e8a8a18af5b29ce5c9e15204443970df32a2f726dfd1823aed837b492039",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_0_current_plastic.glb",
+        "source_sha256": "985fc43521f7e9575ca66769b69d720f7780de90ab8a865b6d63f8ff161dc8b7",
+        "capture_sha256": "985fc43521f7e9575ca66769b69d720f7780de90ab8a865b6d63f8ff161dc8b7",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_0_current_plastic.glb.import",
+        "source_sha256": "6cbf293e821b5ea453549ec94e8a47e0549d821a20fa6a4205feb55cdb152bca",
+        "capture_sha256": "6cbf293e821b5ea453549ec94e8a47e0549d821a20fa6a4205feb55cdb152bca",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_1_wide_plastic.glb",
+        "source_sha256": "c5fa4308a2abc6d32464727b5dac15148b9d42242259f4d7d6a33601ba44c3bc",
+        "capture_sha256": "c5fa4308a2abc6d32464727b5dac15148b9d42242259f4d7d6a33601ba44c3bc",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_1_wide_plastic.glb.import",
+        "source_sha256": "1b9295f4f2cd33df82c9f07e39dfa31783d2bc3d3110845440f668ca3b1f708a",
+        "capture_sha256": "1b9295f4f2cd33df82c9f07e39dfa31783d2bc3d3110845440f668ca3b1f708a",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_2_dense_plastic.glb",
+        "source_sha256": "5e0741971c21b97e2291eebf2366cbca0883e08d448150d6212edbe0722318ba",
+        "capture_sha256": "5e0741971c21b97e2291eebf2366cbca0883e08d448150d6212edbe0722318ba",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_2_dense_plastic.glb.import",
+        "source_sha256": "4f4553a38d3f5451c95de998a37f1944da22fffc6348edea1205718b36db1245",
+        "capture_sha256": "4f4553a38d3f5451c95de998a37f1944da22fffc6348edea1205718b36db1245",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_3_crafted_wood.glb",
+        "source_sha256": "fa98744119c479d172722d53e6ff91ad84306ca6cb5d3e408fdce31f7b8295b3",
+        "capture_sha256": "fa98744119c479d172722d53e6ff91ad84306ca6cb5d3e408fdce31f7b8295b3",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_3_crafted_wood.glb.import",
+        "source_sha256": "1c219d952f0c9ecb4a52b0581ea46284a11330dbe0d26c5f873da52be47387d9",
+        "capture_sha256": "1c219d952f0c9ecb4a52b0581ea46284a11330dbe0d26c5f873da52be47387d9",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_4_engraved_wood.glb",
+        "source_sha256": "6e5be71d7d49b3051e2393261ca60bd764dc2cfc10408bc15e4053dd1857ecc6",
+        "capture_sha256": "6e5be71d7d49b3051e2393261ca60bd764dc2cfc10408bc15e4053dd1857ecc6",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_4_engraved_wood.glb.import",
+        "source_sha256": "f34d72cbae600bc225f9e65fa75646bfe4f9a1dac0faa6806df4138ed2fe5093",
+        "capture_sha256": "f34d72cbae600bc225f9e65fa75646bfe4f9a1dac0faa6806df4138ed2fe5093",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_5_cloud_lacquer.glb",
+        "source_sha256": "06fff3d1f6d20ac8830c119bf51cdc91508ddcdff5c0aa111559934f1744c9ef",
+        "capture_sha256": "06fff3d1f6d20ac8830c119bf51cdc91508ddcdff5c0aa111559934f1744c9ef",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_5_cloud_lacquer.glb.import",
+        "source_sha256": "8d5a1245bc0cb4c137b012fff8b6623006f0d7e4a67b612387798cd60d74c26b",
+        "capture_sha256": "8d5a1245bc0cb4c137b012fff8b6623006f0d7e4a67b612387798cd60d74c26b",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_6_lattice_wood.glb",
+        "source_sha256": "73d643b24536c41aafbf2069d08bba68cb1dba27fd8985a9741fdc21604ef65d",
+        "capture_sha256": "73d643b24536c41aafbf2069d08bba68cb1dba27fd8985a9741fdc21604ef65d",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_6_lattice_wood.glb.import",
+        "source_sha256": "f5b3d495a81a587bb262d87a6c99fcb069bf375a13d85137d12471ef244354e9",
+        "capture_sha256": "f5b3d495a81a587bb262d87a6c99fcb069bf375a13d85137d12471ef244354e9",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_7_jade_cloud.glb",
+        "source_sha256": "7cc642c308efcccdae7fea7c897980392363f6c3a21da6d9757089b3bb640d8f",
+        "capture_sha256": "7cc642c308efcccdae7fea7c897980392363f6c3a21da6d9757089b3bb640d8f",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_7_jade_cloud.glb.import",
+        "source_sha256": "f6c96dd83c1af3909a0bab689277985c410836163f1ab412c5509278cf57d104",
+        "capture_sha256": "f6c96dd83c1af3909a0bab689277985c410836163f1ab412c5509278cf57d104",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_8_master_lattice.glb",
+        "source_sha256": "4c71b1c236d7d1b38081bd2c9026f939f04ee9a2d9d8d57d1047daec8e1f0452",
+        "capture_sha256": "4c71b1c236d7d1b38081bd2c9026f939f04ee9a2d9d8d57d1047daec8e1f0452",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/progression/tier_8_master_lattice.glb.import",
+        "source_sha256": "f203ebdc9e8ee5372cc967dd6c50902f2e7d9bdb31a0558149850f6ed9e79a75",
+        "capture_sha256": "f203ebdc9e8ee5372cc967dd6c50902f2e7d9bdb31a0558149850f6ed9e79a75",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/squeegee_tool_palette.png",
+        "source_sha256": "d30dcad5a77747ddaafcbee361c95e644ce316cd3847b3a51af9b40f962cf8fb",
+        "capture_sha256": "d30dcad5a77747ddaafcbee361c95e644ce316cd3847b3a51af9b40f962cf8fb",
+        "matches": true
+      },
+      {
+        "path": "assets/tools/squeegee_tool_palette.png.import",
+        "source_sha256": "7ef3f5463b0ada7da546e5c27d1a174c6d14b366e0d7b5acb25abb2766eda0eb",
+        "capture_sha256": "7ef3f5463b0ada7da546e5c27d1a174c6d14b366e0d7b5acb25abb2766eda0eb",
+        "matches": true
+      },
+      {
+        "path": "assets/ui/back.svg",
+        "source_sha256": "634ca5627a10756f1342431fd73f5fe3481ae0aaf89dcaa37d02e111fde28102",
+        "capture_sha256": "634ca5627a10756f1342431fd73f5fe3481ae0aaf89dcaa37d02e111fde28102",
+        "matches": true
+      },
+      {
+        "path": "assets/ui/back.svg.import",
+        "source_sha256": "11a8604148f9ffe9bcb8c755d6f958f5265ea1652b6659615c6dbc02aaf300d8",
+        "capture_sha256": "11a8604148f9ffe9bcb8c755d6f958f5265ea1652b6659615c6dbc02aaf300d8",
+        "matches": true
+      },
+      {
+        "path": "assets/ui/nav_items.svg",
+        "source_sha256": "4e7846f526de26993f100379e876d3fec586443f6e70baf53e5a6c0e4a5fd2b3",
+        "capture_sha256": "4e7846f526de26993f100379e876d3fec586443f6e70baf53e5a6c0e4a5fd2b3",
+        "matches": true
+      },
+      {
+        "path": "assets/ui/nav_items.svg.import",
+        "source_sha256": "249aed7cacfa3a59fa606f1f0ac9d5bafb1823427762b71208a66aff5ecda26d",
+        "capture_sha256": "249aed7cacfa3a59fa606f1f0ac9d5bafb1823427762b71208a66aff5ecda26d",
+        "matches": true
+      },
+      {
+        "path": "icon.svg",
+        "source_sha256": "9eba5a7dde203db5206b2c20bac8a818da263f854d2d347301c067e97d1eac6d",
+        "capture_sha256": "9eba5a7dde203db5206b2c20bac8a818da263f854d2d347301c067e97d1eac6d",
+        "matches": true
+      },
+      {
+        "path": "icon.svg.import",
+        "matches": null,
+        "note": "Missing from copy at audit time"
+      },
+      {
+        "path": "project.godot",
+        "source_sha256": "c74bd445bc4283397ba5482ec1a251c5521a1e092d44afa726b53a17b639ff2b",
+        "capture_sha256": "e28c41cf6ce96fde9fcfd50df3e722dcbfd6e980eea9e8b4a62ac377f677b5a1",
+        "matches": false
+      },
+      {
+        "path": "resources/rugs/gym_brush.tres",
+        "source_sha256": "0fe6523d2679b4832ea53eb955a777951d6cad9fde07ca463ccb1014eeff4e94",
+        "capture_sha256": "0fe6523d2679b4832ea53eb955a777951d6cad9fde07ca463ccb1014eeff4e94",
+        "matches": true
+      },
+      {
+        "path": "resources/rugs/gym_water.tres",
+        "source_sha256": "63e9bc5e4ea678ce3281ed8762d9e186c48ef1490be11401d2fe8706586290e1",
+        "capture_sha256": "63e9bc5e4ea678ce3281ed8762d9e186c48ef1490be11401d2fe8706586290e1",
+        "matches": true
+      },
+      {
+        "path": "resources/rugs/indigo_weave.tres",
+        "source_sha256": "d4e154f764dc1a0b8f0548f1b1b3c6068718f69c258ec871a05e01a89e0bcc0a",
+        "capture_sha256": "d4e154f764dc1a0b8f0548f1b1b3c6068718f69c258ec871a05e01a89e0bcc0a",
+        "matches": true
+      },
+      {
+        "path": "resources/rugs/mint_meadow.tres",
+        "source_sha256": "5bf3d1165d32c2162750a2fef406f11c018d38de2b55ada9d7b5fe020395a223",
+        "capture_sha256": "5bf3d1165d32c2162750a2fef406f11c018d38de2b55ada9d7b5fe020395a223",
+        "matches": true
+      },
+      {
+        "path": "resources/rugs/playful_fox.tres",
+        "source_sha256": "5f3e4f9d7ada55fea214ce094d2fc440083b72529158b45b64dd31344baa74c4",
+        "capture_sha256": "5f3e4f9d7ada55fea214ce094d2fc440083b72529158b45b64dd31344baa74c4",
+        "matches": true
+      },
+      {
+        "path": "resources/rugs/sunburst_geometry.tres",
+        "source_sha256": "5250c3cd5380c6f1bc87d5d8b7d95a6905f0ab23115a5796cdf0e0f16ad7cac0",
+        "capture_sha256": "5250c3cd5380c6f1bc87d5d8b7d95a6905f0ab23115a5796cdf0e0f16ad7cac0",
+        "matches": true
+      },
+      {
+        "path": "resources/rugs/terracotta_flatweave.tres",
+        "source_sha256": "6071a5a0bd2bfe2b9d7af8173c0b0a6ff70de1b1bc9514c6fcf28d144bbcb175",
+        "capture_sha256": "6071a5a0bd2bfe2b9d7af8173c0b0a6ff70de1b1bc9514c6fcf28d144bbcb175",
+        "matches": true
+      },
+      {
+        "path": "resources/ui/mint_theme.tres",
+        "source_sha256": "d6e1aaf1f75653aacb75f553395612e3704010e6a178dc0de23d86df45a9921f",
+        "capture_sha256": "d6e1aaf1f75653aacb75f553395612e3704010e6a178dc0de23d86df45a9921f",
+        "matches": true
+      },
+      {
+        "path": "scenes/effects/squeegee_water.tscn",
+        "source_sha256": "3c02acf3ac29d8318c0d98818abedd82cf9699247df9b25ae0e7bedce83cd61f",
+        "capture_sha256": "3c02acf3ac29d8318c0d98818abedd82cf9699247df9b25ae0e7bedce83cd61f",
+        "matches": true
+      },
+      {
+        "path": "scenes/production/floating_home.tscn",
+        "source_sha256": "310d29d0fe4101d59fcc68a0e2ed25c9caf36fc6c181dcc748935a094d1ac151",
+        "capture_sha256": "310d29d0fe4101d59fcc68a0e2ed25c9caf36fc6c181dcc748935a094d1ac151",
+        "matches": true
+      },
+      {
+        "path": "scenes/production/rug_cleaning.tscn",
+        "source_sha256": "70cdbff55b8fd11cbc540ca64b575ecea3f68a6f3d2c4cc01bb7f1122cce6544",
+        "capture_sha256": "70cdbff55b8fd11cbc540ca64b575ecea3f68a6f3d2c4cc01bb7f1122cce6544",
+        "matches": true
+      },
+      {
+        "path": "scenes/test/rug_cleaning_gym.tscn",
+        "source_sha256": "51509abd41d56cb97f8c649ecf35ef397f04a2ae83348e18fcf354589a2a4698",
+        "capture_sha256": "51509abd41d56cb97f8c649ecf35ef397f04a2ae83348e18fcf354589a2a4698",
+        "matches": true
+      },
+      {
+        "path": "scenes/ui/cleaning_hud.tscn",
+        "source_sha256": "bf56becc67604dfdc427f7c1eb3402299250ead75f9d72eed36336286c5d36c6",
+        "capture_sha256": "bf56becc67604dfdc427f7c1eb3402299250ead75f9d72eed36336286c5d36c6",
+        "matches": true
+      },
+      {
+        "path": "scenes/ui/compact_shop.tscn",
+        "source_sha256": "ad9e2260fc560b9fa18b2ac62dd03814eb29f3a42bb1e7fe4a855287b0b4657d",
+        "capture_sha256": "ad9e2260fc560b9fa18b2ac62dd03814eb29f3a42bb1e7fe4a855287b0b4657d",
+        "matches": true
+      },
+      {
+        "path": "scenes/ui/completion_reveal.tscn",
+        "source_sha256": "01b2faba3e45719bf027dc234e2a90b45a5524852c89844be21559ccbff94140",
+        "capture_sha256": "01b2faba3e45719bf027dc234e2a90b45a5524852c89844be21559ccbff94140",
+        "matches": true
+      },
+      {
+        "path": "scenes/ui/gym_hud.tscn",
+        "source_sha256": "66c938575e72a817853bcaa1ecc8e0f22666e10c6208fbd86c843a337364b718",
+        "capture_sha256": "66c938575e72a817853bcaa1ecc8e0f22666e10c6208fbd86c843a337364b718",
+        "matches": true
+      },
+      {
+        "path": "scripts/cleaning_hud.gd",
+        "source_sha256": "ab4c8e1117dd54db4b58f49410e14b8d65ec68d5c142846cf11a97c453dd2972",
+        "capture_sha256": "ab4c8e1117dd54db4b58f49410e14b8d65ec68d5c142846cf11a97c453dd2972",
+        "matches": true
+      },
+      {
+        "path": "scripts/cleaning_hud.gd.uid",
+        "source_sha256": "6cecf768f15187146da9263a7c74bbc36d5ab8663e70e1fd6f2d7515ff8b3f8f",
+        "capture_sha256": "6cecf768f15187146da9263a7c74bbc36d5ab8663e70e1fd6f2d7515ff8b3f8f",
+        "matches": true
+      },
+      {
+        "path": "scripts/compact_shop.gd",
+        "source_sha256": "7ea6b18398969a77b8897f6ebfc44b9b3028a888f8d1de9daa88fe95c821baa7",
+        "capture_sha256": "7ea6b18398969a77b8897f6ebfc44b9b3028a888f8d1de9daa88fe95c821baa7",
+        "matches": true
+      },
+      {
+        "path": "scripts/compact_shop.gd.uid",
+        "source_sha256": "03f5d490cda1d588ec86c263c8ab8c097985ff18473b264707a393320d00184b",
+        "capture_sha256": "03f5d490cda1d588ec86c263c8ab8c097985ff18473b264707a393320d00184b",
+        "matches": true
+      },
+      {
+        "path": "scripts/completion_reveal.gd",
+        "source_sha256": "674002566baaf06b0f0323852bb9c78b4d9733353eabc431857eb3f55946a9a7",
+        "capture_sha256": "674002566baaf06b0f0323852bb9c78b4d9733353eabc431857eb3f55946a9a7",
+        "matches": true
+      },
+      {
+        "path": "scripts/completion_reveal.gd.uid",
+        "source_sha256": "5cc96d190db2f69ce7c3da3cbcf7560495f7951a58b12faa663c48a7016f607c",
+        "capture_sha256": "5cc96d190db2f69ce7c3da3cbcf7560495f7951a58b12faa663c48a7016f607c",
+        "matches": true
+      },
+      {
+        "path": "scripts/dirt_controller.gd",
+        "source_sha256": "6e3bf0b5a6e5c8bce98ed1416bb3f0f7a04e3aa8a01d6b4e8af5be1e7b0ea15b",
+        "capture_sha256": "6e3bf0b5a6e5c8bce98ed1416bb3f0f7a04e3aa8a01d6b4e8af5be1e7b0ea15b",
+        "matches": true
+      },
+      {
+        "path": "scripts/dirt_controller.gd.uid",
+        "source_sha256": "52bee5b16000e7d3609ac9dd171c01fa6c604068983f76e3cc710d7a199b0817",
+        "capture_sha256": "52bee5b16000e7d3609ac9dd171c01fa6c604068983f76e3cc710d7a199b0817",
+        "matches": true
+      },
+      {
+        "path": "scripts/floating_home.gd",
+        "source_sha256": "f222562e5f3c331f1c2e36c5ef5b1ba152522592e042fade288e624f499bd7bc",
+        "capture_sha256": "f222562e5f3c331f1c2e36c5ef5b1ba152522592e042fade288e624f499bd7bc",
+        "matches": true
+      },
+      {
+        "path": "scripts/floating_home.gd.uid",
+        "source_sha256": "28a73643ef08178afff0bea5e1f3447deba3ddaa06476e174eed86ff1ff97bd5",
+        "capture_sha256": "28a73643ef08178afff0bea5e1f3447deba3ddaa06476e174eed86ff1ff97bd5",
+        "matches": true
+      },
+      {
+        "path": "scripts/game_audio.gd",
+        "source_sha256": "bbcd1db2b685cc94324121de581661f0836f0386ea893dd8738fd750e9fc089a",
+        "capture_sha256": "bbcd1db2b685cc94324121de581661f0836f0386ea893dd8738fd750e9fc089a",
+        "matches": true
+      },
+      {
+        "path": "scripts/game_audio.gd.uid",
+        "source_sha256": "71c428f2f539afffd89e8a4045bf8d03e36cda0a90da54de4cc03ad1cf58239c",
+        "capture_sha256": "71c428f2f539afffd89e8a4045bf8d03e36cda0a90da54de4cc03ad1cf58239c",
+        "matches": true
+      },
+      {
+        "path": "scripts/gym.gd",
+        "source_sha256": "ce903ae1e6b5b11d90d4add29e74ffa8e87d0640f1723885b89da80263d7b65d",
+        "capture_sha256": "ce903ae1e6b5b11d90d4add29e74ffa8e87d0640f1723885b89da80263d7b65d",
+        "matches": true
+      },
+      {
+        "path": "scripts/gym.gd.uid",
+        "source_sha256": "15449fcd36f23a6907473fa799b077083dd003d4ccbcbc7f6fbf34e61851c1e3",
+        "capture_sha256": "15449fcd36f23a6907473fa799b077083dd003d4ccbcbc7f6fbf34e61851c1e3",
+        "matches": true
+      },
+      {
+        "path": "scripts/gym_camera.gd",
+        "source_sha256": "d04c3ed6544ac1f8f7b29f7d0539761d7ce4f7307d97787444d8db6fd43c5882",
+        "capture_sha256": "d04c3ed6544ac1f8f7b29f7d0539761d7ce4f7307d97787444d8db6fd43c5882",
+        "matches": true
+      },
+      {
+        "path": "scripts/gym_camera.gd.uid",
+        "source_sha256": "00604b1eab893825028b47dc139bbf473469da8b88bef30291865dc4f18fa82e",
+        "capture_sha256": "00604b1eab893825028b47dc139bbf473469da8b88bef30291865dc4f18fa82e",
+        "matches": true
+      },
+      {
+        "path": "scripts/gym_hud.gd",
+        "source_sha256": "931e1f26e7640fe4177ea531bd35594fccaa0b1e26380b92c1ef03a645121f05",
+        "capture_sha256": "931e1f26e7640fe4177ea531bd35594fccaa0b1e26380b92c1ef03a645121f05",
+        "matches": true
+      },
+      {
+        "path": "scripts/gym_hud.gd.uid",
+        "source_sha256": "1c48046eeff4be93280a83adba4c4d8ed90bfbd62a25cf2af10b8a4c0f44f6ab",
+        "capture_sha256": "1c48046eeff4be93280a83adba4c4d8ed90bfbd62a25cf2af10b8a4c0f44f6ab",
+        "matches": true
+      },
+      {
+        "path": "scripts/progression.gd",
+        "source_sha256": "416ebf108198cd5deb15b220b21eca8ca71aaebd29ad0cbd5f5bd319d7d06864",
+        "capture_sha256": "416ebf108198cd5deb15b220b21eca8ca71aaebd29ad0cbd5f5bd319d7d06864",
+        "matches": true
+      },
+      {
+        "path": "scripts/progression.gd.uid",
+        "source_sha256": "158b4ecb129d3620c503a94358e9eed8f36be1637798cda5ef6f9a15480e0e7c",
+        "capture_sha256": "158b4ecb129d3620c503a94358e9eed8f36be1637798cda5ef6f9a15480e0e7c",
+        "matches": true
+      },
+      {
+        "path": "scripts/reward_ad_service.gd",
+        "source_sha256": "75e4f7067870963181e06497fdc7eb71d2ff0d03aaf4fb1904c855ee324ed0e5",
+        "capture_sha256": "75e4f7067870963181e06497fdc7eb71d2ff0d03aaf4fb1904c855ee324ed0e5",
+        "matches": true
+      },
+      {
+        "path": "scripts/reward_ad_service.gd.uid",
+        "source_sha256": "efd2bf60b726425c08eda6bfd6c903793aded2505275385a691bacbf6785de75",
+        "capture_sha256": "efd2bf60b726425c08eda6bfd6c903793aded2505275385a691bacbf6785de75",
+        "matches": true
+      },
+      {
+        "path": "scripts/rug_catalog.gd",
+        "source_sha256": "d47e56f973622e83c493103a72f0a59aaf18d87f8761888eb831387476e71b33",
+        "capture_sha256": "d47e56f973622e83c493103a72f0a59aaf18d87f8761888eb831387476e71b33",
+        "matches": true
+      },
+      {
+        "path": "scripts/rug_catalog.gd.uid",
+        "source_sha256": "e4f02ee3e4ae6ca7a7b7cb412ecdfdee9219c760927371239ec4e31364d17994",
+        "capture_sha256": "e4f02ee3e4ae6ca7a7b7cb412ecdfdee9219c760927371239ec4e31364d17994",
+        "matches": true
+      },
+      {
+        "path": "scripts/rug_comparison.gd",
+        "source_sha256": "b2672a3ef9d349b6d66a53f4960472c9ef598dbfe1de07f6ec4ace661c5a2cc4",
+        "capture_sha256": "b2672a3ef9d349b6d66a53f4960472c9ef598dbfe1de07f6ec4ace661c5a2cc4",
+        "matches": true
+      },
+      {
+        "path": "scripts/rug_comparison.gd.uid",
+        "source_sha256": "248f09171450e14261804d358d0154a9f83de8e63709732e23b5def9bb1f2637",
+        "capture_sha256": "248f09171450e14261804d358d0154a9f83de8e63709732e23b5def9bb1f2637",
+        "matches": true
+      },
+      {
+        "path": "scripts/rug_definition.gd",
+        "source_sha256": "d3b71e31ede9cffb6c30f8d08aac44f0000543814e12d2af181787482ba5789b",
+        "capture_sha256": "d3b71e31ede9cffb6c30f8d08aac44f0000543814e12d2af181787482ba5789b",
+        "matches": true
+      },
+      {
+        "path": "scripts/rug_definition.gd.uid",
+        "source_sha256": "f888cd6012ef76fd7ec46ebda2d2bf23982720bcc2f345f62bf56564404ace14",
+        "capture_sha256": "f888cd6012ef76fd7ec46ebda2d2bf23982720bcc2f345f62bf56564404ace14",
+        "matches": true
+      },
+      {
+        "path": "scripts/rug_footprint.gd",
+        "source_sha256": "a4d2782b0c902c7cd036be3327796c29e5c76e0f0e4271c9c246e380a1226086",
+        "capture_sha256": "a4d2782b0c902c7cd036be3327796c29e5c76e0f0e4271c9c246e380a1226086",
+        "matches": true
+      },
+      {
+        "path": "scripts/rug_footprint.gd.uid",
+        "source_sha256": "fddc7cb1cfd9822ac8f28be989704c92b146d9833acd646f2898b819c1315567",
+        "capture_sha256": "fddc7cb1cfd9822ac8f28be989704c92b146d9833acd646f2898b819c1315567",
+        "matches": true
+      },
+      {
+        "path": "scripts/rug_roll.gd",
+        "source_sha256": "b465947bba1eb649acd3cae08fc3afc87af1cad63b4be36c43e95aebcbdd8d37",
+        "capture_sha256": "b465947bba1eb649acd3cae08fc3afc87af1cad63b4be36c43e95aebcbdd8d37",
+        "matches": true
+      },
+      {
+        "path": "scripts/rug_roll.gd.uid",
+        "source_sha256": "c129cba1878569d8998feae9f92afda3db5b06ba4ac775fa22dde06e91258950",
+        "capture_sha256": "c129cba1878569d8998feae9f92afda3db5b06ba4ac775fa22dde06e91258950",
+        "matches": true
+      },
+      {
+        "path": "scripts/scene_routes.gd",
+        "source_sha256": "151cc8c9caf9ffbe173cf1ecd00f3eb6007916951c5578b507fc1118b88318af",
+        "capture_sha256": "151cc8c9caf9ffbe173cf1ecd00f3eb6007916951c5578b507fc1118b88318af",
+        "matches": true
+      },
+      {
+        "path": "scripts/scene_routes.gd.uid",
+        "source_sha256": "f2a244be9f629f2c85f035b01dcfb63c5e2d9ea72c4105783f7782431ed1bd6e",
+        "capture_sha256": "f2a244be9f629f2c85f035b01dcfb63c5e2d9ea72c4105783f7782431ed1bd6e",
+        "matches": true
+      },
+      {
+        "path": "scripts/shop_state.gd",
+        "source_sha256": "bfbb2b924c8640005b90bab74fee8c8de19044b8496b724588dc33eb0b360014",
+        "capture_sha256": "bfbb2b924c8640005b90bab74fee8c8de19044b8496b724588dc33eb0b360014",
+        "matches": true
+      },
+      {
+        "path": "scripts/shop_state.gd.uid",
+        "source_sha256": "56dea0bf4cc297082c4a7cde18b47480517191851e8f5051a35594fb084ba88b",
+        "capture_sha256": "56dea0bf4cc297082c4a7cde18b47480517191851e8f5051a35594fb084ba88b",
+        "matches": true
+      },
+      {
+        "path": "scripts/soil_surface.gdshader",
+        "source_sha256": "489b3976b88b42bdb53f5f2c56549399bf8b0d553114f42ea4a838102df7b389",
+        "capture_sha256": "489b3976b88b42bdb53f5f2c56549399bf8b0d553114f42ea4a838102df7b389",
+        "matches": true
+      },
+      {
+        "path": "scripts/soil_surface.gdshader.uid",
+        "source_sha256": "38fd3e3752d2d18a83b5ae28146754874f13e7c6827c6328d08cad548cb7a319",
+        "capture_sha256": "38fd3e3752d2d18a83b5ae28146754874f13e7c6827c6328d08cad548cb7a319",
+        "matches": true
+      },
+      {
+        "path": "scripts/squeegee_motion.gd",
+        "source_sha256": "a991e13cfbdb73cc5d29e1b485b3ee43890875fe4ddd83589049778d6e78fc28",
+        "capture_sha256": "a991e13cfbdb73cc5d29e1b485b3ee43890875fe4ddd83589049778d6e78fc28",
+        "matches": true
+      },
+      {
+        "path": "scripts/squeegee_motion.gd.uid",
+        "source_sha256": "4cc679c1025a42cc90c307811f83928a0330550db337a43724f3ee33bbdf6a60",
+        "capture_sha256": "4cc679c1025a42cc90c307811f83928a0330550db337a43724f3ee33bbdf6a60",
+        "matches": true
+      },
+      {
+        "path": "scripts/squeegee_runoff_streams.gd",
+        "source_sha256": "c5af544b522e2a4eaa87157867ad9cf0e370c58c9b8d246b88ede35810e2870c",
+        "capture_sha256": "c5af544b522e2a4eaa87157867ad9cf0e370c58c9b8d246b88ede35810e2870c",
+        "matches": true
+      },
+      {
+        "path": "scripts/squeegee_runoff_streams.gd.uid",
+        "source_sha256": "4a9e3325e30127c031a723628f10b4486dba5736c18826572d4bb2558c3d4ca0",
+        "capture_sha256": "4a9e3325e30127c031a723628f10b4486dba5736c18826572d4bb2558c3d4ca0",
+        "matches": true
+      },
+      {
+        "path": "scripts/squeegee_runoff_streams.gdshader",
+        "source_sha256": "f196bd91eb59c0715dcf5e0fa2737c4925c7c07f08a53ef690380f9129495745",
+        "capture_sha256": "f196bd91eb59c0715dcf5e0fa2737c4925c7c07f08a53ef690380f9129495745",
+        "matches": true
+      },
+      {
+        "path": "scripts/squeegee_runoff_streams.gdshader.uid",
+        "source_sha256": "48d90adf05dc5586b0e7c90bf4717ec8b9f9213ac7ab802034b60dc82be7bfff",
+        "capture_sha256": "48d90adf05dc5586b0e7c90bf4717ec8b9f9213ac7ab802034b60dc82be7bfff",
+        "matches": true
+      },
+      {
+        "path": "scripts/squeegee_water.gd",
+        "source_sha256": "de7efc27f4b120353564d8ff26d8af168d61734b8ac1ee4dbb808aba5bccdfac",
+        "capture_sha256": "de7efc27f4b120353564d8ff26d8af168d61734b8ac1ee4dbb808aba5bccdfac",
+        "matches": true
+      },
+      {
+        "path": "scripts/squeegee_water.gd.uid",
+        "source_sha256": "06d0fa08f5b9eb1bbff0aac3d44426a23b084f4f2511b51c07add280fdc085b6",
+        "capture_sha256": "06d0fa08f5b9eb1bbff0aac3d44426a23b084f4f2511b51c07add280fdc085b6",
+        "matches": true
+      },
+      {
+        "path": "scripts/squeegee_water_trail.gd",
+        "source_sha256": "a04f27b9d0915a4f015b0fe30ffa6620f133f36d065a64fa644329b99e50fb76",
+        "capture_sha256": "a04f27b9d0915a4f015b0fe30ffa6620f133f36d065a64fa644329b99e50fb76",
+        "matches": true
+      },
+      {
+        "path": "scripts/squeegee_water_trail.gd.uid",
+        "source_sha256": "0b1fa0648bf139d9c0255251edfd8c1ee18e4049a05e0ddb48c07411ad7f29a6",
+        "capture_sha256": "0b1fa0648bf139d9c0255251edfd8c1ee18e4049a05e0ddb48c07411ad7f29a6",
+        "matches": true
+      },
+      {
+        "path": "scripts/tool_progression_visual.gd",
+        "source_sha256": "354105c94facea4a5d41203da34a3da85b80c4e35f7b46a3c66086e2114589c1",
+        "capture_sha256": "354105c94facea4a5d41203da34a3da85b80c4e35f7b46a3c66086e2114589c1",
+        "matches": true
+      },
+      {
+        "path": "scripts/tool_progression_visual.gd.uid",
+        "source_sha256": "12a1425cc648216b850c7bc6f39cbb94949620ebce341eca34416b21041d8a8e",
+        "capture_sha256": "12a1425cc648216b850c7bc6f39cbb94949620ebce341eca34416b21041d8a8e",
+        "matches": true
+      },
+      {
+        "path": "scripts/ui/button_pop.gd",
+        "source_sha256": "befcc08f9535dbc0a906c739abc0c9df0be2d12936a04c51977f0961731946a2",
+        "capture_sha256": "befcc08f9535dbc0a906c739abc0c9df0be2d12936a04c51977f0961731946a2",
+        "matches": true
+      },
+      {
+        "path": "scripts/ui/button_pop.gd.uid",
+        "source_sha256": "039adf9c3e0e81991a5098a22b600757ee57909162142f1d98496cf7417d0480",
+        "capture_sha256": "039adf9c3e0e81991a5098a22b600757ee57909162142f1d98496cf7417d0480",
+        "matches": true
+      },
+      {
+        "path": "scripts/ui/home_pattern.gd",
+        "source_sha256": "eb88c655b8392c4d3d00ed78b04d62dfba83b6a74b01536869e8db1c33e5b0e6",
+        "capture_sha256": "eb88c655b8392c4d3d00ed78b04d62dfba83b6a74b01536869e8db1c33e5b0e6",
+        "matches": true
+      },
+      {
+        "path": "scripts/ui/home_pattern.gd.uid",
+        "source_sha256": "66abc86db22efa8ab731d2d110ee145f30392f004469289561101abea5a1a800",
+        "capture_sha256": "66abc86db22efa8ab731d2d110ee145f30392f004469289561101abea5a1a800",
+        "matches": true
+      },
+      {
+        "path": "scripts/water_hose_profile.gd",
+        "source_sha256": "afd31cb2aa09d13263cea98e5623e899f11e0e273e2392f5c05c341c4f66937c",
+        "capture_sha256": "afd31cb2aa09d13263cea98e5623e899f11e0e273e2392f5c05c341c4f66937c",
+        "matches": true
+      },
+      {
+        "path": "scripts/water_hose_profile.gd.uid",
+        "source_sha256": "a22b0cb8ec56abdceebd2f7ed9289a84c3f8063f4ce43aba0199c5b88fab2b25",
+        "capture_sha256": "a22b0cb8ec56abdceebd2f7ed9289a84c3f8063f4ce43aba0199c5b88fab2b25",
+        "matches": true
+      },
+      {
+        "path": "scripts/water_jet.gd",
+        "source_sha256": "f1f1c42d991c7c4c03a47e447259a9a4326f38ac7cc72ef50bdee1ff7cfec039",
+        "capture_sha256": "f1f1c42d991c7c4c03a47e447259a9a4326f38ac7cc72ef50bdee1ff7cfec039",
+        "matches": true
+      },
+      {
+        "path": "scripts/water_jet.gd.uid",
+        "source_sha256": "1e7228e8632650bc409a5135f200d31fe6461f5c3a42201c04b91d156aad4b9b",
+        "capture_sha256": "1e7228e8632650bc409a5135f200d31fe6461f5c3a42201c04b91d156aad4b9b",
+        "matches": true
+      },
+      {
+        "path": "scripts/water_jet.gdshader",
+        "source_sha256": "109de9b1b87d0615b609232dae7b29914d33679cd8d65067368510ea78b383f4",
+        "capture_sha256": "109de9b1b87d0615b609232dae7b29914d33679cd8d65067368510ea78b383f4",
+        "matches": true
+      },
+      {
+        "path": "scripts/water_jet.gdshader.uid",
+        "source_sha256": "1d652dae7c26c82b7fa0059c0adb2c09f06be9f44d3a0ff9f9fd85e957cdc243",
+        "capture_sha256": "1d652dae7c26c82b7fa0059c0adb2c09f06be9f44d3a0ff9f9fd85e957cdc243",
+        "matches": true
+      },
+      {
+        "path": "scripts/water_jet_droplet.gdshader",
+        "source_sha256": "f3550e4e3f136502e5cfde13e3ad37c86c7241a80844c94071ff26445165a0c3",
+        "capture_sha256": "f3550e4e3f136502e5cfde13e3ad37c86c7241a80844c94071ff26445165a0c3",
+        "matches": true
+      },
+      {
+        "path": "scripts/water_jet_droplet.gdshader.uid",
+        "source_sha256": "f0caf921e8fc3eb585024deef258bbf0274df948cff787ffab8147c0ee3db89e",
+        "capture_sha256": "f0caf921e8fc3eb585024deef258bbf0274df948cff787ffab8147c0ee3db89e",
+        "matches": true
+      },
+      {
+        "path": "scripts/water_jet_impact.gd",
+        "source_sha256": "d561cdd6d6f9bfc9376ba72727bf76c476fd402f4042f1d363158c8eec389c1d",
+        "capture_sha256": "d561cdd6d6f9bfc9376ba72727bf76c476fd402f4042f1d363158c8eec389c1d",
+        "matches": true
+      },
+      {
+        "path": "scripts/water_jet_impact.gd.uid",
+        "source_sha256": "19365881914d67943eb31760bccfc63a3fe56cb1322df54cc73bef247290f326",
+        "capture_sha256": "19365881914d67943eb31760bccfc63a3fe56cb1322df54cc73bef247290f326",
+        "matches": true
+      },
+      {
+        "path": "scripts/water_jet_impact.gdshader",
+        "source_sha256": "e2bd17c460b5654f5a2fc127922e3a7e913383b8851ff22186752c90fa1f0115",
+        "capture_sha256": "e2bd17c460b5654f5a2fc127922e3a7e913383b8851ff22186752c90fa1f0115",
+        "matches": true
+      },
+      {
+        "path": "scripts/water_jet_impact.gdshader.uid",
+        "source_sha256": "aaf1a9ce7d1a14662e9689118e39525fd56e9723dd3be1addc977ee635fe42de",
+        "capture_sha256": "aaf1a9ce7d1a14662e9689118e39525fd56e9723dd3be1addc977ee635fe42de",
+        "matches": true
+      },
+      {
+        "path": "scripts/water_soak.gd",
+        "source_sha256": "a6219ca4195eac8c2582dcaca85565178d33afca3d045048fad5376b540547d9",
+        "capture_sha256": "a6219ca4195eac8c2582dcaca85565178d33afca3d045048fad5376b540547d9",
+        "matches": true
+      },
+      {
+        "path": "scripts/water_soak.gd.uid",
+        "source_sha256": "5642137364c9d5902c8192d33e9b59c743e28a5cc2213d592e5aad76fd97ac35",
+        "capture_sha256": "5642137364c9d5902c8192d33e9b59c743e28a5cc2213d592e5aad76fd97ac35",
+        "matches": true
+      },
+      {
+        "path": "scripts/workshop.gd",
+        "source_sha256": "187ff807f011a65286e6b00ef55cbb46cec9e12658bc35acfdf5fc7f1e906e68",
+        "capture_sha256": "187ff807f011a65286e6b00ef55cbb46cec9e12658bc35acfdf5fc7f1e906e68",
+        "matches": true
+      },
+      {
+        "path": "scripts/workshop.gd.uid",
+        "source_sha256": "cc2ae3ab83ccf0d45eecce86e878962b8ec74c05742b1012f1dc6415bb71b0d8",
+        "capture_sha256": "cc2ae3ab83ccf0d45eecce86e878962b8ec74c05742b1012f1dc6415bb71b0d8",
+        "matches": true
+      }
+    ],
+    "expected_configuration_difference": "project.godot only; recording viewport, preview window, stretch mode and movie output settings.",
+    "summary": {
+      "compared": 149,
+      "matching": 147,
+      "different": [
+        "project.godot"
+      ],
+      "missing": [
+        "icon.svg.import"
+      ]
+    }
+  },
+  "capture_run": {
+    "audit_utc": "2026-09-29T17:48:48.023671+00:00",
+    "session": "build/ad-capture-v2/full-game-001",
+    "started_utc": "2026-09-29 17:40:51",
+    "finished_successfully": true,
+    "manifest_error": "",
+    "driver_frames": 8360,
+    "frame_rate": 30,
+    "duration_seconds": 278.6666666666667,
+    "capture_wall_seconds": 311.427028,
+    "production_input": "InputEventScreenTouch and InputEventScreenDrag through root.push_input; one motion per rendered frame",
+    "clock_normalization": "Only the previous brush input timestamp is aligned with fixed movie delta. No calls to manual physics, soil strokes, mask writes or reward setters.",
+    "native_speed": true,
+    "fixture_only": false,
+    "hud_hidden": false,
+    "runtime_engine": {
+      "build": "official",
+      "hash": "ed1daf0bf001b61586d9930840f2f1394092c079",
+      "hex": 263938,
+      "major": 4,
+      "minor": 7,
+      "patch": 2,
+      "status": "stable",
+      "string": "4.7.2-stable (official)",
+      "timestamp": 0
+    },
+    "audio": {
+      "captured_music_enabled": false,
+      "effects_enabled": true,
+      "audition_audio_enabled": true,
+      "codec": "pcm_s16le",
+      "sample_rate": 48000,
+      "channels": 2,
+      "sample_frames": 13376000,
+      "duration_seconds": 278.6666666666667,
+      "note": "Raw footage includes actual brush/completion effects. Music was disabled for capture to allow a continuous editorial music bed later. Equal audio/video duration is a structural check, not a listening review."
+    },
+    "video": {
+      "codec_name": "mjpeg",
+      "width": 1080,
+      "height": 1920,
+      "pix_fmt": "yuvj420p",
+      "color_range": "pc",
+      "color_space": "bt470bg",
+      "avg_frame_rate": "30/1",
+      "start_time": "0.000000",
+      "duration": "278.666667",
+      "nb_frames": "8360"
+    },
+    "phase_summary": [
+      {
+        "cash": 40,
+        "clearance": 0.990040935031399,
+        "engine_frame": 2633,
+        "frame": 2634,
+        "full_restoration": true,
+        "job_id": "neighborhood-1",
+        "reward": 40,
+        "rug_id": "mint_meadow",
+        "vacuum_engine_frame": 2633,
+        "reveal_engine_frame": 2687,
+        "departure_engine_frame": 2759,
+        "vacuum_seconds": 1.8,
+        "reveal_seconds": 2.4
+      },
+      {
+        "cash": 80,
+        "clearance": 0.990040935031399,
+        "engine_frame": 5421,
+        "frame": 5422,
+        "full_restoration": true,
+        "job_id": "neighborhood-2",
+        "reward": 40,
+        "rug_id": "sunburst_geometry",
+        "vacuum_engine_frame": 5421,
+        "reveal_engine_frame": 5475,
+        "departure_engine_frame": 5547,
+        "vacuum_seconds": 1.8,
+        "reveal_seconds": 2.4
+      },
+      {
+        "cash": 120,
+        "clearance": 0.990040935031399,
+        "engine_frame": 8209,
+        "frame": 8210,
+        "full_restoration": true,
+        "job_id": "neighborhood-3",
+        "reward": 40,
+        "rug_id": "playful_fox",
+        "vacuum_engine_frame": 8209,
+        "reveal_engine_frame": 8263,
+        "departure_engine_frame": 8335,
+        "vacuum_seconds": 1.8,
+        "reveal_seconds": 2.4
+      }
+    ],
+    "checks": {
+      "capture_success": true,
+      "three_jobs": true,
+      "real_rug_order": true,
+      "full_restoration_every_job": true,
+      "rewards_and_wallet": true,
+      "starter_tool_unchanged": true,
+      "suction_and_reveal_durations": true,
+      "capture_frame_count_matches_movie": true,
+      "video_shape_and_rate": true,
+      "raw_audio_matches_video_duration": true,
+      "original_source_hashes_unchanged": true,
+      "fresh_session_no_fixture": true
+    },
+    "source_hash_changes_since_initial_audit": [],
+    "engine_log_messages": [
+      {
+        "line": 4,
+        "text": "ERROR: Failed to read the root certificate store."
+      }
+    ],
+    "engine_log_assessment": "The only ERROR-prefixed message is Failed to read the root certificate store at the Windows system certificate loader. Capture continued successfully with 8360 frames and three paid full restorations. This offline gameplay capture has no certificate-store dependency. No script or capture failure messages were found.",
+    "files": [
+      {
+        "path": "tools/capture_ad_gameplay.gd",
+        "bytes": 15401,
+        "sha256": "fdba3f61cd56ee64e2b80ca6d1fd9616399c1b03380762283f1721fce6fb27cd"
+      },
+      {
+        "path": "build/ad-capture-v2/full-game-001/restorations.avi",
+        "bytes": 2175400342,
+        "sha256": "6f4b8bd1e160a0015406ba50d71362f48cb03188c2956d73f7fb8408bfec7019"
+      },
+      {
+        "path": "build/ad-capture-v2/full-game-001/take_manifest.json",
+        "bytes": 109506,
+        "sha256": "34a0b97d83fe10e57ac7f008b7c17022c3bc9c5ac21f1fe6dc076fdade594fb4"
+      },
+      {
+        "path": "build/ad-capture-v2/full-game-001/engine.log",
+        "bytes": 90243,
+        "sha256": "994437bb14a69d86cdac002e52f7d7e731eb60a0e94ff3a05ddbff08e83c4de4"
+      },
+      {
+        "path": "build/ad-capture-v2/full-game-001/logs/events.jsonl",
+        "bytes": 86083,
+        "sha256": "430498bce8463ba09f6021935f64528877c6a3219c312cb0b8461b9b373a7a93"
+      },
+      {
+        "path": "build/ad-capture-v2/full-game-001/logs/independent_audit.json",
+        "bytes": 3151,
+        "sha256": "857b698a2fc7a1d147cd40bdb0f5e6b94f38f241c18684d9c18c45368407757c"
+      }
+    ],
+    "final_master": {
+      "planned_filename": "Carpet_Cleaner_Find_the_Fox_15s_v1.mp4",
+      "hashed_by_this_audit": false,
+      "note": "Final export and hash are owned by the editor after encoding."
+    }
+  }
+}

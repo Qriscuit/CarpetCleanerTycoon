@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920"><title>header</title><defs>
+ <linearGradient id="ink" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#32636B"/><stop offset=".6" stop-color="#204E58"/><stop offset="1" stop-color="#133C46"/></linearGradient>
+ <linearGradient id="mint" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#A9E5C9"/><stop offset="1" stop-color="#49AF96"/></linearGradient>
+ <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F7D573"/><stop offset="1" stop-color="#D6A139"/></linearGradient>
+ <linearGradient id="coral" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFB090"/><stop offset="1" stop-color="#E5775B"/></linearGradient>
+ <linearGradient id="water" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#B5F2ED"/><stop offset="1" stop-color="#3CBFCF"/></linearGradient>
+ <linearGradient id="paper" x1="0" y1="0" x2=".65" y2="1"><stop stop-color="#FFFAEB"/><stop offset="1" stop-color="#F0F3DD"/></linearGradient>
+ <filter id="lift" x="-40%" y="-50%" width="180%" height="220%" color-interpolation-filters="sRGB"><feDropShadow dx="0" dy="7" stdDeviation="5" flood-color="#153E44" flood-opacity=".20"/></filter>
+ </defs><g transform="rotate(-2 540 214)"><g filter="url(#lift)"><g fill="#DCDAC0" stroke="#DCDAC0" stroke-width="22" stroke-linejoin="round" transform="translate(0 4)"><text x="540" y="225" font-family="CarpetRounded" font-size="104" text-anchor="middle" letter-spacing="-1.7">Three tools.</text></g><g fill="#FFF9E8" stroke="#FFF9E8" stroke-width="19" stroke-linejoin="round"><text x="540" y="225" font-family="CarpetRounded" font-size="104" text-anchor="middle" letter-spacing="-1.7">Three tools.</text></g><g fill="url(#ink)"><text x="540" y="225" font-family="CarpetRounded" font-size="104" text-anchor="middle" letter-spacing="-1.7">Three tools.</text></g></g>
+ <path d="M255 276 Q540 265 825 274 L830 325 Q540 339 251 328Z" fill="#CBE7BE" stroke="#FFF9E8" stroke-width="8" stroke-linejoin="round"/>
+ <text x="540" y="310" font-family="CarpetRounded" font-size="55" text-anchor="middle" fill="#154D54" letter-spacing="-1">One beautiful reveal.</text>
+ <g transform="translate(223 274) rotate(-12) scale(0.59)">
+  <path d="M1 21 C-35 18-61-9-51-30 C-26-38-1-10 1 21 M4 23 C14-5 41-21 54-5 C60 18 33 34 4 28 M0 27 C-18 18-45 24-45 39 C-29 55-7 41 0 27" fill="#FFF9E8" stroke="#FFF9E8" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M1 21 C-35 18-61-9-51-30 C-26-38-1-10 1 21 M4 23 C14-5 41-21 54-5 C60 18 33 34 4 28" fill="url(#mint)" stroke="#479B83" stroke-width="2.5"/>
+  <path d="M0 27 C-18 18-45 24-45 39 C-29 55-7 41 0 27" fill="#6FC1A6" stroke="#479B83" stroke-width="2.5"/>
+  <path d="M-36-18 Q-18-3 1 24 M38 2 Q20 12 4 25 M-32 35 L0 26" fill="none" stroke="#3C937F" stroke-width="3" stroke-linecap="round"/>
+  <path d="M-40-25 Q-24-25-13-12" fill="none" stroke="#D4F0D9" stroke-width="4" stroke-linecap="round"/>
+ </g><g transform="translate(851 272) rotate(36) scale(0.59)">
+  <path d="M1 21 C-35 18-61-9-51-30 C-26-38-1-10 1 21 M4 23 C14-5 41-21 54-5 C60 18 33 34 4 28 M0 27 C-18 18-45 24-45 39 C-29 55-7 41 0 27" fill="#FFF9E8" stroke="#FFF9E8" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M1 21 C-35 18-61-9-51-30 C-26-38-1-10 1 21 M4 23 C14-5 41-21 54-5 C60 18 33 34 4 28" fill="url(#mint)" stroke="#479B83" stroke-width="2.5"/>
+  <path d="M0 27 C-18 18-45 24-45 39 C-29 55-7 41 0 27" fill="#6FC1A6" stroke="#479B83" stroke-width="2.5"/>
+  <path d="M-36-18 Q-18-3 1 24 M38 2 Q20 12 4 25 M-32 35 L0 26" fill="none" stroke="#3C937F" stroke-width="3" stroke-linecap="round"/>
+  <path d="M-40-25 Q-24-25-13-12" fill="none" stroke="#D4F0D9" stroke-width="4" stroke-linecap="round"/>
+ </g><g transform="translate(900 196) rotate(-6) scale(0.88)"><path d="M0-29 C4-7 7-4 24 0 C7 4 4 8 0 29 C-4 8-7 4-24 0 C-7-4-4-7 0-29Z" fill="#FFF7CC" stroke="#FFF9E8" stroke-width="12" stroke-linejoin="round"/><path d="M0-29 C4-7 7-4 24 0 C7 4 4 8 0 29 C-4 8-7 4-24 0 C-7-4-4-7 0-29Z" fill="#FFF1B4" stroke="#EDBA43" stroke-width="3" stroke-linejoin="round"/></g><g transform="translate(168 222) rotate(4) scale(0.64)"><path d="M0-29 C4-7 7-4 24 0 C7 4 4 8 0 29 C-4 8-7 4-24 0 C-7-4-4-7 0-29Z" fill="#FFF7CC" stroke="#FFF9E8" stroke-width="12" stroke-linejoin="round"/><path d="M0-29 C4-7 7-4 24 0 C7 4 4 8 0 29 C-4 8-7 4-24 0 C-7-4-4-7 0-29Z" fill="#FFF1B4" stroke="#EDBA43" stroke-width="3" stroke-linejoin="round"/></g>
+ </g></svg>

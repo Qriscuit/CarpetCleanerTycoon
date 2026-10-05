@@ -8,6 +8,7 @@ const Routes = preload("res://scripts/scene_routes.gd")
 @export var preview_safe_insets := Vector4.ZERO
 var elapsed := 0.0
 var state: Node
+var game_audio: Node
 var management: Control
 var touch_id := -1
 var touch_origin := Vector2.ZERO
@@ -33,11 +34,32 @@ var mouse_settings_dragged := false
 var store_materials: Array[StandardMaterial3D] = []
 var store_colors: Array[Color] = []
 const STORE_NAMES := ["Neighborhood", "High Street", "Wash House", "Restoration"]
+const STORE_SLIDE_SECONDS := 0.62
+var incoming_store_materials: Array[StandardMaterial3D] = []
+var incoming_store_colors: Array[Color] = []
+var displayed_store := 1
+var queued_store := -1
+var store_transition_active := false
+var store_transition_progress := 1.0
+var store_transition_from := 1
+var store_transition_to := 1
+var store_transition_direction := 1.0
+var store_transition_tween: Tween
+var _building_home_position := Vector2.ZERO
+var _selecting_store := false
+var _pending_active_preview := -1
 
 func _ready() -> void:
 	resized.connect(_layout)
 	%SettingsPanel.minimum_size_changed.connect(_layout.call_deferred)
 	if not Engine.is_editor_hint():
+		game_audio = get_node_or_null("/root/GameAudio")
+		if game_audio != null:
+			game_audio.set_context("home")
+			%MusicToggle.set_pressed_no_signal(game_audio.music_enabled)
+			%EffectsToggle.set_pressed_no_signal(game_audio.effects_enabled)
+			%MusicToggle.toggled.connect(game_audio.set_music_enabled)
+			%EffectsToggle.toggled.connect(game_audio.set_effects_enabled)
 		var window := get_window()
 		original_scale_size = window.content_scale_size
 		original_scale_aspect = window.content_scale_aspect
@@ -60,7 +82,7 @@ func _ready() -> void:
 		%ShopTap.button_up.connect(_release_shop)
 		%ShopTap.mouse_exited.connect(_release_shop)
 		%ShopTap.focus_exited.connect(_release_shop)
-		for button in [%Settings,%NavShop,%NavItems,%NavPlans,%NavBonzi,%ReturnNotice,%MotionToggle,%OpenGym,%ResetProgress,%CancelReset,%ConfirmReset]: Pop.bind(button)
+		for button in [%Settings,%NavShop,%NavItems,%NavPlans,%NavBonzi,%ReturnNotice,%MotionToggle,%MusicToggle,%EffectsToggle,%OpenGym,%ResetProgress,%CancelReset,%ConfirmReset]: Pop.bind(button)
 		%Settings.pressed.connect(_open_settings)
 		%MotionToggle.toggled.connect(_toggle_motion)
 		%MotionToggle.set_pressed_no_signal(animate_shop)
@@ -86,7 +108,9 @@ func _ready() -> void:
 	call_deferred("_layout")
 
 func _exit_tree() -> void:
+	if store_transition_tween != null and store_transition_tween.is_valid(): store_transition_tween.kill()
 	if Engine.is_editor_hint() or original_scale_size == Vector2i.ZERO: return
+	if is_instance_valid(game_audio): game_audio.set_context("off")
 	if resized.is_connected(_layout): resized.disconnect(_layout)
 	if is_instance_valid(state) and state.changed.is_connected(_refresh): state.changed.disconnect(_refresh)
 	var window := get_window()
@@ -103,7 +127,7 @@ func _toggle_motion(enabled: bool) -> void:
 		%ShopPivot.position.y = 0.0
 
 func _process(delta: float) -> void:
-	if not is_node_ready() or not animate_shop or %Management.visible or shop_pressed or changing_scene: return
+	if not is_node_ready() or not animate_shop or %Management.visible or shop_pressed or changing_scene or store_transition_active: return
 	elapsed += minf(delta, 0.1)
 	%ShopPivot.rotation.y = deg_to_rad(rotation_speed_degrees) * elapsed
 	%ShopPivot.position.y = sin(elapsed * 1.25) * 0.055
@@ -136,10 +160,14 @@ func _layout() -> void:
 	# The render is fitted using both available dimensions, never cropped to fill.
 	var render_height := maxf(minf(area.size.y-36, area.size.x*1.20), 64)
 	var render_width := minf(area.size.x, render_height*1.28)
-	%BuildingView.position = Vector2(safe.get_center().x-render_width/2, area.position.y+maxf(area.size.y-render_height-36,0)*.4)
+	_building_home_position = Vector2(safe.get_center().x-render_width/2, area.position.y+maxf(area.size.y-render_height-36,0)*.4)
+	%BuildingView.position = _building_home_position
 	%BuildingView.size = Vector2(render_width, render_height)
 	%ShopCamera.size = maxf(6.2, 6.2 / maxf(render_width/render_height, 0.1))
-	%ShopTap.position = %BuildingView.position + %BuildingView.size * Vector2(.10,.08)
+	%IncomingBuildingView.position = _building_home_position
+	%IncomingBuildingView.size = %BuildingView.size
+	%IncomingShopCamera.size = %ShopCamera.size
+	%ShopTap.position = _building_home_position + %BuildingView.size * Vector2(.10,.08)
 	%ShopTap.size = %BuildingView.size * Vector2(.80,.84)
 	%StatusMessage.position = safe.position+Vector2(margin,74)
 	%StatusMessage.size = Vector2(safe.size.x-margin*2, 44)
@@ -151,9 +179,11 @@ func _layout() -> void:
 	if is_instance_valid(management):
 		management.position = safe.position
 		management.size = safe.size
+	if store_transition_active: _set_store_transition_progress(store_transition_progress)
 
 func _open_settings() -> void:
 	if changing_scene: return
+	_settle_store_transition()
 	if %SettingsSheet.visible:
 		_close_settings()
 		return
@@ -171,6 +201,7 @@ func _request_reset() -> void:
 	reset_pending = true
 	%SettingsTitle.text = "Reset progress?"
 	%MotionToggle.hide()
+	%AudioToggles.hide()
 	%ResetProgress.hide()
 	%OpenGym.hide()
 	%ResetReview.show()
@@ -184,6 +215,7 @@ func _cancel_reset() -> void:
 	%ResetReview.hide()
 	%ResetError.hide()
 	%MotionToggle.show()
+	%AudioToggles.show()
 	%ResetProgress.show()
 	%OpenGym.show()
 	%ResetProgress.grab_focus()
@@ -211,13 +243,14 @@ func _new_shop_tween() -> Tween:
 	return shop_tween
 
 func _press_shop() -> void:
-	if changing_scene: return
+	if changing_scene or store_transition_active: return
 	shop_pressed = true
 	_new_shop_tween().tween_property(%ShopPivot,"scale",Vector3(.96,.90,.96),.075).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 func _release_shop() -> void:
 	if changing_scene: return
 	shop_pressed = false
+	if store_transition_active: return
 	_new_shop_tween().tween_property(%ShopPivot,"scale",Vector3.ONE,.13).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 func _refresh() -> void:
@@ -227,28 +260,108 @@ func _refresh() -> void:
 	%ReturnNotice.text = "+%s while away · Got it" % _cash_text(state.return_reward)
 	if last_active_store != state.active_store:
 		last_active_store = state.active_store
-		preview_store = state.active_store
-		_update_store_preview()
+		if not _selecting_store:
+			_pending_active_preview = state.active_store
+			preview_location(state.active_store)
 	_refresh_store_caption()
 
 func _prepare_store_materials() -> void:
-	for mesh: MeshInstance3D in %ShopPivot.find_children("*", "MeshInstance3D", true, false):
+	_prepare_shop_palette(%ShopPivot, store_materials, store_colors)
+	_prepare_shop_palette(%IncomingShopPivot, incoming_store_materials, incoming_store_colors)
+
+func _prepare_shop_palette(pivot: Node3D, materials: Array[StandardMaterial3D], colors: Array[Color]) -> void:
+	for mesh: MeshInstance3D in pivot.find_children("*", "MeshInstance3D", true, false):
 		if mesh.mesh == null: continue
 		for index in mesh.mesh.get_surface_count():
 			var original := mesh.get_active_material(index) as StandardMaterial3D
 			if original == null: continue
 			var material := original.duplicate() as StandardMaterial3D
 			mesh.set_surface_override_material(index, material)
-			store_materials.append(material)
-			store_colors.append(material.albedo_color)
+			materials.append(material)
+			colors.append(original.albedo_color)
+
+func _apply_store_palette(materials: Array[StandardMaterial3D], colors: Array[Color], id: int) -> void:
+	var hues := [0.0, -0.16, 0.09, 0.22]
+	for index in materials.size():
+		var original := colors[index]
+		materials[index].albedo_color = Color.from_hsv(fposmod(original.h + hues[id - 1], 1.0), original.s, original.v, original.a) if original.s > 0.15 else original
 
 func _update_store_preview() -> void:
-	_refresh_store_caption()
-	var hues := [0.0, -0.16, 0.09, 0.22]
-	for index in store_materials.size():
-		var original := store_colors[index]
-		store_materials[index].albedo_color = Color.from_hsv(fposmod(original.h + hues[preview_store - 1], 1.0), original.s, original.v, original.a) if original.s > 0.15 else original
+	displayed_store = preview_store
+	_apply_store_palette(store_materials, store_colors, displayed_store)
+	$SkyPattern.set_store(displayed_store)
 	%ShopPivot.rotation.y = 0.0
+	_refresh_store_caption()
+
+func _start_store_transition(id: int) -> void:
+	if shop_tween != null and shop_tween.is_valid(): shop_tween.kill()
+	shop_pressed = false
+	store_transition_active = true
+	store_transition_from = displayed_store
+	store_transition_to = id
+	store_transition_direction = 1.0 if id > displayed_store else -1.0
+	%ShopPivot.scale = Vector3.ONE
+	%IncomingShopPivot.scale = Vector3.ONE
+	%IncomingShopPivot.rotation = %ShopPivot.rotation
+	%IncomingShopPivot.position = %ShopPivot.position
+	_apply_store_palette(incoming_store_materials, incoming_store_colors, id)
+	%IncomingBuildingView.show()
+	%IncomingShopViewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	_set_store_transition_progress(0.0)
+	store_transition_tween = create_tween()
+	store_transition_tween.tween_method(_set_store_transition_progress, 0.0, 1.0, STORE_SLIDE_SECONDS).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	store_transition_tween.tween_callback(_finish_store_transition)
+
+func _set_store_transition_progress(progress: float) -> void:
+	store_transition_progress = clampf(progress, 0.0, 1.0)
+	# Move the complete transparent render, including its shadow. The travel
+	# distance clears the actual window edge, rather than clipping the model
+	# at the smaller central building viewport.
+	var travel := size.x + 24.0
+	var offset := store_transition_direction * travel
+	%BuildingView.position = _building_home_position - Vector2(offset * store_transition_progress, 0.0)
+	%IncomingBuildingView.position = _building_home_position + Vector2(offset * (1.0 - store_transition_progress), 0.0)
+	var lean := sin(store_transition_progress * PI) * 0.035 * store_transition_direction
+	%ShopPivot.rotation.z = -lean
+	%IncomingShopPivot.rotation.z = lean
+	$SkyPattern.set_store_blend(store_transition_from, store_transition_to, store_transition_progress)
+
+func _finish_store_transition(run_queued: bool = true) -> void:
+	if not store_transition_active: return
+	displayed_store = store_transition_to
+	if displayed_store == _pending_active_preview: _pending_active_preview = -1
+	preview_store = displayed_store
+	_apply_store_palette(store_materials, store_colors, displayed_store)
+	%ShopPivot.rotation = %IncomingShopPivot.rotation
+	%ShopPivot.rotation.z = 0.0
+	%ShopPivot.scale = Vector3.ONE
+	%BuildingView.position = _building_home_position
+	%IncomingBuildingView.hide()
+	%IncomingShopViewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
+	%IncomingShopPivot.rotation.z = 0.0
+	$SkyPattern.set_store(displayed_store)
+	store_transition_progress = 1.0
+	store_transition_active = false
+	_refresh_store_caption()
+	var next := queued_store
+	queued_store = -1
+	if run_queued and next >= 1:
+		# A newer queued preview supersedes an older external visual request.
+		if next != _pending_active_preview: _pending_active_preview = -1
+		var owned: Array = state.progression_view().owned_store_ids
+		if next != displayed_store or (next in owned and state.active_store != next):
+			preview_location.call_deferred(next)
+
+func _settle_store_transition() -> void:
+	if not store_transition_active: return
+	if store_transition_tween != null and store_transition_tween.is_valid(): store_transition_tween.kill()
+	_finish_store_transition(false)
+	# Management may already have committed a newer owned-store selection.
+	# Retire only unstarted visual gestures, never that saved destination.
+	if _pending_active_preview >= 1:
+		preview_store = _pending_active_preview
+		_pending_active_preview = -1
+		_update_store_preview()
 
 func _refresh_store_caption() -> void:
 	%StoreLabel.text = "%d · %s" % [preview_store, STORE_NAMES[preview_store - 1]]
@@ -257,18 +370,29 @@ func _refresh_store_caption() -> void:
 
 func preview_location(id: int) -> void:
 	if changing_scene or id < 1 or id > 4: return
-	preview_store = id
+	if store_transition_active:
+		queued_store = id
+		return
 	var owned: Array = state.progression_view().owned_store_ids
+	if id == preview_store and (id not in owned or state.active_store == id):
+		if id == displayed_store: _pending_active_preview = -1
+		return
 	if id in owned and state.active_store != id:
-		if not state.select_store(id):
-			preview_store = state.active_store
+		_selecting_store = true
+		var selected: bool = state.select_store(id)
+		_selecting_store = false
+		if not selected:
 			_show_error(state.last_error)
-	_update_store_preview()
-	_release_shop()
+			return
+		_pending_active_preview = -1
+	preview_store = id
+	_refresh_store_caption()
+	if displayed_store != id: _start_store_transition(id)
 
 func _swipe_store(delta: Vector2) -> bool:
 	if absf(delta.x) < 48 or absf(delta.x) < absf(delta.y) * 1.4: return false
-	preview_location(clampi(preview_store + (1 if delta.x < 0 else -1), 1, 4))
+	var current := queued_store if queued_store >= 1 else preview_store
+	preview_location(clampi(current + (1 if delta.x < 0 else -1), 1, 4))
 	return true
 
 func _cash_text(amount: int) -> String:
@@ -296,7 +420,7 @@ func _show_error(message: String) -> void:
 	%StatusTimer.start()
 
 func enter_cleaning() -> void:
-	if changing_scene: return
+	if changing_scene or store_transition_active: return
 	if preview_store not in state.progression_view().owned_store_ids:
 		open_management("plans")
 		return
@@ -331,6 +455,7 @@ func enter_gym() -> void:
 
 func open_management(tab: String) -> void:
 	if changing_scene: return
+	_settle_store_transition()
 	%SettingsSheet.hide()
 	if not is_instance_valid(management):
 		management = load("res://scenes/ui/compact_shop.tscn").instantiate()
@@ -358,7 +483,7 @@ func _button_at(point: Vector2) -> Button:
 		return null
 	elif %SettingsSheet.visible:
 		if reset_pending: candidates = [%CancelReset, %ConfirmReset]
-		else: candidates = [%MotionToggle, %ResetProgress, %OpenGym]
+		else: candidates = [%MotionToggle, %MusicToggle, %EffectsToggle, %ResetProgress, %OpenGym]
 	else:
 		candidates = [%Settings, %NavShop, %NavItems, %NavPlans, %NavBonzi, %ReturnNotice, %ShopTap]
 	for button in candidates:
@@ -467,8 +592,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		_back()
 		get_viewport().set_input_as_handled()
 	elif not %Management.visible and not %SettingsSheet.visible:
-		if event.is_action_pressed("ui_left"): preview_location(maxi(1, preview_store - 1))
-		elif event.is_action_pressed("ui_right"): preview_location(mini(4, preview_store + 1))
+		if event.is_action_pressed("ui_left"): _swipe_store(Vector2(64, 0))
+		elif event.is_action_pressed("ui_right"): _swipe_store(Vector2(-64, 0))
 
 func _back() -> void:
 	if %SettingsSheet.visible:
@@ -479,6 +604,7 @@ func _back() -> void:
 func _notification(what: int) -> void:
 	if Engine.is_editor_hint(): return
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		_settle_store_transition()
 		mouse_store_drag = false
 		mouse_outside_settings = false
 		touch_outside_settings = false

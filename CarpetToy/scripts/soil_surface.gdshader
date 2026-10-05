@@ -7,7 +7,11 @@ uniform vec4 surface_tint : source_color = vec4(1.0);
 uniform sampler2D soil_map : source_color, filter_linear_mipmap;
 uniform sampler2D coverage : filter_linear, repeat_disable, hint_default_white;
 uniform sampler2D wetness : filter_linear, repeat_disable, hint_default_black;
+uniform sampler2D extraction : filter_linear, repeat_disable, hint_default_black;
 uniform bool wet_recipe = false;
+uniform int wash_cycle = 0;
+uniform float wash_grime_strength : hint_range(0.0, 1.0) = 1.0;
+uniform float wet_color_depth : hint_range(0.0, 1.0) = 0.38;
 // A dark soil layer reveals the original rug color continuously as it lifts.
 uniform float dust_strength : hint_range(0.0, 1.0) = 0.58;
 uniform vec4 dust_tint : source_color = vec4(0.30, 0.22, 0.14, 1.0);
@@ -47,10 +51,31 @@ void fragment() {
 	float water = wet_recipe ? texture(wetness, rug_uv).r : 0.0;
 	vec3 clean = texture(clean_map, UV).rgb * clean_color.rgb * surface_tint.rgb;
 	// Keep the soil's granules and mottling, but darken its sandy source texture.
-	vec3 dark_soil = mix(texture(soil_map, rug_uv).rgb * 0.28, dust_tint.rgb, 0.35);
+	vec3 soil_texture = texture(soil_map, rug_uv).rgb;
+	vec3 dark_soil = mix(soil_texture * 0.28, dust_tint.rgb, 0.35);
 	vec3 dry_color = mix(clean, dark_soil, soil * dust_strength);
-	vec3 wet_color = mix(dry_color * vec3(0.58, 0.64, 0.68), vec3(0.28, 0.52, 0.60), 0.08);
-	ALBEDO = mix(dry_color, wet_color, water * 0.82);
-	ROUGHNESS = mix(0.96, 0.72, water);
-	SPECULAR = mix(0.12, 0.25, water);
+	// Wash-stage grime survives soaking. Only real local extraction lifts it.
+	// The first pass reveals color promptly, while remaining water still lends
+	// some depth and sheen. Fully extracted fabric restores the authored art.
+	float extracted = wet_recipe ? texture(extraction, rug_uv).r : 0.0;
+	float freshness = smoothstep(0.0, 0.40, extracted);
+	// Full-restoration suction already polishes dust_strength to zero. Share
+	// that polish so forgiven wet specks cannot dull the final clean reveal.
+	float wash_presence = wet_recipe ? clamp(dust_strength * 2.0, 0.0, 1.0) : 0.0;
+	vec3 washed_color = dry_color;
+	if (wet_recipe) {
+		// An opaque, uniform grime layer hides every design at arrival.
+		// Each local blade pass removes one third of the accumulated soil.
+		float restored = clamp((float(wash_cycle) + freshness) / 3.0, 0.0, 1.0);
+		float art_reveal = pow(restored, 1.6);
+		vec3 uniform_grime = vec3(0.16, 0.14, 0.12);
+		vec3 wash_color = mix(uniform_grime, dry_color, art_reveal);
+		washed_color = mix(dry_color, wash_color, wash_grime_strength * wash_presence);
+	}
+	// Multiplication deepens the existing palette without a blue color cast.
+	float visible_water = water * wash_presence;
+	float depth = visible_water * wet_color_depth * mix(1.0, 0.55, freshness);
+	ALBEDO = washed_color * (1.0 - depth);
+	ROUGHNESS = mix(0.96, 0.74, visible_water);
+	SPECULAR = mix(0.12, 0.25, visible_water);
 }

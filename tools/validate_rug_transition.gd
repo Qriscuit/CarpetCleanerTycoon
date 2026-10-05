@@ -78,8 +78,11 @@ func run() -> void:
 	await capture("suction")
 	check(game.get_node("RugDisplay").position.is_equal_approx(Vector3.ZERO),"Rug stays put until debris is sucked out")
 	await create_timer(1.45).timeout
+	await capture("clean_reveal")
+	check(game.rug_phase == game.RugPhase.REVEAL and game.completion_reveal.active,"Clean rug gets an appreciation moment after suction")
+	game.skip_completion_reveal()
 	await capture("rolling_away")
-	check(game.rug_phase == game.RugPhase.DEPARTING,"Clean rug rolls away after suction")
+	check(game.rug_phase == game.RugPhase.DEPARTING,"Skipping the reveal rolls the clean rug away")
 	for tick in 150:
 		if game.contract_job_id != job_id: break
 		await create_timer(0.02).timeout

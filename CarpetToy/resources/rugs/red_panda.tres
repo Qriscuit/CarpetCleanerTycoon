@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/rug_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/carpet/patterns/red_panda.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+rug_id = "red_panda"
+display_name = "Red Panda Nap"
+cleaning_hint = "Brush / ten passes\nUncover the resting red panda beneath the dark soil."
+pattern_texture = ExtResource("2")
+pile_color = Color(1, 1, 1, 1)
+binding_color = Color(0.47, 0.26, 0.19, 1)
+fringe_color = Color(0.93, 0.87, 0.74, 1)
+dust_strength = 0.94
+removal_per_pass = 0.1
+

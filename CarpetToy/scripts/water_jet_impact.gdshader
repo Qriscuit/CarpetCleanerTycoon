@@ -16,6 +16,8 @@ uniform float strength = 1.0;
 uniform bool use_rug_surface = false;
 uniform sampler2D rug_surface : filter_nearest, repeat_disable;
 uniform vec4 water_tint : source_color = vec4(0.20, 0.76, 0.83, 1.0);
+// Squeegee wash palettes opt in per material; hose retains these blue defaults.
+uniform vec4 water_highlight : source_color = vec4(0.72, 0.97, 0.96, 1.0);
 // Optional pooled, world-anchored extraction contour. False preserves the
 // existing circular hose and four-sided head splash path exactly.
 uniform bool trail_mode = false;
@@ -146,7 +148,7 @@ void fragment() {
 	float pale_crest = smoothstep(0.78, 0.98, crest) * (0.48 + 0.24 * pulse);
 	float lip = smoothstep(0.82, 0.91, UV.y) * (1.0 - smoothstep(0.95, 1.0, UV.y));
 	vec3 base = water_tint.rgb * mix(0.90, 1.0, crest);
-	ALBEDO = mix(base, vec3(0.72, 0.97, 0.96), max(pale_crest, lip * 0.28));
+	ALBEDO = mix(base, water_highlight.rgb, max(pale_crest, lip * 0.28));
 	ROUGHNESS = 0.27;
 	SPECULAR = 0.65;
 	EMISSION = water_tint.rgb * 0.06;

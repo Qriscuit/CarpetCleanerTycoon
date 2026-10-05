@@ -55,7 +55,7 @@ func run() -> void:
 	var second_job: String = state.active_job_id
 	check(state.cash == 20 and state.manual_jobs == 1 and not second_job.is_empty() and second_job != first_job, "Finish pays once and atomically reserves the next rug")
 	check(game.contract_finished and soil.completion_started and not game.finish_button.visible, "Accepted Finish starts automatic takeaway")
-	check(game.state_label.text == "100%" and game.progress_bar.value == 100.0, "Accepted cleanup fills the one progress bar during takeaway")
+	check(game.state_label.text == "75%" and game.progress_bar.value == 75.0, "Accepted early finish preserves the actual cleaning result during takeaway")
 	game.finish_contract()
 	game.finish_contract()
 	check(not state.complete_job(first_job) and state.cash == 20 and state.manual_jobs == 1, "Repeated taps and the old job id cannot pay twice")

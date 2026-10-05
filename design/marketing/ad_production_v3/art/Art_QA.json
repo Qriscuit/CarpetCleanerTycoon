@@ -1,0 +1,15 @@
+{
+  "canvas": [
+    1080,
+    1920
+  ],
+  "all_display_svg_text_outlined": true,
+  "no_embedded_raster": true,
+  "window_centres_transparent": true,
+  "background_opaque": true,
+  "mask_dimensions": [
+    952,
+    450
+  ],
+  "preview_visually_reviewed": true
+}

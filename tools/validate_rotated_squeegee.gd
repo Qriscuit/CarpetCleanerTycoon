@@ -39,6 +39,8 @@ func extracted_at(point: Vector2) -> float:
 func clear_extraction() -> void:
 	soil.extraction_values.fill(0.0)
 	soil.extraction_coverage_total = 0.0
+	soil.extraction_mask.fill(Color.BLACK)
+	soil.extraction_mask_changed = true
 
 func apply_stroke(
 	start: Vector2,

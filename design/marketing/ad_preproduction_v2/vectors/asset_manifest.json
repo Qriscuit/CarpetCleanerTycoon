@@ -1,0 +1,258 @@
+{
+  "version": 1,
+  "purpose": "Actual editable vector artwork for a 15-second Carpet Cleaner discovery ad; no footage captured.",
+  "canvas": [
+    1080,
+    1920
+  ],
+  "palette": {
+    "cream": "#FFF5DD",
+    "mint": "#BDE0C3",
+    "green": "#234D40",
+    "coral": "#D9793E",
+    "gold": "#E7B748"
+  },
+  "working_guide": {
+    "x": 96,
+    "y": 300,
+    "width": 804,
+    "height": 920,
+    "official_platform_template": false
+  },
+  "hero_footage_slot": {
+    "x": 365,
+    "y": 505,
+    "width": 350,
+    "height": 565
+  },
+  "font": {
+    "family": "Arial",
+    "weights": [
+      "400",
+      "700"
+    ],
+    "sources": [
+      "C:/Windows/Fonts/arial.ttf",
+      "C:/Windows/Fonts/arialbd.ttf"
+    ],
+    "provenance": "Locally installed Windows Arial. Font binaries are not copied or distributed. Primary SVGs contain outlined glyph paths; editable_text variants refer to Arial and require it or a chosen replacement for faithful reflow."
+  },
+  "art_provenance": "Original geometric plates and end-card shapes authored for this project in build_vector_kit.cjs. No stock illustration, store badge, platform interface, logo imitation, ratings or external image assets.",
+  "generation": {
+    "node": "v24.19.0",
+    "tools": [
+      "@napi-rs/canvas GlobalFonts + convertSVGTextToPath",
+      "sharp SVG raster readback"
+    ],
+    "checks": [
+      "All 10 primary SVGs have no live text elements",
+      "All SVGs rasterize at1080×1920",
+      "Caption/wordmark painted bounds fit internal working rectangle",
+      "Transparent overlays retain empty alpha outside their content",
+      "End card is fully opaque",
+      "Half-size PNG previews generated for visual review"
+    ]
+  },
+  "assets": [
+    {
+      "file": "hook_discovery.svg",
+      "editable_source": "editable_text/hook_discovery.svg",
+      "preview": "previews/hook_discovery.png",
+      "copy": "Find the fox.",
+      "use": "Primary discovery opening",
+      "dimensions": [
+        1080,
+        1920
+      ],
+      "transparent_background": true,
+      "outlined_text": true,
+      "paint_bounds": {
+        "x": 96,
+        "y": 306,
+        "width": 804,
+        "height": 150
+      },
+      "transparent_pixels": 1954236
+    },
+    {
+      "file": "hook_satisfaction.svg",
+      "editable_source": "editable_text/hook_satisfaction.svg",
+      "preview": "previews/hook_satisfaction.png",
+      "copy": "That clean stripe.",
+      "use": "Alternative opening: same footage/body, satisfying-action hook",
+      "dimensions": [
+        1080,
+        1920
+      ],
+      "transparent_background": true,
+      "outlined_text": true,
+      "paint_bounds": {
+        "x": 96,
+        "y": 306,
+        "width": 804,
+        "height": 150
+      },
+      "transparent_pixels": 1954236
+    },
+    {
+      "file": "hook_completion.svg",
+      "editable_source": "editable_text/hook_completion.svg",
+      "preview": "previews/hook_completion.png",
+      "copy": "One spot left.",
+      "use": "Alternative opening: last real patch of dirt",
+      "dimensions": [
+        1080,
+        1920
+      ],
+      "transparent_background": true,
+      "outlined_text": true,
+      "paint_bounds": {
+        "x": 96,
+        "y": 306,
+        "width": 804,
+        "height": 150
+      },
+      "transparent_pixels": 1954236
+    },
+    {
+      "file": "process.svg",
+      "editable_source": "editable_text/process.svg",
+      "preview": "previews/process.png",
+      "copy": "Brush. Reveal.",
+      "use": "Process beat",
+      "dimensions": [
+        1080,
+        1920
+      ],
+      "transparent_background": true,
+      "outlined_text": true,
+      "paint_bounds": {
+        "x": 96,
+        "y": 306,
+        "width": 804,
+        "height": 150
+      },
+      "transparent_pixels": 1954236
+    },
+    {
+      "file": "reveal.svg",
+      "editable_source": "editable_text/reveal.svg",
+      "preview": "previews/reveal.png",
+      "copy": "Fresh again.",
+      "use": "Full-restoration reveal",
+      "dimensions": [
+        1080,
+        1920
+      ],
+      "transparent_background": true,
+      "outlined_text": true,
+      "paint_bounds": {
+        "x": 96,
+        "y": 306,
+        "width": 804,
+        "height": 150
+      },
+      "transparent_pixels": 1954236
+    },
+    {
+      "file": "next_rug.svg",
+      "editable_source": "editable_text/next_rug.svg",
+      "preview": "previews/next_rug.png",
+      "copy": "What’s under\nthe next one?",
+      "use": "Curiosity beat for the next distinct rug",
+      "dimensions": [
+        1080,
+        1920
+      ],
+      "transparent_background": true,
+      "outlined_text": true,
+      "paint_bounds": {
+        "x": 96,
+        "y": 306,
+        "width": 804,
+        "height": 240
+      },
+      "transparent_pixels": 1881876
+    },
+    {
+      "file": "upgrade.svg",
+      "editable_source": "editable_text/upgrade.svg",
+      "preview": "previews/upgrade.png",
+      "copy": "Wide brush\n44% wider strokes",
+      "use": "Optional upgrade beat; actual first brush width increase",
+      "dimensions": [
+        1080,
+        1920
+      ],
+      "transparent_background": true,
+      "outlined_text": true,
+      "paint_bounds": {
+        "x": 96,
+        "y": 306,
+        "width": 804,
+        "height": 178
+      },
+      "transparent_pixels": 1931724
+    },
+    {
+      "file": "wordmark.svg",
+      "editable_source": "editable_text/wordmark.svg",
+      "preview": "previews/wordmark.png",
+      "copy": "CARPET\nCLEANER",
+      "use": "Compact working game title, independent transparent overlay",
+      "dimensions": [
+        1080,
+        1920
+      ],
+      "transparent_background": true,
+      "outlined_text": true,
+      "paint_bounds": {
+        "x": 146,
+        "y": 316,
+        "width": 479,
+        "height": 175
+      },
+      "transparent_pixels": 2041850
+    },
+    {
+      "file": "endcard.svg",
+      "editable_source": "editable_text/endcard.svg",
+      "preview": "previews/endcard.png",
+      "copy": "CARPET\nCLEANER\nPlay now\nOn Google Play",
+      "use": "Full background title/CTA. Root compositor overlays hero footage at x365 y505 w350 h565. Empty central artwork space.",
+      "dimensions": [
+        1080,
+        1920
+      ],
+      "transparent_background": false,
+      "outlined_text": true,
+      "paint_bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 1920
+      },
+      "transparent_pixels": 0
+    },
+    {
+      "file": "safe_guide.svg",
+      "editable_source": "editable_text/safe_guide.svg",
+      "preview": "previews/safe_guide.png",
+      "copy": "INTERNAL GUIDE — DO NOT EXPORT\nWorking text / focal-detail area\nx 96–900 · y 300–1220\nNot an official platform safe zone",
+      "use": "Internal framing aid; remove from all exports. Never a claim of placement approval.",
+      "dimensions": [
+        1080,
+        1920
+      ],
+      "transparent_background": true,
+      "outlined_text": true,
+      "paint_bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 1080,
+        "height": 1920
+      },
+      "transparent_pixels": 735744
+    }
+  ]
+}

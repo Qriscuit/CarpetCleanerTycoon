@@ -31,6 +31,17 @@ The cleaning scene's icon Back control always returns to the production floating
 
 Suspended income uses bounded wall-clock absence, like reopening the app, so a stopped live timer does not lose phone sleep time. Failed saves retain that bounded absence for retry without exposing uncommitted coins. Automated fixtures test this separately from the UI labeling issue.
 
+## Store swipe motion
+
+The 2026-10-05 carousel revision slides the current floating store and its shadow beyond the actual game-window edge while the next store enters from the opposite edge. Navigation takes 0.62 seconds with cubic easing and a subtle temporary lean. The wallet, store caption, settings and navigation dock stay in place.
+
+Two authored, fitted transparent 3D viewports are reused: `BuildingView` is the current store and `IncomingBuildingView` supplies the incoming store. Both use the same imported mesh resources, with separate tint materials. The incoming viewport renders only during a slide and is disabled when idle. Resizing or changing safe-area insets preserves slide progress and recomputes the horizontal travel distance.
+
+`SkyPattern` now draws a continuous diagonal pastel gradient. Neighborhood uses blue, High Street mint, Wash House lavender, and Restoration peach. `set_store_blend(from_store, to_store, progress)` interpolates both gradient endpoints as the stores slide; the quiet bubbles, sparkles and swishes remain.
+
+Mouse and touch swipes, plus keyboard arrows, use the same carousel. Further swipes during a slide queue the latest requested destination. Tapping a moving store cannot start a cleaning job. Focus loss or opening a sheet settles the destination cleanly, including a newer owned-store selection already committed by the management sheet. Browsing a locked store preserves ownership and the active paid branch; selecting an owned store retains the ledger's existing atomic save behavior. The Animate Shop setting continues to control idle rotation and bobbing.
+
+`tools/validate_store_swipe.gd` validates production input, full-window geometry, color blending, rapid navigation, ownership and reload, cancellation, resize, focus loss, material reuse and entry into the paid cleaning route. `tools/capture_store_swipe.gd` produces actual renderer captures in portrait and landscape. Both require the pinned Godot 4.7.2 Mono runner and `-- --shop-test`. The current animation preview is `art/renders/store_swipe_preview.gif`.
 ## Validation
 
 `tools/validate_floating_home.gd` checks the configured main scene, ten portrait/landscape sizes from 320×568 through 1024×768, full-rotation framing, safe areas, balances, away acknowledgement, mouse/touch navigation, compact purchase review/cancellation, swipe rejection, exact-once purchases, tool equipment, blueprint routing, Bonzi income, press/pop animation, paid-job launch, return and rug resumption. The legacy shop UI and paid contract suites also pass.

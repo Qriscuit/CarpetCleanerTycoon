@@ -133,6 +133,14 @@ func setup(source_soil: Node, surface_texture: Texture2D) -> void:
 	reset()
 
 
+func set_water_palette(tint: Color, highlight: Color, runoff_tint: Color, runoff_highlight: Color) -> void:
+	if material != null:
+		material.set_shader_parameter("water_tint", tint)
+		material.set_shader_parameter("water_highlight", highlight)
+	if is_instance_valid(streams):
+		streams.set_water_palette(runoff_tint, runoff_highlight)
+
+
 func notify_extraction(_contact: Vector3, amount: float) -> void:
 	if amount <= 0.0001 or not is_instance_valid(soil):
 		return

@@ -23,7 +23,28 @@ static func decorate(home: Control) -> void:
 	var gym := home.get_node_or_null("%OpenGym") as Button
 	if gym == null:
 		gym = _button(home,column,"OpenGym","Gym",Color("dbedce"))
-	column.move_child(gym,3 if home.get_node_or_null("%ResetProgress") != null else 2)
+	var audio_row := home.get_node_or_null("%AudioToggles") as HBoxContainer
+	if audio_row == null:
+		audio_row = HBoxContainer.new()
+		audio_row.name = "AudioToggles"
+		column.add_child(audio_row)
+		audio_row.owner = home
+		audio_row.unique_name_in_owner = true
+		audio_row.add_theme_constant_override("separation", 8)
+		for entry: Array in [["MusicToggle", "Music"], ["EffectsToggle", "Sound"]]:
+			var toggle := CheckButton.new()
+			toggle.name = entry[0]
+			toggle.text = entry[1]
+			toggle.button_pressed = true
+			toggle.custom_minimum_size.y = 48
+			toggle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			toggle.add_theme_font_size_override("font_size", 14)
+			_readable_button_text(toggle)
+			audio_row.add_child(toggle)
+			toggle.owner = home
+			toggle.unique_name_in_owner = true
+	column.move_child(audio_row, 2)
+	column.move_child(gym,4 if home.get_node_or_null("%ResetProgress") != null else 3)
 	gym.tooltip_text = "Practice on two rugs"
 	for name: String in ["MotionToggle","OpenGym","ResetProgress","CancelReset","ConfirmReset"]:
 		var control := home.get_node_or_null("%"+name) as Control
@@ -32,7 +53,7 @@ static func decorate(home: Control) -> void:
 	if home.get_node_or_null("%ResetProgress") != null:
 		return
 	var reset := _button(home,column,"ResetProgress","Reset progress",Color("f5ded8"))
-	column.move_child(reset,2)
+	column.move_child(reset,3)
 	var review := VBoxContainer.new()
 	review.name = "ResetReview"
 	column.add_child(review)

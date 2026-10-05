@@ -6,6 +6,7 @@ signal ad_reward_granted(amount: int)
 
 const Progression := preload("res://scripts/progression.gd")
 const RewardAds := preload("res://scripts/reward_ad_service.gd")
+const RugCatalog := preload("res://scripts/rug_catalog.gd")
 const SAVE_VERSION := 2
 const SAVE_PATH := "user://neighborhood_shop_v1.json"
 const OFFLINE_CAP_SECONDS := 8.0 * 60.0 * 60.0
@@ -24,6 +25,7 @@ var manual_jobs: int = 0
 var automated_jobs: int = 0
 var routine_remainder: float = 0.0
 var active_job_id: String = ""
+var active_rug_id: String = RugCatalog.DEFAULT_ID
 var job_snapshot: Dictionary = {}
 var return_reward: int = 0
 var return_seconds: float = 0.0
@@ -196,12 +198,13 @@ func start_job() -> String:
 
 
 func save_job_snapshot(snapshot: Dictionary) -> bool:
-	if active_job_id.is_empty():
+	if active_job_id.is_empty() or not _snapshot_matches_active_rug(snapshot):
 		return false
 	var before := _capture_state()
 	var old_ticks := _last_ticks
 	_settle_elapsed()
 	job_snapshot = snapshot.duplicate(true)
+	job_snapshot["rug_id"] = active_rug_id
 	return _finish_transaction(before, old_ticks)
 
 
@@ -219,6 +222,7 @@ func complete_job(job_id: String) -> bool:
 	active_job_id = ""
 	_record_completed_job(job_id, reward)
 	job_snapshot = {}
+	active_rug_id = RugCatalog.DEFAULT_ID
 	_refresh_blueprints()
 	return _finish_transaction(before, old_ticks)
 
@@ -384,6 +388,7 @@ func _capture_state() -> Dictionary:
 		"blueprints": _blueprints.duplicate(true),
 		"job_serial": _job_serial,
 		"active_job_id": active_job_id,
+		"active_rug_id": active_rug_id,
 		"job_snapshot": job_snapshot.duplicate(true),
 		"return_reward": return_reward,
 		"return_seconds": return_seconds,
@@ -408,6 +413,7 @@ func _restore_state(data: Dictionary) -> void:
 	_job_serial = int(data["job_serial"])
 	active_job_id = str(data["active_job_id"])
 	job_snapshot = data["job_snapshot"].duplicate(true)
+	active_rug_id = _saved_rug_id(data, job_snapshot)
 	return_reward = int(data["return_reward"])
 	return_seconds = float(data["return_seconds"])
 	_saved_wall = float(data["saved_wall"])
@@ -420,6 +426,10 @@ func _restore_state(data: Dictionary) -> void:
 	# without charging again or replacing an unfinished rug or its dry progress.
 	for key: String in stores:
 		var branch: Dictionary = stores[key]
+		# Additive version-2 migration: old unfinished rugs remain Mint, regardless
+		# of their completion count. Cosmetic ID damage must not erase work/cash.
+		branch.active_rug_id = _saved_rug_id(branch, branch.job_snapshot)
+		_stamp_snapshot_rug(branch.job_snapshot, branch.active_rug_id)
 		var legacy_wet := int(branch.tool_level) if int(key) >= 3 else 0
 		if not branch.has("hose_level"): branch.hose_level = legacy_wet
 		if not branch.has("squeegee_level"): branch.squeegee_level = legacy_wet
@@ -554,6 +564,7 @@ func _sync_active_branch() -> void:
 	if not stores.has(str(active_store)): return
 	var branch := _branch()
 	branch.active_job_id = active_job_id
+	branch.active_rug_id = active_rug_id
 	branch.job_snapshot = job_snapshot
 	branch.routine_remainder = routine_remainder
 
@@ -562,11 +573,42 @@ func _load_active_branch() -> void:
 	var branch := _branch()
 	active_job_id = str(branch.active_job_id)
 	job_snapshot = branch.job_snapshot.duplicate(true)
+	active_rug_id = _saved_rug_id(branch, job_snapshot)
+	_stamp_snapshot_rug(job_snapshot, active_rug_id)
 	routine_remainder = float(branch.routine_remainder)
+
+
+static func _saved_rug_id(record: Dictionary, snapshot: Dictionary) -> String:
+	# The reserved branch identity is authoritative if recognized. A snapshot
+	# can recover an absent/damaged ID. Retired art switches to its replacement
+	# without changing the reservation or saved dirt/water; old saves stay Mint.
+	var reserved: String = RugCatalog.resolve_saved_id(record.get("active_rug_id"))
+	if not reserved.is_empty(): return reserved
+	var captured: String = RugCatalog.resolve_saved_id(snapshot.get("rug_id"))
+	return captured if not captured.is_empty() else RugCatalog.DEFAULT_ID
+
+static func _stamp_snapshot_rug(snapshot: Dictionary, rug_id: String) -> void:
+	# An empty snapshot means a reserved, not-yet-spawned rug. Keep that marker.
+	if not snapshot.is_empty(): snapshot["rug_id"] = rug_id
+
+
+func _snapshot_matches_active_rug(snapshot: Dictionary) -> bool:
+	if not RugCatalog.is_known(active_rug_id):
+		last_error = "The current rug identity is unavailable. Reopen this job to restore it."
+		return false
+	# Old snapshots and legacy callers have no ID. New explicit IDs must match
+	# the reservation so stale artwork cannot overwrite or finish another rug.
+	if snapshot.has("rug_id") and (not RugCatalog.is_known(snapshot["rug_id"]) or snapshot["rug_id"] != active_rug_id):
+		last_error = "This progress belongs to a different rug."
+		return false
+	return true
 
 
 func _prepare_job() -> void:
 	var branch := _branch()
+	# Reserve the art in the same transaction as the job. Reloading, upgrades,
+	# ad rewards and failed writes cannot reroll the customer's unfinished rug.
+	active_rug_id = RugCatalog.id_for_completed_jobs(int(branch.manual_jobs))
 	branch.job_early_reward = Progression.early_reward(active_store, int(branch.payout_level))
 	branch.job_started_with_final_tool = _travel_tool_level(branch, active_store) == 4
 	branch.job_final_tool_used = false
@@ -595,7 +637,7 @@ func _record_completed_job(job_id: String, reward: int) -> void:
 
 
 func reward_for_current_job(snapshot: Dictionary) -> int:
-	if active_job_id.is_empty(): return 0
+	if active_job_id.is_empty() or not _snapshot_matches_active_rug(snapshot): return 0
 	var fraction := _job_clearance(snapshot)
 	if not completion_reached(fraction, MANUAL_COMPLETION_THRESHOLD): return 0
 	var quote: int = int(_branch().job_early_reward)
@@ -613,6 +655,27 @@ func _job_clearance(snapshot: Dictionary) -> float:
 		if not _unit_fraction(snapshot.get(key)): return -1.0
 	var water := float(snapshot.water_clearance)
 	var extraction := float(snapshot.extraction_clearance)
+	if snapshot.has("wash_cycle_count") or snapshot.has("wash_cycle"):
+		var count: Variant = snapshot.get("wash_cycle_count")
+		var cycle: Variant = snapshot.get("wash_cycle")
+		if not (count is int or count is float) or not is_finite(float(count)) or float(count) != 3.0:
+			return -1.0
+		if not (cycle is int or cycle is float) or not is_finite(float(cycle)) or float(cycle) != floorf(float(cycle)) or float(cycle) < 0.0 or float(cycle) > 2.0:
+			return -1.0
+		var skip_dry: bool = active_store == Progression.WET_FIRST_STORE
+		if snapshot.get("skip_dry_stage", false) != skip_dry:
+			return -1.0
+		if not skip_dry and (water > 0.0 or int(cycle) > 0) and not completion_reached(dry, PERFECT_COMPLETION_THRESHOLD):
+			return -1.0
+		if extraction > 0.0 and not completion_reached(water, PERFECT_COMPLETION_THRESHOLD):
+			return -1.0
+		# A paid finish requires the third squeegee round. The old early-finish
+		# option applies within that last extraction, never to earlier rounds.
+		if int(cycle) != 2 or not completion_reached(water, PERFECT_COMPLETION_THRESHOLD) or not completion_reached(extraction, MANUAL_COMPLETION_THRESHOLD):
+			return -1.0
+		var wet_work := float(int(cycle) * 2) + water + extraction
+		var fraction := wet_work / 6.0 if skip_dry else (dry + wet_work) / 7.0
+		return fraction if completion_reached(extraction, PERFECT_COMPLETION_THRESHOLD) else minf(fraction, 0.989)
 	# High Street is a water -> extract lesson. Its dry mask is preserved in
 	# snapshots but does not contribute to completion or unlock a third stage.
 	if active_store == Progression.WET_FIRST_STORE:
@@ -848,6 +911,7 @@ func _migrate_legacy_branch() -> void:
 	branch.bonzi_earned = mini(Progression.MAX_MONEY, automated_jobs * ROUTINE_REWARD)
 	branch.routine_remainder = routine_remainder
 	branch.active_job_id = active_job_id
+	branch.active_rug_id = active_rug_id
 	branch.job_snapshot = job_snapshot.duplicate(true)
 	branch.job_early_reward = MANUAL_REWARD if not active_job_id.is_empty() else 0
 	stores = {"1": branch}

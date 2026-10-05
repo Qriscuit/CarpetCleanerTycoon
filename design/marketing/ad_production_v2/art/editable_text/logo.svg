@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920"><title>logo.svg</title><defs>
+ <linearGradient id="tealInk" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#245C62"/><stop offset="1" stop-color="#103D44"/></linearGradient>
+ <linearGradient id="leafLight" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#98D9B8"/><stop offset="1" stop-color="#55B79D"/></linearGradient>
+ <linearGradient id="ribbonMint" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#C9EAB8"/><stop offset="1" stop-color="#9DD5AC"/></linearGradient>
+ <linearGradient id="orangeSun" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FF9656"/><stop offset="1" stop-color="#F06C35"/></linearGradient>
+ <filter id="softShadow" x="-30%" y="-35%" width="160%" height="180%"><feDropShadow dx="0" dy="10" stdDeviation="6" flood-color="#163D38" flood-opacity=".23"/></filter>
+ </defs><g id="carpet-cleaner-logo" transform="rotate(-3 540 535)" filter="url(#softShadow)">
+ <g transform="translate(0 9)"><text x="540" y="510" text-anchor="middle" font-family="CarpetRounded" font-size="192" fill="#67977B" stroke="#FFF9E8" stroke-width="33" stroke-linejoin="round" paint-order="stroke fill">Carpet</text><text x="540" y="680" text-anchor="middle" font-family="CarpetRounded" font-size="190" fill="#67977B" stroke="#FFF9E8" stroke-width="33" stroke-linejoin="round" paint-order="stroke fill">Cleaner</text></g>
+ <text x="540" y="510" text-anchor="middle" font-family="CarpetRounded" font-size="192" fill="url(#tealInk)" stroke="#FFF9E8" stroke-width="30" stroke-linejoin="round" paint-order="stroke fill">Carpet</text><text x="540" y="680" text-anchor="middle" font-family="CarpetRounded" font-size="190" fill="url(#tealInk)" stroke="#FFF9E8" stroke-width="30" stroke-linejoin="round" paint-order="stroke fill">Cleaner</text>
+ <text x="540" y="510" text-anchor="middle" font-family="CarpetRounded" font-size="192" fill="url(#tealInk)" stroke="url(#tealInk)" stroke-width="2" stroke-linejoin="round" paint-order="stroke fill">Carpet</text><text x="540" y="680" text-anchor="middle" font-family="CarpetRounded" font-size="190" fill="url(#tealInk)" stroke="url(#tealInk)" stroke-width="2" stroke-linejoin="round" paint-order="stroke fill">Cleaner</text>
+ </g></svg>

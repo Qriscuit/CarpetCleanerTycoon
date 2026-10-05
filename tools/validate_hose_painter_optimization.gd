@@ -1,54 +1,9 @@
 extends SceneTree
-## Exact-output comparison with the original hose mask painter, without a renderer.
+## Whole-carpet hose progress with bounded fresh-patch bonuses; extraction remains local.
 ## tools/run_godot.ps1 --headless --path CarpetToy --script ../tools/validate_hose_painter_optimization.gd -- --shop-test
 const Soil := preload("res://scripts/dirt_controller.gd")
 var checks := 0
 var failures := 0
-
-class OriginalSoil:
-	extends "res://scripts/dirt_controller.gd"
-
-	func apply_water_blob(world_center: Vector3, radius: float, strength: float = 1.0, edge_fraction: float = WATER_BLOB_EDGE_FRACTION) -> bool:
-		# Frozen 2026-09-27 implementation. Do not share optimized helpers.
-		if not wet_recipe or (not skip_dry_stage and minf(unique_clearance(), surface_clearance()) < WET_STAGE_TARGET):
-			return false
-		if completion_started or simulation_suspended or reveal_progress < 1.0 or radius <= 0.0:
-			return false
-		var center3 := rug_node.to_local(world_center)
-		var center := Vector2(center3.x, center3.z)
-		var low := (center - Vector2.ONE * radius + RUG_HALF) / (RUG_HALF * 2.0)
-		var high := (center + Vector2.ONE * radius + RUG_HALF) / (RUG_HALF * 2.0)
-		var from_pixel := Vector2i((low * Vector2(MASK_SIZE)).floor()).clamp(Vector2i.ZERO, MASK_SIZE)
-		var to_pixel := Vector2i((high * Vector2(MASK_SIZE)).ceil()).clamp(Vector2i.ZERO, MASK_SIZE)
-		var amount := clampf(strength, 0.0, 1.0)
-		var inner_radius := radius * (1.0 - clampf(edge_fraction, 0.01, 1.0))
-		var any_changed := false
-		for y in range(from_pixel.y, to_pixel.y):
-			for x in range(from_pixel.x, to_pixel.x):
-				var index := y * MASK_SIZE.x + x
-				if surface_pixels[index] == 0:
-					continue
-				var loosened := 1.0 - coverage_values[index]
-				var old_water := water_values[index]
-				if old_water >= loosened:
-					continue
-				var point := (Vector2(x + 0.5, y + 0.5) / Vector2(MASK_SIZE) - Vector2.ONE * 0.5) * RUG_HALF * 2.0
-				var distance := point.distance_to(center)
-				if distance >= radius:
-					continue
-				var weight := 1.0 - smoothstep(inner_radius, radius, distance)
-				var new_water := minf(loosened, old_water + amount * weight)
-				if new_water <= old_water:
-					continue
-				water_values[index] = new_water
-				water_coverage_total += new_water - old_water
-				var visible_water := clampf(new_water - extraction_values[index], 0.0, 1.0)
-				wet_mask.set_pixel(x, y, Color(visible_water, visible_water, visible_water))
-				any_changed = true
-		if any_changed:
-			wet_mask_changed = true
-			set_process(true)
-		return any_changed
 
 func _initialize() -> void:
 	if "--shop-test" not in OS.get_cmdline_user_args():
@@ -63,8 +18,8 @@ func check(value: bool, message: String) -> void:
 		failures += 1
 		push_error(message)
 
-func make_soil(original: bool) -> Node:
-	var soil := OriginalSoil.new() if original else Soil.new()
+func make_soil() -> Node:
+	var soil := Soil.new()
 	root.add_child(soil)
 	var rug := Node3D.new()
 	root.add_child(rug)
@@ -79,6 +34,10 @@ func make_soil(original: bool) -> Node:
 	soil.mask = Image.create(Soil.MASK_SIZE.x, Soil.MASK_SIZE.y, false, Image.FORMAT_L8)
 	soil.mask.fill(Color.BLACK)
 	soil.wet_mask = Image.create(Soil.MASK_SIZE.x, Soil.MASK_SIZE.y, false, Image.FORMAT_L8)
+	soil.extraction_mask = Image.create(Soil.MASK_SIZE.x, Soil.MASK_SIZE.y, false, Image.FORMAT_L8)
+	soil.mask_texture = ImageTexture.create_from_image(soil.mask)
+	soil.wet_texture = ImageTexture.create_from_image(soil.wet_mask)
+	soil.extraction_texture = ImageTexture.create_from_image(soil.extraction_mask)
 	for y in Soil.MASK_SIZE.y:
 		for x in Soil.MASK_SIZE.x:
 			var p := (Vector2(x + 0.5, y + 0.5) / Vector2(Soil.MASK_SIZE) - Vector2.ONE * 0.5) * Soil.RUG_HALF * 2.0
@@ -89,128 +48,281 @@ func make_soil(original: bool) -> Node:
 	return soil
 
 func reset_soil(soil: Node, mode: String) -> void:
-	soil.water_coverage_total = 0.0
+	soil.wash_cycle = 0
+	soil.global_water_level = 1.0 if mode == "saturated" else (0.37 if mode == "partial" else 0.0)
+	soil.hose_patch_water.resize(Soil.HOSE_PATCH_SIZE.x * Soil.HOSE_PATCH_SIZE.y)
+	soil.hose_patch_water.fill(soil.global_water_level)
+	soil.water_coverage_total = soil.global_water_level * soil.surface_pixel_count
+	soil.surface_coverage_total = 0.0
+	soil.extraction_coverage_total = 0.0
 	soil.coverage_values.fill(0.0)
 	soil.extraction_values.fill(0.0)
-	soil.water_values.fill(0.0)
-	soil.wet_mask.fill(Color.BLACK)
-	if mode != "fresh":
+	# Production global supply intentionally fills the whole native buffer.
+	# Surface totals count only valid carpet; padding is not a cleaning target.
+	soil.water_values.fill(soil.global_water_level)
+	soil.wet_mask.fill(Color(soil.global_water_level, soil.global_water_level, soil.global_water_level))
+	soil.extraction_mask.fill(Color.BLACK)
+	if mode == "partial":
+		# Nonzero extraction history makes the unchanged-mask guards meaningful.
 		for y in Soil.MASK_SIZE.y:
 			for x in Soil.MASK_SIZE.x:
 				var index := y * Soil.MASK_SIZE.x + x
-				if soil.surface_pixels[index] == 0:
-					continue
-				var dirt := float(index % 37) / 51.0 if mode == "partial" else 0.0
-				var water := 1.0 if mode == "saturated" else float(index % 43) / 71.0
-				water = minf(water, 1.0 - dirt)
-				var extracted := water * 0.37 if mode == "partial" else 0.0
-				soil.coverage_values[index] = dirt
-				soil.water_values[index] = water
+				if soil.surface_pixels[index] == 0: continue
+				var extracted := float(index % 29) / 128.0
 				soil.extraction_values[index] = extracted
-				soil.water_coverage_total += soil.water_values[index]
-				var visible := clampf(water - soil.extraction_values[index], 0.0, 1.0)
-				soil.wet_mask.set_pixel(x, y, Color(visible, visible, visible))
+				soil.extraction_coverage_total += soil.extraction_values[index]
+				soil.extraction_mask.set_pixel(x, y, Color(extracted, extracted, extracted))
 	soil.wet_mask_changed = false
+	soil.extraction_mask_changed = false
 	soil.mask_changed = false
 	soil.set_process(false)
 
-func compare(actual: Node, reference: Node, args: Array, label: String) -> void:
-	var center: Vector3 = actual.rug_node.to_global(args[0])
-	var expected: bool = reference.apply_water_blob(center, args[1], args[2], args[3])
-	var result: bool = actual.apply_water_blob(center, args[1], args[2], args[3])
-	check(result == expected, "Return value: " + label)
-	check(actual.water_values == reference.water_values, "Exact water mask: " + label)
-	check(actual.water_coverage_total == reference.water_coverage_total, "Exact authoritative water total: " + label)
-	check(actual.wet_mask.get_data() == reference.wet_mask.get_data(), "Exact visible water pixels: " + label)
-	check(actual.coverage_values == reference.coverage_values and actual.extraction_values == reference.extraction_values, "Other masks unchanged: " + label)
-	check(actual.wet_mask_changed == reference.wet_mask_changed and actual.is_processing() == reference.is_processing(), "Dirty/processing flags: " + label)
-	check(actual.mask.get_data() == reference.mask.get_data() and actual.mask_changed == reference.mask_changed, "Dry image unchanged: " + label)
+func pooled_ids(soil: Node) -> Array:
+	return [soil.mask.get_instance_id(), soil.wet_mask.get_instance_id(), soil.extraction_mask.get_instance_id(),
+		soil.mask_texture.get_instance_id(), soil.wet_texture.get_instance_id(), soil.extraction_texture.get_instance_id()]
 
-func run() -> void:
-	var actual := make_soil(false)
-	var reference := make_soil(true)
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 20260927
-	var cases := [
+func other_masks(soil: Node) -> Dictionary:
+	return {"coverage": soil.coverage_values.duplicate(), "extraction": soil.extraction_values.duplicate(),
+		"extraction_total": soil.extraction_coverage_total, "dry_image": soil.mask.get_data(),
+		"extraction_image": soil.extraction_mask.get_data(), "dry_dirty": soil.mask_changed,
+		"extraction_dirty": soil.extraction_mask_changed, "surface_total": soil.surface_coverage_total}
+
+func uniform_expected(soil: Node, level: float, label: String) -> void:
+	var expected := PackedFloat32Array()
+	expected.resize(soil.water_values.size())
+	expected.fill(level)
+	var image := Image.create(Soil.MASK_SIZE.x, Soil.MASK_SIZE.y, false, Image.FORMAT_L8)
+	image.fill(Color(level, level, level))
+	check(soil.water_values == expected, "Exact native uniform water values: " + label)
+	check(soil.wet_mask.get_data() == image.get_data(), "Exact native visible water bytes: " + label)
+	check(is_equal_approx(soil.global_water_level, level), "Whole-rug level: " + label)
+	check(is_equal_approx(soil.water_coverage_total, level * soil.surface_pixel_count), "Authoritative total counts valid surface only: " + label)
+	check(absf(soil.water_clearance() - (level if soil.wet_recipe else 1.0)) < 0.000001, "Meter follows uniform supply or bypasses dry recipes: " + label)
+
+# Independent coarse-grid oracle. The global supply stays uniform; only the
+# optional acceleration tracks where direct hose water has landed this round.
+func contact_expected(soil: Node, local_center: Vector3, radius: float, strength: float) -> Dictionary:
+	var expected_patches: PackedFloat32Array = soil.hose_patch_water.duplicate()
+	var level: float = soil.global_water_level
+	var center := Vector2(local_center.x, local_center.z)
+	var eligible: bool = soil.footprint.contains_point(center) and radius > 0.0 and is_finite(radius) and strength > 0.0 and is_finite(strength) and level < Soil.WET_STAGE_TARGET
+	if not eligible:
+		return {"level": level, "patches": expected_patches, "eligible": false}
+	var touched: Array[int] = []
+	var nearest := -1
+	var nearest_distance := INF
+	for y in Soil.HOSE_PATCH_SIZE.y:
+		for x in Soil.HOSE_PATCH_SIZE.x:
+			var point := (Vector2(x + 0.5, y + 0.5) / Vector2(Soil.HOSE_PATCH_SIZE) - Vector2.ONE * 0.5) * Soil.RUG_HALF * 2.0
+			if not soil.footprint.contains_point(point):
+				continue
+			var index := y * Soil.HOSE_PATCH_SIZE.x + x
+			var distance := point.distance_squared_to(center)
+			if distance < nearest_distance:
+				nearest_distance = distance
+				nearest = index
+			if distance <= radius * radius:
+				touched.append(index)
+	if touched.is_empty() and nearest >= 0:
+		touched.append(nearest)
+	var integrated_fresh := 0.0
+	for index in touched:
+		var old := float(expected_patches[index])
+		var next := minf(1.0, old + strength / Soil.HOSE_PATCH_SATURATION)
+		# Integral of remaining local dryness over the supplied water, rather
+		# than a per-event reward that could increase with deposit frequency.
+		integrated_fresh += (next - old) * (1.0 - (old + next) * 0.5) * Soil.HOSE_PATCH_SATURATION / strength
+		expected_patches[index] = next
+	var mean_fresh := integrated_fresh / maxf(float(touched.size()), 1.0)
+	level = minf(1.0, level + strength * Soil.GLOBAL_WATER_GAIN * (1.0 + Soil.FRESH_WATER_BONUS * mean_fresh))
+	if level >= Soil.WET_STAGE_TARGET:
+		level = 1.0
+		expected_patches.fill(1.0)
+	return {"level": level, "patches": expected_patches, "eligible": true}
+
+func check_patch_values(actual: PackedFloat32Array, expected: PackedFloat32Array, label: String) -> void:
+	var maximum_error := 0.0
+	check(actual.size() == expected.size(), "Fixed local history size: " + label)
+	for index in mini(actual.size(), expected.size()):
+		maximum_error = maxf(maximum_error, absf(actual[index] - expected[index]))
+	check(maximum_error <= 0.000001, "Independent local exposure oracle: " + label)
+
+func check_contact(soil: Node, local_center: Vector3, radius: float, strength: float, edge: float, label: String) -> void:
+	var before_other := other_masks(soil)
+	var before_ids := pooled_ids(soil)
+	var expected := contact_expected(soil, local_center, radius, strength)
+	var actual: bool = soil.apply_water_blob(soil.rug_node.to_global(local_center), radius, strength, edge)
+	check(actual == bool(expected.eligible), "Contact result: " + label)
+	uniform_expected(soil, float(expected.level), label)
+	check_patch_values(soil.hose_patch_water, expected.patches, label)
+	check(other_masks(soil) == before_other, "Dry and extraction values, images, totals and flags unchanged: " + label)
+	check(pooled_ids(soil) == before_ids, "Image and texture pools retained: " + label)
+	check(soil.wet_mask_changed == bool(expected.eligible) and soil.is_processing() == bool(expected.eligible), "Water dirty/processing flags: " + label)
+func validate_contacts(soil: Node) -> void:
+	var contacts := [
 		[Vector3.ZERO, 0.17, 0.3, 0.18],
-		[Vector3(0.8, 0, 1.4), 0.51, 0.1, 0.82],
-		[Vector3(-0.98, 0, -1.63), 0.23, 0.8, 0.01],
+		[Vector3(0.82, 0, 1.25), 0.51, 0.3, 0.82],
+		[Vector3(-0.75, 0, -1.2), 0.00001, 0.0037, 0.01],
+		[Vector3(0, 0, 1.56), 0.23, 0.8, 0.01],
+		[Vector3(4, 0, 4), 8.0, 0.5, 0.18],
 		[Vector3(1.01, 0, 1.67), 0.14, 1.0, 1.0],
-		[Vector3(5, 0, 5), 0.3, 0.5, 0.18],
-		[Vector3.ZERO, 0.00001, 0.7, 0.2],
 		[Vector3.ZERO, -0.1, 0.7, 0.2],
 		[Vector3.ZERO, 0.0, 0.7, 0.2],
 		[Vector3.ZERO, 0.24, 0.0, 0.2],
 		[Vector3.ZERO, 0.24, -1.0, -1.0],
 		[Vector3.ZERO, 0.24, 2.0, 2.0],
-		[Vector3(-0.21, 0, 0.73), 0.24, 0.0037, 0.0001],
+		[Vector3(0.82, 0, 1.25), 0.24, 9.261, 0.18],
+		[Vector3.ZERO, 0.24, 100.0, 0.18],
+		[Vector3.ZERO, 0.24, INF, 0.18],
+		[Vector3.ZERO, 0.24, -INF, 0.18],
+		[Vector3.ZERO, 0.24, NAN, 0.18],
 		[Vector3.ZERO, 4.0, 1.0, 0.01],
-		[Vector3(-0.96, 0, 1.63), 1.2, 0.005, 0.82],
 	]
-	var pixel_point := (Vector2(153.5, 272.5) / Vector2(Soil.MASK_SIZE) - Vector2.ONE * 0.5) * Soil.RUG_HALF * 2.0
-	cases.append([Vector3(pixel_point.x, 0.0, pixel_point.y), 0.00001, 0.7, 0.2])
-	for boundary_offset in [-0.0000001, 0.0, 0.0000001]:
-		cases.append([Vector3.ZERO, pixel_point.length() + boundary_offset, 0.7, 0.18])
-	for i in 24:
-		cases.append([Vector3(rng.randf_range(-1.2, 1.2), 0, rng.randf_range(-1.8, 1.8)), rng.randf_range(0.05, 0.64), rng.randf_range(0.001, 0.81), rng.randf_range(0.01, 1.0)])
-	# Identity, rotated/translated, and nonuniformly scaled local-space mapping.
 	for transform in [Transform3D.IDENTITY, Transform3D(Basis(Vector3.UP, 0.63), Vector3(2, 0.5, -3)), Transform3D(Basis(Vector3.UP, -0.91).scaled(Vector3(1.7, 0.8, 0.6)), Vector3(-2, 1.1, 4))]:
-		actual.rug_node.transform = transform
-		reference.rug_node.transform = transform
-		for mode in ["fresh", "partial", "saturated", "overlap"]:
-			reset_soil(actual, "fresh" if mode == "overlap" else mode)
-			reset_soil(reference, "fresh" if mode == "overlap" else mode)
-			for i in cases.size():
-				# Keep random overlap cases meaningful: the full-rug stamp would
-				# otherwise saturate every pixel before those cases are exercised.
-				if mode == "overlap" and float(cases[i][1]) > 2.0:
-					continue
-				if mode == "fresh" or mode == "partial":
-					reset_soil(actual, mode)
-					reset_soil(reference, mode)
-				compare(actual, reference, cases[i], "%s transform=%s case=%d" % [mode, transform, i])
-	for soil in [actual, reference]:
-		soil.rug_node.transform = Transform3D.IDENTITY
+		soil.rug_node.transform = transform
+		for mode in ["fresh", "partial", "saturated"]:
+			for index in contacts.size():
+				reset_soil(soil, mode)
+				var args: Array = contacts[index]
+				check_contact(soil, args[0], args[1], args[2], args[3], "%s transform=%s case=%d" % [mode, transform, index])
+	soil.rug_node.transform = Transform3D.IDENTITY
+
+func validate_steady_supply(soil: Node) -> void:
+	var baseline := PackedFloat32Array()
+	var baseline_bytes := PackedByteArray()
+	var baseline_total := 0.0
+	for center in [Vector3.ZERO, Vector3(0.82, 0, 1.25), Vector3(-0.75, 0, -1.2), Vector3(0, 0, 1.56)]:
+		for radius in [0.00001, 0.19, 0.65]:
+			reset_soil(soil, "fresh")
+			for contact in 8:
+				soil.wet_mask_changed = false
+				soil.set_process(false)
+				var previous: float = soil.water_clearance()
+				var expected := contact_expected(soil, center, radius, 0.3)
+				soil.apply_water_blob(soil.rug_node.to_global(center), radius, 0.3, 0.82)
+				uniform_expected(soil, float(expected.level), "steady %s radius=%s contact=%d" % [center, radius, contact])
+				check_patch_values(soil.hose_patch_water, expected.patches, "steady local exposure")
+				var gain: float = soil.water_clearance() - previous
+				check(gain >= 0.3 * Soil.GLOBAL_WATER_GAIN - 0.000001 and gain <= 0.3 * Soil.GLOBAL_WATER_GAIN * (1.0 + Soil.FRESH_WATER_BONUS) + 0.000001, "Every repeated corner/fringe contact gains steady base flow with a bounded optional bonus")
+				if contact >= 5:
+					check(absf(gain - 0.3 * Soil.GLOBAL_WATER_GAIN) < 0.000001, "A locally saturated patch keeps the constant base rate")
+			if baseline.is_empty():
+				baseline = soil.water_values.duplicate()
+				baseline_bytes = soil.wet_mask.get_data()
+				baseline_total = soil.water_coverage_total
+			else:
+				check(soil.water_values == baseline and soil.wet_mask.get_data() == baseline_bytes and soil.water_coverage_total == baseline_total, "Uniformly fresh repeated center, corner, fringe and radius contacts share the same whole-rug rate")
+	reset_soil(soil, "fresh")
+	var supplied := 0
+	while not soil.water_stage_complete() and supplied < 100:
+		check(soil.apply_water_blob(Vector3(0.82, 0, 1.25), 0.00001, 1.0), "Tiny repeated corner contact continues supplying the whole carpet")
+		supplied += 1
+	var expected_contacts := ceili((Soil.WET_STAGE_TARGET / Soil.GLOBAL_WATER_GAIN) - Soil.FRESH_WATER_BONUS * Soil.HOSE_PATCH_SATURATION * 0.5)
+	check(supplied == expected_contacts and soil.water_stage_complete() and soil.water_stage_progress() == 1.0, "One corner eventually saturates every part of the rug at the slower base rate")
+	uniform_expected(soil, 1.0, "complete corner soak")
+	var before := other_masks(soil)
+	var before_patches: PackedFloat32Array = soil.hose_patch_water.duplicate()
+	soil.wet_mask_changed = false
+	soil.set_process(false)
+	check(not soil.apply_water_blob(Vector3.ZERO, 0.55, 1.0) and not soil.wet_mask_changed and not soil.is_processing(), "Saturated stage rejects extra water and stays asleep")
+	check(other_masks(soil) == before and soil.hose_patch_water == before_patches, "Saturation never changes local history, extraction or dry work")
+
+func validate_fresh_patch_bonus(soil: Node) -> void:
+	check(Soil.GLOBAL_WATER_GAIN < 0.08 and Soil.GLOBAL_WATER_GAIN >= 0.06, "Constant base watering is modestly slower than the previous rate")
+	check(Soil.FRESH_WATER_BONUS > 0.0 and Soil.FRESH_WATER_BONUS <= 0.25, "Fresh-patch acceleration is modest and capped")
+	reset_soil(soil, "fresh")
+	for contact in 12:
+		check_contact(soil, Vector3.ZERO, 0.14, 0.3, 0.18, "held history %d" % contact)
+		soil.wet_mask_changed = false
+		soil.set_process(false)
+	var held: float = soil.water_clearance()
+	reset_soil(soil, "fresh")
+	for contact in 12:
+		var point := Vector3(-0.60 + float(contact % 4) * 0.40, 0, -0.90 + floorf(float(contact) / 4.0) * 0.90)
+		check_contact(soil, point, 0.14, 0.3, 0.18, "fresh sweep %d" % contact)
+		soil.wet_mask_changed = false
+		soil.set_process(false)
+	var swept: float = soil.water_clearance()
+	check(swept > held * 1.08 and swept <= held * (1.0 + Soil.FRESH_WATER_BONUS) + 0.000001, "Equal landed water accelerates modestly when it reaches fresh sections")
+	reset_soil(soil, "fresh")
+	soil.apply_water_blob(Vector3.ZERO, 0.19, 2.1)
+	var whole: float = soil.water_clearance()
+	var whole_patches: PackedFloat32Array = soil.hose_patch_water.duplicate()
+	reset_soil(soil, "fresh")
+	for parcel in 8:
+		soil.apply_water_blob(Vector3.ZERO, 0.19, 2.1 / 8.0)
+	check(absf(soil.water_clearance() - whole) < 0.000001, "Splitting one stationary deposit retains total water and integrated freshness bonus")
+	check_patch_values(soil.hose_patch_water, whole_patches, "partitioned stationary deposit")
+	# Returning to used carpet retains base progress, while a new section gives
+	# the optional boost even though rendered/global water is uniform everywhere.
+	var used_before: float = soil.water_clearance()
+	soil.apply_water_blob(Vector3.ZERO, 0.19, 0.3)
+	var used_gain: float = soil.water_clearance() - used_before
+	var fresh_before: float = soil.water_clearance()
+	soil.apply_water_blob(Vector3(0.65, 0, 1.0), 0.19, 0.3)
+	var fresh_gain: float = soil.water_clearance() - fresh_before
+	check(absf(used_gain - 0.3 * Soil.GLOBAL_WATER_GAIN) < 0.000001 and fresh_gain > used_gain, "Returning to used sections cannot refresh their bonus")
+func validate_strokes(soil: Node) -> void:
+	for elapsed in [1.0 / 60.0, 0.08, 0.0, 0.001]:
+		for power in [1.0, 4.41, 9.261]:
+			var center_level := 0.0
+			for center in [Vector3.ZERO, Vector3(0.82, 0, 1.25)]:
+				reset_soil(soil, "fresh")
+				soil.tool_strength = power
+				var before := other_masks(soil)
+				var seconds := clampf(elapsed if elapsed > 0.0 else 1.0 / 60.0, 1.0 / 240.0, 0.08)
+				var expected := contact_expected(soil, center, Soil.WATER_HALF.x, seconds * Soil.WATER_RATE * power)
+				soil.apply_water_stroke(center, center, elapsed)
+				uniform_expected(soil, float(expected.level), "stationary stroke elapsed=%s power=%s center=%s" % [elapsed, power, center])
+				check(other_masks(soil) == before, "Stationary hose keeps extraction and dry masks unchanged")
+				if center == Vector3.ZERO: center_level = soil.water_clearance()
+				else: check(soil.water_clearance() == center_level, "Stationary center and corner hose grow at the same rate")
+	reset_soil(soil, "fresh")
+	soil.apply_water_stroke(Vector3(4, 0, 4), Vector3(5, 0, 5), 0.08)
+	uniform_expected(soil, 0.0, "off-rug stroke")
+	check(not soil.wet_mask_changed and not soil.is_processing(), "Wholly off-carpet strokes never supply water")
+	soil.tool_strength = 1.0
+
+func validate_gates(soil: Node) -> void:
 	for gate in ["wet_recipe", "completion_started", "simulation_suspended", "reveal_progress", "skip_dry_stage"]:
-		reset_soil(actual, "fresh")
-		reset_soil(reference, "fresh")
-		var saved = actual.get(gate)
-		var blocked = 0.5 if gate == "reveal_progress" else not saved
-		actual.set(gate, blocked)
-		reference.set(gate, blocked)
-		if gate == "skip_dry_stage":
-			actual.surface_coverage_total = actual.surface_pixel_count
-			reference.surface_coverage_total = reference.surface_pixel_count
-		compare(actual, reference, cases[0], "blocked " + gate)
-		check(actual.water_coverage_total == 0.0, "Gate prevents painting: " + gate)
-		actual.set(gate, saved)
-		reference.set(gate, saved)
-	for profile in ["direct", "soak", "rapid_sweep", "saturated"]:
-		var old_times: Array[int] = []
-		var new_times: Array[int] = []
+		reset_soil(soil, "fresh")
+		var saved: Variant = soil.get(gate)
+		soil.set(gate, 0.5 if gate == "reveal_progress" else not saved)
+		if gate == "skip_dry_stage": soil.surface_coverage_total = soil.surface_pixel_count
+		var before := other_masks(soil)
+		var before_patches: PackedFloat32Array = soil.hose_patch_water.duplicate()
+		check(not soil.apply_water_blob(Vector3.ZERO, 0.17, 0.3), "Gate blocks global blob supply: " + gate)
+		soil.apply_water_stroke(Vector3.ZERO, Vector3(0.1, 0, 0.1), 0.08)
+		uniform_expected(soil, 0.0, "blocked " + gate)
+		check(other_masks(soil) == before and soil.hose_patch_water == before_patches and not soil.wet_mask_changed and not soil.is_processing(), "Gate leaves every mask and flag untouched: " + gate)
+		soil.set(gate, saved)
+	soil.surface_coverage_total = 0.0
+
+func benchmark(soil: Node) -> void:
+	var before_ids := pooled_ids(soil)
+	for profile in ["direct", "wide_circle", "rapid_sweep", "saturated"]:
+		var times: Array[int] = []
 		for sample in 24:
-			reset_soil(actual, "saturated" if profile == "saturated" else "fresh")
-			reset_soil(reference, "saturated" if profile == "saturated" else "fresh")
+			reset_soil(soil, "saturated" if profile == "saturated" else "fresh")
 			var start := Time.get_ticks_usec()
-			profile_paint(reference, profile)
-			old_times.append(Time.get_ticks_usec() - start)
-			start = Time.get_ticks_usec()
-			profile_paint(actual, profile)
-			new_times.append(Time.get_ticks_usec() - start)
-		old_times.sort()
-		new_times.sort()
-		print("HOSE_PAINTER_BENCH profile=%s reference_median_us=%d current_median_us=%d reference_p95_us=%d current_p95_us=%d" % [profile, old_times[12], new_times[12], old_times[22], new_times[22]])
-	for soil in [actual, reference]:
-		soil.rug_node.free()
-		soil.free()
+			if profile == "rapid_sweep":
+				for contact in 14: soil.apply_water_blob(Vector3(-0.65 + float(contact) * 0.09, 0, 0), 0.3, 0.05)
+			else:
+				soil.apply_water_blob(Vector3.ZERO, 0.55 if profile == "wide_circle" else 0.3, 0.14, 0.82 if profile == "wide_circle" else 0.18)
+			times.append(Time.get_ticks_usec() - start)
+		times.sort()
+		print("HOSE_PAINTER_BENCH profile=%s current_median_us=%d current_p95_us=%d" % [profile, times[12], times[22]])
+	check(pooled_ids(soil) == before_ids, "Repeated whole-rug fills retain every image/texture allocation")
+
+func run() -> void:
+	var soil := make_soil()
+	validate_contacts(soil)
+	validate_steady_supply(soil)
+	validate_fresh_patch_bonus(soil)
+	validate_strokes(soil)
+	validate_gates(soil)
+	benchmark(soil)
+	soil.rug_node.free()
+	soil.free()
 	print("HOSE_PAINTER_OPTIMIZATION_VALIDATION: %d checks, %d failures" % [checks, failures])
 	quit(0 if failures == 0 else 1)
-
-func profile_paint(soil: Node, profile: String) -> void:
-	if profile == "rapid_sweep":
-		for i in 8:
-			soil.apply_water_blob(Vector3(-0.65 + i * 0.18, 0, 0), 0.3, 0.14, 0.18)
-		for i in 6:
-			soil.apply_water_blob(Vector3(-0.65 + i * 0.25, 0, 0), 0.55, 0.055, 0.82)
-	else:
-		soil.apply_water_blob(Vector3.ZERO, 0.55 if profile == "soak" else 0.3, 0.14, 0.82 if profile == "soak" else 0.18)

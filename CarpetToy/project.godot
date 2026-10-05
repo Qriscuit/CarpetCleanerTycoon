@@ -22,6 +22,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 ShopState="*res://scripts/shop_state.gd"
+GameAudio="*res://scripts/game_audio.gd"
 
 [display]
 

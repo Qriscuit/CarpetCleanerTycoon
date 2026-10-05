@@ -1,0 +1,138 @@
+{
+  "canvas": [
+    1080,
+    1920
+  ],
+  "background": "background.svg",
+  "overlay": "overlay.svg",
+  "alphaOverlay": "overlay.png",
+  "panels": [
+    {
+      "id": "brush",
+      "label": "label_brush.svg",
+      "x": 64,
+      "y": 355,
+      "width": 952,
+      "height": 450,
+      "radius": 38,
+      "mask": "mask_brush.png",
+      "suggestedActiveContact": [
+        540,
+        615
+      ],
+      "captionSafeTop": 450
+    },
+    {
+      "id": "hose",
+      "label": "label_hose.svg",
+      "x": 64,
+      "y": 841,
+      "width": 952,
+      "height": 450,
+      "radius": 38,
+      "mask": "mask_hose.png",
+      "suggestedActiveContact": [
+        540,
+        1101
+      ],
+      "captionSafeTop": 936
+    },
+    {
+      "id": "squeegee",
+      "label": "label_squeegee.svg",
+      "x": 64,
+      "y": 1327,
+      "width": 952,
+      "height": 450,
+      "radius": 38,
+      "mask": "mask_squeegee.png",
+      "suggestedActiveContact": [
+        540,
+        1587
+      ],
+      "captionSafeTop": 1422
+    }
+  ],
+  "title": "Three tools. One beautiful reveal.",
+  "palette": {
+    "teal": "#154D54",
+    "deep": "#103D44",
+    "mint": "#77C9AE",
+    "leaf": "#4CA78F",
+    "cream": "#FFF9E8",
+    "orange": "#F57940",
+    "gold": "#EDBA43",
+    "water": "#65D4DF"
+  },
+  "fonts": "Outlined Arial Rounded MT Bold and Arial Bold; editable text source retained, no font binaries distributed.",
+  "provenance": "Original vector illustration of the actual mint brush, mint handheld sprayer and coral squeegee; transparent windows require real recorded gameplay. Decorative artwork only.",
+  "endcard": "Use the approved v2 endcard logo, One more rug ribbon, and Play now / On Google Play CTA.",
+  "assets": [
+    {
+      "file": "background.svg",
+      "raster": "background.png",
+      "transparent": false,
+      "outlined": true
+    },
+    {
+      "file": "overlay.svg",
+      "raster": "overlay.png",
+      "transparent": true,
+      "outlined": true
+    },
+    {
+      "file": "header.svg",
+      "raster": "header.png",
+      "transparent": true,
+      "outlined": true
+    },
+    {
+      "file": "frames.svg",
+      "raster": "frames.png",
+      "transparent": true,
+      "outlined": true
+    },
+    {
+      "file": "labels.svg",
+      "raster": "labels.png",
+      "transparent": true,
+      "outlined": true
+    },
+    {
+      "file": "label_brush.svg",
+      "raster": "label_brush.png",
+      "transparent": true,
+      "outlined": true
+    },
+    {
+      "file": "label_hose.svg",
+      "raster": "label_hose.png",
+      "transparent": true,
+      "outlined": true
+    },
+    {
+      "file": "label_squeegee.svg",
+      "raster": "label_squeegee.png",
+      "transparent": true,
+      "outlined": true
+    },
+    {
+      "file": "icon_brush.svg",
+      "raster": "icon_brush.png",
+      "transparent": true,
+      "outlined": true
+    },
+    {
+      "file": "icon_hose.svg",
+      "raster": "icon_hose.png",
+      "transparent": true,
+      "outlined": true
+    },
+    {
+      "file": "icon_squeegee.svg",
+      "raster": "icon_squeegee.png",
+      "transparent": true,
+      "outlined": true
+    }
+  ]
+}

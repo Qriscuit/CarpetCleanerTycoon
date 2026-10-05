@@ -1,0 +1,93 @@
+{
+  "recorded_gameplay": true,
+  "total_frames": 450,
+  "output_dir": "exports",
+  "filename": "Carpet_Cleaner_Illustrated_15s_v2.mp4",
+  "target_lufs": -18,
+  "crf": 16,
+  "preset": "slow",
+  "poster_time": 13.3,
+  "review_frame_times": [0.65, 3.3, 6.3, 8.3, 10.3, 13.3],
+  "music": {
+    "source": "../ad_preproduction_v2/audio/quiet_shop_music_loop.wav",
+    "gain": 0.32,
+    "in": 0,
+    "fade_out": 0.9
+  },
+  "audio_events": [],
+  "clips": [
+    {
+      "id": "fox_hook",
+      "source": "../../../build/ad-capture-v2/full-game-001/restorations.avi",
+      "in": 206.1,
+      "frames": 60,
+      "crop": [117, 232, 846, 1504],
+      "audio": "source",
+      "overlay": "captions/hook_discovery.svg",
+      "overlay_motion": {"enter": 0, "exit": 0.08, "rise": 0}
+    },
+    {
+      "id": "fox_work",
+      "source": "../../../build/ad-capture-v2/full-game-001/restorations.avi",
+      "in": 227.13333333333333,
+      "frames": 90,
+      "crop": [117, 232, 846, 1504],
+      "audio": "source",
+      "overlay": "captions/process.svg",
+      "overlay_motion": {"enter": 0.18, "exit": 0.08, "rise": 14}
+    },
+    {
+      "id": "fox_finish",
+      "source": "../../../build/ad-capture-v2/full-game-001/restorations.avi",
+      "in": 273.23333333333335,
+      "frames": 66,
+      "crop": [117, 232, 846, 1504],
+      "audio": "source"
+    },
+    {
+      "id": "fox_reveal",
+      "source": "../../../build/ad-capture-v2/full-game-001/restorations.avi",
+      "in": 275.43333333333334,
+      "frames": 69,
+      "crop": [90, 210, 900, 1600],
+      "audio": "source",
+      "overlay": "captions/reveal.svg",
+      "overlay_motion": {"enter": 0.22, "exit": 0.08, "rise": 16}
+    },
+    {
+      "id": "mint_reveal",
+      "source": "../../../build/ad-capture-v2/full-game-001/restorations.avi",
+      "in": 89.83333333333333,
+      "frames": 38,
+      "crop": [90, 210, 900, 1600],
+      "audio": "mute",
+      "overlay": "captions/next_rug.svg",
+      "overlay_motion": {"enter": 0.18, "exit": 0, "rise": 14}
+    },
+    {
+      "id": "sunburst_reveal",
+      "source": "../../../build/ad-capture-v2/full-game-001/restorations.avi",
+      "in": 182.76666666666668,
+      "frames": 37,
+      "crop": [90, 210, 900, 1600],
+      "audio": "mute",
+      "overlay": "captions/next_rug.svg",
+      "overlay_motion": {"enter": 0, "exit": 0.08, "rise": 0}
+    },
+    {
+      "id": "google_play",
+      "kind": "freeze",
+      "source": "../../../build/ad-capture-v2/full-game-001/restorations.avi",
+      "in": 276.43333333333334,
+      "frames": 90,
+      "crop": [90, 210, 900, 1600],
+      "audio": "mute",
+      "freeze_zoom": [1, 1.02],
+      "overlays": [
+        {"source": "art/endcard_sparkles.svg", "at": 0.12, "until": 3, "motion": {"enter": 0.3, "exit": 0, "rise": 0, "float": 3, "period": 2.8}},
+        {"source": "art/endcard_title.svg", "at": 0, "until": 3, "motion": {"enter": 0.22, "exit": 0, "rise": 16}},
+        {"source": "art/endcard_cta.svg", "at": 0.2, "until": 3, "motion": {"enter": 0.22, "exit": 0, "rise": 14}}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920"><title>endcard_title.svg</title><defs>
+ <linearGradient id="tealInk" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#245C62"/><stop offset="1" stop-color="#103D44"/></linearGradient>
+ <linearGradient id="leafLight" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#98D9B8"/><stop offset="1" stop-color="#55B79D"/></linearGradient>
+ <linearGradient id="ribbonMint" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#C9EAB8"/><stop offset="1" stop-color="#9DD5AC"/></linearGradient>
+ <linearGradient id="orangeSun" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FF9656"/><stop offset="1" stop-color="#F06C35"/></linearGradient>
+ <filter id="softShadow" x="-30%" y="-35%" width="160%" height="180%"><feDropShadow dx="0" dy="10" stdDeviation="6" flood-color="#163D38" flood-opacity=".23"/></filter>
+ </defs><g id="carpet-cleaner-logo" transform="rotate(-3 540 535)" filter="url(#softShadow)">
+ <g transform="translate(0 9)"><text x="540" y="510" text-anchor="middle" font-family="CarpetRounded" font-size="192" fill="#67977B" stroke="#FFF9E8" stroke-width="33" stroke-linejoin="round" paint-order="stroke fill">Carpet</text><text x="540" y="680" text-anchor="middle" font-family="CarpetRounded" font-size="190" fill="#67977B" stroke="#FFF9E8" stroke-width="33" stroke-linejoin="round" paint-order="stroke fill">Cleaner</text></g>
+ <text x="540" y="510" text-anchor="middle" font-family="CarpetRounded" font-size="192" fill="url(#tealInk)" stroke="#FFF9E8" stroke-width="30" stroke-linejoin="round" paint-order="stroke fill">Carpet</text><text x="540" y="680" text-anchor="middle" font-family="CarpetRounded" font-size="190" fill="url(#tealInk)" stroke="#FFF9E8" stroke-width="30" stroke-linejoin="round" paint-order="stroke fill">Cleaner</text>
+ <text x="540" y="510" text-anchor="middle" font-family="CarpetRounded" font-size="192" fill="url(#tealInk)" stroke="url(#tealInk)" stroke-width="2" stroke-linejoin="round" paint-order="stroke fill">Carpet</text><text x="540" y="680" text-anchor="middle" font-family="CarpetRounded" font-size="190" fill="url(#tealInk)" stroke="url(#tealInk)" stroke-width="2" stroke-linejoin="round" paint-order="stroke fill">Cleaner</text>
+ </g><g id="one-more-rug-ribbon" transform="rotate(-3 540 770)" filter="url(#softShadow)">
+ <path d="M277 714 Q529 699 804 714 L819 807 Q538 835 264 812Z" fill="url(#ribbonMint)" stroke="#FFF9E8" stroke-width="20" stroke-linejoin="round"/>
+ <path d="M287 727 Q538 713 793 727" fill="none" stroke="#E7F3CC" stroke-width="8" stroke-linecap="round"/>
+ <text x="540" y="788" text-anchor="middle" font-family="CarpetRounded" font-size="58" fill="#154D54" >One more rug.</text>
+ <g transform="translate(260 750) rotate(2) scale(0.92 0.92)">
+  <path d="M8 25 C-20 -40 -88 -77 -104 -51 C-121 -15 -68 27 -4 36 C-70 32 -117 69 -94 87 C-66 108 -22 83 13 42 C31 91 71 107 79 78 C90 41 43 4 8 25Z" fill="#FFF9E8" stroke="#FFF9E8" stroke-width="19" stroke-linejoin="round"/>
+  <path d="M8 27 C-9 -33 -81 -68 -98 -47 C-112 -19 -68 21 8 35Z" fill="url(#leafLight)" stroke="#4CA78F" stroke-width="3"/>
+  <path d="M3 34 C-63 29 -106 62 -89 78 C-67 98 -23 75 11 39Z" fill="#58B59A" stroke="#4CA78F" stroke-width="3"/>
+  <path d="M15 31 C39 20 76 53 72 77 C66 97 37 77 15 31Z" fill="#72C8AB" stroke="#4CA78F" stroke-width="3"/>
+  <path d="M-81 -37 Q-27 -13 12 37 M-79 74 Q-27 57 12 37 M14 34 L60 76" fill="none" stroke="#378F7C" stroke-width="4" stroke-linecap="round"/>
+  <path d="M-82 -48 Q-42 -51 -11 -20" fill="none" stroke="#C4EACD" stroke-width="6" stroke-linecap="round" opacity=".75"/>
+ </g><g transform="translate(820 731) rotate(-13) scale(-0.82 0.82)">
+  <path d="M8 25 C-20 -40 -88 -77 -104 -51 C-121 -15 -68 27 -4 36 C-70 32 -117 69 -94 87 C-66 108 -22 83 13 42 C31 91 71 107 79 78 C90 41 43 4 8 25Z" fill="#FFF9E8" stroke="#FFF9E8" stroke-width="19" stroke-linejoin="round"/>
+  <path d="M8 27 C-9 -33 -81 -68 -98 -47 C-112 -19 -68 21 8 35Z" fill="url(#leafLight)" stroke="#4CA78F" stroke-width="3"/>
+  <path d="M3 34 C-63 29 -106 62 -89 78 C-67 98 -23 75 11 39Z" fill="#58B59A" stroke="#4CA78F" stroke-width="3"/>
+  <path d="M15 31 C39 20 76 53 72 77 C66 97 37 77 15 31Z" fill="#72C8AB" stroke="#4CA78F" stroke-width="3"/>
+  <path d="M-81 -37 Q-27 -13 12 37 M-79 74 Q-27 57 12 37 M14 34 L60 76" fill="none" stroke="#378F7C" stroke-width="4" stroke-linecap="round"/>
+  <path d="M-82 -48 Q-42 -51 -11 -20" fill="none" stroke="#C4EACD" stroke-width="6" stroke-linecap="round" opacity=".75"/>
+ </g>
+ </g></svg>

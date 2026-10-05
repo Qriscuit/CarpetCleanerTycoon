@@ -1,0 +1,123 @@
+{
+  "canvas": [
+    1080,
+    1920
+  ],
+  "palette": {
+    "teal": "#154D54",
+    "deep": "#103D44",
+    "mint": "#77C9AE",
+    "leaf": "#4CA78F",
+    "cream": "#FFF9E8",
+    "orange": "#F57940",
+    "gold": "#EDBA43"
+  },
+  "fonts": "Outlined from locally installed Arial Rounded MT Bold and Arial Bold; no font binaries copied.",
+  "provenance": "Original SVG geometry authored for this Carpet Cleaner ad. Decoration only, not gameplay.",
+  "assets": [
+    {
+      "file": "logo.svg",
+      "description": "Chunky rounded outlined title",
+      "outlined": true,
+      "transparent": true,
+      "clearPixels": 1837670,
+      "paintBounds": {
+        "x": 163,
+        "y": 343,
+        "width": 771,
+        "height": 399
+      }
+    },
+    {
+      "file": "ribbon.svg",
+      "description": "Mint leaf ribbon",
+      "outlined": true,
+      "transparent": true,
+      "clearPixels": 1953812,
+      "paintBounds": {
+        "x": 142,
+        "y": 641,
+        "width": 790,
+        "height": 240
+      }
+    },
+    {
+      "file": "cta.svg",
+      "description": "Orange text call to action; no platform badge",
+      "outlined": true,
+      "transparent": true,
+      "clearPixels": 1953189,
+      "paintBounds": {
+        "x": 229,
+        "y": 1182,
+        "width": 622,
+        "height": 202
+      }
+    },
+    {
+      "file": "sparkles.svg",
+      "description": "Small decorative vector sparkles",
+      "outlined": true,
+      "transparent": true,
+      "clearPixels": 2065206,
+      "paintBounds": {
+        "x": 148,
+        "y": 290,
+        "width": 764,
+        "height": 837
+      }
+    },
+    {
+      "file": "endcard_title.svg",
+      "description": "Rounded title and mint leaf ribbon",
+      "outlined": true,
+      "transparent": true,
+      "clearPixels": 1739676,
+      "paintBounds": {
+        "x": 142,
+        "y": 343,
+        "width": 792,
+        "height": 538
+      }
+    },
+    {
+      "file": "endcard_cta.svg",
+      "description": "Orange call to action, separate motion layer",
+      "outlined": true,
+      "transparent": true,
+      "clearPixels": 1953189,
+      "paintBounds": {
+        "x": 229,
+        "y": 1182,
+        "width": 622,
+        "height": 202
+      }
+    },
+    {
+      "file": "endcard_sparkles.svg",
+      "description": "Separate motion layer of decorative sparkles",
+      "outlined": true,
+      "transparent": true,
+      "clearPixels": 2065206,
+      "paintBounds": {
+        "x": 148,
+        "y": 290,
+        "width": 764,
+        "height": 837
+      }
+    },
+    {
+      "file": "endcard_overlay.svg",
+      "description": "Transparent vector identity above a real full-size rug",
+      "outlined": true,
+      "transparent": true,
+      "clearPixels": 1613058,
+      "paintBounds": {
+        "x": 142,
+        "y": 290,
+        "width": 792,
+        "height": 1094
+      }
+    }
+  ]
+}

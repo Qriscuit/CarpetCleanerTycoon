@@ -1,0 +1,24 @@
+{
+  "purpose": "Restrained one-shot for the full-restoration reveal; not early finish",
+  "provenance": "Original offline additive composition and filtered-noise synthesis. No downloaded samples, external recordings, or external generation model.",
+  "generator": "tools/synthesize_game_audio.py",
+  "listening_status": "Signal and file checks completed; not independently listened to by the generator",
+  "files": [
+    {
+      "file": "CarpetToy/assets/audio/restoration_complete.wav",
+      "seconds": 0.84,
+      "sample_rate": 44100,
+      "sample_frames": 37044,
+      "channels": 1,
+      "bit_depth": 16,
+      "peak_dbfs": -14.89,
+      "rms_dbfs": -25.68,
+      "finite": true,
+      "clipped_samples": 0,
+      "energy_above_2500_hz_percent": 0.0,
+      "seam_adjacent_sample_jump": 0.0,
+      "interior_adjacent_jump_p999": 0.0163884,
+      "loop": false
+    }
+  ]
+}

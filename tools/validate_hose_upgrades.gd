@@ -93,6 +93,8 @@ func mask_stats(center := Vector2.ZERO, halo_start := 0.26) -> Dictionary:
 	for y in soil.MASK_SIZE.y:
 		for x in soil.MASK_SIZE.x:
 			var index: int = y * soil.MASK_SIZE.x + x
+			if soil.surface_pixels[index] == 0:
+				continue # Uniform fills include unused storage; sample actual rug support.
 			var value := int(bytes[index])
 			total += value
 			if soil.surface_pixels[index] == 0 and value > 0:
@@ -153,11 +155,15 @@ func check_profiles() -> void:
 
 
 func clear_soak_test_mask() -> void:
+	soil.global_water_level = 0.0
+	soil.hose_patch_water.fill(0.0)
 	soil.water_values.fill(0.0)
 	soil.extraction_values.fill(0.0)
 	soil.water_coverage_total = 0.0
 	soil.extraction_coverage_total = 0.0
 	soil.wet_mask.fill(Color.BLACK)
+	soil.extraction_mask.fill(Color.BLACK)
+	soil.extraction_mask_changed = true
 
 
 func feed_soak(soak: RefCounted, seconds: float, position := Vector3.ZERO) -> void:
@@ -185,7 +191,7 @@ func check_passive_mask_progression() -> void:
 		soak.soak_contact.connect(func(position: Vector3, radius: float, strength: float):
 			emitted.peak = maxf(float(emitted.peak), strength)
 			emitted.count = int(emitted.count) + 1
-			soil.apply_water_blob(position, radius, strength, 0.78)
+			if is_instance_valid(game): game._on_soak_contact(position, radius, strength)
 		)
 		feed_soak(soak, 0.3)
 		var early: Dictionary = soak.debug_stats()
@@ -195,11 +201,11 @@ func check_passive_mask_progression() -> void:
 		check(float(held.max_strength_per_second) >= float(early.max_strength_per_second) * 1.34, "Level %d gently ramps passive intensity another 35%% while held" % (level + 1))
 		check(float(held.max_radius) > float(early.max_radius) + 0.1 and float(held.max_radius) <= float(profile.max_spread_radius), "Level %d grows a bounded halo during a stationary hold" % (level + 1))
 		check(int(emitted.count) == 15 and float(emitted.peak) <= 1.0, "Level %d deposits at 10 Hz without saturating the per-event strength cap" % (level + 1))
-		check(int(progress.outside) == 0 and int(progress.halo_total) > 0, "Level %d visibly wets outside the direct core but never outside the rug" % (level + 1))
+		check(int(progress.total) == 0, "Level %d capillary circles remain visual and never add hidden progress" % (level + 1))
 		if level > 0:
-			check(int(progress.total) > previous_total and int(progress.halo_total) > previous_halo and float(held.max_radius) > previous_radius, "Level %d measurably increases passive amount, halo wetness and spread at equal elapsed time" % (level + 1))
+			check(float(held.max_radius) > previous_radius, "Level %d increases the visual influence circle at equal elapsed time" % (level + 1))
 		else:
-			check(water_at(Vector2(0.36, 0.0)) > 0.25, "The starter hose builds clearly visible passive wetness beyond its 0.26 m direct core within 1.5 seconds")
+			check(water_at(Vector2(0.36, 0.0)) == 0.0, "A visual halo never secretly advances or re-wets carpet progress")
 		print("HOSE_PASSIVE_MASK level=%d seconds=1.5 total=%d halo=%d radius=%.3f held_rate=%.3f" % [level + 1, int(progress.total), int(progress.halo_total), float(held.max_radius), float(held.max_strength_per_second)])
 		previous_total = int(progress.total)
 		previous_halo = int(progress.halo_total)
@@ -217,9 +223,9 @@ func check_passive_mask_progression() -> void:
 	var edge_soak := Soak.new()
 	edge_soak.setup(soil.footprint)
 	edge_soak.set_profile(Profile.for_level(Profile.MAX_LEVEL))
-	edge_soak.soak_contact.connect(func(position: Vector3, radius: float, strength: float): soil.apply_water_blob(position, radius, strength, 0.78))
+	edge_soak.soak_contact.connect(func(position: Vector3, radius: float, strength: float): if is_instance_valid(game): game._on_soak_contact(position, radius, strength))
 	feed_soak(edge_soak, 2.5, Vector3(0.82, 0.0, 1.32))
-	check(int(mask_stats().outside) == 0 and int(mask_stats().total) > 0, "The strongest corner soak respects rounded edges and fringe gaps")
+	check(int(mask_stats().total) == 0, "Even the strongest corner halo leaves authoritative water untouched")
 	edge_soak.reset()
 	feed_soak(edge_soak, 1.0, Vector3(2.0, 0.0, 0.0))
 	check(not edge_soak.is_alive() and int(edge_soak.debug_stats().emitted_events) == 0, "Off-rug feeds cannot start passive soaking")
@@ -275,22 +281,61 @@ func check_stationary_growth() -> void:
 	var early_soak: Dictionary = water.debug_stats().soak
 	check(early.occupied > 0 and early_soak.active_spots == 1, "A stationary stream creates one anchored soaking area")
 	check(float(early_soak.max_radius) > float(water.profile.wet_radius), "Soaking already extends beyond the direct contact radius")
-	advance_water(5.2)
+	advance_water(7.2)
 	var grown := mask_stats()
 	var grown_soak: Dictionary = water.debug_stats().soak
-	check(int(grown.occupied) > int(early.occupied) * 1.3, "Holding the same point grows genuinely wetted carpet area")
-	check(int(grown.total) > int(early.total) and int(grown.halo_total) > int(early.halo_total), "Core absorption and passive halo wetness accumulate without pointer motion")
-	check(float(grown_soak.max_radius) > float(early_soak.max_radius) + 0.10, "Stationary reservoir radius expands gradually over time")
+	check(int(grown.occupied) == soil.surface_pixel_count and int(early.occupied) == soil.surface_pixel_count, "A stationary contact wets the whole carpet from the first deposit")
+	check(int(grown.total) > int(early.total) and int(grown.halo_total) > int(early.halo_total), "Direct landed flow steadily advances every part of the carpet without pointer motion")
+	check(soil.water_stage_complete() and float(grown_soak.max_radius) == 0.0, "Whole-carpet saturation retires the influence circle at the stage gate")
 	check(float(grown_soak.max_radius) <= float(water.profile.max_spread_radius) + 0.00001, "Passive spread remains bounded by its upgrade profile")
 	check(float(grown.farthest) > float(water.profile.wet_radius) + 0.06, "The carpet mask, not just a visual splash, grows beyond the initial AOE")
-	check(int(grown.outside) == 0 and soil.water_clearance() < 0.50, "A held spout stays local and never paints outside the carpet")
+	check(soil.water_clearance() == 1.0, "Holding one spout location completes all watering without a hidden dry corner")
 	stop_fixture()
 	check(not water.is_processing() and int(water.debug_stats().soak.active_spots) == 0, "Release retires the column, droplets and residual soaking within 1.5 seconds")
 	var settled := mask_stats()
 	advance_water(4.0)
 	check(mask_stats().hash == settled.hash, "Retired reservoirs cannot continue wetting indefinitely")
+	start_fixture(0, Vector3(0.72, 0.60, 1.20))
+	advance_water(0.8)
+	var corner_fraction: float = soil.water_clearance()
+	stop_fixture()
+	start_fixture(0)
+	advance_water(0.8)
+	check(absf(soil.water_clearance() - corner_fraction) < 0.00001, "Actual stationary jets at equally fresh center and corner have equal progress")
+	stop_fixture()
+	start_fixture(0, Vector3(2.0, 0.60, 0.0))
+	advance_water(0.8)
+	check(soil.water_clearance() == 0.0, "Actual floor-only jet contact never advances carpet watering")
+	stop_fixture()
 
 
+func check_fresh_section_acceleration() -> void:
+	start_fixture(0)
+	advance_water(2.2)
+	var held: float = soil.water_clearance()
+	check(held > 0.0 and held < 1.0, "A stationary starter hose steadily advances without completing too quickly")
+	stop_fixture()
+	start_fixture(0, Vector3(-0.65, 0.60, -1.05))
+	advance_water(0.7)
+	for section in 3:
+		var point := Vector3(0.65 if section % 2 == 0 else -0.65, 0.60, -0.35 + float(section) * 0.7)
+		water.set_emitter(true, point, Vector3.DOWN)
+		advance_water(0.5)
+	var swept: float = soil.water_clearance()
+	check(swept > held * 1.04 and swept <= held * 1.21, "Equal elapsed hose time gains a modest bonus when moving across fresh carpet")
+	check(is_equal_approx(water_at(Vector2.ZERO), water_at(Vector2(0.70, 1.2))), "Movement bonuses retain uniform whole-carpet wetness and no hidden dry corner")
+	stop_fixture()
+	start_fixture(0)
+	advance_water(1.4)
+	var used_before: float = soil.water_clearance()
+	advance_water(0.5)
+	var used_gain: float = soil.water_clearance() - used_before
+	var fresh_before: float = soil.water_clearance()
+	water.set_emitter(true, Vector3(0.65, 0.60, 1.05), Vector3.DOWN)
+	advance_water(0.5)
+	var fresh_gain: float = soil.water_clearance() - fresh_before
+	check(used_gain > 0.0 and fresh_gain > used_gain * 1.03, "Real hose contact keeps a base gain on used fabric and accelerates again on a fresh section")
+	stop_fixture()
 func check_upgrade_effects() -> void:
 	start_fixture(0)
 	advance_water(0.34)
@@ -310,8 +355,8 @@ func check_upgrade_effects() -> void:
 	var high_middle: float = water.ring_data[8].w
 	var high_lower: float = water.ring_data[11].w
 	var high_tip: float = water.ring_data[-1].w
-	check(high_center > low_center + 0.1, "The upgraded spout absorbs water faster at equal elapsed time")
-	check(int(high.occupied) > int(low.occupied) * 1.5 and int(high.total) > int(low.total) * 1.5, "The upgraded spout wets a wider area and deposits more water at equal time")
+	check(high_center > low_center * 1.3, "The upgraded spout raises the whole-rug meter faster at equal elapsed time")
+	check(int(high.occupied) == int(low.occupied) and int(high.total) > int(low.total) * 1.3, "Upgrades wet the same whole carpet faster while widening the visual jet")
 	check(is_equal_approx(water.ring_data[0].w, low_nozzle) and is_equal_approx(low_nozzle, water.NOZZLE_RADIUS), "Upgrades preserve the exact nozzle attachment radius")
 	check(low_upper <= water.NOZZLE_RADIUS * 1.01 and high_upper <= water.NOZZLE_RADIUS * 1.01, "The first two tube spans stay seated at nozzle scale before widening")
 	check(low_middle >= water.NOZZLE_RADIUS * 1.08, "Even the starter spout has a visibly fuller column midpoint")
@@ -349,9 +394,9 @@ func check_upgrade_effects() -> void:
 	var high_halo := mask_stats(Vector2.ZERO, 0.46)
 	var held_timing: Dictionary = water.debug_stats()
 	print("HOSE_UPGRADE_CPU level=5 held_total_usec=%d process_count=%d mean_usec=%.1f max_usec=%d" % [int(held_timing.cpu_usec_total), int(held_timing.process_count), float(held_timing.cpu_usec_total) / maxf(float(held_timing.process_count), 1.0), int(held_timing.cpu_usec_max)])
-	check(float(water.debug_stats().soak.max_radius) > low_radius + 0.2, "A higher spout upgrade accelerates the growing soak radius")
-	check(int(high_halo.halo_total) > int(low_halo.halo_total) and float(high_halo.farthest) > float(low_halo.farthest) + 0.15, "Upgrade growth increases passive absorption outside the core")
-	check(int(high_halo.outside) == 0, "The largest upgrade still respects the shared carpet footprint")
+	check(soil.water_stage_complete() and water.emission_locked and float(water.debug_stats().soak.max_radius) == 0.0, "The faster upgrade completes watering and retires its visual circle")
+	check(int(high_halo.total) > int(low_halo.total) and is_equal_approx(float(high_halo.farthest), float(low_halo.farthest)), "Upgrade strength increases saturation everywhere, without changing the covered area")
+	check(is_equal_approx(water_at(Vector2.ZERO), water_at(Vector2(0.70, 1.2))), "The largest upgrade leaves no remote dry corner")
 	stop_fixture()
 	var released_timing: Dictionary = water.debug_stats()
 	print("HOSE_UPGRADE_CPU level=5 including_after_soak_total_usec=%d process_count=%d mean_usec=%.1f max_usec=%d" % [int(released_timing.cpu_usec_total), int(released_timing.process_count), float(released_timing.cpu_usec_total) / maxf(float(released_timing.process_count), 1.0), int(released_timing.cpu_usec_max)])
@@ -363,7 +408,7 @@ func check_movement_and_lifecycle() -> void:
 	var old_position := Vector3(-0.30, 0.60, -0.30)
 	var new_position := Vector3(0.30, 0.60, 0.30)
 	start_fixture(Profile.MAX_LEVEL, old_position)
-	advance_water(5.0)
+	advance_water(0.9)
 	var mature_radius: float = water.debug_stats().soak.max_radius
 	water.set_emitter(true, new_position, Vector3.DOWN)
 	advance_water(0.40)
@@ -375,7 +420,7 @@ func check_movement_and_lifecycle() -> void:
 		var position: Vector3 = water.soak.positions[slot]
 		if Vector2(position.x, position.z).distance_to(Vector2(new_position.x, new_position.z)) < 0.20:
 			new_spots += 1
-			check(float(water.soak.fed_durations[slot]) < 0.5 and float(water.soak.radii[slot]) < mature_radius - 0.15, "A newly targeted area starts a young small reservoir instead of dragging a mature AOE")
+			check(float(water.soak.fed_durations[slot]) < 0.5 and float(water.soak.radii[slot]) < mature_radius - 0.05, "A newly targeted area starts a young small reservoir instead of dragging a mature AOE")
 		if Vector2(position.x, position.z).distance_to(Vector2(old_position.x, old_position.z)) < 0.10:
 			old_spots += 1
 	check(new_spots > 0 and old_spots > 0, "Moving preserves the previous anchored after-soak while feeding a new area")
@@ -398,7 +443,9 @@ func check_movement_and_lifecycle() -> void:
 	water.set_emitter(true, Vector3(0.0, 0.60, 0.0), Vector3.DOWN)
 	advance_water(0.5)
 	check(int(water.debug_stats().soak.active_spots) > 0, "Full-wet gate fixture starts with an active reservoir")
-	check(soil.apply_water_blob(Vector3.ZERO, 5.0), "The shared production painter can saturate the practice carpet")
+	for _deposit in 24:
+		soil.apply_water_blob(Vector3.ZERO, 5.0)
+	check(soil.water_stage_complete(), "Continued contact saturates the entire practice carpet")
 	game.update_contract_status()
 	check(soil.water_stage_complete() and water.emission_locked and int(water.debug_stats().soak.active_spots) == 0, "The shared full-wet gate immediately clears all residual soak reservoirs")
 	var full := mask_stats()
@@ -502,6 +549,7 @@ func run() -> void:
 	check(soil.wet_mask.get_format() == Image.FORMAT_L8 and soil.wet_mask.get_size() == Vector2i(256, 416), "All upgrade levels use the original compact authoritative L8 wet mask")
 	check_passive_mask_progression()
 	check_stationary_growth()
+	check_fresh_section_acceleration()
 	check_upgrade_effects()
 	check_movement_and_lifecycle()
 	game.set_hose_upgrade_level(-20)

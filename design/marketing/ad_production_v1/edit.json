@@ -1,0 +1,122 @@
+{
+  "recorded_gameplay": true,
+  "total_frames": 450,
+  "output_dir": "exports",
+  "filename": "Carpet_Cleaner_Find_the_Fox_15s_v1.mp4",
+  "target_lufs": -18,
+  "crf": 16,
+  "preset": "slow",
+  "music": {
+    "source": "../ad_preproduction_v2/audio/quiet_shop_music_loop.wav",
+    "gain": 0.32,
+    "in": 0,
+    "fade_out": 0.9
+  },
+  "audio_events": [],
+  "clips": [
+    {
+      "id": "fox_hook",
+      "source": "../../../build/ad-capture-v2/full-game-001/restorations.avi",
+      "in": 206.1,
+      "frames": 60,
+      "crop": [
+        117,
+        232,
+        846,
+        1504
+      ],
+      "audio": "source",
+      "overlay": "../ad_preproduction_v2/vectors/hook_discovery.svg"
+    },
+    {
+      "id": "fox_work",
+      "source": "../../../build/ad-capture-v2/full-game-001/restorations.avi",
+      "in": 227.13333333333333,
+      "frames": 90,
+      "crop": [
+        117,
+        232,
+        846,
+        1504
+      ],
+      "audio": "source",
+      "overlay": "../ad_preproduction_v2/vectors/process.svg"
+    },
+    {
+      "id": "fox_finish",
+      "source": "../../../build/ad-capture-v2/full-game-001/restorations.avi",
+      "in": 273.23333333333335,
+      "frames": 66,
+      "crop": [
+        117,
+        232,
+        846,
+        1504
+      ],
+      "audio": "source"
+    },
+    {
+      "id": "fox_reveal",
+      "source": "../../../build/ad-capture-v2/full-game-001/restorations.avi",
+      "in": 275.43333333333334,
+      "frames": 69,
+      "crop": [
+        90,
+        210,
+        900,
+        1600
+      ],
+      "audio": "source",
+      "overlay": "../ad_preproduction_v2/vectors/reveal.svg"
+    },
+    {
+      "id": "mint_reveal",
+      "source": "../../../build/ad-capture-v2/full-game-001/restorations.avi",
+      "in": 89.83333333333333,
+      "frames": 38,
+      "crop": [
+        90,
+        210,
+        900,
+        1600
+      ],
+      "audio": "mute",
+      "overlay": "../ad_preproduction_v2/vectors/next_rug.svg"
+    },
+    {
+      "id": "sunburst_reveal",
+      "source": "../../../build/ad-capture-v2/full-game-001/restorations.avi",
+      "in": 182.76666666666668,
+      "frames": 37,
+      "crop": [
+        90,
+        210,
+        900,
+        1600
+      ],
+      "audio": "mute",
+      "overlay": "../ad_preproduction_v2/vectors/next_rug.svg"
+    },
+    {
+      "id": "google_play",
+      "kind": "endcard",
+      "source": "../../../build/ad-capture-v2/full-game-001/restorations.avi",
+      "in": 276.43333333333334,
+      "frames": 90,
+      "crop": [
+        104,
+        286,
+        872,
+        1430
+      ],
+      "audio": "mute",
+      "background": "../ad_preproduction_v2/vectors/endcard.svg",
+      "hero_slot": [
+        365,
+        505,
+        350,
+        565
+      ]
+    }
+  ]
+}

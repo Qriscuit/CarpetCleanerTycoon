@@ -83,6 +83,12 @@ func setup(texture: Texture2D = null, footprint: RefCounted = null) -> void:
 	reset()
 
 
+func set_water_palette(tint: Color, highlight: Color) -> void:
+	if material != null:
+		material.set_shader_parameter("water_tint", tint)
+		material.set_shader_parameter("water_highlight", highlight)
+
+
 func begin_sources(_at: float) -> void:
 	sources_this_frame = 0
 

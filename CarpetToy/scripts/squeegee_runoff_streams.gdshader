@@ -8,6 +8,8 @@ uniform float cap_radius = 0.17;
 uniform float floor_blend_start = 8.22;
 uniform float floor_blend_end = 8.62;
 uniform bool use_rug_surface = false;
+uniform vec4 water_tint : source_color = vec4(0.16, 0.69, 0.79, 1.0);
+uniform vec4 water_highlight : source_color = vec4(0.40, 0.84, 0.88, 1.0);
 uniform sampler2D rug_surface : filter_nearest, repeat_disable;
 varying float flow_distance;
 varying float flow_across;
@@ -62,7 +64,7 @@ void fragment() {
 	float centered = 1.0 - smoothstep(0.30, 0.94, abs(flow_across));
 	float moving_band = sin(flow_distance * 5.0 - water_clock * 26.0 + flow_across * 1.1);
 	float accent = smoothstep(0.35, 0.94, moving_band) * centered * 0.55;
-	ALBEDO = mix(vec3(0.16, 0.69, 0.79), vec3(0.40, 0.84, 0.88), accent);
+	ALBEDO = mix(water_tint.rgb, water_highlight.rgb, accent);
 	ROUGHNESS = 1.0;
 	SPECULAR = 0.0;
 }

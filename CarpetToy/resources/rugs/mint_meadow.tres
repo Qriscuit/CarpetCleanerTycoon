@@ -4,6 +4,7 @@
 
 [resource]
 script = ExtResource("1")
+rug_id = "mint_meadow"
 dust_strength = 0.94
 display_name = "Mint Meadow"
 cleaning_hint = "Brush / ten passes\nKeep sweeping to reveal the color beneath the dark soil."

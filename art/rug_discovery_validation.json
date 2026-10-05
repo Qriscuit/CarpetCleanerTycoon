@@ -1,0 +1,3250 @@
+{
+	"captures": [
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_mint_meadow_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "e845ee896e5d303d342f555035aef435313c53f27588510818669e4e0803a9dc",
+			"rug_id": "mint_meadow",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/mint_meadow_mint_meadow_albedo.png",
+			"texture_pixel_sha256": "141ea94edfdcf4e1649da26d5f0da2c28d3a5f65b84a039be51b315be7d7ae39",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_mint_meadow_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "60753313cac6e092bd11047eaeccd77264f64c5f40b2461bd98a576e577119e3",
+			"rug_id": "mint_meadow",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/mint_meadow_mint_meadow_albedo.png",
+			"texture_pixel_sha256": "141ea94edfdcf4e1649da26d5f0da2c28d3a5f65b84a039be51b315be7d7ae39",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_mint_meadow_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "71a695afc834f8a7a188fae4fedc61ef804560ac46efc92ac4790efda2f3ca24",
+			"rug_id": "mint_meadow",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/mint_meadow_mint_meadow_albedo.png",
+			"texture_pixel_sha256": "141ea94edfdcf4e1649da26d5f0da2c28d3a5f65b84a039be51b315be7d7ae39",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_mint_meadow_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "ae2c8c5fb6b8b846eef63dadd593ccfacebe545b454991365fd5c6f76911a09e",
+			"rug_id": "mint_meadow",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/mint_meadow_mint_meadow_albedo.png",
+			"texture_pixel_sha256": "141ea94edfdcf4e1649da26d5f0da2c28d3a5f65b84a039be51b315be7d7ae39",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_mint_meadow_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "0f6aa01726ae5f80e1f0f6f934bc125da44183514ee23deeb6ce6aa878f66cd3",
+			"rug_id": "mint_meadow",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/mint_meadow_mint_meadow_albedo.png",
+			"texture_pixel_sha256": "141ea94edfdcf4e1649da26d5f0da2c28d3a5f65b84a039be51b315be7d7ae39",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_sunburst_geometry_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "874ed1d0eeade3571d2f7c5191ecc852c8c793d1e7d4a4cec9b996fd8f0c43f3",
+			"rug_id": "sunburst_geometry",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/sunburst_geometry.png",
+			"texture_pixel_sha256": "84a6ed4dc482ebe47ada21d08c09dee7ac3c2dbd8d4a1c03fa99868546a72592",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_sunburst_geometry_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "898ef5981494bb39bd8f45dc0b6fc1f5304ef593ae96fce73fd06b2afa1c7385",
+			"rug_id": "sunburst_geometry",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/sunburst_geometry.png",
+			"texture_pixel_sha256": "84a6ed4dc482ebe47ada21d08c09dee7ac3c2dbd8d4a1c03fa99868546a72592",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_sunburst_geometry_resumed.png",
+			"height": 844,
+			"render_pixel_sha256": "043a5634b4b5d28ecb6739df35d3bb98a3ff4edcdbc2873cab28c5a7313b4dfc",
+			"rug_id": "sunburst_geometry",
+			"stage": "resumed",
+			"surface_clearance": 0.502385955191033,
+			"texture_path": "res://assets/carpet/patterns/sunburst_geometry.png",
+			"texture_pixel_sha256": "84a6ed4dc482ebe47ada21d08c09dee7ac3c2dbd8d4a1c03fa99868546a72592",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_sunburst_geometry_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "bf5fa575ae83a28bba4d67d1e5edc3fdd07d809d8bfd86ee658effc4e6336f79",
+			"rug_id": "sunburst_geometry",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/sunburst_geometry.png",
+			"texture_pixel_sha256": "84a6ed4dc482ebe47ada21d08c09dee7ac3c2dbd8d4a1c03fa99868546a72592",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_sunburst_geometry_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "ea57da4b37642720d29b66a181396aca3151e283127fc535de33c72b08e663b0",
+			"rug_id": "sunburst_geometry",
+			"stage": "reveal_after",
+			"surface_clearance": 0.75,
+			"texture_path": "res://assets/carpet/patterns/sunburst_geometry.png",
+			"texture_pixel_sha256": "84a6ed4dc482ebe47ada21d08c09dee7ac3c2dbd8d4a1c03fa99868546a72592",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_sunburst_geometry_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "e74c358d25ce866555405ab3171c9f9d4d322e54344a2d1488de6e55bccaf0c9",
+			"rug_id": "sunburst_geometry",
+			"stage": "reveal_before",
+			"surface_clearance": 0.75,
+			"texture_path": "res://assets/carpet/patterns/sunburst_geometry.png",
+			"texture_pixel_sha256": "84a6ed4dc482ebe47ada21d08c09dee7ac3c2dbd8d4a1c03fa99868546a72592",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_playful_fox_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "d95ff8a665c6c9f9ccdd7027f66123973a154941d7fdb66e5c0ae4c2ec41d961",
+			"rug_id": "playful_fox",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/playful_fox.png",
+			"texture_pixel_sha256": "de9aae9aab329e42c578ffd6d04ab4043706e28bae0e89366b76a04f0ed56680",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_playful_fox_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "df0685c3c07cd753a12a37cd8e8f6e88c67a194fb908a31175c0644fe0827137",
+			"rug_id": "playful_fox",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/playful_fox.png",
+			"texture_pixel_sha256": "de9aae9aab329e42c578ffd6d04ab4043706e28bae0e89366b76a04f0ed56680",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_playful_fox_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "010cdc9a00f9b5f94ce56efab56fbe9fc46d38642f8644a2e172dd408893a2b7",
+			"rug_id": "playful_fox",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/playful_fox.png",
+			"texture_pixel_sha256": "de9aae9aab329e42c578ffd6d04ab4043706e28bae0e89366b76a04f0ed56680",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_playful_fox_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "9d4b598bdc06c1d6088fa4d82c237a6b90c0620e16a3e62d701080f03bf8efdb",
+			"rug_id": "playful_fox",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/playful_fox.png",
+			"texture_pixel_sha256": "de9aae9aab329e42c578ffd6d04ab4043706e28bae0e89366b76a04f0ed56680",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_playful_fox_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "52dd5b88c9ba63a6149fe71a020b4397b5d68f1d34dca91e7d99e8858dafffa9",
+			"rug_id": "playful_fox",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/playful_fox.png",
+			"texture_pixel_sha256": "de9aae9aab329e42c578ffd6d04ab4043706e28bae0e89366b76a04f0ed56680",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_moonlit_owl_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "99c75119c7724b4a3805dcad16bb64dc4da09bf6b4db17064e208bc0fb923876",
+			"rug_id": "moonlit_owl",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/moonlit_owl.png",
+			"texture_pixel_sha256": "a7c98153357e71d3244bf111f4bba6771f13d960492f5450473f04c33656b3e3",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_moonlit_owl_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "dd92106cf086d3f96b9f6e7042aa3e91363aeb27c43d5b66a3d2202934c71a73",
+			"rug_id": "moonlit_owl",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/moonlit_owl.png",
+			"texture_pixel_sha256": "a7c98153357e71d3244bf111f4bba6771f13d960492f5450473f04c33656b3e3",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_moonlit_owl_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "8d61511c424cd09b6675cd1aa2559d4014bf03aa41612707cd46887fcdcaa403",
+			"rug_id": "moonlit_owl",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/moonlit_owl.png",
+			"texture_pixel_sha256": "a7c98153357e71d3244bf111f4bba6771f13d960492f5450473f04c33656b3e3",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_moonlit_owl_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "5ca98a6417dea301c67d8c2b41f930f4d275a5cbb1c374a53bfa20321b05697a",
+			"rug_id": "moonlit_owl",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/moonlit_owl.png",
+			"texture_pixel_sha256": "a7c98153357e71d3244bf111f4bba6771f13d960492f5450473f04c33656b3e3",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_moonlit_owl_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "a96f281afc263b49bb62ca9cbe53111137037c0402be969e047cb40eedd65cdc",
+			"rug_id": "moonlit_owl",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/moonlit_owl.png",
+			"texture_pixel_sha256": "a7c98153357e71d3244bf111f4bba6771f13d960492f5450473f04c33656b3e3",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_koi_garden_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "98b4affbaf2252fb767bcc22506ce4e4d93cef205cc825813e767c680793a1ff",
+			"rug_id": "koi_garden",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/koi_garden.png",
+			"texture_pixel_sha256": "2eec5777fd00a5c9c51869863ab575fc3e6cb6ce93043c73c2cccbd0f5306800",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_koi_garden_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "e4d1a51502bb992d61c135a8d8926500b74ff29c7df7decdc51ce42d22b555d2",
+			"rug_id": "koi_garden",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/koi_garden.png",
+			"texture_pixel_sha256": "2eec5777fd00a5c9c51869863ab575fc3e6cb6ce93043c73c2cccbd0f5306800",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_koi_garden_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "2092d41448288599e786ad22873f7a51a2c48a4761b0d1c626c63a964c0c1c41",
+			"rug_id": "koi_garden",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/koi_garden.png",
+			"texture_pixel_sha256": "2eec5777fd00a5c9c51869863ab575fc3e6cb6ce93043c73c2cccbd0f5306800",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_koi_garden_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "d9a6ecce1fb9e5c44343f4b29cb91c4116b645e4fb10d3c490244af7f2258d99",
+			"rug_id": "koi_garden",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/koi_garden.png",
+			"texture_pixel_sha256": "2eec5777fd00a5c9c51869863ab575fc3e6cb6ce93043c73c2cccbd0f5306800",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_koi_garden_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "baf2c79a5915568b2f6307a005da1a2b406e131ddc7d219ac50f1fd28e000c4a",
+			"rug_id": "koi_garden",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/koi_garden.png",
+			"texture_pixel_sha256": "2eec5777fd00a5c9c51869863ab575fc3e6cb6ce93043c73c2cccbd0f5306800",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_stillwater_pond_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "33b25f371f4725f58bf61750c70a2d5ff5cd326ab76e13a2e23fdfab7bb52889",
+			"rug_id": "stillwater_pond",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/stillwater_pond.png",
+			"texture_pixel_sha256": "4251dd8909cd10c8cb7bf6df5d883ee9533b87139d8e2768a837529d64be36fc",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_stillwater_pond_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "c700210cc3e8e2185f6ab02f350fe701f271ea9b92deb34df1203697377abbb6",
+			"rug_id": "stillwater_pond",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/stillwater_pond.png",
+			"texture_pixel_sha256": "4251dd8909cd10c8cb7bf6df5d883ee9533b87139d8e2768a837529d64be36fc",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_stillwater_pond_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "64f79362b9420d961143eb674a479cbf45c2cf5d1c38cb312f0dcc896aadb34e",
+			"rug_id": "stillwater_pond",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/stillwater_pond.png",
+			"texture_pixel_sha256": "4251dd8909cd10c8cb7bf6df5d883ee9533b87139d8e2768a837529d64be36fc",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_stillwater_pond_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "0d9c33b93d21291a74b516f5daa7172218bc2bb1d160309298db39c430e31a6e",
+			"rug_id": "stillwater_pond",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/stillwater_pond.png",
+			"texture_pixel_sha256": "4251dd8909cd10c8cb7bf6df5d883ee9533b87139d8e2768a837529d64be36fc",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_stillwater_pond_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "d4213efadcdc7b3c17592f4e49d9ca69428289fd3205534c52fb0d54e361089a",
+			"rug_id": "stillwater_pond",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/stillwater_pond.png",
+			"texture_pixel_sha256": "4251dd8909cd10c8cb7bf6df5d883ee9533b87139d8e2768a837529d64be36fc",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_woodland_hare_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "4a11d4787edff1dd1bc5e6aa3bdd064428eef0ae566513425d4468d416784eb2",
+			"rug_id": "woodland_hare",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/woodland_hare.png",
+			"texture_pixel_sha256": "1a6412c226e87d0684e4ac174d1f7e3b9eb934ff82ac1e063d736fc31291183a",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_woodland_hare_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "365611c8301467c87ed4dbd6540e3f1118d4bdd14e88db450ef450d9bd70caec",
+			"rug_id": "woodland_hare",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/woodland_hare.png",
+			"texture_pixel_sha256": "1a6412c226e87d0684e4ac174d1f7e3b9eb934ff82ac1e063d736fc31291183a",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_woodland_hare_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "57aa6f90d6d7282b92e58f9d10338352b6c0f4fd96a8ada838e609b3d774470e",
+			"rug_id": "woodland_hare",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/woodland_hare.png",
+			"texture_pixel_sha256": "1a6412c226e87d0684e4ac174d1f7e3b9eb934ff82ac1e063d736fc31291183a",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_woodland_hare_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "aea369660d9f2a019f078160e3f40b83e802389923936310b65c22df02e96bd3",
+			"rug_id": "woodland_hare",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/woodland_hare.png",
+			"texture_pixel_sha256": "1a6412c226e87d0684e4ac174d1f7e3b9eb934ff82ac1e063d736fc31291183a",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_woodland_hare_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "77ba5c491b5ac0e8a245ac21c6456f8e327a558ca4675773aec67ed73b6c4701",
+			"rug_id": "woodland_hare",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/woodland_hare.png",
+			"texture_pixel_sha256": "1a6412c226e87d0684e4ac174d1f7e3b9eb934ff82ac1e063d736fc31291183a",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_peacock_palace_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "de9ddb5d19ddd0e9009f2767c95c7edcc9062c0979b3fde4be1a24ca59a6a291",
+			"rug_id": "peacock_palace",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/peacock_palace.png",
+			"texture_pixel_sha256": "d6babc4ce0854b761f550ac3f202304e946a882e0ca3d3518d810ca5f535c866",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_peacock_palace_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "29533fe841068ca023df5381f57fcb3e3807ffb3675fc527c3fedb88fbae882f",
+			"rug_id": "peacock_palace",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/peacock_palace.png",
+			"texture_pixel_sha256": "d6babc4ce0854b761f550ac3f202304e946a882e0ca3d3518d810ca5f535c866",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_peacock_palace_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "676f33e14bcba4ab5be0a732d664ad76feaa8af7e4de87098e154ad3d3d6722d",
+			"rug_id": "peacock_palace",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/peacock_palace.png",
+			"texture_pixel_sha256": "d6babc4ce0854b761f550ac3f202304e946a882e0ca3d3518d810ca5f535c866",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_peacock_palace_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "2817b24c384224d3e0ab979094aacf26abd17340166dda4a8187dcdfc210ab37",
+			"rug_id": "peacock_palace",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/peacock_palace.png",
+			"texture_pixel_sha256": "d6babc4ce0854b761f550ac3f202304e946a882e0ca3d3518d810ca5f535c866",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_peacock_palace_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "c49bc6583f2f21d4dcf53f265b33189b75d19cd5aef6ab559424b3fbef269b44",
+			"rug_id": "peacock_palace",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/peacock_palace.png",
+			"texture_pixel_sha256": "d6babc4ce0854b761f550ac3f202304e946a882e0ca3d3518d810ca5f535c866",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_tiger_bloom_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "7aac8da6af48b467e5564bfacda962b56472631255199caf9224fc41304c6541",
+			"rug_id": "tiger_bloom",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/tiger_bloom.png",
+			"texture_pixel_sha256": "b67ee0fbeab62850031b79ed85c354dbb2af6a2bbfc0fbb8a369ed2cd48924d2",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_tiger_bloom_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "43b92707d5076e389d1e6921e5d8d7ad7467310dda76f86f1707d38627861601",
+			"rug_id": "tiger_bloom",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/tiger_bloom.png",
+			"texture_pixel_sha256": "b67ee0fbeab62850031b79ed85c354dbb2af6a2bbfc0fbb8a369ed2cd48924d2",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_tiger_bloom_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "54585da95dfe922e318b5161015eeb7cf2e4690fc655b75908e108c63c09ac38",
+			"rug_id": "tiger_bloom",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/tiger_bloom.png",
+			"texture_pixel_sha256": "b67ee0fbeab62850031b79ed85c354dbb2af6a2bbfc0fbb8a369ed2cd48924d2",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_tiger_bloom_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "93f8462015c7924d8c515223c52209177f34634a18b67475d9f41022c183d5b4",
+			"rug_id": "tiger_bloom",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/tiger_bloom.png",
+			"texture_pixel_sha256": "b67ee0fbeab62850031b79ed85c354dbb2af6a2bbfc0fbb8a369ed2cd48924d2",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_tiger_bloom_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "b58d0b619520f7ec61b7c8d46b1a47c342265256970803d25127ae0e73da52d6",
+			"rug_id": "tiger_bloom",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/tiger_bloom.png",
+			"texture_pixel_sha256": "b67ee0fbeab62850031b79ed85c354dbb2af6a2bbfc0fbb8a369ed2cd48924d2",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_mushroom_glade_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "973df36a79de9a6e6d8bcb902c59c822e0759fc0b151589555a25daa124a91d1",
+			"rug_id": "mushroom_glade",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/mushroom_glade.png",
+			"texture_pixel_sha256": "7db7dbf7dbdb0de57ce770c4822c81be8c28551e71c6853aad9a0c6d1bbd4f44",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_mushroom_glade_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "b74a663e27b71f6dfb9225339dd4bc323afb2884365cd711430f4cb3e7175ea4",
+			"rug_id": "mushroom_glade",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/mushroom_glade.png",
+			"texture_pixel_sha256": "7db7dbf7dbdb0de57ce770c4822c81be8c28551e71c6853aad9a0c6d1bbd4f44",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_mushroom_glade_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "7e29bb8715c69406b405d35d360556e54a29f1e0b6e525f71cf03b9f33d46c8c",
+			"rug_id": "mushroom_glade",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/mushroom_glade.png",
+			"texture_pixel_sha256": "7db7dbf7dbdb0de57ce770c4822c81be8c28551e71c6853aad9a0c6d1bbd4f44",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_mushroom_glade_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "995f5c87c8a28b3dc47e778bac142440830dba8d4d863eefe1e002e860290569",
+			"rug_id": "mushroom_glade",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/mushroom_glade.png",
+			"texture_pixel_sha256": "7db7dbf7dbdb0de57ce770c4822c81be8c28551e71c6853aad9a0c6d1bbd4f44",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_mushroom_glade_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "e54f768108c002b4c8172126d140a427f000cf488338900fa0f473969af973b2",
+			"rug_id": "mushroom_glade",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/mushroom_glade.png",
+			"texture_pixel_sha256": "7db7dbf7dbdb0de57ce770c4822c81be8c28551e71c6853aad9a0c6d1bbd4f44",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_sun_moon_tapestry_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "54a57917801e8ae53886c45cc012cc51d604f99c1d83c0b5e190dabd94abebea",
+			"rug_id": "sun_moon_tapestry",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/sun_moon_tapestry.png",
+			"texture_pixel_sha256": "14424fa5f3402310e7820e14d0eed63f632d2a95937303d8330672cfb23519d8",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_sun_moon_tapestry_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "78d3aa9c6e99d8824ca6fd61bf8f7575222c685240119b21b4fc66d0b3e876e3",
+			"rug_id": "sun_moon_tapestry",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/sun_moon_tapestry.png",
+			"texture_pixel_sha256": "14424fa5f3402310e7820e14d0eed63f632d2a95937303d8330672cfb23519d8",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_sun_moon_tapestry_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "c642fd75ca3ced44dec8bf4187679b29520f398ec662e1cf1c506d375c17fd4b",
+			"rug_id": "sun_moon_tapestry",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/sun_moon_tapestry.png",
+			"texture_pixel_sha256": "14424fa5f3402310e7820e14d0eed63f632d2a95937303d8330672cfb23519d8",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_sun_moon_tapestry_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "46e0c121b8f73f228f45a255fe69dfef3544ea3ce0c1e0edc07d9ff377927745",
+			"rug_id": "sun_moon_tapestry",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/sun_moon_tapestry.png",
+			"texture_pixel_sha256": "14424fa5f3402310e7820e14d0eed63f632d2a95937303d8330672cfb23519d8",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_sun_moon_tapestry_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "0971b6a5195b1a19281e32c14a0b868fc6c907ded614b3b23d59f239d8afc410",
+			"rug_id": "sun_moon_tapestry",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/sun_moon_tapestry.png",
+			"texture_pixel_sha256": "14424fa5f3402310e7820e14d0eed63f632d2a95937303d8330672cfb23519d8",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_wildflower_meadow_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "129b5cfe8cb6be591f4a244e9cdb8acb019ee543a1ee3acaadce97e294f5f9da",
+			"rug_id": "wildflower_meadow",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/wildflower_meadow.png",
+			"texture_pixel_sha256": "99bccc514bea025fff92ec2200a104c7f5b9f4276ae1a488b20a7dea94c2b162",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_wildflower_meadow_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "1e5b12e61379088836fc158d2f5840a8dc854d788d4e71facb5ba4173f3dcf6c",
+			"rug_id": "wildflower_meadow",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/wildflower_meadow.png",
+			"texture_pixel_sha256": "99bccc514bea025fff92ec2200a104c7f5b9f4276ae1a488b20a7dea94c2b162",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_wildflower_meadow_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "11a474f621f6d7b7b4461df5c37997e6c927f88b8ec90089f572eb1f6346478a",
+			"rug_id": "wildflower_meadow",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/wildflower_meadow.png",
+			"texture_pixel_sha256": "99bccc514bea025fff92ec2200a104c7f5b9f4276ae1a488b20a7dea94c2b162",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_wildflower_meadow_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "8ab5cf94753da53e71f2d969efcdcb02b8564ec068dc8fe8d5adb1891c26fc63",
+			"rug_id": "wildflower_meadow",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/wildflower_meadow.png",
+			"texture_pixel_sha256": "99bccc514bea025fff92ec2200a104c7f5b9f4276ae1a488b20a7dea94c2b162",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_wildflower_meadow_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "eafd1362cd90961740a01fd9d4e78b1be2ceefc464a598a5b7f2661ce9825ce3",
+			"rug_id": "wildflower_meadow",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/wildflower_meadow.png",
+			"texture_pixel_sha256": "99bccc514bea025fff92ec2200a104c7f5b9f4276ae1a488b20a7dea94c2b162",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_sleepy_cat_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "7d5aa7a95d598ebda856e9f1ad6096663e2627dd02342e8a940df33d3a75c5ba",
+			"rug_id": "sleepy_cat",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/sleepy_cat.png",
+			"texture_pixel_sha256": "7b10c4d2a4eee2e9111072b6e1de0ffacba43926b6834633c87730358f068423",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_sleepy_cat_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "81662335ab28431e3465034b0cd116a8fef9ba1fb733de6e3fddf0f38bc4f220",
+			"rug_id": "sleepy_cat",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/sleepy_cat.png",
+			"texture_pixel_sha256": "7b10c4d2a4eee2e9111072b6e1de0ffacba43926b6834633c87730358f068423",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_sleepy_cat_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "39d52e462c89c8d93db31704e8641760ba88e8e4949603961910ba92a336aa13",
+			"rug_id": "sleepy_cat",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/sleepy_cat.png",
+			"texture_pixel_sha256": "7b10c4d2a4eee2e9111072b6e1de0ffacba43926b6834633c87730358f068423",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_sleepy_cat_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "cfd4d631069713d9bc30d5a291fa8d29af41ffdcbd87d1f27de07ca29e00a116",
+			"rug_id": "sleepy_cat",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/sleepy_cat.png",
+			"texture_pixel_sha256": "7b10c4d2a4eee2e9111072b6e1de0ffacba43926b6834633c87730358f068423",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_sleepy_cat_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "48c388d7be59299ab1354b54c512da3dd97ffa7ddbbf1ed36516453cbff1f3ea",
+			"rug_id": "sleepy_cat",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/sleepy_cat.png",
+			"texture_pixel_sha256": "7b10c4d2a4eee2e9111072b6e1de0ffacba43926b6834633c87730358f068423",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_river_otter_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "0e5cf28ee1b833b90e3ac680b530084193580823ec2fd4d4ad4507b610d9bcac",
+			"rug_id": "river_otter",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/river_otter.png",
+			"texture_pixel_sha256": "435081687b57638aa8ca0a3e49fc7e425b58251002edc61dfb70712a2369e598",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_river_otter_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "01f28add53c2b143a4b2fea39a4e43cf20478e3569fb1a07b50b686d619af344",
+			"rug_id": "river_otter",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/river_otter.png",
+			"texture_pixel_sha256": "435081687b57638aa8ca0a3e49fc7e425b58251002edc61dfb70712a2369e598",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_river_otter_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "b021cc46f35313656ea7d8fc6230f1b6086f7d14b81bc85be189a3afa39870f3",
+			"rug_id": "river_otter",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/river_otter.png",
+			"texture_pixel_sha256": "435081687b57638aa8ca0a3e49fc7e425b58251002edc61dfb70712a2369e598",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_river_otter_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "4ec0eac0ef539fd00067bfe966541e4c52c0eb04aefa7f69495c3a02a01b7e63",
+			"rug_id": "river_otter",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/river_otter.png",
+			"texture_pixel_sha256": "435081687b57638aa8ca0a3e49fc7e425b58251002edc61dfb70712a2369e598",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_river_otter_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "ebf7bed870c61364df44074f7291eb60c42709f3e66d40d77d7998b5c9b6d9e9",
+			"rug_id": "river_otter",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/river_otter.png",
+			"texture_pixel_sha256": "435081687b57638aa8ca0a3e49fc7e425b58251002edc61dfb70712a2369e598",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_honey_bear_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "d13e6f35d4b7c0c1df49c5c8f33de466530263ebd7e6d407c8089980db9ddefd",
+			"rug_id": "honey_bear",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/honey_bear.png",
+			"texture_pixel_sha256": "e9b46f1005662c0935dd63b31d0323c6071231274dbcdb36a1cc1dc36640186f",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_honey_bear_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "92fe36dc55bb218bb8355f354b2195c41d0383793918bd234ba2bc890d9b65e5",
+			"rug_id": "honey_bear",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/honey_bear.png",
+			"texture_pixel_sha256": "e9b46f1005662c0935dd63b31d0323c6071231274dbcdb36a1cc1dc36640186f",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_honey_bear_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "f0ac6a5b7e26e5705e3bba63dad75179125af6f537c1b5c3ededde9a804138d0",
+			"rug_id": "honey_bear",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/honey_bear.png",
+			"texture_pixel_sha256": "e9b46f1005662c0935dd63b31d0323c6071231274dbcdb36a1cc1dc36640186f",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_honey_bear_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "dca6f5c482c3e2e391819ff07b555dfa38172f0883b7a91a6592ce1c34cf2732",
+			"rug_id": "honey_bear",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/honey_bear.png",
+			"texture_pixel_sha256": "e9b46f1005662c0935dd63b31d0323c6071231274dbcdb36a1cc1dc36640186f",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_honey_bear_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "51984819fd0e97685ea586eba09568c6a67e42629ff825c41e5b22fa0ca5fcf0",
+			"rug_id": "honey_bear",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/honey_bear.png",
+			"texture_pixel_sha256": "e9b46f1005662c0935dd63b31d0323c6071231274dbcdb36a1cc1dc36640186f",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_red_panda_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "a5f7d0866c6913090c4358fe73aa1fd4ac204cd8116d66b51e110ed690f5d2d5",
+			"rug_id": "red_panda",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/red_panda.png",
+			"texture_pixel_sha256": "1b1c148a4893d0d3522b0713f34c295c9491d611f4edda228a9fa20e05f11639",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_red_panda_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "d72997c55c2f6b5b6c70dbcc82dc7114ee4bc0620481da666e076e7faedc59fa",
+			"rug_id": "red_panda",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/red_panda.png",
+			"texture_pixel_sha256": "1b1c148a4893d0d3522b0713f34c295c9491d611f4edda228a9fa20e05f11639",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_red_panda_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "8d450d15fcd495fd1e39bf00130e8da3631348c94bc37d7990fbbc82aa83a4b3",
+			"rug_id": "red_panda",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/red_panda.png",
+			"texture_pixel_sha256": "1b1c148a4893d0d3522b0713f34c295c9491d611f4edda228a9fa20e05f11639",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_red_panda_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "e6c5fe11cf66fd4198bcdb4038376003e5f56f0cdf64892c0fdffed30d840d12",
+			"rug_id": "red_panda",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/red_panda.png",
+			"texture_pixel_sha256": "1b1c148a4893d0d3522b0713f34c295c9491d611f4edda228a9fa20e05f11639",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_red_panda_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "deec44520ca1e03ff2e70f7377ca9ce3274eab7e77a8a94b0cbf685db7db1ed5",
+			"rug_id": "red_panda",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/red_panda.png",
+			"texture_pixel_sha256": "1b1c148a4893d0d3522b0713f34c295c9491d611f4edda228a9fa20e05f11639",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_lemon_branch_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "a4e5cd21146210e03e20f5d0ab7321c845e9e7ccf5fe86c26fd930782995b5a8",
+			"rug_id": "lemon_branch",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/lemon_branch.png",
+			"texture_pixel_sha256": "e3c80fd046b46c55c8ffcea62cf2584fd9484df60bf623da43622fbe217c4176",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_lemon_branch_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "35c144b419b3c0ba8cb4bf3a6c34df8adc797d0fb1bb24abde39a8d411e5e136",
+			"rug_id": "lemon_branch",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/lemon_branch.png",
+			"texture_pixel_sha256": "e3c80fd046b46c55c8ffcea62cf2584fd9484df60bf623da43622fbe217c4176",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_lemon_branch_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "2da22d29356cfe11c6ecd2898415b53398867a6dcfb0f312ef44177c65e6f78b",
+			"rug_id": "lemon_branch",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/lemon_branch.png",
+			"texture_pixel_sha256": "e3c80fd046b46c55c8ffcea62cf2584fd9484df60bf623da43622fbe217c4176",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_lemon_branch_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "331b005b786e7b6e4b33e7c4b17cc4f0d5ec06f06cdf9a85f11f75c357a362eb",
+			"rug_id": "lemon_branch",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/lemon_branch.png",
+			"texture_pixel_sha256": "e3c80fd046b46c55c8ffcea62cf2584fd9484df60bf623da43622fbe217c4176",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_lemon_branch_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "9e2923ad96f0cf5b26f11757b0e658a983dfddab5930eeb10aadc267e5824e50",
+			"rug_id": "lemon_branch",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/lemon_branch.png",
+			"texture_pixel_sha256": "e3c80fd046b46c55c8ffcea62cf2584fd9484df60bf623da43622fbe217c4176",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_paper_boats_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "9f410d915343c20a1a92457740c3d8ba64dc943ea99349b25eb4e55827a94082",
+			"rug_id": "paper_boats",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/paper_boats.png",
+			"texture_pixel_sha256": "94b1670145561d7cfdb6d6ff35fc5c4e659978ed7736b5cf2f4f22402c1979d9",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_paper_boats_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "6423ce9ef35b7f09249f2ab01bef895981a468f6290d154d5e6836cc5482ed40",
+			"rug_id": "paper_boats",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/paper_boats.png",
+			"texture_pixel_sha256": "94b1670145561d7cfdb6d6ff35fc5c4e659978ed7736b5cf2f4f22402c1979d9",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_paper_boats_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "58c9b6e66e39e7c2fd6638f7c9641ec42bfcbbb949e47cf69904d5849a428ca3",
+			"rug_id": "paper_boats",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/paper_boats.png",
+			"texture_pixel_sha256": "94b1670145561d7cfdb6d6ff35fc5c4e659978ed7736b5cf2f4f22402c1979d9",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_paper_boats_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "5342f28a8353ae23bffa2c8df0647ae54e3fc9bc235ffc1e00c72faac86f4ac4",
+			"rug_id": "paper_boats",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/paper_boats.png",
+			"texture_pixel_sha256": "94b1670145561d7cfdb6d6ff35fc5c4e659978ed7736b5cf2f4f22402c1979d9",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_paper_boats_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "adfc46d6eb299bffb9dbeacc0a807e9dd32e06c540e0a81d97d05867f5549b1c",
+			"rug_id": "paper_boats",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/paper_boats.png",
+			"texture_pixel_sha256": "94b1670145561d7cfdb6d6ff35fc5c4e659978ed7736b5cf2f4f22402c1979d9",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_desert_sun_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "5122bcff91aacc0e612012b611ad5593a0f280c18b9d01f65d1893a1a8f200d8",
+			"rug_id": "desert_sun",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/desert_sun.png",
+			"texture_pixel_sha256": "077cb59df826bb99a5622822bc33172da9befd93e0321b34eb9163d62aa1b9e7",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_desert_sun_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "0519ebcc9f9e6ed6e3e6afd5ce44f6ebbda06775e79010402cb3dd9b285d8179",
+			"rug_id": "desert_sun",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/desert_sun.png",
+			"texture_pixel_sha256": "077cb59df826bb99a5622822bc33172da9befd93e0321b34eb9163d62aa1b9e7",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_desert_sun_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "eaca657e60efb723da92be2b5111988bc3d4fcbceb25f628435d006a8cafe4a3",
+			"rug_id": "desert_sun",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/desert_sun.png",
+			"texture_pixel_sha256": "077cb59df826bb99a5622822bc33172da9befd93e0321b34eb9163d62aa1b9e7",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_desert_sun_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "af117e99cbf0105999ddd44eee373e1a4cc2e00fabf8df2b7c1abbed3f9e389b",
+			"rug_id": "desert_sun",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/desert_sun.png",
+			"texture_pixel_sha256": "077cb59df826bb99a5622822bc33172da9befd93e0321b34eb9163d62aa1b9e7",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_desert_sun_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "ebb81bdca1d77684b3baa9c87c7160eb8016bc8e387653d71241aabc0908cab7",
+			"rug_id": "desert_sun",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/desert_sun.png",
+			"texture_pixel_sha256": "077cb59df826bb99a5622822bc33172da9befd93e0321b34eb9163d62aa1b9e7",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_moon_moth_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "ef5f3acd64bbea534e9b2fb0cd568236b30ce4b99643cec7b858fa9f59a83653",
+			"rug_id": "moon_moth",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/moon_moth.png",
+			"texture_pixel_sha256": "a19a446df0467c8e77d9f42671da80365e98274ed4822fe0db559fe31019d24c",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_moon_moth_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "2567c36abf12ecfe5f47fe3dd83f613eeb89a75cceadfd17ba96a31508179a27",
+			"rug_id": "moon_moth",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/moon_moth.png",
+			"texture_pixel_sha256": "a19a446df0467c8e77d9f42671da80365e98274ed4822fe0db559fe31019d24c",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_moon_moth_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "b41c3fb32b8a14dbd5fdf6b52b3ecf9875ce2f8801c7b46afb41819400cc9e83",
+			"rug_id": "moon_moth",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/moon_moth.png",
+			"texture_pixel_sha256": "a19a446df0467c8e77d9f42671da80365e98274ed4822fe0db559fe31019d24c",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_moon_moth_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "a13ca41c67c8ea9bda04259be68acc98c68e8164360dd162183ae166c8725d26",
+			"rug_id": "moon_moth",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/moon_moth.png",
+			"texture_pixel_sha256": "a19a446df0467c8e77d9f42671da80365e98274ed4822fe0db559fe31019d24c",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_moon_moth_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "63e5fab7d17fccddd964a70f0c4b7ab112809f7258db4aa3ecd9d3c9df9e38b9",
+			"rug_id": "moon_moth",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/moon_moth.png",
+			"texture_pixel_sha256": "a19a446df0467c8e77d9f42671da80365e98274ed4822fe0db559fe31019d24c",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_misty_tea_garden_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "3ab2634be8a19d3ce86ee1601924c4d582a515d5ccc8e2250d24bca6413d5fe7",
+			"rug_id": "misty_tea_garden",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/misty_tea_garden.png",
+			"texture_pixel_sha256": "b4747e18756e673bd8967f5fa6b9ac892cd1fc5a21c202a9233e6bf01ed262d9",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_misty_tea_garden_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "4257a6e2792c6739c062b130a662fd86735442856bbf5a9c3dea65764bab93bc",
+			"rug_id": "misty_tea_garden",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/misty_tea_garden.png",
+			"texture_pixel_sha256": "b4747e18756e673bd8967f5fa6b9ac892cd1fc5a21c202a9233e6bf01ed262d9",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_misty_tea_garden_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "cb423deac96eae9700803a1ff5fde4c118f040bcedc1052afbb1c89568a5daea",
+			"rug_id": "misty_tea_garden",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/misty_tea_garden.png",
+			"texture_pixel_sha256": "b4747e18756e673bd8967f5fa6b9ac892cd1fc5a21c202a9233e6bf01ed262d9",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_misty_tea_garden_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "6b3b084c7129088419fe4e8e43a966a8a7334664d6af6321bc8d276ad19d057c",
+			"rug_id": "misty_tea_garden",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/misty_tea_garden.png",
+			"texture_pixel_sha256": "b4747e18756e673bd8967f5fa6b9ac892cd1fc5a21c202a9233e6bf01ed262d9",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_misty_tea_garden_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "55bed35587622647b47a4ed860ea361f1f58d9d27804d5308919d6968651dc6c",
+			"rug_id": "misty_tea_garden",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/misty_tea_garden.png",
+			"texture_pixel_sha256": "b4747e18756e673bd8967f5fa6b9ac892cd1fc5a21c202a9233e6bf01ed262d9",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_quiet_cove_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "35af7c87f78369b149946b9de2fbe59b6b21d6765433c709392e8f18c523ce10",
+			"rug_id": "quiet_cove",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/quiet_cove.png",
+			"texture_pixel_sha256": "cf478b7b4bd2f411fa5f72af80632de750d4816eaaef3b9eaf9c79b526b6f014",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_quiet_cove_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "50c347d44fda6ea47b7cc9c7f4568bb6c432ad734a885900ac57ee3b61acfd0a",
+			"rug_id": "quiet_cove",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/quiet_cove.png",
+			"texture_pixel_sha256": "cf478b7b4bd2f411fa5f72af80632de750d4816eaaef3b9eaf9c79b526b6f014",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_quiet_cove_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "877a6e992293fe1b2141dcc064efcad79b326ae0676a1b7cedf53873c104f6a3",
+			"rug_id": "quiet_cove",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/quiet_cove.png",
+			"texture_pixel_sha256": "cf478b7b4bd2f411fa5f72af80632de750d4816eaaef3b9eaf9c79b526b6f014",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_quiet_cove_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "39fc1ada0072ed8e1a90f6d84b7908a93d74c512fa7f9d12e39f3ce4961e80ee",
+			"rug_id": "quiet_cove",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/quiet_cove.png",
+			"texture_pixel_sha256": "cf478b7b4bd2f411fa5f72af80632de750d4816eaaef3b9eaf9c79b526b6f014",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_quiet_cove_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "424bfc3ce14f1608c11adc2689c286dba1bf369d58e33e6121003b816daae6e3",
+			"rug_id": "quiet_cove",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/quiet_cove.png",
+			"texture_pixel_sha256": "cf478b7b4bd2f411fa5f72af80632de750d4816eaaef3b9eaf9c79b526b6f014",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_moonlit_greenhouse_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "6b71d9d0ddaf52c55fece03abeeb9dd9771f2acfbc22fa33786a36719a6323ac",
+			"rug_id": "moonlit_greenhouse",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/moonlit_greenhouse.png",
+			"texture_pixel_sha256": "d4d031ae7a2d045caff13597a408a99d5b5e0c961d9a870e6fc295670baff273",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_moonlit_greenhouse_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "4cd1bd4f6ecdc2b1eb3c45ed7d3204f70b81b4fbebc0e4b7fcd5e0fa9eb9dd01",
+			"rug_id": "moonlit_greenhouse",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/moonlit_greenhouse.png",
+			"texture_pixel_sha256": "d4d031ae7a2d045caff13597a408a99d5b5e0c961d9a870e6fc295670baff273",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_moonlit_greenhouse_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "ff8a117ca882cf983161cffb47d6997ebb7c2a1d9ca18a397ad157ef02d3c957",
+			"rug_id": "moonlit_greenhouse",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/moonlit_greenhouse.png",
+			"texture_pixel_sha256": "d4d031ae7a2d045caff13597a408a99d5b5e0c961d9a870e6fc295670baff273",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_moonlit_greenhouse_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "0ea24a485a093d9e53e2c72408a9cf0e6d6da65f239e21410b7625acc5bcec5f",
+			"rug_id": "moonlit_greenhouse",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/moonlit_greenhouse.png",
+			"texture_pixel_sha256": "d4d031ae7a2d045caff13597a408a99d5b5e0c961d9a870e6fc295670baff273",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_moonlit_greenhouse_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "350ef69aafe16d91b4334fdcbecc5aa64a11d505135944f61f6246c0d754d437",
+			"rug_id": "moonlit_greenhouse",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/moonlit_greenhouse.png",
+			"texture_pixel_sha256": "d4d031ae7a2d045caff13597a408a99d5b5e0c961d9a870e6fc295670baff273",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_ramen_neko_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "86779997faaa32576ad3ddb1a6e341d7b09d253e885ee7a02c805cff2d71e178",
+			"rug_id": "ramen_neko",
+			"stage": "dirty",
+			"surface_clearance": 0.0,
+			"texture_path": "res://assets/carpet/patterns/ramen_neko.png",
+			"texture_pixel_sha256": "091f6eff80620e2d4e85c2fa1d7d17b0f96f61dbb120815aa9a0ef3d17afa9bf",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_ramen_neko_partly_dirty.png",
+			"height": 844,
+			"render_pixel_sha256": "554f5901c716818a15a51b543096d7d74d81cf06d9c61f84fd3f86ff474b7640",
+			"rug_id": "ramen_neko",
+			"stage": "partly_dirty",
+			"surface_clearance": 0.502189497074877,
+			"texture_path": "res://assets/carpet/patterns/ramen_neko.png",
+			"texture_pixel_sha256": "091f6eff80620e2d4e85c2fa1d7d17b0f96f61dbb120815aa9a0ef3d17afa9bf",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_ramen_neko_resumed.png",
+			"height": 844,
+			"render_pixel_sha256": "47236e8df0715561035e2b6a682d8a1f024bf12cef679388df6c81c9f4b455f9",
+			"rug_id": "ramen_neko",
+			"stage": "resumed",
+			"surface_clearance": 0.502385955191033,
+			"texture_path": "res://assets/carpet/patterns/ramen_neko.png",
+			"texture_pixel_sha256": "091f6eff80620e2d4e85c2fa1d7d17b0f96f61dbb120815aa9a0ef3d17afa9bf",
+			"width": 390
+		},
+		{
+			"camera_size": 5.57815170288086,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.114256)]",
+			"file": "res://../art/renders/discovery_ramen_neko_clean.png",
+			"height": 844,
+			"render_pixel_sha256": "6d0fcab29172dc48747e15505b43a5420173042211e7410a7a7c69a4c4788971",
+			"rug_id": "ramen_neko",
+			"stage": "clean",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/ramen_neko.png",
+			"texture_pixel_sha256": "091f6eff80620e2d4e85c2fa1d7d17b0f96f61dbb120815aa9a0ef3d17afa9bf",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_ramen_neko_reveal_after.png",
+			"height": 844,
+			"render_pixel_sha256": "a113e290e8434afbb11055d67d972d0aa71d1f08958fb0333f1c1ea5e0c276d1",
+			"rug_id": "ramen_neko",
+			"stage": "reveal_after",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/ramen_neko.png",
+			"texture_pixel_sha256": "091f6eff80620e2d4e85c2fa1d7d17b0f96f61dbb120815aa9a0ef3d17afa9bf",
+			"width": 390
+		},
+		{
+			"camera_size": 5.23888874053955,
+			"camera_transform": "[X: (1.0, 0.0, 0.0), Y: (0.0, -0.0, -1.0), Z: (0.0, 1.0, -0.0), O: (0.0, 9.0, -0.139198)]",
+			"file": "res://../art/renders/discovery_ramen_neko_reveal_before.png",
+			"height": 844,
+			"render_pixel_sha256": "1f579aeeaca315db644033611c4397837156c3b84c15796e6cea9c6287b69f3d",
+			"rug_id": "ramen_neko",
+			"stage": "reveal_before",
+			"surface_clearance": 1.0,
+			"texture_path": "res://assets/carpet/patterns/ramen_neko.png",
+			"texture_pixel_sha256": "091f6eff80620e2d4e85c2fa1d7d17b0f96f61dbb120815aa9a0ef3d17afa9bf",
+			"width": 390
+		}
+	],
+	"checks": 1389,
+	"failures": 0,
+	"rendered_pair_differences": [
+		{
+			"a": "mint_meadow",
+			"b": "sunburst_geometry",
+			"luminance_pattern_correlation": -0.238578766915867,
+			"mean_rgb_absolute_difference": 0.302155924171555
+		},
+		{
+			"a": "mint_meadow",
+			"b": "playful_fox",
+			"luminance_pattern_correlation": 0.00476329770273618,
+			"mean_rgb_absolute_difference": 0.298254161128845
+		},
+		{
+			"a": "mint_meadow",
+			"b": "moonlit_owl",
+			"luminance_pattern_correlation": -0.0326285638688077,
+			"mean_rgb_absolute_difference": 0.392678280457496
+		},
+		{
+			"a": "mint_meadow",
+			"b": "koi_garden",
+			"luminance_pattern_correlation": -0.154489947392665,
+			"mean_rgb_absolute_difference": 0.306784041799113
+		},
+		{
+			"a": "mint_meadow",
+			"b": "stillwater_pond",
+			"luminance_pattern_correlation": 0.0301611957419809,
+			"mean_rgb_absolute_difference": 0.419964976943541
+		},
+		{
+			"a": "mint_meadow",
+			"b": "woodland_hare",
+			"luminance_pattern_correlation": 0.0780881190166913,
+			"mean_rgb_absolute_difference": 0.344479678024021
+		},
+		{
+			"a": "mint_meadow",
+			"b": "peacock_palace",
+			"luminance_pattern_correlation": 0.0335555361293223,
+			"mean_rgb_absolute_difference": 0.410215052237867
+		},
+		{
+			"a": "mint_meadow",
+			"b": "tiger_bloom",
+			"luminance_pattern_correlation": -0.0612287235621329,
+			"mean_rgb_absolute_difference": 0.400174501904265
+		},
+		{
+			"a": "mint_meadow",
+			"b": "mushroom_glade",
+			"luminance_pattern_correlation": -0.0222968175238561,
+			"mean_rgb_absolute_difference": 0.377257195628232
+		},
+		{
+			"a": "mint_meadow",
+			"b": "sun_moon_tapestry",
+			"luminance_pattern_correlation": 0.125462832041954,
+			"mean_rgb_absolute_difference": 0.277338918542284
+		},
+		{
+			"a": "mint_meadow",
+			"b": "wildflower_meadow",
+			"luminance_pattern_correlation": 0.0171596467313289,
+			"mean_rgb_absolute_difference": 0.414782085387205
+		},
+		{
+			"a": "mint_meadow",
+			"b": "sleepy_cat",
+			"luminance_pattern_correlation": 0.0321786110521001,
+			"mean_rgb_absolute_difference": 0.273719027488717
+		},
+		{
+			"a": "mint_meadow",
+			"b": "river_otter",
+			"luminance_pattern_correlation": 0.105005959416016,
+			"mean_rgb_absolute_difference": 0.243023836378413
+		},
+		{
+			"a": "mint_meadow",
+			"b": "honey_bear",
+			"luminance_pattern_correlation": 0.188620681848928,
+			"mean_rgb_absolute_difference": 0.21848828596207
+		},
+		{
+			"a": "mint_meadow",
+			"b": "red_panda",
+			"luminance_pattern_correlation": 0.0368767783303604,
+			"mean_rgb_absolute_difference": 0.306008066415814
+		},
+		{
+			"a": "mint_meadow",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": 0.243414209116579,
+			"mean_rgb_absolute_difference": 0.195661880014933
+		},
+		{
+			"a": "mint_meadow",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": -0.0714092407655126,
+			"mean_rgb_absolute_difference": 0.20340056340391
+		},
+		{
+			"a": "mint_meadow",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": -0.104011863524419,
+			"mean_rgb_absolute_difference": 0.188498814415896
+		},
+		{
+			"a": "mint_meadow",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": -0.0769450962821494,
+			"mean_rgb_absolute_difference": 0.18986625371304
+		},
+		{
+			"a": "mint_meadow",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": 0.0340015087157567,
+			"mean_rgb_absolute_difference": 0.28370224232134
+		},
+		{
+			"a": "mint_meadow",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.199810501737449,
+			"mean_rgb_absolute_difference": 0.260716346076591
+		},
+		{
+			"a": "mint_meadow",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": -0.150963199546938,
+			"mean_rgb_absolute_difference": 0.315553260943965
+		},
+		{
+			"a": "mint_meadow",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": 0.0326240117864212,
+			"mean_rgb_absolute_difference": 0.298542077298309
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "playful_fox",
+			"luminance_pattern_correlation": -0.0367576406421125,
+			"mean_rgb_absolute_difference": 0.225676166123411
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "moonlit_owl",
+			"luminance_pattern_correlation": -0.119911877412487,
+			"mean_rgb_absolute_difference": 0.304404420914364
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "koi_garden",
+			"luminance_pattern_correlation": -0.0208538679005461,
+			"mean_rgb_absolute_difference": 0.245006310111798
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "stillwater_pond",
+			"luminance_pattern_correlation": 0.0643220999677722,
+			"mean_rgb_absolute_difference": 0.311702166394628
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "woodland_hare",
+			"luminance_pattern_correlation": -0.0455490445516529,
+			"mean_rgb_absolute_difference": 0.245657819717463
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "peacock_palace",
+			"luminance_pattern_correlation": 0.0216456050875953,
+			"mean_rgb_absolute_difference": 0.300784318827433
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "tiger_bloom",
+			"luminance_pattern_correlation": -0.0743323346096187,
+			"mean_rgb_absolute_difference": 0.279416460044993
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "mushroom_glade",
+			"luminance_pattern_correlation": -0.0201989037038717,
+			"mean_rgb_absolute_difference": 0.265803758770718
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "sun_moon_tapestry",
+			"luminance_pattern_correlation": -0.190251691800906,
+			"mean_rgb_absolute_difference": 0.251467412072873
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "wildflower_meadow",
+			"luminance_pattern_correlation": -0.117683826447184,
+			"mean_rgb_absolute_difference": 0.320191601934042
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "sleepy_cat",
+			"luminance_pattern_correlation": -0.0910297006909775,
+			"mean_rgb_absolute_difference": 0.266091047239467
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "river_otter",
+			"luminance_pattern_correlation": 0.0135418896850105,
+			"mean_rgb_absolute_difference": 0.256973450610309
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "honey_bear",
+			"luminance_pattern_correlation": -0.172813986014928,
+			"mean_rgb_absolute_difference": 0.224294964215384
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "red_panda",
+			"luminance_pattern_correlation": -0.0542691761313394,
+			"mean_rgb_absolute_difference": 0.248557193860111
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": -0.111456285929063,
+			"mean_rgb_absolute_difference": 0.275513858626789
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": 0.052006506558817,
+			"mean_rgb_absolute_difference": 0.277922880281398
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.00870487525619057,
+			"mean_rgb_absolute_difference": 0.249109046566186
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": -0.0350920392878638,
+			"mean_rgb_absolute_difference": 0.264498649017296
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": -0.0610788568490781,
+			"mean_rgb_absolute_difference": 0.262409442063701
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": 0.187076872370233,
+			"mean_rgb_absolute_difference": 0.261980175564208
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": 0.119580344910079,
+			"mean_rgb_absolute_difference": 0.255068542301486
+		},
+		{
+			"a": "sunburst_geometry",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": -0.0918130376679501,
+			"mean_rgb_absolute_difference": 0.253847873032863
+		},
+		{
+			"a": "playful_fox",
+			"b": "moonlit_owl",
+			"luminance_pattern_correlation": -0.146221545027378,
+			"mean_rgb_absolute_difference": 0.288569081384108
+		},
+		{
+			"a": "playful_fox",
+			"b": "koi_garden",
+			"luminance_pattern_correlation": 0.0735178266054398,
+			"mean_rgb_absolute_difference": 0.224889559866014
+		},
+		{
+			"a": "playful_fox",
+			"b": "stillwater_pond",
+			"luminance_pattern_correlation": 0.0475430119704626,
+			"mean_rgb_absolute_difference": 0.315988372964715
+		},
+		{
+			"a": "playful_fox",
+			"b": "woodland_hare",
+			"luminance_pattern_correlation": -0.0714071231355814,
+			"mean_rgb_absolute_difference": 0.226477993003814
+		},
+		{
+			"a": "playful_fox",
+			"b": "peacock_palace",
+			"luminance_pattern_correlation": 0.120514148276173,
+			"mean_rgb_absolute_difference": 0.286197793415237
+		},
+		{
+			"a": "playful_fox",
+			"b": "tiger_bloom",
+			"luminance_pattern_correlation": 0.106777488073966,
+			"mean_rgb_absolute_difference": 0.231109864179569
+		},
+		{
+			"a": "playful_fox",
+			"b": "mushroom_glade",
+			"luminance_pattern_correlation": 0.11684774977291,
+			"mean_rgb_absolute_difference": 0.230157095987442
+		},
+		{
+			"a": "playful_fox",
+			"b": "sun_moon_tapestry",
+			"luminance_pattern_correlation": 0.222748271471747,
+			"mean_rgb_absolute_difference": 0.198785588951904
+		},
+		{
+			"a": "playful_fox",
+			"b": "wildflower_meadow",
+			"luminance_pattern_correlation": 0.012184505337326,
+			"mean_rgb_absolute_difference": 0.303364716272468
+		},
+		{
+			"a": "playful_fox",
+			"b": "sleepy_cat",
+			"luminance_pattern_correlation": -0.0631540049431819,
+			"mean_rgb_absolute_difference": 0.270038260102813
+		},
+		{
+			"a": "playful_fox",
+			"b": "river_otter",
+			"luminance_pattern_correlation": 0.111570073827452,
+			"mean_rgb_absolute_difference": 0.243083675983843
+		},
+		{
+			"a": "playful_fox",
+			"b": "honey_bear",
+			"luminance_pattern_correlation": -0.0106039438623396,
+			"mean_rgb_absolute_difference": 0.201640556990535
+		},
+		{
+			"a": "playful_fox",
+			"b": "red_panda",
+			"luminance_pattern_correlation": -0.0290088275374838,
+			"mean_rgb_absolute_difference": 0.240710095976275
+		},
+		{
+			"a": "playful_fox",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": 0.0409174022517064,
+			"mean_rgb_absolute_difference": 0.265718693444224
+		},
+		{
+			"a": "playful_fox",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": 0.0474152695803642,
+			"mean_rgb_absolute_difference": 0.274702440820147
+		},
+		{
+			"a": "playful_fox",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.187278518984689,
+			"mean_rgb_absolute_difference": 0.238648402941224
+		},
+		{
+			"a": "playful_fox",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": 0.115391916695321,
+			"mean_rgb_absolute_difference": 0.258201832418934
+		},
+		{
+			"a": "playful_fox",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": -0.0251628019252791,
+			"mean_rgb_absolute_difference": 0.259352870935112
+		},
+		{
+			"a": "playful_fox",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.0226614470146598,
+			"mean_rgb_absolute_difference": 0.286649367353467
+		},
+		{
+			"a": "playful_fox",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": -0.183186145876364,
+			"mean_rgb_absolute_difference": 0.269007103315051
+		},
+		{
+			"a": "playful_fox",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": -0.0511081137717334,
+			"mean_rgb_absolute_difference": 0.250272178261731
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "koi_garden",
+			"luminance_pattern_correlation": 0.049693206889389,
+			"mean_rgb_absolute_difference": 0.246094385941713
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "stillwater_pond",
+			"luminance_pattern_correlation": -0.102409087583391,
+			"mean_rgb_absolute_difference": 0.266983567212164
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "woodland_hare",
+			"luminance_pattern_correlation": 0.0572046929304555,
+			"mean_rgb_absolute_difference": 0.230435839417139
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "peacock_palace",
+			"luminance_pattern_correlation": -0.0121256359835241,
+			"mean_rgb_absolute_difference": 0.276184764472028
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "tiger_bloom",
+			"luminance_pattern_correlation": -0.00418559876546134,
+			"mean_rgb_absolute_difference": 0.269686760056808
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "mushroom_glade",
+			"luminance_pattern_correlation": 0.0169584732992354,
+			"mean_rgb_absolute_difference": 0.249916716792721
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "sun_moon_tapestry",
+			"luminance_pattern_correlation": 0.0492333588756348,
+			"mean_rgb_absolute_difference": 0.275720055248183
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "wildflower_meadow",
+			"luminance_pattern_correlation": 0.0327096667079974,
+			"mean_rgb_absolute_difference": 0.249023575211638
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "sleepy_cat",
+			"luminance_pattern_correlation": 0.278983796784542,
+			"mean_rgb_absolute_difference": 0.284496985776676
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "river_otter",
+			"luminance_pattern_correlation": -0.0798304582874019,
+			"mean_rgb_absolute_difference": 0.309935899259614
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "honey_bear",
+			"luminance_pattern_correlation": 0.113001958397332,
+			"mean_rgb_absolute_difference": 0.304394413628415
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "red_panda",
+			"luminance_pattern_correlation": 0.0226803171676432,
+			"mean_rgb_absolute_difference": 0.243043025770532
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": 0.0674772018936158,
+			"mean_rgb_absolute_difference": 0.38153276992467
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": 0.00849509844032397,
+			"mean_rgb_absolute_difference": 0.341287805596273
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.299567400500547,
+			"mean_rgb_absolute_difference": 0.366225517082838
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": 0.0429795415674949,
+			"mean_rgb_absolute_difference": 0.375836802710835
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": 0.264227308064845,
+			"mean_rgb_absolute_difference": 0.275202180026866
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.267947820754929,
+			"mean_rgb_absolute_difference": 0.341801093092484
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": 0.179691941397346,
+			"mean_rgb_absolute_difference": 0.253511800803095
+		},
+		{
+			"a": "moonlit_owl",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": 0.140872064830625,
+			"mean_rgb_absolute_difference": 0.274540037554795
+		},
+		{
+			"a": "koi_garden",
+			"b": "stillwater_pond",
+			"luminance_pattern_correlation": -0.0572745945256933,
+			"mean_rgb_absolute_difference": 0.266777168861692
+		},
+		{
+			"a": "koi_garden",
+			"b": "woodland_hare",
+			"luminance_pattern_correlation": -0.0569462547664509,
+			"mean_rgb_absolute_difference": 0.21869865297179
+		},
+		{
+			"a": "koi_garden",
+			"b": "peacock_palace",
+			"luminance_pattern_correlation": 0.0379282994937922,
+			"mean_rgb_absolute_difference": 0.252114963513447
+		},
+		{
+			"a": "koi_garden",
+			"b": "tiger_bloom",
+			"luminance_pattern_correlation": 0.0451944556887219,
+			"mean_rgb_absolute_difference": 0.248226751670379
+		},
+		{
+			"a": "koi_garden",
+			"b": "mushroom_glade",
+			"luminance_pattern_correlation": 0.0388221112773178,
+			"mean_rgb_absolute_difference": 0.23620644527562
+		},
+		{
+			"a": "koi_garden",
+			"b": "sun_moon_tapestry",
+			"luminance_pattern_correlation": 0.0634701900705395,
+			"mean_rgb_absolute_difference": 0.209504127112929
+		},
+		{
+			"a": "koi_garden",
+			"b": "wildflower_meadow",
+			"luminance_pattern_correlation": -0.003078810500589,
+			"mean_rgb_absolute_difference": 0.251882713774401
+		},
+		{
+			"a": "koi_garden",
+			"b": "sleepy_cat",
+			"luminance_pattern_correlation": 0.0249801018337193,
+			"mean_rgb_absolute_difference": 0.249151580855257
+		},
+		{
+			"a": "koi_garden",
+			"b": "river_otter",
+			"luminance_pattern_correlation": 0.0487633345371644,
+			"mean_rgb_absolute_difference": 0.228004090674765
+		},
+		{
+			"a": "koi_garden",
+			"b": "honey_bear",
+			"luminance_pattern_correlation": -0.00806585462346898,
+			"mean_rgb_absolute_difference": 0.237117723077151
+		},
+		{
+			"a": "koi_garden",
+			"b": "red_panda",
+			"luminance_pattern_correlation": -0.0217202649714955,
+			"mean_rgb_absolute_difference": 0.197800505941844
+		},
+		{
+			"a": "koi_garden",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": 0.0360902792593508,
+			"mean_rgb_absolute_difference": 0.301588224425592
+		},
+		{
+			"a": "koi_garden",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": 0.0104895027448364,
+			"mean_rgb_absolute_difference": 0.263143719631806
+		},
+		{
+			"a": "koi_garden",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.199696616899933,
+			"mean_rgb_absolute_difference": 0.290280930336334
+		},
+		{
+			"a": "koi_garden",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": -0.00561826607187857,
+			"mean_rgb_absolute_difference": 0.291318552206772
+		},
+		{
+			"a": "koi_garden",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": 0.00847742720619904,
+			"mean_rgb_absolute_difference": 0.260338579628869
+		},
+		{
+			"a": "koi_garden",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.0353108688774376,
+			"mean_rgb_absolute_difference": 0.253482612212977
+		},
+		{
+			"a": "koi_garden",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": 0.0482147286277399,
+			"mean_rgb_absolute_difference": 0.228489648978187
+		},
+		{
+			"a": "koi_garden",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": -0.069080425310434,
+			"mean_rgb_absolute_difference": 0.243062829040932
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "woodland_hare",
+			"luminance_pattern_correlation": -0.0717137832507358,
+			"mean_rgb_absolute_difference": 0.245526686675871
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "peacock_palace",
+			"luminance_pattern_correlation": -0.0644277816117779,
+			"mean_rgb_absolute_difference": 0.216365934756414
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "tiger_bloom",
+			"luminance_pattern_correlation": -0.0441634304224966,
+			"mean_rgb_absolute_difference": 0.258439926207482
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "mushroom_glade",
+			"luminance_pattern_correlation": 0.0234941534425116,
+			"mean_rgb_absolute_difference": 0.25434531675506
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "sun_moon_tapestry",
+			"luminance_pattern_correlation": 0.029495366652784,
+			"mean_rgb_absolute_difference": 0.286228859044243
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "wildflower_meadow",
+			"luminance_pattern_correlation": 0.00666494305873394,
+			"mean_rgb_absolute_difference": 0.214036344093728
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "sleepy_cat",
+			"luminance_pattern_correlation": 0.00845879725612432,
+			"mean_rgb_absolute_difference": 0.312171043371329
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "river_otter",
+			"luminance_pattern_correlation": 0.00566096466603748,
+			"mean_rgb_absolute_difference": 0.315001623922583
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "honey_bear",
+			"luminance_pattern_correlation": 0.0540702217621578,
+			"mean_rgb_absolute_difference": 0.347623402600275
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "red_panda",
+			"luminance_pattern_correlation": 0.144208510535532,
+			"mean_rgb_absolute_difference": 0.249512677718842
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": -0.0379743227619264,
+			"mean_rgb_absolute_difference": 0.432388490587091
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": -0.0796594839558313,
+			"mean_rgb_absolute_difference": 0.374364082526031
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": -0.118421736081027,
+			"mean_rgb_absolute_difference": 0.436874214627221
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": 0.0626276319748709,
+			"mean_rgb_absolute_difference": 0.424730696621131
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": -0.199146553673165,
+			"mean_rgb_absolute_difference": 0.332996220534673
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": 0.0148983794229971,
+			"mean_rgb_absolute_difference": 0.305673876043228
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": -0.0484667170899435,
+			"mean_rgb_absolute_difference": 0.246427124916244
+		},
+		{
+			"a": "stillwater_pond",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": -0.00443346021292002,
+			"mean_rgb_absolute_difference": 0.297928098035139
+		},
+		{
+			"a": "woodland_hare",
+			"b": "peacock_palace",
+			"luminance_pattern_correlation": 0.0258882142309288,
+			"mean_rgb_absolute_difference": 0.230230692709321
+		},
+		{
+			"a": "woodland_hare",
+			"b": "tiger_bloom",
+			"luminance_pattern_correlation": 0.0212791608490144,
+			"mean_rgb_absolute_difference": 0.222794513515871
+		},
+		{
+			"a": "woodland_hare",
+			"b": "mushroom_glade",
+			"luminance_pattern_correlation": -0.0332043638946756,
+			"mean_rgb_absolute_difference": 0.207272941104628
+		},
+		{
+			"a": "woodland_hare",
+			"b": "sun_moon_tapestry",
+			"luminance_pattern_correlation": -0.00367069795327518,
+			"mean_rgb_absolute_difference": 0.222337310088641
+		},
+		{
+			"a": "woodland_hare",
+			"b": "wildflower_meadow",
+			"luminance_pattern_correlation": 0.0148294514972361,
+			"mean_rgb_absolute_difference": 0.238701365016781
+		},
+		{
+			"a": "woodland_hare",
+			"b": "sleepy_cat",
+			"luminance_pattern_correlation": 0.168005069044403,
+			"mean_rgb_absolute_difference": 0.245367401834539
+		},
+		{
+			"a": "woodland_hare",
+			"b": "river_otter",
+			"luminance_pattern_correlation": -0.112299564267637,
+			"mean_rgb_absolute_difference": 0.247589210576119
+		},
+		{
+			"a": "woodland_hare",
+			"b": "honey_bear",
+			"luminance_pattern_correlation": 0.121646601159825,
+			"mean_rgb_absolute_difference": 0.232807333000175
+		},
+		{
+			"a": "woodland_hare",
+			"b": "red_panda",
+			"luminance_pattern_correlation": 0.089717527734337,
+			"mean_rgb_absolute_difference": 0.179854900160568
+		},
+		{
+			"a": "woodland_hare",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": 0.134620631096265,
+			"mean_rgb_absolute_difference": 0.318162011364472
+		},
+		{
+			"a": "woodland_hare",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": 0.0257701137239167,
+			"mean_rgb_absolute_difference": 0.279826337120666
+		},
+		{
+			"a": "woodland_hare",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.0036660458287035,
+			"mean_rgb_absolute_difference": 0.326843251087721
+		},
+		{
+			"a": "woodland_hare",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": 0.0468619721390018,
+			"mean_rgb_absolute_difference": 0.31807132341634
+		},
+		{
+			"a": "woodland_hare",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": -0.0450009924700918,
+			"mean_rgb_absolute_difference": 0.248332241847166
+		},
+		{
+			"a": "woodland_hare",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.100187920656082,
+			"mean_rgb_absolute_difference": 0.275858487374394
+		},
+		{
+			"a": "woodland_hare",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": -0.0138801520097826,
+			"mean_rgb_absolute_difference": 0.221530688645348
+		},
+		{
+			"a": "woodland_hare",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": 0.0691942041516404,
+			"mean_rgb_absolute_difference": 0.24056665999107
+		},
+		{
+			"a": "peacock_palace",
+			"b": "tiger_bloom",
+			"luminance_pattern_correlation": 0.0119602447771441,
+			"mean_rgb_absolute_difference": 0.25175178552159
+		},
+		{
+			"a": "peacock_palace",
+			"b": "mushroom_glade",
+			"luminance_pattern_correlation": 0.0827950729047062,
+			"mean_rgb_absolute_difference": 0.237707525213877
+		},
+		{
+			"a": "peacock_palace",
+			"b": "sun_moon_tapestry",
+			"luminance_pattern_correlation": 0.0591611325302428,
+			"mean_rgb_absolute_difference": 0.258506849956174
+		},
+		{
+			"a": "peacock_palace",
+			"b": "wildflower_meadow",
+			"luminance_pattern_correlation": -0.0743331377074907,
+			"mean_rgb_absolute_difference": 0.232240679243541
+		},
+		{
+			"a": "peacock_palace",
+			"b": "sleepy_cat",
+			"luminance_pattern_correlation": 0.151400905096933,
+			"mean_rgb_absolute_difference": 0.285363858721576
+		},
+		{
+			"a": "peacock_palace",
+			"b": "river_otter",
+			"luminance_pattern_correlation": 0.054118507518792,
+			"mean_rgb_absolute_difference": 0.290529450736787
+		},
+		{
+			"a": "peacock_palace",
+			"b": "honey_bear",
+			"luminance_pattern_correlation": 0.134173121965621,
+			"mean_rgb_absolute_difference": 0.317503002999554
+		},
+		{
+			"a": "peacock_palace",
+			"b": "red_panda",
+			"luminance_pattern_correlation": 0.023216128399227,
+			"mean_rgb_absolute_difference": 0.237255117161139
+		},
+		{
+			"a": "peacock_palace",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": 0.0257525992109312,
+			"mean_rgb_absolute_difference": 0.40610668317579
+		},
+		{
+			"a": "peacock_palace",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": -0.0784011329549956,
+			"mean_rgb_absolute_difference": 0.352587596363532
+		},
+		{
+			"a": "peacock_palace",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.0752334362054934,
+			"mean_rgb_absolute_difference": 0.417648312010203
+		},
+		{
+			"a": "peacock_palace",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": 0.00654048084440432,
+			"mean_rgb_absolute_difference": 0.394426832345757
+		},
+		{
+			"a": "peacock_palace",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": 0.121610278586859,
+			"mean_rgb_absolute_difference": 0.303073880743857
+		},
+		{
+			"a": "peacock_palace",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.178099566016387,
+			"mean_rgb_absolute_difference": 0.312925339308789
+		},
+		{
+			"a": "peacock_palace",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": 0.0780529374470111,
+			"mean_rgb_absolute_difference": 0.245368865312979
+		},
+		{
+			"a": "peacock_palace",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": 0.0538852634506904,
+			"mean_rgb_absolute_difference": 0.303875706722746
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "mushroom_glade",
+			"luminance_pattern_correlation": 0.0591003924453345,
+			"mean_rgb_absolute_difference": 0.227620273906934
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "sun_moon_tapestry",
+			"luminance_pattern_correlation": 0.0191094635558807,
+			"mean_rgb_absolute_difference": 0.252774812526911
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "wildflower_meadow",
+			"luminance_pattern_correlation": 0.150918945839059,
+			"mean_rgb_absolute_difference": 0.25558287308087
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "sleepy_cat",
+			"luminance_pattern_correlation": 0.0743077458958384,
+			"mean_rgb_absolute_difference": 0.299983116472619
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "river_otter",
+			"luminance_pattern_correlation": 0.0193524046295204,
+			"mean_rgb_absolute_difference": 0.297060810138237
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "honey_bear",
+			"luminance_pattern_correlation": 0.0336527305241776,
+			"mean_rgb_absolute_difference": 0.286663335613448
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "red_panda",
+			"luminance_pattern_correlation": 0.0000600254601120363,
+			"mean_rgb_absolute_difference": 0.237167969492013
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": 0.100849037157693,
+			"mean_rgb_absolute_difference": 0.364715682398695
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": 0.116103844086025,
+			"mean_rgb_absolute_difference": 0.348266988131572
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.110128002017303,
+			"mean_rgb_absolute_difference": 0.375302041275645
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": -0.0489657887252128,
+			"mean_rgb_absolute_difference": 0.378463690409878
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": -0.0322082090374204,
+			"mean_rgb_absolute_difference": 0.30946097097487
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.0579767102135543,
+			"mean_rgb_absolute_difference": 0.326199045580068
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": -0.0625391500509784,
+			"mean_rgb_absolute_difference": 0.265807721826436
+		},
+		{
+			"a": "tiger_bloom",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": -0.041631488578364,
+			"mean_rgb_absolute_difference": 0.289485780329135
+		},
+		{
+			"a": "mushroom_glade",
+			"b": "sun_moon_tapestry",
+			"luminance_pattern_correlation": 0.00930073207358788,
+			"mean_rgb_absolute_difference": 0.249487033009465
+		},
+		{
+			"a": "mushroom_glade",
+			"b": "wildflower_meadow",
+			"luminance_pattern_correlation": -0.0650128438694064,
+			"mean_rgb_absolute_difference": 0.257732335443679
+		},
+		{
+			"a": "mushroom_glade",
+			"b": "sleepy_cat",
+			"luminance_pattern_correlation": 0.0531679817074143,
+			"mean_rgb_absolute_difference": 0.275017255051716
+		},
+		{
+			"a": "mushroom_glade",
+			"b": "river_otter",
+			"luminance_pattern_correlation": 0.0604043226333792,
+			"mean_rgb_absolute_difference": 0.264395248470852
+		},
+		{
+			"a": "mushroom_glade",
+			"b": "honey_bear",
+			"luminance_pattern_correlation": 0.0348495697388855,
+			"mean_rgb_absolute_difference": 0.273594775383203
+		},
+		{
+			"a": "mushroom_glade",
+			"b": "red_panda",
+			"luminance_pattern_correlation": -0.0714422639775463,
+			"mean_rgb_absolute_difference": 0.215737149868793
+		},
+		{
+			"a": "mushroom_glade",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": -0.0121486937673819,
+			"mean_rgb_absolute_difference": 0.35850705250896
+		},
+		{
+			"a": "mushroom_glade",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": -0.0295415919449296,
+			"mean_rgb_absolute_difference": 0.317396466501933
+		},
+		{
+			"a": "mushroom_glade",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.148373872859677,
+			"mean_rgb_absolute_difference": 0.355416080456847
+		},
+		{
+			"a": "mushroom_glade",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": -0.036413298455699,
+			"mean_rgb_absolute_difference": 0.357758391511681
+		},
+		{
+			"a": "mushroom_glade",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": 0.104157805368857,
+			"mean_rgb_absolute_difference": 0.259233202087529
+		},
+		{
+			"a": "mushroom_glade",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.0472513152355234,
+			"mean_rgb_absolute_difference": 0.308860333157522
+		},
+		{
+			"a": "mushroom_glade",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": 0.00619264673573968,
+			"mean_rgb_absolute_difference": 0.25007975044532
+		},
+		{
+			"a": "mushroom_glade",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": -0.0292572378278252,
+			"mean_rgb_absolute_difference": 0.269327540791324
+		},
+		{
+			"a": "sun_moon_tapestry",
+			"b": "wildflower_meadow",
+			"luminance_pattern_correlation": -0.0532520693747816,
+			"mean_rgb_absolute_difference": 0.284916666390995
+		},
+		{
+			"a": "sun_moon_tapestry",
+			"b": "sleepy_cat",
+			"luminance_pattern_correlation": 0.135401262457112,
+			"mean_rgb_absolute_difference": 0.238977809353545
+		},
+		{
+			"a": "sun_moon_tapestry",
+			"b": "river_otter",
+			"luminance_pattern_correlation": 0.177721475774679,
+			"mean_rgb_absolute_difference": 0.218662999604035
+		},
+		{
+			"a": "sun_moon_tapestry",
+			"b": "honey_bear",
+			"luminance_pattern_correlation": -0.0129232746074663,
+			"mean_rgb_absolute_difference": 0.195100230585778
+		},
+		{
+			"a": "sun_moon_tapestry",
+			"b": "red_panda",
+			"luminance_pattern_correlation": 0.179587508791439,
+			"mean_rgb_absolute_difference": 0.196950936921892
+		},
+		{
+			"a": "sun_moon_tapestry",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": 0.0934327883505398,
+			"mean_rgb_absolute_difference": 0.265176010330083
+		},
+		{
+			"a": "sun_moon_tapestry",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": -0.0341299972622634,
+			"mean_rgb_absolute_difference": 0.24960085783552
+		},
+		{
+			"a": "sun_moon_tapestry",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.145942323695615,
+			"mean_rgb_absolute_difference": 0.270347643853359
+		},
+		{
+			"a": "sun_moon_tapestry",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": 0.227377722183695,
+			"mean_rgb_absolute_difference": 0.246459434007766
+		},
+		{
+			"a": "sun_moon_tapestry",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": 0.00544067139057756,
+			"mean_rgb_absolute_difference": 0.259895135903731
+		},
+		{
+			"a": "sun_moon_tapestry",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.179170650019118,
+			"mean_rgb_absolute_difference": 0.258754109267047
+		},
+		{
+			"a": "sun_moon_tapestry",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": -0.177189277148643,
+			"mean_rgb_absolute_difference": 0.251556019678089
+		},
+		{
+			"a": "sun_moon_tapestry",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": 0.0884235720145417,
+			"mean_rgb_absolute_difference": 0.250126448604999
+		},
+		{
+			"a": "wildflower_meadow",
+			"b": "sleepy_cat",
+			"luminance_pattern_correlation": -0.00616688735506482,
+			"mean_rgb_absolute_difference": 0.30504633954445
+		},
+		{
+			"a": "wildflower_meadow",
+			"b": "river_otter",
+			"luminance_pattern_correlation": -0.0689639253908561,
+			"mean_rgb_absolute_difference": 0.304804711929581
+		},
+		{
+			"a": "wildflower_meadow",
+			"b": "honey_bear",
+			"luminance_pattern_correlation": 0.00810420373706674,
+			"mean_rgb_absolute_difference": 0.336207697615463
+		},
+		{
+			"a": "wildflower_meadow",
+			"b": "red_panda",
+			"luminance_pattern_correlation": 0.016776557261472,
+			"mean_rgb_absolute_difference": 0.248133770422467
+		},
+		{
+			"a": "wildflower_meadow",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": 0.0639009046058229,
+			"mean_rgb_absolute_difference": 0.411175326519639
+		},
+		{
+			"a": "wildflower_meadow",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": 0.152508720833882,
+			"mean_rgb_absolute_difference": 0.353030832379473
+		},
+		{
+			"a": "wildflower_meadow",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.0712777465827489,
+			"mean_rgb_absolute_difference": 0.41329017986572
+		},
+		{
+			"a": "wildflower_meadow",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": -0.0297011649061121,
+			"mean_rgb_absolute_difference": 0.414714747622824
+		},
+		{
+			"a": "wildflower_meadow",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": -0.0688130058151784,
+			"mean_rgb_absolute_difference": 0.316845029102021
+		},
+		{
+			"a": "wildflower_meadow",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.0148280043755562,
+			"mean_rgb_absolute_difference": 0.315281199498582
+		},
+		{
+			"a": "wildflower_meadow",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": -0.0549697968307448,
+			"mean_rgb_absolute_difference": 0.258295239529813
+		},
+		{
+			"a": "wildflower_meadow",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": -0.0119250123477617,
+			"mean_rgb_absolute_difference": 0.302063988195387
+		},
+		{
+			"a": "sleepy_cat",
+			"b": "river_otter",
+			"luminance_pattern_correlation": 0.0169701262965876,
+			"mean_rgb_absolute_difference": 0.241592187916684
+		},
+		{
+			"a": "sleepy_cat",
+			"b": "honey_bear",
+			"luminance_pattern_correlation": 0.496391779242294,
+			"mean_rgb_absolute_difference": 0.194662624806885
+		},
+		{
+			"a": "sleepy_cat",
+			"b": "red_panda",
+			"luminance_pattern_correlation": 0.49712218125854,
+			"mean_rgb_absolute_difference": 0.230162931077774
+		},
+		{
+			"a": "sleepy_cat",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": 0.167563670313723,
+			"mean_rgb_absolute_difference": 0.250253829208703
+		},
+		{
+			"a": "sleepy_cat",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": -0.0476332324499807,
+			"mean_rgb_absolute_difference": 0.260293335733363
+		},
+		{
+			"a": "sleepy_cat",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.492779035822103,
+			"mean_rgb_absolute_difference": 0.217271372407344
+		},
+		{
+			"a": "sleepy_cat",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": 0.327281355375592,
+			"mean_rgb_absolute_difference": 0.224992549401186
+		},
+		{
+			"a": "sleepy_cat",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": 0.318479191216005,
+			"mean_rgb_absolute_difference": 0.192675361613974
+		},
+		{
+			"a": "sleepy_cat",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.71117322072102,
+			"mean_rgb_absolute_difference": 0.318314625901913
+		},
+		{
+			"a": "sleepy_cat",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": 0.194388352959061,
+			"mean_rgb_absolute_difference": 0.220077766224158
+		},
+		{
+			"a": "sleepy_cat",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": 0.229906812907481,
+			"mean_rgb_absolute_difference": 0.236358010580352
+		},
+		{
+			"a": "river_otter",
+			"b": "honey_bear",
+			"luminance_pattern_correlation": 0.0116616237446331,
+			"mean_rgb_absolute_difference": 0.218547497114194
+		},
+		{
+			"a": "river_otter",
+			"b": "red_panda",
+			"luminance_pattern_correlation": 0.0921844840347944,
+			"mean_rgb_absolute_difference": 0.199368093193283
+		},
+		{
+			"a": "river_otter",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": -0.0677137993161461,
+			"mean_rgb_absolute_difference": 0.271982150593577
+		},
+		{
+			"a": "river_otter",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": -0.147347226203908,
+			"mean_rgb_absolute_difference": 0.145031950466537
+		},
+		{
+			"a": "river_otter",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.0614942025023921,
+			"mean_rgb_absolute_difference": 0.252577369063421
+		},
+		{
+			"a": "river_otter",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": -0.013668498146116,
+			"mean_rgb_absolute_difference": 0.238493704716818
+		},
+		{
+			"a": "river_otter",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": 0.0718434718736004,
+			"mean_rgb_absolute_difference": 0.234285478241806
+		},
+		{
+			"a": "river_otter",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.190987857760074,
+			"mean_rgb_absolute_difference": 0.216910282077818
+		},
+		{
+			"a": "river_otter",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": -0.0298720109211531,
+			"mean_rgb_absolute_difference": 0.229007312533252
+		},
+		{
+			"a": "river_otter",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": 0.0973098790185169,
+			"mean_rgb_absolute_difference": 0.267824584838442
+		},
+		{
+			"a": "honey_bear",
+			"b": "red_panda",
+			"luminance_pattern_correlation": 0.281276998297116,
+			"mean_rgb_absolute_difference": 0.219288238728545
+		},
+		{
+			"a": "honey_bear",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": 0.130106573490587,
+			"mean_rgb_absolute_difference": 0.192711008948328
+		},
+		{
+			"a": "honey_bear",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": -0.0579115215713653,
+			"mean_rgb_absolute_difference": 0.209002090384713
+		},
+		{
+			"a": "honey_bear",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.10644293983917,
+			"mean_rgb_absolute_difference": 0.185544191421483
+		},
+		{
+			"a": "honey_bear",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": 0.201855626307575,
+			"mean_rgb_absolute_difference": 0.174702440313338
+		},
+		{
+			"a": "honey_bear",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": 0.302384796206004,
+			"mean_rgb_absolute_difference": 0.206883699443548
+		},
+		{
+			"a": "honey_bear",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.653347752414171,
+			"mean_rgb_absolute_difference": 0.270681011128796
+		},
+		{
+			"a": "honey_bear",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": 0.150385096637533,
+			"mean_rgb_absolute_difference": 0.243321349040257
+		},
+		{
+			"a": "honey_bear",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": 0.214168546300811,
+			"mean_rgb_absolute_difference": 0.220570204315678
+		},
+		{
+			"a": "red_panda",
+			"b": "lemon_branch",
+			"luminance_pattern_correlation": 0.0267042024123827,
+			"mean_rgb_absolute_difference": 0.310776909975697
+		},
+		{
+			"a": "red_panda",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": 0.0197603725698716,
+			"mean_rgb_absolute_difference": 0.230401853883357
+		},
+		{
+			"a": "red_panda",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.0855591145101849,
+			"mean_rgb_absolute_difference": 0.306431285472731
+		},
+		{
+			"a": "red_panda",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": 0.37275915935202,
+			"mean_rgb_absolute_difference": 0.287180159946218
+		},
+		{
+			"a": "red_panda",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": -0.0384264943900607,
+			"mean_rgb_absolute_difference": 0.250595743641857
+		},
+		{
+			"a": "red_panda",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.385546002021927,
+			"mean_rgb_absolute_difference": 0.250483375454832
+		},
+		{
+			"a": "red_panda",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": -0.0873064134586783,
+			"mean_rgb_absolute_difference": 0.225389506418115
+		},
+		{
+			"a": "red_panda",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": 0.289035994518156,
+			"mean_rgb_absolute_difference": 0.223162273049224
+		},
+		{
+			"a": "lemon_branch",
+			"b": "paper_boats",
+			"luminance_pattern_correlation": 0.04434054676569,
+			"mean_rgb_absolute_difference": 0.219200252929721
+		},
+		{
+			"a": "lemon_branch",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.119909831731767,
+			"mean_rgb_absolute_difference": 0.138305656679254
+		},
+		{
+			"a": "lemon_branch",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": 0.0172398601786888,
+			"mean_rgb_absolute_difference": 0.167498929157717
+		},
+		{
+			"a": "lemon_branch",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": 0.044361739518388,
+			"mean_rgb_absolute_difference": 0.255487381306844
+		},
+		{
+			"a": "lemon_branch",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.133948947357382,
+			"mean_rgb_absolute_difference": 0.266013486868748
+		},
+		{
+			"a": "lemon_branch",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": -0.0513936558385507,
+			"mean_rgb_absolute_difference": 0.323170820382021
+		},
+		{
+			"a": "lemon_branch",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": -0.0657692697555084,
+			"mean_rgb_absolute_difference": 0.287924029561261
+		},
+		{
+			"a": "paper_boats",
+			"b": "desert_sun",
+			"luminance_pattern_correlation": 0.232171250675899,
+			"mean_rgb_absolute_difference": 0.184021216485969
+		},
+		{
+			"a": "paper_boats",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": 0.0915163045971295,
+			"mean_rgb_absolute_difference": 0.160098397166948
+		},
+		{
+			"a": "paper_boats",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": -0.152807452201676,
+			"mean_rgb_absolute_difference": 0.238384046710152
+		},
+		{
+			"a": "paper_boats",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": 0.153689569274755,
+			"mean_rgb_absolute_difference": 0.187184121718369
+		},
+		{
+			"a": "paper_boats",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": 0.0242579653405997,
+			"mean_rgb_absolute_difference": 0.261067228048942
+		},
+		{
+			"a": "paper_boats",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": -0.158091374048416,
+			"mean_rgb_absolute_difference": 0.297392291807391
+		},
+		{
+			"a": "desert_sun",
+			"b": "moon_moth",
+			"luminance_pattern_correlation": 0.0702933179398466,
+			"mean_rgb_absolute_difference": 0.136090937507143
+		},
+		{
+			"a": "desert_sun",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": 0.288479274107538,
+			"mean_rgb_absolute_difference": 0.211260176103429
+		},
+		{
+			"a": "desert_sun",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.31569266421527,
+			"mean_rgb_absolute_difference": 0.262251615431612
+		},
+		{
+			"a": "desert_sun",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": 0.220567538445802,
+			"mean_rgb_absolute_difference": 0.299284484503612
+		},
+		{
+			"a": "desert_sun",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": 0.0611005660041336,
+			"mean_rgb_absolute_difference": 0.252728732907031
+		},
+		{
+			"a": "moon_moth",
+			"b": "misty_tea_garden",
+			"luminance_pattern_correlation": -0.123480256570615,
+			"mean_rgb_absolute_difference": 0.249410722631682
+		},
+		{
+			"a": "moon_moth",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.203256406999567,
+			"mean_rgb_absolute_difference": 0.240060873394607
+		},
+		{
+			"a": "moon_moth",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": -0.0622641510084178,
+			"mean_rgb_absolute_difference": 0.304310807363508
+		},
+		{
+			"a": "moon_moth",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": 0.123987702429224,
+			"mean_rgb_absolute_difference": 0.276870459942413
+		},
+		{
+			"a": "misty_tea_garden",
+			"b": "quiet_cove",
+			"luminance_pattern_correlation": -0.453422760942276,
+			"mean_rgb_absolute_difference": 0.295209892093339
+		},
+		{
+			"a": "misty_tea_garden",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": 0.175084399336241,
+			"mean_rgb_absolute_difference": 0.23991890187667
+		},
+		{
+			"a": "misty_tea_garden",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": 0.156485800903932,
+			"mean_rgb_absolute_difference": 0.246942909385121
+		},
+		{
+			"a": "quiet_cove",
+			"b": "moonlit_greenhouse",
+			"luminance_pattern_correlation": -0.155650176034889,
+			"mean_rgb_absolute_difference": 0.245546489802286
+		},
+		{
+			"a": "quiet_cove",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": -0.269473114903593,
+			"mean_rgb_absolute_difference": 0.301236724971561
+		},
+		{
+			"a": "moonlit_greenhouse",
+			"b": "ramen_neko",
+			"luminance_pattern_correlation": 0.0953773539331186,
+			"mean_rgb_absolute_difference": 0.26220825766508
+		}
+	]
+}

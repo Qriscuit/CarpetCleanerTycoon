@@ -6,9 +6,13 @@ signal squeegee_level_requested(level: int)
 signal camera_angle_requested(oblique: bool)
 
 var practice_rug := 0
+var practice_design_name := "Practice gym"
 var wet_fraction := 0.0
 var extraction_fraction := 0.0
 var wet_ready := false
+var wash_round := 1
+var wash_round_count := 3
+var wash_complete := false
 var hose_upgrade_level := 0
 var squeegee_upgrade_level := 0
 var squeegee_upgrade_power := 1.0
@@ -28,6 +32,7 @@ func _ready() -> void:
 	set_hose_upgrade(hose_upgrade_level, _hose_upgrade_profile)
 	set_squeegee_upgrade(squeegee_upgrade_level, squeegee_upgrade_power)
 	set_practice_rug(practice_rug)
+	set_practice_design(practice_design_name)
 
 
 func action_buttons() -> Array[Button]:
@@ -50,6 +55,15 @@ func _request_camera_angle() -> void:
 	camera_angle_requested.emit(not camera_oblique)
 
 
+func set_practice_design(design_name: String) -> void:
+	practice_design_name = design_name
+	if not is_node_ready(): return
+	(control("GymTitle") as Label).text = design_name
+	control("GymTitle").tooltip_text = "Practice gym · " + design_name
+	control("GymReset").tooltip_text = "Replace this carpet with a random design from any level. Keep your practice mode, camera and upgrades."
+	_layout()
+
+
 func set_practice_rug(index: int) -> void:
 	practice_rug = clampi(index, 0, 1)
 	if not is_node_ready(): return
@@ -57,21 +71,26 @@ func set_practice_rug(index: int) -> void:
 	wet_fraction = 0.0
 	extraction_fraction = 0.0
 	wet_ready = false
+	wash_round = 1
+	wash_round_count = 3
+	wash_complete = false
 	(control("GymRug1") as Button).set_pressed_no_signal(not wet)
 	(control("GymRug2") as Button).set_pressed_no_signal(wet)
-	(control("GymDescription") as Label).text = "Wet the whole rug" if wet else "Dust + dirt pellets"
+	(control("GymDescription") as Label).text = "Wash 1/3 · Spray fresh areas" if wet else "Dust + dirt pellets"
 	control("GymStatus").visible = wet
 	control("GymBrush").visible = not wet
 	control("GymHose").visible = wet
 	control("GymSqueegee").visible = wet
-	control("GymHose").tooltip_text = "Dry the entire rug and equip the hose. Tap again for a fresh dry rug."
-	control("GymSqueegee").tooltip_text = "Instantly wet the entire rug and equip the squeegee. Tap again to refill."
+	control("GymHose").tooltip_text = "Restart all three washes with a dry carpet and the hose."
+	control("GymSqueegee").tooltip_text = "Restart the three-wash exercise with wash 1 soaked and the squeegee ready."
 	control("GymHoseUpgrades").visible = wet
 	control("GymSqueegeeUpgrades").visible = wet
 	control("CleaningProgress").visible = true
 	control("WaterDropCharge").hide()
 	if wet:
 		set_wet_progress(0.0, 0.0, false)
+	else:
+		clear_wet_stage()
 	_layout()
 
 
@@ -80,12 +99,12 @@ func set_hose_upgrade(level: int, profile: Dictionary) -> void:
 	_hose_upgrade_profile = profile.duplicate()
 	if not is_node_ready(): return
 	(control("GymHoseUpgradeTitle") as Label).text = "Hose upgrades · Spout Lv %d / 5" % (hose_upgrade_level + 1)
-	(control("GymHoseUpgradeStats") as Label).text = "Width %.2f m · Soak %.1f×" % [float(profile.get("impact_radius", 0.19)) * 2.0, float(profile.get("passive_soak_multiplier", 1.0))]
-	control("GymHoseUpgradeStats").tooltip_text = "Passive soaking %.2f× versus Lv 1. Direct absorption %.2f×. Hold steady to build another 35%% passive flow." % [float(profile.get("passive_soak_multiplier", 1.0)), float(profile.get("soak_multiplier", 1.0))]
-	control("GymHoseUpgradeHint").tooltip_text = "Hold steady: stronger passive soaking spreads up to %.2f m from the impact point." % float(profile.get("max_spread_radius", 0.70))
+	(control("GymHoseUpgradeStats") as Label).text = "Circle %.2f m · Flow %.1f×" % [float(profile.get("impact_radius", 0.19)) * 2.0, float(profile.get("soak_multiplier", 1.0))]
+	control("GymHoseUpgradeStats").tooltip_text = "Whole-rug flow %.2f× versus Lv 1. Holding anywhere gives steady progress; spraying fresh areas adds a small speed bonus." % float(profile.get("soak_multiplier", 1.0))
+	control("GymHoseUpgradeHint").tooltip_text = "The influence circle spreads up to %.2f m. Watering anywhere soaks the whole carpet. Sweep across fresh areas to wet it a little faster." % float(profile.get("max_spread_radius", 0.70))
 	(control("GymHoseLess") as Button).disabled = hose_upgrade_level <= 0
 	(control("GymHoseMore") as Button).disabled = hose_upgrade_level >= 4
-	control("GymHoseUpgrades").tooltip_text = "Free gym preview. A wider spout wets more carpet and soaks it faster. Hold steady to let water spread."
+	control("GymHoseUpgrades").tooltip_text = "Free gym preview. Stronger flow fills the whole carpet faster. Hold anywhere, or sweep fresh areas for a small speed bonus."
 	_layout()
 
 
@@ -121,30 +140,34 @@ func blocks_point(point: Vector2) -> bool:
 
 
 func set_practice_tool(index: int) -> void:
-	if practice_rug == 1:
-		if extraction_fraction >= 0.99:
-			(control("GymDescription") as Label).text = "Water removed"
-		elif index == 1:
-			(control("GymDescription") as Label).text = "Push to scrape · Tap Hose to dry"
-		else:
-			(control("GymDescription") as Label).text = "Hold to water · Squeegee fills rug"
+	if practice_rug != 1: return
+	var instruction := "Spray fresh areas"
+	if wash_complete:
+		instruction = "Fresh and clean"
+	elif index == 1:
+		instruction = ["Push out dark mud", "Push out brown water", "Rinse clear blue"][clampi(wash_round - 1, 0, 2)]
+	(control("GymDescription") as Label).text = "Wash %d/%d · %s" % [wash_round, wash_round_count, instruction]
 
 
-func set_wet_progress(water: float, extracted: float, ready: bool) -> void:
+func set_wet_progress(water: float, extracted: float, ready: bool, round_number: int = 1, round_count: int = 3, complete: bool = false) -> void:
 	wet_fraction = clampf(water, 0.0, 1.0)
 	extraction_fraction = clampf(extracted, 0.0, 1.0)
 	wet_ready = ready
+	wash_round_count = maxi(round_count, 1)
+	wash_round = clampi(round_number, 1, wash_round_count)
+	wash_complete = complete
 	if practice_rug != 1:
 		return
-	var complete := extraction_fraction >= 0.99
-	# Gym buttons are repeatable setup shortcuts, not production stage gates.
+	# Gym buttons remain repeatable setup shortcuts; internal auto-advance
+	# follows the same three wash gates as a paid carpet.
 	(control("GymHose") as Button).disabled = false
 	(control("GymSqueegee") as Button).disabled = false
 	(control("GymStatus") as Label).text = (
-		"Water removed" if complete
-		else "Removed %d%%" % floori(extraction_fraction * 100.0 + 0.0001) if ready
+		"Clean" if wash_complete
+		else "Removed %d%%" % floori(minf(extraction_fraction / 0.99, 1.0) * 100.0 + 0.0001) if ready
 		else "Wet %d%%" % floori(minf(wet_fraction / 0.99, 1.0) * 100.0 + 0.0001)
 	)
+	set_wet_stage(wash_round, wash_round_count, ready, wash_complete)
 	set_practice_tool(1 if ready else 2)
 	if ready:
 		control("WaterDropCharge").hide()
@@ -206,20 +229,21 @@ func _layout() -> void:
 	var inside := panel_width - 32.0
 	var compact := inside < 400.0
 	(control("GymHose") as Button).text = "Hose" if compact else "Water hose"
-	(control("GymReset") as Button).text = "Reset" if compact else "Reset rug"
+	(control("GymReset") as Button).text = "Reset" if compact else "Reset carpet"
 	for node_name in ["GymHose", "GymSqueegee", "GymReset", "GymBrush"]:
 		control(node_name).add_theme_font_size_override("font_size", 15 if inside < 360.0 else 16)
 	for node_name in ["GymRug1", "GymRug2"]:
 		control(node_name).add_theme_font_size_override("font_size", 16 if inside < 360.0 else 17)
 	var title := control("GymTitle")
+	title.add_theme_font_size_override("font_size", 18 if compact else 20)
 	title.position = Vector2(16.0, 12.0)
-	title.size = Vector2(inside, 28.0)
+	title.size = Vector2(inside - 104.0 if practice_rug == 1 else inside, 28.0)
 	var description := control("GymDescription")
 	description.position = Vector2(16.0, 40.0)
 	description.size = Vector2(inside, 24.0)
 	var status := control("GymStatus")
-	status.position = Vector2(panel_width - 194.0, 14.0)
-	status.size = Vector2(178.0, 24.0)
+	status.position = Vector2(panel_width - 112.0, 14.0)
+	status.size = Vector2(96.0, 24.0)
 	var rug_width := (inside - 8.0) * 0.5
 	_place("GymRug1", Vector2(16.0, 68.0), Vector2(rug_width, 56.0))
 	_place("GymRug2", Vector2(24.0 + rug_width, 68.0), Vector2(rug_width, 56.0))
@@ -235,7 +259,7 @@ func _layout() -> void:
 	control("GymHoseUpgradeStats").add_theme_font_size_override("font_size", 13)
 	control("GymHoseUpgradeHint").add_theme_font_size_override("font_size", 12)
 	(control("GymHoseUpgradeTitle") as Label).text = "Hose · Spout Lv %d / 5" % (hose_upgrade_level + 1)
-	(control("GymHoseUpgradeHint") as Label).text = "Spread %.2f m · Hold to grow" % float(_hose_upgrade_profile.get("max_spread_radius", 0.70))
+	(control("GymHoseUpgradeHint") as Label).text = "Whole rug · Hold to soak"
 	_place("GymHoseUpgrades", Vector2(16.0, 198.0), Vector2(inside, 68.0))
 	_place("GymHoseUpgradeDivider", Vector2.ZERO, Vector2(inside, 1.0))
 	_place("GymHoseUpgradeTitle", Vector2(0.0, 4.0), Vector2(inside - 132.0, 20.0))

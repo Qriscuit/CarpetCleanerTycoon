@@ -4,13 +4,14 @@ const Routes = preload("res://scripts/scene_routes.gd")
 const Pop = preload("res://scripts/ui/button_pop.gd")
 const ShopLedger = preload("res://scripts/shop_state.gd")
 const Progression = preload("res://scripts/progression.gd")
+const RugCatalog = preload("res://scripts/rug_catalog.gd")
 const WaterJet = preload("res://scripts/water_jet.gd")
 const HoseProfile = preload("res://scripts/water_hose_profile.gd")
 const SqueegeeMotion = preload("res://scripts/squeegee_motion.gd")
 const SQUEEGEE_WATER_SCENE = preload("res://scenes/effects/squeegee_water.tscn")
 @export var practice_only := false
 @export var animate_rug_changes := true
-enum RugPhase { ARRIVING, GROWING, TOOL_ENTERING, CLEANING, VACUUMING, DEPARTING }
+enum RugPhase { ARRIVING, GROWING, TOOL_ENTERING, CLEANING, VACUUMING, REVEAL, DEPARTING }
 var rug_phase := RugPhase.ARRIVING
 var rug_roll := preload("res://scripts/rug_roll.gd").new()
 var transition_tween: Tween
@@ -26,6 +27,7 @@ const TOOL_PIVOTS := [Vector3(0, 0.007, 0), Vector3(0, 0, 0.025), Vector3(0, 0.2
 const TOOL_HEAD_HALVES := [Vector2(0.305, 0.11), Vector2(0.34, 0.075), Vector2(0.035, 0.035)]
 const RUG_VIEW_CENTER := Vector3(0, 0.0335, 0)
 const PROGRESS_COLORS := [Color("e76c62"), Color("dfb13d"), Color("63b66e"), Color("559bdd")]
+# Practice keeps its authored recipes, independently of paid-job discovery.
 @export var rugs: Array[Resource] = [
 	preload("res://resources/rugs/mint_meadow.tres"),
 	preload("res://resources/rugs/terracotta_flatweave.tres"),
@@ -56,6 +58,7 @@ var tool_buttons: Array[Button] = []
 var touch_buttons: Array[Button] = []
 var contact_point := Vector3.ZERO
 var shop_state: Node
+var game_audio: Node
 var paid_contract := false
 var contract_finished := false
 var contract_save_failed := false
@@ -97,6 +100,11 @@ var finish_requested := false
 var auto_finish_queued := false
 var replacement_job_id := ""
 var completed_reward := 0
+var completed_fraction := 0.0
+var completed_full_restore := false
+var completion_reveal: CanvasLayer
+var rug_comparison := preload("res://scripts/rug_comparison.gd").new()
+var _resumed_rug := false
 var original_scale_size := Vector2i.ZERO
 var original_scale_aspect := 0
 var original_scale_mode := 0
@@ -106,6 +114,8 @@ const CONTRACT_TARGET := ShopLedger.MANUAL_COMPLETION_THRESHOLD
 const AUTO_FINISH_TARGET := ShopLedger.PERFECT_COMPLETION_THRESHOLD
 
 func _ready() -> void:
+	game_audio = get_node_or_null("/root/GameAudio")
+	if game_audio != null: game_audio.set_context("cleaning")
 	var window := get_window()
 	original_scale_size = window.content_scale_size
 	original_scale_aspect = window.content_scale_aspect
@@ -140,6 +150,11 @@ func _ready() -> void:
 	contact_point = brush.position + brush.basis * TOOL_PIVOTS[0]
 	last_brush_position = contact_point
 	bind_ui()
+	completion_reveal = preload("res://scenes/ui/completion_reveal.tscn").instantiate()
+	add_child(completion_reveal)
+	completion_reveal.continued.connect(skip_completion_reveal)
+	completion_reveal.comparison_changed.connect(_set_completion_comparison)
+	completion_reveal.layout_changed.connect(_frame_completion_reveal)
 	if shop_state != null:
 		hud.initialize_wallet(shop_state.cash)
 		shop_state.changed.connect(_sync_wallet)
@@ -161,7 +176,7 @@ func _ready() -> void:
 		_ensure_wet_runtime()
 	if animate_rug_changes:
 		rug_roll.setup($RugDisplay/Dirty/CarpetMesh)
-	select_rug(0)
+	select_rug(_active_paid_rug_index() if paid_contract else 0)
 	_sync_progression()
 	if paid_contract and not shop_state.job_snapshot.is_empty():
 		# Normalize legacy Store 2 saves to its water-only recipe. Restoring clears
@@ -169,7 +184,7 @@ func _ready() -> void:
 		var restored_snapshot: Dictionary = shop_state.job_snapshot.duplicate(true)
 		restored_snapshot["wet_recipe"] = wet_recipe
 		restored_snapshot["skip_dry_stage"] = water_only_recipe
-		soil.restore_snapshot(restored_snapshot)
+		_resumed_rug = soil.restore_snapshot(restored_snapshot)
 		applied_strength = -1.0
 		_sync_progression()
 	_sync_wet_runtime_state()
@@ -192,6 +207,8 @@ func _ready() -> void:
 		get_tree().quit()
 
 func _input(event: InputEvent) -> void:
+	if rug_phase == RugPhase.REVEAL:
+		return # The reveal owns its gestures; the hidden cleaning HUD cannot act.
 	if event.device == -1:
 		return
 	# Real touch is routed on release because mouse emulation is disabled. A
@@ -292,6 +309,7 @@ func begin_stroke(screen_position: Vector2, touch_input: bool) -> void:
 	get_viewport().set_input_as_handled()
 
 func end_stroke() -> void:
+	if is_instance_valid(game_audio): game_audio.end_brush()
 	var was_dragging := brush_dragging
 	if soil != null:
 		soil.end_pass()
@@ -410,7 +428,14 @@ func _show_ad_reward(amount: int) -> void:
 	hud.show_reward(amount, shop_state.cash)
 
 func _advance_wet_tool() -> void:
-	if not wet_recipe or brush_dragging or rug_phase != RugPhase.CLEANING or finish_requested: return
+	if leaving_scene or not is_inside_tree() or not wet_recipe or brush_dragging or rug_phase != RugPhase.CLEANING or finish_requested: return
+	if soil.advance_wash_cycle():
+		# Retire old spray/ridges before the next round; no airborne parcel
+		# from a prior hose session may pre-wet the following wash.
+		_cancel_wet_runtime_effects()
+		_sync_wet_runtime_state()
+		update_contract_status()
+		queue_snapshot_save()
 	var next_tool: int = soil.recommended_tool()
 	if next_tool != selected_tool: select_tool(next_tool)
 
@@ -482,6 +507,7 @@ func _sync_wet_runtime_state() -> void:
 		squeegee_water.set_enabled(wet_recipe)
 	if wet_recipe and is_instance_valid(soil):
 		water.set_emission_locked(soil.water_stage_complete())
+		squeegee_water.set_wash_cycle(soil.wash_cycle)
 	_sync_water_emitter()
 
 
@@ -495,9 +521,10 @@ func _on_water_contact(world_position: Vector3, radius: float, strength: float) 
 	_apply_hose_water(world_position, radius, strength * hose_direct_scale, soil.WATER_BLOB_EDGE_FRACTION)
 
 
-func _on_soak_contact(world_position: Vector3, radius: float, strength: float) -> void:
-	# Passive capillary flow keeps the selected hose profile's independent rate.
-	_apply_hose_water(world_position, radius, strength, 0.78)
+func _on_soak_contact(_world_position: Vector3, _radius: float, _strength: float) -> void:
+	# Capillary circles remain visual. Direct landed flow alone grows the
+	# whole-carpet meter at the same rate at the center or an edge.
+	pass
 
 
 func _apply_hose_water(world_position: Vector3, radius: float, strength: float, edge_fraction: float) -> void:
@@ -576,6 +603,7 @@ func apply_selected_tool_stroke(world_from: Vector3, world_to: Vector3, elapsed:
 		_apply_selected_tool_strength()
 		var dry_before: float = soil.surface_coverage_total
 		soil.stroke(world_from, world_to, elapsed)
+		_update_brush_audio(world_from, world_to, elapsed, soil.surface_coverage_total < dry_before)
 		if paid_contract and soil.surface_coverage_total < dry_before:
 			shop_state.note_current_tool_used(0)
 	elif wet_recipe and selected_tool == 2:
@@ -595,6 +623,17 @@ func apply_selected_tool_stroke(world_from: Vector3, world_to: Vector3, elapsed:
 			var splash_contact := world_to
 			splash_contact.y = soil.squeegee_surface_height(world_to, squeegee_motion.heading)
 			squeegee_water.feed_stroke(world_from, splash_contact, elapsed, maxf(0.0, soil.extraction_coverage_total - before), squeegee_motion.heading, squeegee_motion.speed)
+
+func _update_brush_audio(world_from: Vector3, world_to: Vector3, elapsed: float, removed: bool) -> void:
+	if not is_instance_valid(game_audio): return
+	if soil.completion_started or soil.simulation_suspended or soil.reveal_progress < 1.0 or soil.brush_surface_height(world_to, soil.head_half) <= 0.0:
+		game_audio.end_brush()
+		return
+	var local: Vector3 = soil.rug_node.to_local(world_to)
+	var pixel := Vector2i(((Vector2(local.x, local.z) + soil.RUG_HALF) / (soil.RUG_HALF * 2.0) * Vector2(soil.MASK_SIZE)).floor())
+	pixel = pixel.clamp(Vector2i.ZERO, soil.MASK_SIZE - Vector2i.ONE)
+	var amount: float = soil.coverage_values[pixel.y * soil.MASK_SIZE.x + pixel.x]
+	game_audio.feed_brush(world_from.distance_to(world_to) / maxf(elapsed, 0.016), amount, removed)
 
 func select_tool(index: int) -> void:
 	if soil.completion_started or index < 0 or index >= tool_nodes.size():
@@ -650,6 +689,8 @@ func set_brush_instruction(_active: bool) -> void:
 func reset_rug() -> void:
 	if paid_contract:
 		return
+	_dismiss_completion_reveal()
+	_resumed_rug = false
 	end_stroke()
 	_cancel_wet_runtime_effects()
 	_cancel_transition()
@@ -667,16 +708,19 @@ func reset_rug() -> void:
 	contact_point = brush_home.origin + brush_home.basis * TOOL_PIVOTS[0]
 	select_tool(selected_tool)
 	update_contract_status()
+	_capture_rug_before()
 
 func select_rug(index: int) -> void:
-	if index < 0 or index >= rugs.size():
+	var choice_count: int = RugCatalog.IDS.size() if paid_contract else rugs.size()
+	if index < 0 or index >= choice_count:
 		return
-	if paid_contract and (index != 0 or rug_initialized):
+	if paid_contract and (index != _active_paid_rug_index() or rug_initialized):
 		return
+	_dismiss_completion_reveal()
 	end_stroke()
 	_cancel_wet_runtime_effects()
 	selected_rug = index
-	soil.configure_rug(rugs[index])
+	soil.configure_rug(_selected_rug_definition())
 	for i in rug_buttons.size():
 		rug_buttons[i].set_pressed_no_signal(i == index)
 	for button in tool_buttons:
@@ -689,6 +733,16 @@ func select_rug(index: int) -> void:
 	select_tool(start_tool)
 	_sync_wet_runtime_state()
 	rug_initialized = true
+
+func _active_paid_rug_index() -> int:
+	if shop_state != null:
+		return maxi(0, RugCatalog.IDS.find(str(shop_state.active_rug_id)))
+	return 0
+
+func _selected_rug_definition() -> Resource:
+	if paid_contract:
+		return RugCatalog.load_definition(RugCatalog.IDS[selected_rug])
+	return rugs[selected_rug]
 
 func update_progress(remaining: int, _total: int) -> void:
 	# Surface-mask changes are credited at stroke time. A clump may cross the
@@ -713,16 +767,24 @@ func queue_snapshot_save() -> void:
 func update_contract_status() -> void:
 	if soil == null or state_label == null:
 		return
-	# One recipe-aware number drives the bar, Finish button and auto-completion.
-	var fraction: float = 1.0 if contract_finished else soil.overall_clearance()
+	# Overall work drives payout eligibility; each wet action has its own 0–100% meter.
+	var fraction: float = completed_fraction if contract_finished else soil.overall_clearance()
 	progress_fraction = clampf(fraction, 0.0, 1.0)
-	var contract_ready := ShopLedger.completion_reached(progress_fraction, CONTRACT_TARGET)
-	var auto_finish_ready := ShopLedger.completion_reached(progress_fraction, AUTO_FINISH_TARGET)
-	var percent := floori(progress_fraction * 100.0 + 0.0001)
+	var final_stage_ready: bool = not wet_recipe or (soil.wash_cycle == soil.WASH_CYCLES - 1 and soil.water_stage_complete() and soil.extraction_clearance() >= CONTRACT_TARGET)
+	var contract_ready := ShopLedger.completion_reached(progress_fraction, CONTRACT_TARGET) and final_stage_ready
+	var auto_finish_ready: bool = soil.all_washes_complete() if wet_recipe else ShopLedger.completion_reached(progress_fraction, AUTO_FINISH_TARGET)
+	var display_fraction := progress_fraction
+	if wet_recipe and soil.recommended_tool() != 0 and not contract_finished:
+		display_fraction = soil.extraction_stage_progress() if soil.water_stage_complete() else soil.water_stage_progress()
+	var percent := floori(display_fraction * 100.0 + 0.0001)
 	dirty = not contract_finished and not auto_finish_ready
 	state_label.text = "%d%%" % percent
-	var color := progress_color(progress_fraction)
-	progress_bar.value = progress_fraction * 100.0
+	if wet_recipe and soil.recommended_tool() != 0:
+		hud.set_wet_stage(soil.wash_cycle + 1, soil.WASH_CYCLES, soil.water_stage_complete(), soil.all_washes_complete())
+	else:
+		hud.clear_wet_stage()
+	var color := progress_color(display_fraction)
+	progress_bar.value = display_fraction * 100.0
 	progress_fill.bg_color = color
 	progress_fill.shadow_color = Color(color, 0.42)
 	finish_button.visible = rug_phase == RugPhase.CLEANING and not hud.upgrades_open() and not contract_finished and not finish_requested and contract_ready and (not auto_finish_ready or contract_save_failed)
@@ -756,6 +818,9 @@ func toggle_view() -> void:
 	frame_carpet()
 
 func frame_carpet() -> void:
+	if rug_phase == RugPhase.REVEAL:
+		_frame_completion_reveal()
+		return
 	overhead = true
 	var viewport_size := get_viewport().get_visible_rect().size
 	var aspect := maxf(viewport_size.x, 1.0) / maxf(viewport_size.y, 1.0)
@@ -794,10 +859,54 @@ func on_vacuum_started() -> void:
 func on_vacuum_finished() -> void:
 	if not contract_finished or leaving_scene:
 		return
-	rug_phase = RugPhase.DEPARTING
 	if not animate_rug_changes:
+		rug_phase = RugPhase.DEPARTING
 		next_rug.call_deferred()
 		return
+	# Flush the final render request before freezing this actual completed rug.
+	soil._process(0.0)
+	soil.suspend_simulation(true)
+	rug_phase = RugPhase.REVEAL
+	hud.hide()
+	held_touches.clear()
+	touch_chord = false
+	hud_touch = -1
+	hud_button = null
+	completion_reveal.show_reveal(completed_full_restore, completed_fraction, rug_comparison.available, completed_reward, rug_comparison.label)
+	_frame_completion_reveal()
+	if completed_full_restore and is_instance_valid(game_audio):
+		game_audio.play_completion()
+
+func _capture_rug_before() -> void:
+	if is_instance_valid(soil) and not soil.completion_started:
+		rug_comparison.capture(soil, _resumed_rug)
+
+func _set_completion_comparison(before: bool) -> void:
+	if not is_instance_valid(soil): return
+	if before and rug_phase != RugPhase.REVEAL: return
+	# Only GPU render state changes. Saved masks, dirt and rewards remain intact.
+	rug_comparison.set_before(soil, before)
+
+func _dismiss_completion_reveal() -> void:
+	_set_completion_comparison(false)
+	if is_instance_valid(completion_reveal): completion_reveal.dismiss()
+	if is_instance_valid(hud): hud.show()
+
+func _frame_completion_reveal() -> void:
+	if leaving_scene or not is_inside_tree() or rug_phase != RugPhase.REVEAL or not is_instance_valid(completion_reveal) or not completion_reveal.is_inside_tree(): return
+	var viewport_size := get_viewport().get_visible_rect().size
+	var space: Rect2 = completion_reveal.rug_view_rect()
+	camera.keep_aspect = Camera3D.KEEP_HEIGHT
+	camera.size = maxf(3.65 * viewport_size.y / maxf(space.size.y, 1.0), 2.3 * viewport_size.y / maxf(space.size.x, 1.0))
+	camera.position = Vector3((0.5 - space.get_center().x / viewport_size.x) * camera.size * viewport_size.x / viewport_size.y, 9.0, (0.5 - space.get_center().y / viewport_size.y) * camera.size)
+	camera.rotation_degrees = Vector3(-90, 0, 0)
+
+func skip_completion_reveal() -> void:
+	if leaving_scene or rug_phase != RugPhase.REVEAL: return
+	_set_completion_comparison(false)
+	completion_reveal.dismiss()
+	rug_phase = RugPhase.DEPARTING
+	_cancel_transition()
 	transition_tween = create_tween()
 	transition_tween.tween_method(_roll_departure,0.0,1.0,0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	transition_tween.tween_property($RugDisplay,"position:z",_offscreen_z(-1.0),0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
@@ -817,9 +926,11 @@ func _cancel_transition() -> void:
 		transition_tween.kill()
 
 func start_rug_arrival() -> void:
+	_dismiss_completion_reveal()
 	_cancel_transition()
 	_cancel_wet_runtime_effects()
 	rug_phase = RugPhase.ARRIVING
+	frame_carpet()
 	soil.suspend_simulation(true)
 	soil.set_reveal_progress(0.0)
 	for tool in tool_nodes: tool.hide()
@@ -863,8 +974,13 @@ func _tool_arrival_finished() -> void:
 	if leaving_scene: return
 	rug_phase = RugPhase.CLEANING
 	soil.suspend_simulation(false)
+	_capture_rug_before()
 	select_tool(soil.recommended_tool() if wet_recipe else 0)
 	update_contract_status()
+	# A saved last blade pass may precede its deferred round transition.
+	# Resume that finished round without requiring a redundant press/release.
+	if wet_recipe:
+		_advance_wet_tool.call_deferred()
 
 func save_contract_progress() -> bool:
 	if not paid_contract or contract_finished:
@@ -895,7 +1011,11 @@ func finish_rug() -> void:
 		return
 	if not ShopLedger.completion_reached(soil.overall_clearance(), CONTRACT_TARGET):
 		return
+	if wet_recipe and (soil.wash_cycle != soil.WASH_CYCLES - 1 or not soil.water_stage_complete() or soil.extraction_clearance() < CONTRACT_TARGET):
+		return
 	finish_requested = true
+	completed_fraction = soil.overall_clearance()
+	completed_full_restore = soil.all_washes_complete() if wet_recipe else ShopLedger.completion_reached(completed_fraction, AUTO_FINISH_TARGET)
 	end_stroke()
 	if paid_contract:
 		var completed_snapshot: Dictionary = soil.make_snapshot()
@@ -917,12 +1037,14 @@ func finish_rug() -> void:
 	contract_save_failed = false
 	snapshot_timer.stop()
 	update_contract_status()
-	soil.start_vacuum(true)
+	soil.start_vacuum(true, completed_full_restore)
 
 func next_rug() -> void:
 	if leaving_scene or next_job_pending or not soil.vacuum_complete or not contract_finished:
 		return
 	next_job_pending = true
+	_dismiss_completion_reveal()
+	_resumed_rug = false
 	rug_phase = RugPhase.ARRIVING
 	if paid_contract:
 		hud.show_reward(completed_reward,shop_state.cash)
@@ -930,12 +1052,13 @@ func next_rug() -> void:
 		contract_job_id = replacement_job_id
 		replacement_job_id = ""
 		shop_state.contract_mode = true
+		selected_rug = _active_paid_rug_index()
 	else:
 		selected_rug = (selected_rug+1)%rugs.size()
 	# Refill the existing batch offscreen. No PackedScene instantiation, mesh
 	# loading, or scene replacement occurs between rugs.
 	soil.set_reveal_progress(0.0)
-	soil.configure_rug(rugs[selected_rug])
+	soil.configure_rug(_selected_rug_definition())
 	contract_finished = false
 	finish_requested = false
 	auto_finish_queued = false
@@ -948,6 +1071,7 @@ func next_rug() -> void:
 
 func return_to_shop() -> void:
 	if leaving_scene: return
+	_dismiss_completion_reveal()
 	leaving_scene = true
 	_cancel_transition()
 	end_stroke()
@@ -958,6 +1082,8 @@ func return_to_shop() -> void:
 	get_tree().change_scene_to_file(Routes.MAIN_MENU)
 
 func _exit_tree() -> void:
+	_dismiss_completion_reveal()
+	if is_instance_valid(game_audio): game_audio.set_context("off")
 	leaving_scene = true
 	_cancel_wet_runtime_effects()
 	if is_instance_valid(shop_state) and shop_state.changed.is_connected(_sync_wallet):

@@ -1,0 +1,26 @@
+{
+  "purpose": "Audition sketches; not integrated into gameplay",
+  "method": "Original offline procedural composition and synthesis; no downloaded samples",
+  "sample_rate": 44100,
+  "bit_depth": 16,
+  "files": [
+    {
+      "file": "quiet_shop_music_sketch.wav",
+      "seconds": 14.0,
+      "channels": 2,
+      "peak_dbfs": -11.7,
+      "rms_dbfs": -23.7,
+      "finite": true,
+      "clipped_samples": 0
+    },
+    {
+      "file": "brush_dirty_to_clean_sketch.wav",
+      "seconds": 9.1,
+      "channels": 1,
+      "peak_dbfs": -9.9,
+      "rms_dbfs": -27.96,
+      "finite": true,
+      "clipped_samples": 0
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "recorded_gameplay": true,
+  "frames": 180,
+  "output": "exports/Three_Tools_Triptych.mkv",
+  "corner_radius": 38,
+  "background": "art/background.svg",
+  "overlay": "art/overlay.svg",
+  "audio_panel": 0,
+  "panels": [
+    {"source": "../../../build/ad-capture-v3/brush-band-002/restorations.avi", "in": 28.166666666666668, "crop": [64,700,952,450], "slot": [64,355,952,450]},
+    {"source": "../../../build/ad-capture-v3/wet-tools-003/restorations.avi", "in": 2.566666666666667, "crop": [64,730,952,450], "slot": [64,841,952,450]},
+    {"source": "../../../build/ad-capture-v3/wet-tools-003/restorations.avi", "in": 21.366666666666667, "crop": [64,730,952,450], "slot": [64,1327,952,450]}
+  ]
+}

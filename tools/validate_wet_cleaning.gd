@@ -53,26 +53,26 @@ func run() -> void:
 	soil.mask.fill(Color.BLACK)
 	soil.mask_changed = true
 	soil._process(0.0)
-	check(soil.overall_clearance() > 0.329 and soil.overall_clearance() < 0.334 and soil.recommended_tool() == 2, "A clean dry layer contributes the first third and recommends water")
+	check(soil.overall_clearance() > 0.142 and soil.overall_clearance() < 0.144 and soil.recommended_tool() == 2, "A clean dry layer contributes one of seven actions and recommends water")
 
 	soil.set_tool_strength(1.0)
 	for z_step in range(19):
-		var z := -1.62 + float(z_step) * 0.18
+		var z := -1.3 + float(z_step) * 0.145
 		for pass_index in 3:
-			soil.apply_water_stroke(Vector3(-1.15, 0.067, z), Vector3(1.15, 0.067, z), 0.08)
+			soil.apply_water_stroke(Vector3(-0.75, 0.067, z), Vector3(0.75, 0.067, z), 0.08)
 	soil._process(0.0)
 	check(soil.water_clearance() >= 0.99 and soil.extraction_clearance() == 0.0, "Overlapping spray passes wet the full loosened rug without extracting it")
-	check(soil.overall_clearance() > 0.659 and soil.overall_clearance() < 0.668 and soil.recommended_tool() == 1, "Water contributes the second third and recommends the squeegee")
+	check(soil.overall_clearance() > 0.284 and soil.overall_clearance() < 0.287 and soil.recommended_tool() == 1, "First watering contributes the second of seven actions and recommends the squeegee")
 	check(bool(soil.surface_materials[0].get_shader_parameter("wet_recipe")), "Wet recipe enables the shader layer")
 
 	for z_step in range(34):
 		var z := -1.65 + float(z_step) * 0.10
 		soil.apply_squeegee_stroke(Vector3(-1.15, 0.067, z), Vector3(1.15, 0.067, z), 0.08)
 	soil._process(0.0)
-	check(soil.extraction_clearance() > 0.50 and soil.overall_clearance() >= 0.83, "The first extraction pass advances into the early-finish range")
+	check(soil.extraction_clearance() > 0.50 and soil.overall_clearance() > 0.35 and soil.overall_clearance() < 0.43, "The first extraction pass advances within cycle one without enabling early finish")
 	var snapshot: Dictionary = soil.make_snapshot()
 	var progress: Dictionary = soil.make_progress_snapshot()
-	for key: String in ["unique_clearance", "surface_clearance", "water_clearance", "extraction_clearance", "overall_clearance", "wet_recipe"]:
+	for key: String in ["unique_clearance", "surface_clearance", "water_clearance", "extraction_clearance", "overall_clearance", "wet_recipe", "wash_cycle", "wash_cycle_count"]:
 		check(progress.has(key), "Lightweight progress includes " + key)
 	check(snapshot.has("water") and snapshot.has("extracted") and snapshot.wet_recipe, "Full snapshots persist both wet masks and the recipe")
 	var extraction_before := soil.extraction_clearance()
@@ -86,7 +86,19 @@ func run() -> void:
 			var z := -1.65 + float(z_step) * 0.10
 			soil.apply_squeegee_stroke(Vector3(-1.15, 0.067, z), Vector3(1.15, 0.067, z), 0.08)
 	soil._process(0.0)
-	check(soil.extraction_clearance() >= 0.99 and soil.overall_clearance() >= 0.99, "A second extraction pass reaches perfect-clean eligibility")
+	check(soil.extraction_clearance() >= 0.99 and not soil.all_washes_complete() and soil.overall_clearance() < 0.5, "A second blade pass completes only the first wash cycle")
+	for cycle in [1, 2]:
+		check(soil.advance_wash_cycle() and soil.wash_cycle == cycle and soil.recommended_tool() == 2, "Completed extraction advances to hose cycle " + str(cycle + 1))
+		for contact in 30:
+			soil.apply_water_blob(Vector3(0.8, 0.067, 1.2), 0.19, 1.0)
+		check(soil.water_stage_complete(), "Corner-only watering finishes cycle " + str(cycle + 1))
+		for pass_index in 3:
+			for z_step in range(36):
+				var z := -1.75 + float(z_step) * 0.10
+				soil.apply_squeegee_stroke(Vector3(-1.3, 0.067, z), Vector3(1.3, 0.067, z), 0.08)
+		soil._process(0.0)
+		check(soil.extraction_stage_complete(), "Complete extraction cycle " + str(cycle + 1))
+	check(soil.all_washes_complete() and soil.overall_clearance() >= 0.99, "Three wash and extraction cycles reach perfect-clean eligibility")
 	check(soil.batch.get_instance_id() == pool_id and soil.wet_texture.get_instance_id() == wet_texture_id, "Wet cleaning reuses the dirt pool and texture allocation")
 	check(changed_signals >= 4, "Dry, water and extraction changes emit surface progress")
 

@@ -36,6 +36,8 @@ func make_soil() -> Node:
 	soil.extraction_values.fill(0.0)
 	soil.wet_mask = Image.create(Soil.MASK_SIZE.x, Soil.MASK_SIZE.y, false, Image.FORMAT_L8)
 	soil.wet_mask.fill(Color.WHITE)
+	soil.extraction_mask = Image.create(Soil.MASK_SIZE.x, Soil.MASK_SIZE.y, false, Image.FORMAT_L8)
+	soil.extraction_mask.fill(Color.BLACK)
 	for y in Soil.MASK_SIZE.y:
 		for x in Soil.MASK_SIZE.x:
 			var p := (Vector2(x + 0.5, y + 0.5) / Vector2(Soil.MASK_SIZE) - Vector2.ONE * 0.5) * Soil.RUG_HALF * 2.0
@@ -51,6 +53,8 @@ func reset_extraction(soil: Node, fully_extracted: bool = false) -> void:
 	soil.extraction_coverage_total = float(soil.surface_pixel_count) if fully_extracted else 0.0
 	soil.wet_mask.fill(Color.BLACK if fully_extracted else Color.WHITE)
 	soil.wet_mask_changed = false
+	soil.extraction_mask.fill(Color.WHITE if fully_extracted else Color.BLACK)
+	soil.extraction_mask_changed = false
 	soil.set_process(false)
 
 func heading(angle: float) -> Vector3:
@@ -150,6 +154,8 @@ func check_full_wet_preparation() -> void:
 	actual.surface_changed.connect(func(): events.surface += 1)
 	var image_id: int = actual.wet_mask.get_instance_id()
 	var texture_id: int = actual.wet_texture.get_instance_id()
+	var extraction_image_id: int = actual.extraction_mask.get_instance_id()
+	var extraction_texture_id: int = actual.extraction_texture.get_instance_id()
 	var pool_id: int = actual.batch.get_instance_id()
 	for sample in 12:
 		actual.reset()
@@ -157,29 +163,40 @@ func check_full_wet_preparation() -> void:
 		events.progress = 0
 		events.surface = 0
 		var start_us := Time.get_ticks_usec()
+		var cycle := sample % Soil.WASH_CYCLES
 		reference.prepare_water_stage()
-		reference.apply_water_blob(reference.rug_node.to_global(Vector3.ZERO), Soil.RUG_HALF.length() * 2.0, 1.0, 0.01)
+		# The reference uses actual landed supply. A large influence radius
+		# does not accelerate the new whole-carpet meter.
+		reference.wash_cycle = cycle
+		var contacts := 0
+		while not reference.water_stage_complete() and contacts < 32:
+			reference.apply_water_blob(reference.rug_node.to_global(Vector3(0.82, 0.067, 1.25)), 0.19, 1.0, 0.18)
+			contacts += 1
 		original.append(Time.get_ticks_usec() - start_us)
 		start_us = Time.get_ticks_usec()
-		actual.prepare_extraction_stage()
+		actual.prepare_extraction_stage(cycle)
 		optimized.append(Time.get_ticks_usec() - start_us)
+		var expected_contacts := ceili(Soil.WET_STAGE_TARGET / Soil.GLOBAL_WATER_GAIN - Soil.FRESH_WATER_BONUS * Soil.HOSE_PATCH_SATURATION * 0.5)
+		check(contacts == expected_contacts and reference.water_stage_complete(), "Repeated reference contact fully soaks the carpet at the tuned rate")
+		check(actual.wash_cycle == cycle and actual.make_snapshot().get("wash_cycle_count") == Soil.WASH_CYCLES, "Bulk preparation retains the requested wash and required cycle count")
+		check(actual.water_coverage_total == float(actual.surface_pixel_count), "Bulk preparation counts only supported surface despite uniform native buffer fills")
 		check(actual.water_values == reference.water_values, "Bulk preparation preserves full wet mask, sample %d" % sample)
 		check(actual.extraction_values == reference.extraction_values and actual.coverage_values == reference.coverage_values, "Bulk preparation preserves clear dry/extraction masks")
-		check(actual.wet_mask.get_data() == reference.wet_mask.get_data(), "Bulk preparation keeps empty rounded corners and fringe gaps dry")
+		check(actual.wet_mask.get_data() == reference.wet_mask.get_data(), "Bulk preparation matches whole-rug native wet bytes; silhouette clipping still excludes non-carpet support")
 		check(actual.make_progress_snapshot() == reference.make_progress_snapshot(), "Bulk preparation has identical stage/reward progress")
 		check(actual.credited == reference.credited and actual.cleared == reference.cleared and actual.growth == reference.growth and actual.remaining == 0, "Bulk preparation hides and credits existing dirt pool")
 		check(actual.recommended_tool() == 1 and not actual.is_physics_processing() and not actual.automatic_completion_enabled, "Bulk preparation selects extraction without automatic completion")
 		check(events.progress == 1 and events.surface == 0, "Bulk preparation emits progress once and defers surface upload")
 		actual._process(0.0)
 		check(events.surface == 1 and not actual.is_processing(), "Bulk preparation emits one surface update then sleeps")
-		check(actual.wet_mask.get_instance_id() == image_id and actual.wet_texture.get_instance_id() == texture_id and actual.batch.get_instance_id() == pool_id, "Bulk preparation retains image, GPU texture and clump pool")
+		check(actual.wet_mask.get_instance_id() == image_id and actual.wet_texture.get_instance_id() == texture_id and actual.batch.get_instance_id() == pool_id and actual.extraction_mask.get_instance_id() == extraction_image_id and actual.extraction_texture.get_instance_id() == extraction_texture_id, "Bulk preparation retains wet/extraction images, GPU textures and clump pool")
 	check(actual.make_snapshot() == reference.make_snapshot(), "Bulk preparation preserves complete save schema and bytes")
 	actual.apply_squeegee_stroke(Vector3(0, 0, 0), Vector3(0, 0, -0.05), 0.08)
 	check(actual.extraction_clearance() > 0.0, "Prepared carpet accepts normal squeegee extraction")
 	actual.prepare_water_stage()
 	check(actual.water_clearance() == 0.0 and actual.extraction_clearance() == 0.0, "Hose shortcut still dries the prepared carpet")
 	actual.prepare_extraction_stage()
-	check(actual.water_clearance() == 1.0 and actual.extraction_clearance() == 0.0, "Repeated preparation does not mutate cached full-water template")
+	check(actual.water_clearance() == 1.0 and actual.extraction_clearance() == 0.0, "Repeated preparation restores complete native water fills after resetting the lesson")
 	original.sort()
 	optimized.sort()
 	print("MASK_BENCH profile=gym_full_wet reference_median_us=%d current_median_us=%d reference_p95_us=%d current_p95_us=%d" % [original[6], optimized[6], original[11], optimized[11]])

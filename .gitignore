@@ -31,6 +31,23 @@ export_credentials.cfg
 /art/test-appdata/
 *.log
 
+# Generated ad previews, review captures, and video build artifacts.
+# Keep editable artwork, audio inputs, scripts, edit specs, and design notes.
+/design/marketing/ad_*/**/preview/
+/design/marketing/ad_*/**/previews/
+/design/marketing/ad_*/exports/
+/design/marketing/ad_*/stills/
+/design/marketing/ad_*/comparison/
+/design/marketing/ad_*/Review.html
+/design/marketing/ad_*/Ad_Preview.html
+/design/marketing/ad_preproduction_*/*.zip
+/design/marketing/ad_preproduction_*/Storyboard.png
+/design/marketing/ad_preproduction_*/Storyboard.svg
+/design/marketing/ad_preproduction_*/references/
+/design/marketing/ad_*/captions/*_gameplay_preview.png
+/design/marketing/ad_*/captions/qa_*.png
+/design/marketing/ad_*/captions/*_Contact.png
+
 # Local game saves; test saves inside .godot are already excluded above.
 neighborhood_shop_v*.json
 shop_test_*.json

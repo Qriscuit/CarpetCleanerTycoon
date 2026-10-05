@@ -48,7 +48,7 @@ func add_stores(state: Node, through: int) -> void:
 
 func wet_snapshot(extraction: float, water: float = 1.0, dry: float = 1.0) -> Dictionary:
 	return {"wet_recipe": true, "skip_dry_stage": true, "unique_clearance": dry, "surface_clearance": dry,
-		"water_clearance": water, "extraction_clearance": extraction}
+		"water_clearance": water, "extraction_clearance": extraction, "wash_cycle_count": 3.0, "wash_cycle": 2.0}
 
 func run() -> void:
 	check_thresholds()
@@ -77,15 +77,23 @@ func check_thresholds() -> void:
 	check(state.select_store(2), "Store 2 fixture is selectable")
 	job = state.start_job()
 	check(state.reward_for_current_job({"unique_clearance": 1.0, "surface_clearance": 1.0}) == 0, "Store 2 dry-only snapshots cannot skip watering and extraction")
-	for pair: Array in [[0.4999, 0], [0.5, 160], [0.9799, 160], [0.98, 320], [1.0, 320]]:
-		check(state.reward_for_current_job(wet_snapshot(pair[0])) == pair[1], "Wet 75%/99% overall tier at extraction " + str(pair[0]))
+	for pair: Array in [[0.7499, 0], [0.75, 160], [0.94, 160], [0.9899, 160], [0.99, 320], [1.0, 320]]:
+		check(state.reward_for_current_job(wet_snapshot(pair[0])) == pair[1], "Final-wash early/full overall tier at extraction " + str(pair[0]))
 	check(state.reward_for_current_job(wet_snapshot(1.0, 0.9899)) == 0, "Extraction cannot skip 99% water coverage")
-	check(state.reward_for_current_job(wet_snapshot(1.0, 1.0, 0.0)) == 320, "Store 2's dry metrics do not gate or dilute its two-stage reward")
+	for cycle in [0, 1]:
+		var unfinished := wet_snapshot(1.0)
+		unfinished.wash_cycle = cycle
+		check(state.reward_for_current_job(unfinished) == 0, "Complete extraction in wash " + str(cycle + 1) + " cannot pay before the third wash")
+	var legacy := wet_snapshot(0.5)
+	legacy.erase("wash_cycle")
+	legacy.erase("wash_cycle_count")
+	check(state.reward_for_current_job(legacy) == 160, "Legacy one-wash saves retain their already-earned early payout")
+	check(state.reward_for_current_job(wet_snapshot(1.0, 1.0, 0.0)) == 320, "Store 2's dry metrics do not gate or dilute its three-wash reward")
 	var forged := wet_snapshot(0.0)
 	forged.overall_clearance = 1.0
 	check(state.reward_for_current_job(forged) == 0, "Forged overall meter cannot finish an unextracted wet rug")
 	var starting_cash: int = state.cash
-	check(not state.complete_and_start_next_job(job, wet_snapshot(0.5)).is_empty() and state.cash == starting_cash + 160, "Store 2's exact 75% wet job commits the base reward")
+	check(not state.complete_and_start_next_job(job, wet_snapshot(0.75)).is_empty() and state.cash == starting_cash + 160, "Store 2's final extraction at 75% commits the base reward")
 	state.free()
 
 func check_independent_tracks() -> void:
@@ -193,6 +201,8 @@ func check_migration() -> void:
 	state.start_job()
 	var old_snapshot := wet_snapshot(0.5)
 	old_snapshot.erase("skip_dry_stage")
+	old_snapshot.erase("wash_cycle")
+	old_snapshot.erase("wash_cycle_count")
 	state.save_job_snapshot(old_snapshot)
 	var job: String = state.active_job_id
 	var snapshot: Dictionary = state.job_snapshot.duplicate(true)

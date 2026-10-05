@@ -1,11 +1,17 @@
 extends "res://scripts/workshop.gd"
-## Free, repeatable brush and wet-then-extract exercises.
+## Free, repeatable brush and three-wash carpet exercises.
 const GYM_HUD := preload("res://scenes/ui/gym_hud.tscn")
 const GymCamera = preload("res://scripts/gym_camera.gd")
+const PracticeCatalog = preload("res://scripts/rug_catalog.gd")
 var camera_oblique := false
+var practice_design_id := ""
+var _design_deck: Array[String] = []
+var _design_rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	practice_only = true
+	_design_rng.randomize()
+	_draw_practice_design()
 	# Swap the authored overlay explicitly: overriding an inherited instance
 	# in the scene file leaves its original CanvasLayer orphaned in Godot.
 	var old_hud := hud
@@ -19,6 +25,26 @@ func _ready() -> void:
 	_sync_wet_runtime_state()
 	set_hose_upgrade_level(hose_upgrade_level)
 	set_squeegee_upgrade(squeegee_upgrade_level, Progression.WET_POWERS[squeegee_upgrade_level])
+
+func _draw_practice_design() -> void:
+	# Browse the same complete catalog as paid jobs, independently of the
+	# player's unlocks. Finish one shuffled deck before repeating any design.
+	if _design_deck.is_empty():
+		_design_deck.assign(PracticeCatalog.IDS)
+		for index in range(_design_deck.size() - 1, 0, -1):
+			var other := _design_rng.randi_range(0, index)
+			var id := _design_deck[index]
+			_design_deck[index] = _design_deck[other]
+			_design_deck[other] = id
+		if _design_deck.size() > 1 and _design_deck.back() == practice_design_id:
+			var id := _design_deck[0]
+			_design_deck[0] = _design_deck[-1]
+			_design_deck[-1] = id
+	practice_design_id = _design_deck.pop_back()
+	var definition: Resource = load(PracticeCatalog.definition_path(practice_design_id))
+	# Modes share a design while keeping their resource instances local to this
+	# practice session; the catalog resources and paid job are never modified.
+	rugs.assign([definition.duplicate(), definition.duplicate()])
 
 func bind_ui() -> void:
 	super.bind_ui()
@@ -69,6 +95,8 @@ func set_squeegee_upgrade(level: int, power: float) -> void:
 
 func select_rug(index: int) -> void:
 	if index < 0 or index >= rugs.size() or leaving_scene: return
+	_dismiss_completion_reveal()
+	_resumed_rug = false
 	end_stroke()
 	_cancel_wet_runtime_effects()
 	squeegee_motion.reset()
@@ -93,6 +121,7 @@ func select_rug(index: int) -> void:
 	soil.set_reveal_progress(1.0)
 	soil.suspend_simulation(false)
 	rug_phase = RugPhase.CLEANING
+	hud.set_practice_design(PracticeCatalog.display_name(practice_design_id))
 	hud.set_practice_rug(index)
 	for i in rug_buttons.size():
 		rug_buttons[i].set_pressed_no_signal(i == index)
@@ -103,6 +132,7 @@ func select_rug(index: int) -> void:
 	select_tool(0 if index == 0 else 2)
 	update_contract_status()
 	frame_carpet()
+	_capture_rug_before()
 
 func select_tool(index: int) -> void:
 	if selected_rug == 0 and index != 0: return
@@ -122,27 +152,21 @@ func _on_practice_tool_pressed(index: int) -> void:
 	# second tap on the equipped tool. Internal selection/auto-advance must not
 	# refill or drain the carpet. Reset also discards water still in flight,
 	# passive soak and extraction VFX while retaining the camera and hose tier.
-	reset_rug()
+	# Setup shortcuts refill/drain the current design. Only Reset draws a new
+	# catalog carpet, so switching between wet tools keeps the same artwork.
+	select_rug(selected_rug)
 	if index == 1:
 		# This shortcut fills every carpet pixel uniformly. Use the cached exact
 		# silhouette instead of a 106k-pixel geometric paint on the input frame.
 		soil.prepare_extraction_stage()
+		_capture_rug_before()
 		select_tool(1)
 	update_contract_status()
 
 func reset_rug() -> void:
 	if leaving_scene: return
-	squeegee_motion.reset()
-	super.reset_rug()
-	if selected_rug == 1:
-		soil.prepare_water_stage()
-	soil.batch_node.visible = selected_rug == 0
-	_cancel_wet_runtime_effects()
-	_sync_wet_runtime_state()
-	select_tool(0 if selected_rug == 0 else 2)
-	hud.set_practice_rug(selected_rug)
-	hud.set_practice_tool(selected_tool)
-	update_contract_status()
+	_draw_practice_design()
+	select_rug(selected_rug)
 
 func update_contract_status() -> void:
 	if selected_rug == 1 and is_instance_valid(water) and state_label != null:
@@ -156,9 +180,9 @@ func update_contract_status() -> void:
 		progress_bar.value = stage_fraction * 100.0
 		progress_fill.bg_color = color
 		progress_fill.shadow_color = Color(color, 0.42)
-		dirty = not soil.extraction_stage_complete()
+		dirty = not soil.all_washes_complete()
 		water.set_emission_locked(ready)
-		hud.set_wet_progress(wet_fraction, extraction_fraction, ready)
+		hud.set_wet_progress(wet_fraction, extraction_fraction, ready, soil.wash_cycle + 1, soil.WASH_CYCLES, soil.all_washes_complete())
 		finish_button.hide()
 		finish_button.disabled = true
 		return
@@ -168,11 +192,14 @@ func _tool_arrival_finished() -> void:
 	if leaving_scene: return
 	rug_phase = RugPhase.CLEANING
 	soil.suspend_simulation(false)
+	_capture_rug_before()
 	select_tool(0 if selected_rug == 0 else soil.recommended_tool())
 	update_contract_status()
 
 func next_rug() -> void:
 	if leaving_scene or next_job_pending or not soil.vacuum_complete or not contract_finished: return
+	_dismiss_completion_reveal()
+	_resumed_rug = false
 	_cancel_wet_runtime_effects()
 	# Completion repeats this exercise; changing exercises is always explicit.
 	next_job_pending = true
@@ -192,6 +219,7 @@ func next_rug() -> void:
 
 func frame_carpet() -> void:
 	super.frame_carpet()
+	if rug_phase == RugPhase.REVEAL: return
 	if not is_instance_valid(hud) or not hud.has_method("rug_view_rect"): return
 	var viewport_size := get_viewport().get_visible_rect().size
 	var space: Rect2 = hud.rug_view_rect()

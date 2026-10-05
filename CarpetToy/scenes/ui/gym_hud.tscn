@@ -141,6 +141,7 @@ mouse_filter = 2
 theme_override_colors/font_color = Color(0.16, 0.3, 0.35, 1)
 theme_override_font_sizes/font_size = 22
 text = "Practice gym"
+text_overrun_behavior = 3
 
 [node name="GymDescription" type="Label" parent="HUD/GymPracticePanel"]
 unique_name_in_owner = true
@@ -186,7 +187,7 @@ theme_override_styles/focus = SubResource("PracticeFocus")
 toggle_mode = true
 button_pressed = true
 button_group = SubResource("RugGroup")
-text = "Rug 1 · Brush"
+text = "Brush practice"
 
 [node name="GymRug2" type="Button" parent="HUD/GymPracticePanel"]
 unique_name_in_owner = true
@@ -207,7 +208,7 @@ theme_override_styles/hover_pressed = SubResource("PracticeSelected")
 theme_override_styles/focus = SubResource("PracticeFocus")
 toggle_mode = true
 button_group = SubResource("RugGroup")
-text = "Rug 2 · Wet tools"
+text = "Wet practice"
 
 [node name="GymBrush" type="Button" parent="HUD/GymPracticePanel"]
 unique_name_in_owner = true
@@ -291,7 +292,8 @@ theme_override_styles/normal = SubResource("PracticeNormal")
 theme_override_styles/hover = SubResource("PracticeHover")
 theme_override_styles/pressed = SubResource("PracticeSelected")
 theme_override_styles/focus = SubResource("PracticeFocus")
-text = "Reset rug"
+text = "Reset carpet"
+tooltip_text = "Replace this carpet with a random design from any level."
 
 [node name="GymHoseUpgrades" type="Control" parent="HUD/GymPracticePanel"]
 unique_name_in_owner = true

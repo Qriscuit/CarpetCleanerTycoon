@@ -6,10 +6,20 @@ const Impact := preload("res://scripts/water_jet_impact.gd")
 const Trail := preload("res://scripts/squeegee_water_trail.gd")
 const HEAD_HALF := Vector2(0.34, 0.075)
 const REFERENCE_AREA_RATE := 0.65
+# Each rinse removes less soil. Shared hose materials keep their blue defaults.
+const WASH_PALETTES := [
+	{"name": "muddy", "water": Color(0.27, 0.13, 0.04), "crest": Color(0.53, 0.34, 0.16),
+		"drop_rim": Color(0.53, 0.34, 0.16), "runoff": Color(0.24, 0.10, 0.025), "runoff_accent": Color(0.45, 0.25, 0.08)},
+	{"name": "rinse", "water": Color(0.55, 0.33, 0.12), "crest": Color(0.79, 0.60, 0.32),
+		"drop_rim": Color(0.79, 0.60, 0.32), "runoff": Color(0.46, 0.29, 0.11), "runoff_accent": Color(0.64, 0.46, 0.23)},
+	{"name": "clean", "water": Color(0.20, 0.76, 0.83), "crest": Color(0.72, 0.97, 0.96),
+		"drop_rim": Color(0.65, 0.91, 0.97), "runoff": Color(0.16, 0.69, 0.79), "runoff_accent": Color(0.40, 0.84, 0.88)},
+]
 
 @export_range(0.06, 0.24, 0.005) var splash_reach := 0.17
 @export_range(0.025, 0.11, 0.005) var splash_height := 0.085
 
+var wash_cycle := 0
 var impact: Node3D
 var trail: Node3D
 var footprint: RefCounted
@@ -49,6 +59,24 @@ func setup(rug_footprint: RefCounted, surface_pixels: PackedByteArray, mask_size
 		add_child(trail)
 		trail.setup(soil, surface_texture)
 	reset()
+	_apply_wash_palette()
+
+func set_wash_cycle(cycle_index: int) -> void:
+	var next_cycle := clampi(cycle_index, 0, WASH_PALETTES.size() - 1)
+	if next_cycle == wash_cycle:
+		return
+	wash_cycle = next_cycle
+	_apply_wash_palette()
+
+func _apply_wash_palette() -> void:
+	var palette: Dictionary = WASH_PALETTES[wash_cycle]
+	if is_instance_valid(impact):
+		impact.patch_material.set_shader_parameter("water_tint", palette.water)
+		impact.patch_material.set_shader_parameter("water_highlight", palette.crest)
+		impact.droplet_material.set_shader_parameter("water_tint", palette.water)
+		impact.droplet_material.set_shader_parameter("water_highlight", palette.drop_rim)
+	if is_instance_valid(trail):
+		trail.set_water_palette(palette.water, palette.crest, palette.runoff, palette.runoff_accent)
 
 func set_enabled(value: bool) -> void:
 	reset()
@@ -116,6 +144,7 @@ func _process(delta: float) -> void:
 func debug_stats() -> Dictionary:
 	var stats: Dictionary = impact.debug_stats() if is_instance_valid(impact) else {}
 	return {
+		"wash_cycle": wash_cycle, "water_palette": WASH_PALETTES[wash_cycle].name,
 		"active_sheets": 0, # Explicit regression guard: never recreate the old column.
 		"active_splashes": int(is_instance_valid(impact) and impact.patch.visible),
 		"feeding_splashes": int(feeding),

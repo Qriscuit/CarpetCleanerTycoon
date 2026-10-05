@@ -1,0 +1,216 @@
+{
+  "status": "preproduction_not_footage",
+  "canvas": [
+    1080,
+    1920
+  ],
+  "duration_seconds": 15,
+  "editorial_fps": 30,
+  "google_play_url": null,
+  "google_play_status": "Availability confirmed by user; URL and public-build match pending",
+  "guide": {
+    "x": 96,
+    "y": 300,
+    "width": 804,
+    "height": 920,
+    "official": false
+  },
+  "source_note": "Existing 390x844 renderer test stills. Cropped with uniform scale; no gameplay recorded. Full-clean reference states are staged fixtures.",
+  "shots": [
+    {
+      "id": "01",
+      "start": 0,
+      "end": 2,
+      "title": "Find the fox",
+      "take": "A",
+      "overlay": "hook_discovery.svg",
+      "ref": "fox_partial",
+      "crop": [
+        35,
+        175,
+        330,
+        586.6667
+      ],
+      "copy": "Find the fox.",
+      "action": "Open already brushing. A real late pass reveals an eye or muzzle.",
+      "motion": "Keep the brush head and the changing soil boundary together in the centre of the frame.",
+      "sound": "Live cloth + dirt scrape from frame one. Quiet music underneath.",
+      "note": "The reference is a partial-clean test still. The final hook needs a new take with the head beside the face.",
+      "lines": [
+        "Start mid-stroke.",
+        "Expose eye / muzzle.",
+        "Keep the contact visible."
+      ],
+      "frame_file": "preview/shot_01.png",
+      "in_frame": 0,
+      "out_frame_exclusive": 60
+    },
+    {
+      "id": "02",
+      "start": 2,
+      "end": 5,
+      "title": "Make the change",
+      "take": "B",
+      "overlay": "process.svg",
+      "ref": "fox_partial",
+      "crop": [
+        0,
+        148,
+        390,
+        693.3333
+      ],
+      "copy": "Brush. Reveal.",
+      "action": "Two useful passes, with a clear cut forward to later progress on this Fox.",
+      "motion": "One continuous normal-speed stroke, then a visible edit. No accelerated wipe.",
+      "sound": "Contact sound starts and stops with the visible tool.",
+      "note": "Same partial-clean reference for composition; the edited progression is still to be filmed.",
+      "lines": [
+        "Same Fox. Same brush.",
+        "Two adjacent lanes.",
+        "Visible progress cut."
+      ],
+      "frame_file": "preview/shot_02.png",
+      "in_frame": 60,
+      "out_frame_exclusive": 150
+    },
+    {
+      "id": "03",
+      "start": 5,
+      "end": 7.2,
+      "title": "Finish the last patch",
+      "take": "C",
+      "overlay": null,
+      "ref": "fox_clean",
+      "crop": [
+        0,
+        135,
+        390,
+        693.3333
+      ],
+      "copy": "No added copy",
+      "action": "Final effective movement, then the actual 1.8-second suction and 99% polish.",
+      "motion": "Record from before completion. Let the engine finish naturally.",
+      "sound": "Brush lifts; leave some breathing room. No invented vacuum effect.",
+      "note": "This still shows the target result, not the missing final-patch or suction footage.",
+      "lines": [
+        "Cross 99% in play.",
+        "Keep real suction.",
+        "No added text."
+      ],
+      "frame_file": "preview/shot_03.png",
+      "in_frame": 150,
+      "out_frame_exclusive": 216
+    },
+    {
+      "id": "04",
+      "start": 7.2,
+      "end": 9.5,
+      "title": "Enjoy the reveal",
+      "take": "C",
+      "overlay": "reveal.svg",
+      "ref": "fox_clean",
+      "crop": [
+        0,
+        135,
+        390,
+        693.3333
+      ],
+      "copy": "Fresh again.",
+      "action": "Give the clean Fox 2.3 seconds of the real reveal. No distracting new feature.",
+      "motion": "Hold the framing still. This follows shot 03 in the same source take.",
+      "sound": "One restrained completion cue at 7.2s; allow the tail to resolve.",
+      "note": "Renderer fixture confirms the look. Capture a genuine completed job for the ad.",
+      "lines": [
+        "Same uninterrupted take.",
+        "Clean Fox gets room.",
+        "One completion cue."
+      ],
+      "frame_file": "preview/shot_04.png",
+      "in_frame": 216,
+      "out_frame_exclusive": 285
+    },
+    {
+      "id": "05",
+      "start": 9.5,
+      "end": 12,
+      "title": "Want the next one",
+      "take": "E + F",
+      "overlay": "next_rug.svg",
+      "ref": "mint_clean",
+      "crop": [
+        0,
+        135,
+        390,
+        693.3333
+      ],
+      "copy": "What’s under the next one?",
+      "action": "Mint for 1.25 seconds, then Sunburst for 1.25 seconds.",
+      "motion": "Match the rug size and angle. Simple cuts make them separate restorations.",
+      "sound": "Quiet continuous music, with no repeated reward noise.",
+      "note": "Both are real designs. These test stills will be replaced by newly recorded full-clean reveals.",
+      "lines": [
+        "Mint → Sunburst.",
+        "1.25 seconds each.",
+        "A new discovery."
+      ],
+      "frame_file": "preview/shot_05.png",
+      "in_frame": 285,
+      "out_frame_exclusive": 360
+    },
+    {
+      "id": "06",
+      "start": 12,
+      "end": 15,
+      "title": "Give a clear next step",
+      "take": "G",
+      "overlay": "endcard.svg",
+      "ref": "fox_clean",
+      "crop": [
+        25,
+        174,
+        340,
+        548
+      ],
+      "copy": "Carpet Cleaner · Play now · On Google Play",
+      "action": "Keep the game name and play prompt readable for three seconds.",
+      "motion": "A clean Fox frame sits inside the vector card. A deliberate end-card hold is allowed.",
+      "sound": "Let the music resolve and fade gently. No voice-over required.",
+      "note": "Google Play availability is confirmed by the user. The exact listing URL and public-build match are pending.",
+      "lines": [
+        "A steady three seconds.",
+        "Real restored rug insert.",
+        "Google Play destination."
+      ],
+      "frame_file": "preview/shot_06.png",
+      "in_frame": 360,
+      "out_frame_exclusive": 450
+    }
+  ],
+  "optional_25s": [
+    {
+      "start": 0,
+      "end": 9.5,
+      "beat": "Same hook, work and reveal"
+    },
+    {
+      "start": 9.5,
+      "end": 12.5,
+      "beat": "Real 80-coin Wide brush purchase"
+    },
+    {
+      "start": 12.5,
+      "end": 18.5,
+      "beat": "Real 44% wider lane proof"
+    },
+    {
+      "start": 18.5,
+      "end": 22,
+      "beat": "Pattern discovery montage"
+    },
+    {
+      "start": 22,
+      "end": 25,
+      "beat": "Title and Google Play CTA"
+    }
+  ]
+}

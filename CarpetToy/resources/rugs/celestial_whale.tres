@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/rug_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/carpet/patterns/celestial_whale.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+rug_id = "celestial_whale"
+display_name = "Celestial Whale"
+cleaning_hint = "Brush / ten passes\nUncover the whale among the stars beneath the dark soil."
+pattern_texture = ExtResource("2")
+pile_color = Color(1, 1, 1, 1)
+binding_color = Color(0.10, 0.14, 0.30, 1)
+fringe_color = Color(0.81, 0.84, 0.87, 1)
+dust_strength = 0.94
+removal_per_pass = 0.1
+

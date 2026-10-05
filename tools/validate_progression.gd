@@ -64,7 +64,7 @@ func complete(state: Node, use_final: bool = true) -> bool:
 	if use_final: state.note_current_tool_used()
 	var snapshot := {"unique_clearance": 1.0, "surface_clearance": 1.0}
 	if state.active_store >= 2:
-		snapshot.merge({"wet_recipe": true, "water_clearance": 1.0, "extraction_clearance": 1.0})
+		snapshot.merge({"wet_recipe": true, "water_clearance": 1.0, "extraction_clearance": 1.0, "wash_cycle_count": 3, "wash_cycle": 2})
 		if state.active_store == 2: snapshot.skip_dry_stage = true
 	return not state.complete_and_start_next_job(id, snapshot).is_empty()
 
@@ -141,9 +141,9 @@ func run() -> void:
 	check(state.open_next_store() and state.active_store == 3, "Wet store opens only after its preceding store's goals")
 	state.start_job()
 	check(state.reward_for_current_job({"unique_clearance": 1.0, "surface_clearance": 1.0}) == 0, "Wet jobs cannot pay from dry-only snapshots")
-	check(state.reward_for_current_job({"wet_recipe": true, "unique_clearance": 1.0, "surface_clearance": 1.0, "water_clearance": 1.0, "extraction_clearance": 0.55}) == 1280, "Wet early reward follows the validated three-stage meter")
-	check(state.reward_for_current_job({"wet_recipe": true, "unique_clearance": 0.5, "surface_clearance": 1.0, "water_clearance": 1.0, "extraction_clearance": 1.0, "overall_clearance": 1.0}) == 0, "Out-of-sequence wet progress and forged overall meters cannot pay")
-	check(state.reward_for_current_job({"wet_recipe": true, "unique_clearance": 1.0, "surface_clearance": 1.0, "water_clearance": 1.0, "extraction_clearance": 1.0}) == 2560, "Wet full reward remains exactly double")
+	check(state.reward_for_current_job({"wet_recipe": true, "unique_clearance": 1.0, "surface_clearance": 1.0, "water_clearance": 1.0, "extraction_clearance": 0.75, "wash_cycle_count": 3, "wash_cycle": 2}) == 1280, "Wet early reward requires the third wash and its extraction threshold")
+	check(state.reward_for_current_job({"wet_recipe": true, "unique_clearance": 0.5, "surface_clearance": 1.0, "water_clearance": 1.0, "extraction_clearance": 1.0, "wash_cycle_count": 3, "wash_cycle": 2, "overall_clearance": 1.0}) == 0, "Out-of-sequence wet progress and forged overall meters cannot pay")
+	check(state.reward_for_current_job({"wet_recipe": true, "unique_clearance": 1.0, "surface_clearance": 1.0, "water_clearance": 1.0, "extraction_clearance": 1.0, "wash_cycle_count": 3, "wash_cycle": 2}) == 2560, "Wet full reward remains exactly double")
 	state = reload_state(state)
 	check(state.active_store == 3 and state.stores.size() == 3 and state.progression_view().global_tool_tier == 4, "All stores, selection and permanent tools survive reload")
 	fund(state, 5000000)

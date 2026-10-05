@@ -190,6 +190,12 @@ func run() -> void:
 	prepare()
 	soil.extraction_values = soil.water_values.duplicate()
 	soil.extraction_coverage_total = soil.water_coverage_total
+	soil.wet_mask.fill(Color.BLACK)
+	for index in soil.extraction_values.size():
+		var extracted: float = soil.extraction_values[index]
+		soil.extraction_mask.set_pixel(index % soil.MASK_SIZE.x, index / soil.MASK_SIZE.x, Color(extracted, extracted, extracted))
+	soil.wet_mask_changed = true
+	soil.extraction_mask_changed = true
 	step(Vector3(0, 0.067, 0.1), Vector3(0, 0.067, 0))
 	check(water.emitted_strokes == 0, "Dry carpet cannot emit new splash")
 	prepare()
@@ -220,13 +226,18 @@ func run() -> void:
 		water._process(1.0 / 60.0)
 		water.set_process(false)
 	check(water.emitted_strokes > 0 and water.debug_stats().active_edges == 4, "Real screen-space drag drives four-edge splashing")
+	# The current focus policy resets both wet-effect controllers immediately.
+	# It must preserve the earned extraction and fresh carpet appearance.
+	var before_focus_snapshot: Dictionary = soil.make_snapshot()
 	game._notification(Node.NOTIFICATION_APPLICATION_FOCUS_OUT)
 	check(not game.brush_dragging and not water.feeding, "Focus loss stops splash supply")
+	check(not water.impact.is_alive() and not water.trail.is_alive() and not water.is_processing(), "Focus loss clears transient wet effects immediately")
+	check(soil.make_snapshot() == before_focus_snapshot, "Focus loss preserves earned wetness, extraction and cleaning progress")
 	water.set_process(true)
 	await create_timer(1.0).timeout
-	check(not water.impact.is_alive() and water.trail.is_alive(), "Focus loss stops head splashing while the existing ridge lingers")
+	check(not water.impact.is_alive() and not water.trail.is_alive(), "Cleared wet effects cannot reappear after focus loss")
 	advance(11.0)
-	check(not water.is_processing() and not water.trail.is_alive(), "Existing ridge also retires after focus loss")
+	check(not water.is_processing() and not water.trail.is_alive(), "Focus-loss reset leaves no lingering background wet effects")
 	for rate in [30.0, 60.0, 120.0]:
 		water.reset()
 		water.feed_stroke(Vector3.ZERO, Vector3.FORWARD * 0.6 / rate, 1.0 / rate, 0.3 / water.pixel_area / rate)

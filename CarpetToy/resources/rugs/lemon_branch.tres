@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/rug_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/carpet/patterns/lemon_branch.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+rug_id = "lemon_branch"
+display_name = "Lemon Afternoon"
+cleaning_hint = "Brush / ten passes\nUncover the sunlit lemon branch beneath the dark soil."
+pattern_texture = ExtResource("2")
+pile_color = Color(1, 1, 1, 1)
+binding_color = Color(0.35, 0.39, 0.22, 1)
+fringe_color = Color(0.94, 0.90, 0.79, 1)
+dust_strength = 0.94
+removal_per_pass = 0.1
+

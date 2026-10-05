@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/rug_definition.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/carpet/patterns/playful_fox.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+rug_id = "playful_fox"
+display_name = "Fox's Den"
+cleaning_hint = "Brush / ten passes\nUncover the playful fox beneath the dark soil."
+pattern_texture = ExtResource("2")
+pile_color = Color(1, 1, 1, 1)
+binding_color = Color(0.10, 0.20, 0.29, 1)
+fringe_color = Color(0.89, 0.82, 0.66, 1)
+dust_strength = 0.94
+removal_per_pass = 0.1

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" role="img" aria-labelledby="title desc"><title id="title">endcard</title><desc id="desc">Full background title/CTA. Root compositor overlays hero footage at x365 y505 w350 h565. Empty central artwork space. Copy: CARPET
+CLEANER
+Play now
+On Google Play</desc><rect width="1080" height="1920" fill="#FFF5DD"/>
+<path d="M0 0H1080V154C891 209 750 121 600 164C391 224 245 157 0 240Z" fill="#BDE0C3"/>
+<path d="M0 1560C251 1419 552 1610 738 1528C855 1476 944 1472 1080 1496V1920H0Z" fill="#BDE0C3"/>
+<path d="M0 1684C206 1590 412 1747 675 1664C853 1608 938 1673 1080 1635" fill="none" stroke="#FFF5DD" stroke-width="20"/>
+<text x="540" y="365" font-family="Arial" font-size="110" font-weight="700" text-anchor="middle" fill="#234D40" >CARPET</text>
+<text x="540" y="469" font-family="Arial" font-size="110" font-weight="700" text-anchor="middle" fill="#234D40" >CLEANER</text>
+<rect x="230" y="1100" width="620" height="115" rx="35" fill="#234D40"/>
+<text x="540" y="1156" font-family="Arial" font-size="48" font-weight="700" text-anchor="middle" fill="#FFF5DD" >Play now</text>
+<text x="540" y="1190" font-family="Arial" font-size="25" font-weight="400" text-anchor="middle" fill="#FFF5DD" >On Google Play</text></svg>
