@@ -45,7 +45,7 @@ func run() -> void:
 		quit(2)
 		return
 	var state := root.get_node("ShopState")
-	state.cash = 2000
+	state.cash = state.build_cost("bonzi") + state.build_cost("bonzi_mk2") + state.build_cost("intake") + 2000.0
 	state.manual_jobs = 10
 	state.stores["1"].manual_jobs = 10
 	state._refresh_blueprints()

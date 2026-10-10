@@ -1,6 +1,7 @@
 @tool
 extends Control
 const Routes = preload("res://scripts/scene_routes.gd")
+const Money = preload("res://scripts/money.gd")
 ## Scenes own presentation. This controller binds data and routes user intent only.
 @export_enum("Shop", "Items", "Blueprints", "Bonzi", "Future shop") var editor_page := 0:
 	set(value):
@@ -110,12 +111,12 @@ func _format(node: Node, values: Dictionary) -> void:
 
 func refresh_state() -> void:
 	var values := {
-		"cash": state.cash, "manual_jobs": state.manual_jobs, "automated_jobs": state.automated_jobs,
-		"income": roundi(state.output_per_hour() * 10), "orders": roundi(state.output_per_hour()),
+		"cash": Money.format(state.cash), "manual_jobs": state.manual_jobs, "automated_jobs": state.automated_jobs,
+		"income": Money.format(roundf(state.output_per_hour() * 10.0)), "orders": roundi(state.output_per_hour()),
 		"demand": roundi(state.demand_per_hour()), "capacity": roundi(state.capacity_per_hour()),
-		"bottleneck": state.bottleneck(), "return_reward": state.return_reward,
-		"bonzi_rugs_left": maxi(3 - state.manual_jobs, 0), "bonzi_shortfall": maxi(100 - state.cash, 0),
-		"bonzi_jobs_left": ceili(float(maxi(100 - state.cash, 0)) / 20.0),
+		"bottleneck": state.bottleneck(), "return_reward": Money.format(state.return_reward),
+		"bonzi_rugs_left": maxi(3 - state.manual_jobs, 0), "bonzi_shortfall": Money.format(maxf(100.0 - state.cash, 0.0)),
+		"bonzi_jobs_left": Money.format(ceilf(maxf(100.0 - state.cash, 0.0) / 20.0)),
 		"wide_rugs_left": maxi(8 - state.manual_jobs, 0)}
 	for node in templates:
 		if node in [%PurchaseTitle, %PurchaseBenefit, %PurchaseTotalsText, %ConfirmBuildButton, %DeliveryTime]: continue
@@ -186,8 +187,8 @@ func _refresh_purchase() -> void:
 			title = item.find_child("ItemTitle", true, false).text
 			benefit = item.find_child("Benefit", true, false).text
 			break
-	var values := {"item": title, "benefit": benefit, "cost": state.build_cost(pending_item),
-		"remaining": state.cash - state.build_cost(pending_item)}
+	var values := {"item": title, "benefit": benefit, "cost": Money.format(state.build_cost(pending_item)),
+		"remaining": Money.format(state.cash - state.build_cost(pending_item))}
 	for node in [%PurchaseTitle, %PurchaseBenefit, %PurchaseTotalsText, %ConfirmBuildButton]:
 		_format(node, values)
 	%ConfirmBuildButton.disabled = not state.blueprint_known(pending_item) or state.cash < state.build_cost(pending_item)

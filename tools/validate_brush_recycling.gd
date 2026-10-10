@@ -1,9 +1,10 @@
 extends SceneTree
-## Real ten-pass extraction plus bounded, demand-only pool reclamation/save cases.
+## Ten-pass extraction, natural disappearance, permanent credit and bounded reuse.
 var checks := 0
 var failures := 0
 var soil: Node
 var rug: Node3D
+var removal_events := 0
 
 func check(value: bool, message: String) -> void:
 	checks += 1
@@ -14,6 +15,10 @@ func check(value: bool, message: String) -> void:
 func _initialize() -> void:
 	if "--shop-test" not in OS.get_cmdline_user_args():
 		push_error("Use -- --shop-test to keep player saves isolated")
+		quit(2)
+		return
+	if DisplayServer.get_name() == "headless":
+		push_error("Brush recycling needs the real renderer for authored MultiMesh clump radii")
 		quit(2)
 		return
 	call_deferred("run")
@@ -41,6 +46,7 @@ func floor_fixture(supply: int) -> void:
 		soil.growth[i] = 1.0
 		soil.awakened[i] = true
 		if i < supply:
+			soil.retired_credits[i] = true
 			soil.growth[i] = 0.0
 			soil.awakened[i] = false
 			soil.recycled[i] = true
@@ -48,6 +54,7 @@ func floor_fixture(supply: int) -> void:
 			soil.free_slots.append(i)
 		else:
 			soil.floor_debris.append(i)
+	soil.retired_credit_count = supply
 
 func run() -> void:
 	rug = Node3D.new()
@@ -59,6 +66,7 @@ func run() -> void:
 	root.add_child(soil)
 	soil.automatic_completion_enabled = false
 	soil.setup(rug)
+	soil.cleaning_material_removed.connect(func(): removal_events += 1)
 	var pool_id: int = soil.batch.get_instance_id()
 	var mesh_id: int = soil.batch.mesh.get_instance_id()
 	var node_id: int = soil.batch_node.get_instance_id()
@@ -92,9 +100,6 @@ func run() -> void:
 	check(immediate and soil.render_dirty and not soil.active.is_empty(), "Original dirt is fully visible and scheduled to render during brush contact, before physics")
 	soil._process(0.0)
 	check(soil.batch.visible_instance_count > 25, "New contact dirt reaches the GPU batch without waiting for a physics tick")
-	advance(10.0)
-	check(soil.timed_debris.is_empty() and soil.recycled.count(true) == 0 and not soil.floor_debris.is_empty(), "First-pass floor dirt stays visible after ten idle seconds")
-	check(not soil.is_physics_processing(), "Retained settled dirt needs no idle physics")
 	var supply_after_first: int = soil.free_slots.size()
 	swipe()
 	var borrowed := false
@@ -103,86 +108,114 @@ func run() -> void:
 		if soil.awakened[i] and absf(soil.positions[i].x) < 0.1:
 			borrowed = true
 			borrowed_slot = i
-	check(borrowed and soil.free_slots.size() < supply_after_first, "A second dirty pass borrows unused slots from outside its stripe")
+	check(borrowed and soil.free_slots.size() < supply_after_first, "A second dirty pass borrows unused slots before the earlier contact settles")
 	if borrowed_slot >= 0:
 		check(soil.growth[borrowed_slot] == 1.0 and soil.render_dirty, "Borrowed clump appears at full size in the brush's input event")
 		var contact_position: Vector3 = soil.positions[borrowed_slot]
 		soil._physics_process(1.0 / 60.0)
 		check(soil.positions[borrowed_slot] != contact_position, "Borrowed dirt moves on the first physics tick instead of growing in place")
-	check(soil.timed_debris.is_empty(), "Pool with ample supply does not reclaim old floor dirt")
-	for pass_index in 5:
+	check(soil.timed_debris.is_empty(), "Airborne contact cannot disappear or grant retirement credit prematurely")
+	check(soil.retired_credit_count == 0 and removal_events == 0,"Birth and brush contact alone cannot count as removed dirt")
+	advance(10.0)
+	check(soil.timed_debris.is_empty() and soil.floor_debris.is_empty() and soil.recycled.count(true) > 0, "Settled outside clumps naturally disappear and return their slots")
+	check(soil.retired_credit_count == soil.retired_credits.count(true) and soil.retired_credit_count > 0 and removal_events > 0,"Natural disappearance emits removal and retires each original credit once")
+	check(not soil.is_physics_processing(), "Finished natural fades need no idle physics")
+	for pass_index in 6:
 		swipe()
 	check(soil.free_slots.is_empty(), "Repeated extraction can draw the entire available pool before reuse")
-	check(soil.make_snapshot().pending_emissions.is_empty() and soil.timed_debris.size() <= soil.DEBRIS_POOL_BUFFER, "Full-pool fading is bounded and no delayed births are queued")
+	check(soil.make_snapshot().pending_emissions.is_empty() and soil.timed_debris.size() <= soil.batch.instance_count, "Natural fades stay within the fixed pool and no delayed births are queued")
 	check(soil.remaining == soil.credited.count(false), "Borrowing visual identities preserves the one-time progress ledger")
 	# Actual dirty strokes, not a test call to the reclamation helper, cause pressure.
 	floor_fixture(64)
+	# A saved retained floor now resumes all eligible clumps' natural timers;
+	# its64 previously retired slots remain immediately available to contact.
+	check(soil.restore_snapshot(JSON.parse_string(JSON.stringify(soil.make_snapshot()))),"Retained-floor fixture resumes through the production JSON loader")
+	check(soil.timed_debris.size() == 496 and soil.floor_debris.is_empty(),"Every eligible retained clump resumes a natural fade without new brush demand")
 	soil.begin_pass()
 	soil.stroke(Vector3(0, 0.067, -1.9), Vector3(0, 0.067, 1.9), 0.2)
-	check(soil.free_slots.is_empty() and soil.timed_debris.size() == 64 and soil.make_snapshot().pending_emissions.is_empty(), "New dirt uses the reserve and starts reclamation without queueing late births")
+	check(soil.free_slots.is_empty() and soil.timed_debris.size() == 496 and soil.make_snapshot().pending_emissions.is_empty(), "New dirt uses the reserve while bounded natural fades finish without queueing late births")
 	var fading: int = soil.timed_debris[0]
 	var born: int = soil.awakened.count(true)
 	soil.stroke(Vector3(0, 0.067, -1.9), Vector3(0, 0.067, 1.9), 0.2)
 	check(soil.awakened.count(true) == born and soil.make_snapshot().pending_emissions.is_empty(), "Duplicate same-pass events cannot manufacture extra extraction requests")
 	soil.end_pass()
 	advance(0.30)
-	check(soil._visible_debris_growth(fading) > 0.0 and soil._visible_debris_growth(fading) < 1.0, "Pressure-selected old clump shrinks smoothly")
+	check(soil._visible_debris_growth(fading) > 0.0 and soil._visible_debris_growth(fading) < 1.0, "A naturally retiring clump shrinks smoothly before0.6 seconds")
+	check(not soil.retired_credits[fading],"A partially visible clump has not earned its disappearance credit")
 	var mid_fade: Dictionary = soil.make_snapshot()
 	soil.suspend_simulation(true)
 	advance(10.0)
 	check(soil.make_snapshot() == mid_fade, "Pause freezes fades and earned progress")
 	soil.suspend_simulation(false)
 	var json_snapshot: Dictionary = JSON.parse_string(JSON.stringify(mid_fade))
-	check(soil.restore_snapshot(json_snapshot), "Demand state survives the real JSON save format")
-	check(soil.floor_debris == mid_fade.floor_debris and soil.make_snapshot().pending_emissions.is_empty() and absf(soil.debris_age[fading] - 0.3) < 0.00001, "Resume preserves floor order and partial shrink without delayed extraction")
+	check(soil.restore_snapshot(json_snapshot), "Natural fade and retirement state survive the real JSON save format")
+	check(soil.floor_debris == mid_fade.floor_debris and soil.make_snapshot().pending_emissions.is_empty() and absf(soil.debris_age[fading] - 0.3) < 0.00001 and soil.retired_credit_count == 64, "Resume preserves the partial shrink and permanent credits without delayed extraction")
 	advance(0.4)
-	check(soil.free_slots.size() == 64 and soil.recycled[fading] and soil.growth[fading] == 0.0, "Freed slots stay invisible after release instead of appearing at old contact points")
+	check(soil.free_slots.size() >= 496 and soil.recycled[fading] and soil.growth[fading] == 0.0 and soil.retired_credits[fading], "Disappeared slots stay invisible and retain credit after release")
 	check(soil.remaining == 0 and soil.credited.count(true) == 560, "Reclamation and replacement never grant duplicate credit")
+	check(soil.retired_credit_count == 560,"Previously retired reserve slots cannot earn retirement credit a second time")
+	advance(8.0)
 	var returned_slots: Array[int] = soil.free_slots.duplicate()
 	soil.begin_pass()
 	soil.stroke(Vector3(0.8, 0.067, -1.9), Vector3(0.8, 0.067, 1.9), 0.2)
 	soil.end_pass()
 	var current_contact := true
+	var respawned := 0
 	for i in returned_slots:
-		current_contact = current_contact and soil.awakened[i] and soil.growth[i] == 1.0 and absf(soil.positions[i].x - 0.8) < 0.001
-	check(current_contact, "Returned slots spawn immediately at the new brush contact, not the old stripe")
+		if soil.awakened[i]:
+			respawned += 1
+			current_contact = current_contact and soil.growth[i] == 1.0 and absf(soil.positions[i].x - 0.8) < 0.001
+		else:
+			current_contact = current_contact and soil.growth[i] == 0.0
+	check(current_contact and respawned > 0, "Returned slots spawn immediately at new contact; unused returned slots stay hidden")
 	advance(8.0)
+	check(soil.retired_credit_count == 560,"Reused cosmetic dirt never increases the original retirement ledger")
 	var idle: Dictionary = soil.make_snapshot()
 	advance(20.0)
 	check(soil.make_snapshot() == idle and not soil.is_physics_processing(), "After motion and fades finish, elapsed time creates no dirt or further reclamation")
 	check(soil.batch.instance_count == 560 and soil.batch.get_instance_id() == pool_id and soil.batch.mesh.get_instance_id() == mesh_id and soil.batch_node.get_instance_id() == node_id, "Extraction retains exactly the same 560-slot GPU batch, mesh and node")
-	# A genuinely clean patch has no demand, even when every visual slot is busy.
+	# A genuinely clean patch has no new demand, even when every slot is busy.
 	floor_fixture(0)
 	soil.coverage_values.fill(0.0)
 	soil.surface_coverage_total = 0.0
 	swipe()
-	check(soil.timed_debris.is_empty() and soil.make_snapshot().pending_emissions.is_empty(), "Clean strokes cannot trigger fading or new dirt")
-	# Legacy elapsed-time saves migrate into retained floor dirt.
+	check(soil.timed_debris.is_empty() and soil.make_snapshot().pending_emissions.is_empty(), "A clean stroke cannot manufacture extraction or demand reclamation")
+	# Older elapsed-time and retained-floor saves resume natural disappearance.
 	floor_fixture(0)
 	var legacy: Dictionary = soil.make_snapshot()
 	legacy.erase("debris_policy")
 	legacy.erase("floor_debris")
 	legacy.erase("pending_emissions")
+	legacy.erase("retired_credits")
 	legacy.debris_age[0] = 3.3
-	check(soil.restore_snapshot(legacy) and soil.debris_age[0] == -1.0 and soil.floor_debris.size() == 560, "Old timed snapshots become retained debris under the new policy")
+	check(soil.restore_snapshot(legacy) and soil.debris_age[0] == 0.0 and soil.floor_debris.is_empty() and soil.timed_debris.size() == 560, "Old floor snapshots resume all natural fades without carrying obsolete lifetime ages")
 	advance(10.0)
-	check(soil.growth[0] == 1.0 and soil.timed_debris.is_empty(), "Migrated old timers cannot resume automatic disappearance")
+	check(soil.growth[0] == 0.0 and soil.timed_debris.is_empty() and soil.retired_credit_count == 560, "Migrated floor dirt disappears naturally and preserves every original credit")
 	var stable: Dictionary = soil.make_snapshot()
-	for field: String in ["debris_age", "floor_debris", "pending_emissions", "debris_policy"]:
+	var hidden_legacy: Dictionary = JSON.parse_string(JSON.stringify(stable))
+	hidden_legacy.erase("retired_credits")
+	check(soil.restore_snapshot(hidden_legacy) and soil.retired_credit_count == 560,"Old hidden credited slots infer prior retirement rather than becoming fresh income")
+	var events_before_idle := removal_events
+	advance(10.0)
+	check(removal_events == events_before_idle and soil.retired_credit_count == 560,"Restoring already-hidden old dirt cannot replay removal income")
+	stable = soil.make_snapshot()
+	for field: String in ["debris_age", "floor_debris", "pending_emissions", "debris_policy", "retired_credits", "retired_count"]:
 		var invalid: Dictionary = JSON.parse_string(JSON.stringify(stable))
 		match field:
 			"debris_age": invalid.debris_age[0] = 3.3
 			"floor_debris": invalid.floor_debris.append(0)
 			"pending_emissions": invalid.pending_emissions = [{"source": 560, "velocity": [0, 0, 0]}]
 			"debris_policy": invalid.debris_policy = 3
+			"retired_credits": invalid.retired_credits[0] = "retired"
+			"retired_count": invalid.retired_credits.pop_back()
 		check(not soil.restore_snapshot(invalid) and soil.make_snapshot() == stable, "Invalid %s is rejected atomically" % field)
 	# Older valid saves may contain deferred cosmetic requests. Preserve earned
 	# progress and fade state, but never replay those obsolete contact positions.
 	var queued_legacy: Dictionary = JSON.parse_string(JSON.stringify(mid_fade))
 	queued_legacy.pending_emissions = [{"source": 0, "velocity": [0, 0.9, 4]}]
 	check(soil.restore_snapshot(queued_legacy) and soil.make_snapshot().pending_emissions.is_empty(), "Old valid queued requests load safely and are discarded")
-	advance(1.0)
-	check(soil.free_slots.size() == 64 and soil.recycled[fading] and soil.remaining == 0, "Loading an old queue cannot spawn stale dirt or alter earned credit")
+	advance(8.0)
+	check(soil.free_slots.size() == 560 and soil.recycled[fading] and soil.remaining == 0 and soil.retired_credit_count == 560, "Loading an old queue cannot spawn stale dirt or duplicate earned retirement credit")
 	soil.set_recipe(true, true)
 	check(soil.free_slots.is_empty() and soil.floor_debris.is_empty() and soil.timed_debris.is_empty() and not soil.is_physics_processing(), "Water-only recipe clears all dry pool demand and simulation")
 	soil.free()

@@ -1,6 +1,7 @@
 extends Node3D
 ## Visual-only union contour of actual extraction. One bounded strip MultiMesh;
 ## all authoritative water/extraction/surface arrays are read, never modified.
+signal runoff_retired(packet_id: int, progress_target: float)
 
 const StreamEffect := preload("res://scripts/squeegee_runoff_streams.gd")
 const GRID_SIZE := Vector2i(65, 105)
@@ -74,6 +75,7 @@ var _sample_offsets := PackedInt32Array()
 var _sample_sources := PackedInt32Array()
 var _sample_weights := PackedFloat64Array()
 var _sample_support := PackedFloat64Array()
+var _progress_target := 0.0
 
 
 func setup(source_soil: Node, surface_texture: Texture2D) -> void:
@@ -130,6 +132,7 @@ func setup(source_soil: Node, surface_texture: Texture2D) -> void:
 	streams.name = "GroupedRunoffStreams"
 	add_child(streams)
 	streams.setup(surface_texture, soil.footprint)
+	streams.runoff_retired.connect(_on_runoff_retired)
 	reset()
 
 
@@ -141,9 +144,11 @@ func set_water_palette(tint: Color, highlight: Color, runoff_tint: Color, runoff
 		streams.set_water_palette(runoff_tint, runoff_highlight)
 
 
-func notify_extraction(_contact: Vector3, amount: float) -> void:
-	if amount <= 0.0001 or not is_instance_valid(soil):
+func notify_extraction(_contact: Vector3, amount: float, progress_target: float = 0.0) -> void:
+	if not is_finite(amount) or amount <= 0.0001 or not is_instance_valid(soil):
 		return
+	if is_finite(progress_target):
+		_progress_target = maxf(_progress_target, clampf(progress_target, 0.0, 1.0))
 	notification_count += 1
 	_dirty = true
 	# Deliberately not a wetness supply. Only an actual positive array delta
@@ -184,6 +189,7 @@ func reset() -> void:
 	_last_supply = -1000.0
 	_since_build = REBUILD_INTERVAL
 	_dirty = false
+	_progress_target = 0.0
 	_field.fill(0.0)
 	_extracted.fill(0.0)
 	_charge.fill(0.0)
@@ -661,13 +667,17 @@ func _build_runoff_sources() -> void:
 			var frame := _body_frame((float(start) + float(count) * 0.5) * bin_length)
 			var center := Vector3(frame.x, RUG_Y, frame.y)
 			var direction := Vector3(frame.z, 0.0, frame.w)
-			streams.feed_source(center, direction, maxf(0.12, float(count) * bin_length), maxf(power, 0.10), supplied)
+			streams.feed_source(center, direction, maxf(0.12, float(count) * bin_length), maxf(power, 0.10), supplied, _progress_target)
 			for member in count:
 				var bin := (start + member) % MOUTH_BINS
 				_mouth_consumed[bin] = maxf(_mouth_consumed[bin], _mouth_times[bin])
 			_mouths_funded += 1
 		offset += count
 	streams.end_sources()
+
+
+func _on_runoff_retired(packet_id: int, progress_target: float) -> void:
+	runoff_retired.emit(packet_id, progress_target)
 
 
 func _record_mouth_bin(point: Vector2, supplied: float, power: float) -> void:

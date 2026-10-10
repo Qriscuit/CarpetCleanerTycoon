@@ -94,13 +94,7 @@ visible = false
 [node name="UpgradeButton" parent="HUD" index="4"]
 visible = false
 
-[node name="PayoutCard" parent="HUD" index="5"]
-visible = false
-
-[node name="PayoutUpgradeButton" parent="HUD" index="6"]
-visible = false
-
-[node name="GymCameraAngle" type="Button" parent="HUD" index="10"]
+[node name="GymCameraAngle" type="Button" parent="HUD" index="9"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(88, 56)
 offset_left = 616.0
@@ -122,7 +116,7 @@ theme_override_styles/focus = SubResource("PracticeFocus")
 toggle_mode = true
 text = "Angle"
 
-[node name="GymPracticePanel" type="Panel" parent="HUD" index="11"]
+[node name="GymPracticePanel" type="Panel" parent="HUD" index="10"]
 unique_name_in_owner = true
 offset_left = 16.0
 offset_top = 784.0
@@ -435,7 +429,7 @@ theme_override_styles/focus = SubResource("PracticeFocus")
 theme_override_styles/disabled = SubResource("PracticeNormal")
 text = "+"
 
-[node name="WaterDropCharge" type="TextureProgressBar" parent="HUD" index="12"]
+[node name="WaterDropCharge" type="TextureProgressBar" parent="HUD" index="11"]
 unique_name_in_owner = true
 visible = false
 z_index = 20

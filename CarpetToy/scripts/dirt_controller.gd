@@ -1,9 +1,11 @@
 extends Node
 ## One fixed GPU pool, no rigid bodies. Only airborne/sliding clumps are simulated.
 signal progress_changed(remaining: int, total: int)
+signal manual_debris_cleared
 signal vacuum_started
 signal vacuum_finished
 signal surface_changed
+signal cleaning_material_removed
 
 const VACUUM_SECONDS := 1.8
 var completion_started := false
@@ -76,6 +78,10 @@ var growth: Array[float] = []
 var initial_growth := PackedFloat32Array()
 var awakened: Array[bool] = []
 var credited: Array[bool] = []
+# Each original credit becomes payable only once its dirt has disappeared.
+# Visual pool slots may be reused; these flags never reset within a carpet.
+var retired_credits: Array[bool] = []
+var retired_credit_count := 0
 # Physical slots can be reused; their original one-time progress credit cannot.
 var recycled: Array[bool] = []
 var debris_age: Array[float] = []
@@ -304,6 +310,8 @@ func reset() -> void:
 	growth.resize(initial.size())
 	awakened.resize(initial.size())
 	credited.resize(initial.size())
+	retired_credits.resize(initial.size())
+	retired_credit_count = 0
 	recycled.resize(initial.size())
 	debris_age.resize(initial.size())
 	source_emitted_pass.resize(initial.size())
@@ -320,6 +328,7 @@ func reset() -> void:
 		growth[i] = initial_growth[i]
 		awakened[i] = false
 		credited[i] = false
+		retired_credits[i] = false
 		recycled[i] = false
 		debris_age[i] = -1.0
 		source_emitted_pass[i] = -1
@@ -613,6 +622,7 @@ func _cancel_debris_timer(i: int) -> void:
 	request_render()
 
 func _age_debris(delta: float) -> void:
+	var removed := false
 	for slot in range(timed_debris.size() - 1, -1, -1):
 		var i := timed_debris[slot]
 		debris_age[i] += delta
@@ -633,6 +643,14 @@ func _age_debris(delta: float) -> void:
 		active.erase(i)
 		timed_debris.remove_at(slot)
 		free_slots.append(i)
+		if credited[i] and not retired_credits[i]:
+			retired_credits[i] = true
+			retired_credit_count += 1
+			removed = true
+	if removed: cleaning_material_removed.emit()
+
+func removed_dry_clearance() -> float:
+	return minf(surface_clearance(), float(retired_credit_count) / maxf(initial.size(), 1))
 
 static func swept_head_hits(start: Vector2, finish: Vector2, point: Vector2, half: Vector2) -> bool:
 	# Segment versus expanded rectangle: fast swipes cannot tunnel between events.
@@ -674,7 +692,8 @@ func paint_stroke(start: Vector2, finish: Vector2) -> void:
 			if weight > pass_strength[index]:
 				pass_strength[index] = weight
 				var old_value := coverage_values[index]
-				coverage_values[index] = maxf(0.0, pass_base[index] - rug_definition.removal_per_pass * weight * tool_strength)
+				# Autonomous cleaning may have removed dust since this finger pass began.
+				coverage_values[index] = minf(old_value, maxf(0.0, pass_base[index] - rug_definition.removal_per_pass * weight * tool_strength))
 				if coverage_values[index] <= COVERAGE_EPSILON:
 					coverage_values[index] = 0.0
 				var value := coverage_values[index]
@@ -682,6 +701,75 @@ func paint_stroke(start: Vector2, finish: Vector2) -> void:
 					surface_coverage_total += value - old_value
 				mask.set_pixel(x, y, Color(value, value, value))
 				mask_changed = true
+	set_process(mask_changed or wet_mask_changed or render_dirty)
+
+func apply_bonzi_stroke(world_from: Vector3, world_to: Vector3, elapsed: float, radius: float = 0.29, strength: float = 1.4) -> void:
+	# The spinning underbody brush removes dust over contact time. It never
+	# borrows the finger's pass buffers, direction, width or equipped-tool power.
+	if completion_started or simulation_suspended or reveal_progress < 1.0 or skip_dry_stage or (wet_recipe and recommended_tool() != 0):
+		return
+	if not is_finite(elapsed) or not is_finite(radius) or not is_finite(strength) or elapsed <= 0.0 or radius <= 0.0:
+		return
+	var a := rug_node.to_local(world_from)
+	var b := rug_node.to_local(world_to)
+	var start := Vector2(a.x, a.z)
+	var finish := Vector2(b.x, b.z)
+	var brush_radius := clampf(radius, 0.05, 0.4)
+	var soft_radius := brush_radius + EDGE_FEATHER
+	var low := (start.min(finish) - Vector2.ONE * soft_radius + RUG_HALF) / (RUG_HALF * 2.0)
+	var high := (start.max(finish) + Vector2.ONE * soft_radius + RUG_HALF) / (RUG_HALF * 2.0)
+	var from_pixel := Vector2i((low * Vector2(MASK_SIZE)).floor()).clamp(Vector2i.ZERO, MASK_SIZE)
+	var to_pixel := Vector2i((high * Vector2(MASK_SIZE)).ceil()).clamp(Vector2i.ZERO, MASK_SIZE)
+	var removal := minf(elapsed, 0.1) * clampf(strength, 0.0, 4.0)
+	for y in range(from_pixel.y, to_pixel.y):
+		for x in range(from_pixel.x, to_pixel.x):
+			var index := y * MASK_SIZE.x + x
+			if surface_pixels[index] == 0 or coverage_values[index] <= 0.0:
+				continue
+			var point := Vector2(_water_pixel_x[x], _water_pixel_z[y])
+			var closest := Geometry2D.get_closest_point_to_segment(point, start, finish)
+			var weight := 1.0 - smoothstep(brush_radius - EDGE_FEATHER, soft_radius, point.distance_to(closest))
+			var previous := coverage_values[index]
+			var value := maxf(0.0, previous - removal * weight)
+			if value >= previous:
+				continue
+			coverage_values[index] = value
+			surface_coverage_total += value - previous
+			mask.set_pixel(x, y, Color(value, value, value))
+			mask_changed = true
+	var collected := false
+	for i in positions.size():
+		if recycled[i] or positions[i].y > RUG_Y + 0.14:
+			continue
+		var point := Vector2(positions[i].x, positions[i].z)
+		if point.distance_to(Geometry2D.get_closest_point_to_segment(point, start, finish)) > brush_radius + radii[i] * growth[i]:
+			continue
+		# Suction consumes the same original progress ID once. Decorative dust
+		# swirls live in Bonzi's fixed visual pool and cannot re-dirty the carpet.
+		if not credited[i]:
+			credited[i] = true
+			remaining -= 1
+			collected = true
+		if not retired_credits[i]:
+			retired_credits[i] = true
+			retired_credit_count += 1
+			collected = true
+		_cancel_debris_timer(i)
+		positions[i] = initial[i].origin
+		velocities[i] = Vector3.ZERO
+		growth[i] = 0.0
+		awakened[i] = false
+		moving[i] = false
+		cleared[i] = true
+		cooldown[i] = 0.0
+		recycled[i] = true
+		active.erase(i)
+		if not free_slots.has(i):
+			free_slots.append(i)
+		request_render()
+	if collected:
+		cleaning_material_removed.emit()
+		progress_changed.emit(remaining, initial.size())
 	set_process(mask_changed or wet_mask_changed or render_dirty)
 
 func _process(_delta: float) -> void:
@@ -746,9 +834,13 @@ func _physics_process(delta: float) -> void:
 		if velocities[i].length_squared() < 0.0001 and cooldown[i] <= 0.0:
 			moving[i] = false
 			active.remove_at(slot)
-			if outside and credited[i] and debris_age[i] < 0.0 and not floor_debris.has(i):
-				floor_debris.append(i)
+			if outside and credited[i] and debris_age[i] < 0.0:
+				# Cleared dirt now fades naturally, synchronizing its disappearance
+				# with cleaning earnings rather than waiting for pool demand.
+				debris_age[i] = 0.0
+				timed_debris.append(i)
 	if changed:
+		manual_debris_cleared.emit()
 		progress_changed.emit(remaining, initial.size())
 	if remaining == 0 and automatic_completion_enabled:
 		start_vacuum()
@@ -802,10 +894,12 @@ func _clear_dry_stage() -> void:
 		velocities[i] = Vector3.ZERO
 		cleared[i] = true
 		credited[i] = true
+		retired_credits[i] = true
 		moving[i] = false
 		growth[i] = 0.0
 		awakened[i] = false
 	remaining = 0
+	retired_credit_count = initial.size()
 	coverage_values.fill(0.0)
 	surface_coverage_total = 0.0
 	mask.fill(Color.BLACK)
@@ -1246,6 +1340,7 @@ func make_snapshot() -> Dictionary:
 		"spawn_positions": spawn_positions,
 		"growth": growth.duplicate(), "awakened": awakened.duplicate(),
 		"credited": credited.duplicate(), "cleared": cleared.duplicate(),
+		"retired_credits": retired_credits.duplicate(),
 		"cooldown": cooldown.duplicate(), "moving": moving.duplicate(),
 		"recycled": recycled.duplicate(), "debris_age": debris_age.duplicate(),
 		"debris_policy": 2, "floor_debris": floor_debris.duplicate(),
@@ -1361,6 +1456,10 @@ func restore_snapshot(snapshot: Dictionary) -> bool:
 		for value in snapshot[key]:
 			if not value is bool:
 				return false
+	if snapshot.has("retired_credits"):
+		if not snapshot.retired_credits is Array or snapshot.retired_credits.size() != initial.size(): return false
+		for i in initial.size():
+			if not snapshot.retired_credits[i] is bool or (snapshot.retired_credits[i] and not snapshot.credited[i]): return false
 	# Additive version-1 fields preserve older rug saves. Validate every new
 	# value before mutating live progress, including impossible free-slot states.
 	var has_lifecycle := snapshot.has("recycled") or snapshot.has("debris_age")
@@ -1413,6 +1512,7 @@ func restore_snapshot(snapshot: Dictionary) -> bool:
 	pass_serial = 0
 	source_emitted_pass.fill(-1)
 	remaining = initial.size()
+	retired_credit_count = 0
 	for i in initial.size():
 		var p: Array = snapshot.positions[i]
 		var v: Array = snapshot.velocities[i]
@@ -1428,6 +1528,8 @@ func restore_snapshot(snapshot: Dictionary) -> bool:
 		growth[i] = float(snapshot.growth[i])
 		awakened[i] = snapshot.awakened[i]
 		credited[i] = snapshot.credited[i]
+		retired_credits[i] = snapshot.retired_credits[i] if snapshot.has("retired_credits") else (credited[i] and float(snapshot.growth[i]) <= 0.025)
+		if retired_credits[i]: retired_credit_count += 1
 		cleared[i] = snapshot.cleared[i]
 		cooldown[i] = float(snapshot.cooldown[i])
 		moving[i] = snapshot.moving[i]
@@ -1450,6 +1552,13 @@ func restore_snapshot(snapshot: Dictionary) -> bool:
 			floor_debris.append(int(value))
 		# Older saves may carry validated cosmetic extraction requests. Drop
 		# them: replay would spawn dirt after the original contact has ended.
+	# Resume cleared floor dirt with the new natural fade, preserving saved
+	# animation ages and permanent credit identities.
+	for i in initial.size():
+		if credited[i] and cleared[i] and not moving[i] and not recycled[i] and growth[i] > 0.0 and debris_age[i] < 0.0 and clump_is_outside(i):
+			debris_age[i] = 0.0
+			timed_debris.append(i)
+	floor_debris.clear()
 	surface_coverage_total = 0.0
 	water_coverage_total = 0.0
 	extraction_coverage_total = 0.0

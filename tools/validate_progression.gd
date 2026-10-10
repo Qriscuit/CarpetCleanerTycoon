@@ -1,6 +1,8 @@
 extends SceneTree
 const State := preload("res://scripts/shop_state.gd")
 const Rules := preload("res://scripts/progression.gd")
+const Room := preload("res://scripts/room_upgrades.gd")
+const Money := preload("res://scripts/money.gd")
 var checks := 0
 var failures := 0
 var paths: Array[String] = []
@@ -63,20 +65,29 @@ func complete(state: Node, use_final: bool = true) -> bool:
 	var id: String = state.start_job()
 	if use_final: state.note_current_tool_used()
 	var snapshot := {"unique_clearance": 1.0, "surface_clearance": 1.0}
-	if state.active_store >= 2:
-		snapshot.merge({"wet_recipe": true, "water_clearance": 1.0, "extraction_clearance": 1.0, "wash_cycle_count": 3, "wash_cycle": 2})
-		if state.active_store == 2: snapshot.skip_dry_stage = true
 	return not state.complete_and_start_next_job(id, snapshot).is_empty()
 
-func fund(state: Node, amount: int) -> void:
+func fund(state: Node, amount: float) -> void:
 	state.cash = amount
-	check(state.save_state(), "Isolated test funds save")
+	var saved: bool = state.save_state()
+	if not saved:
+		print("FUNDS_SAVE_FAILURE ", JSON.stringify({
+			"error": state.last_error, "amount": "%.0f" % amount, "cash": "%.0f" % state.cash,
+			"money_limit": "%.0f" % Rules.MAX_MONEY, "shared_money_limit": "%.0f" % Money.MAX_VALUE,
+			"cash_valid": state._bounded_money(state.cash),
+			"manual_jobs": state.manual_jobs, "manual_valid": state._bounded_integer(state.manual_jobs),
+			"automated_jobs": state.automated_jobs, "automated_valid": state._bounded_integer(state.automated_jobs),
+			"job_serial": state._job_serial, "serial_valid": state._bounded_integer(state._job_serial),
+			"return_reward": state.return_reward, "return_valid": state._bounded_money(state.return_reward),
+			"save_enabled": state._save_enabled, "active_store": state.active_store,
+		}))
+	check(saved, "Isolated test funds save")
 
 func run() -> void:
 	var state := new_state("main")
 	var view: Dictionary = state.progression_view()
-	check(view.store_id == 1 and view.early_reward == 20 and view.full_reward == 40 and view.payout_cost == 25, "Starter payout and first price match design")
-	check(view.bonzi_tier == -1 and view.tool_width == 1.0 and not view.can_travel, "Starter tools and travel gates are intact")
+	check(view.store_id == 1 and view.early_reward == 20 and view.full_reward == 40 and state.room_upgrade_view("plants").cost == 25 and view.payout_cost == 40, "Starter payout and independent floor/plant prices match design")
+	check(view.bonzi_tier == -1 and view.bonzi_reward == 0 and state.bonzi_reward_for_store() == 0 and view.tool_width == 1.0 and not view.can_travel, "Starter tools and travel gates are intact without unowned Bonzi income")
 	check(not state.reward_ad_available() and not state.request_reward_ad(), "No configured provider means no production ad or reward")
 	check(not state.buy_bonzi_upgrade() and not state.select_store(2) and not state.open_next_store(), "Locked automation and unowned stores cannot be bypassed")
 	var job: String = state.start_job()
@@ -85,35 +96,42 @@ func run() -> void:
 		check(state.reward_for_current_job({"unique_clearance": pair[0], "surface_clearance": pair[0]}) == pair[1], "Current quote respects completion tier " + str(pair[0]))
 	check(state.reward_for_current_job({"unique_clearance": 1.0, "surface_clearance": 0.7499}) == 0, "Dry payout requires both layers")
 	fund(state, 100)
-	check(state.buy_payout_upgrade() and state.cash == 75 and state.active_job_id == job and state.job_snapshot.pixels == [7, 8], "Earnings upgrade atomically keeps rug and rebases unpaid quote")
-	check(state.reward_for_current_job({"unique_clearance": 1.0, "surface_clearance": 1.0}) == 44, "Already-present rug receives the purchased quote")
+	check(state.buy_room_upgrade("floor") and state.cash == 60 and state.active_job_id == job and state.job_snapshot.pixels == [7, 8], "Room upgrade atomically keeps rug and rebases unpaid quote")
+	check(state.reward_for_current_job({"unique_clearance": 1.0, "surface_clearance": 1.0}) == 46, "Already-present rug receives the floor's purchased quote")
 	state = reload_state(state)
-	check(state.progression_view().payout_level == 1 and state.active_job_id == job and state.reward_for_current_job({"unique_clearance": 0.75, "surface_clearance": 0.75}) == 22, "Payout level and 75% current quote survive reload")
+	check(state.progression_view().payout_level == 1 and state.room_upgrade_levels().floor == 1 and state.active_job_id == job and state.reward_for_current_job({"unique_clearance": 0.75, "surface_clearance": 0.75}) == 23, "Selected room improvement and the fixed early half survive reload")
 	var good_path: String = state._save_path
 	var before: Dictionary = state._capture_state()
 	state._save_path += "/cannot-write.json"
-	check(not state.buy_payout_upgrade() and state._capture_state() == before, "Failed upgrade save rolls back price, level and quote together")
+	check(not state.buy_room_upgrade("plants") and state._capture_state() == before, "Failed room upgrade save rolls back price, level and quote together")
 	state._save_path = good_path
-	check(state.buy_payout_upgrade() and state.progression_view().payout_level == 2, "Failed purchase can be retried once storage recovers")
-	fund(state, 500000)
+	check(state.buy_room_upgrade("plants") and state.progression_view().payout_level == 2 and state.room_upgrade_levels().plants == 1, "Failed room purchase can be retried once storage recovers")
+	fund(state, Rules.reward_cap(1) * 20.0)
 	for index in 3: check(complete(state), "Paid local job " + str(index + 1))
 	check(state.progression_view().local_jobs == 3 and state.buy_bonzi_upgrade(), "Three paid local jobs unlock basic Bonzi")
-	var income_before: int = state.cash
+	var income_before: float = state.cash
 	advance(state, 120.0)
-	check(state.cash == income_before + 10 and state.progression_view().bonzi_earned == 10, "Basic Bonzi credits one 10-coin completed cycle")
+	check(state.cash == income_before + 50 and state.progression_view().bonzi_earned == 50 and state.progression_view().bonzi_reward == 50 and state.progression_view().full_reward == 50, "Basic Bonzi credits the same room-upgraded full-rug reward as the player")
 	check(state.buy_bonzi_upgrade(), "Improved Bonzi can be bought")
 	income_before = state.cash
 	advance(state, 90.0)
-	check(state.cash == income_before + 20 and state.progression_view().bonzi_seconds == 90.0, "Improved cycle pays 20 every 90 seconds")
+	check(state.cash == income_before + 50 and state.progression_view().bonzi_reward == 50 and state.progression_view().bonzi_seconds == 90.0, "Improved Bonzi completes the same 50-coin rug every 90 seconds")
 	check(state.buy_bonzi_upgrade(), "Final Bonzi can be bought")
+	income_before = state.cash
 	advance(state, 120.0)
-	check(state.progression_view().bonzi_earned == 110 and not state.buy_bonzi_upgrade(), "Final cycles pay 40 and cumulative earned count never gets spent")
+	check(state.cash == income_before + 100 and state.progression_view().bonzi_earned == 200 and state.progression_view().bonzi_reward == 50 and state.progression_view().bonzi_seconds == 60.0 and not state.buy_bonzi_upgrade(), "Final Bonzi completes two equally valued rugs and retains cumulative earnings")
 	for index in 4: check(state.buy_tool_upgrade(), "Tool milestone " + str(index + 1))
 	check(state.progression_view().global_tool_tier == 4 and state.progression_view().tool_cost == -1 and not state.buy_tool_upgrade(), "Store's capstone is a one-time fourth tool purchase")
 	check(complete(state) and state.progression_view().final_tool_jobs == 1, "Using the purchased final tool on the current rug counts without a throwaway job")
 	check(complete(state, false) and state.progression_view().final_tool_jobs == 1, "Owning the final tool without using it cannot count")
 	for index in 3: check(complete(state), "Final tool used on new paid rug " + str(index + 1))
-	check(state.progression_view().can_travel and state.progression_view().final_tool_jobs == 3, "All three travel goals are independently satisfied")
+	check(not state.progression_view().can_travel and state.progression_view().final_tool_jobs == 3 and state.progression_view().payout_level == 2, "Tools and service cannot bypass unfinished room mastery")
+	for id: String in Room.IDS:
+		for _upgrade in range(int(state.room_upgrade_levels()[id]), Rules.room_level_cap(1)):
+			var offer: Dictionary = state.room_upgrade_view(id)
+			fund(state, maxf(float(offer.cost) * 2.0, 1000000.0))
+			check(state.buy_room_upgrade(id), "Buy remaining " + id + " mastery")
+	check(state.progression_view().can_travel and state.progression_view().full_reward == 400000.0, "A fully mastered first place has its400K reward and opens the travel gate")
 	job = state.active_job_id
 	state.save_job_snapshot({"pixels": [3, 1, 4], "unique_clearance": 0.5, "surface_clearance": 0.5})
 	before = state._capture_state()
@@ -121,48 +139,23 @@ func run() -> void:
 	check(not state.open_next_store() and state._capture_state() == before, "Failed store opening preserves wallet, ownership and old job")
 	state._save_path = good_path
 	income_before = state.cash
-	check(state.open_next_store() and state.active_store == 2 and state.cash == income_before - 2000, "Opening Store 2 charges once and selects its included starter kit")
-	check(state.progression_view().bonzi_tier == 0 and state.progression_view().early_reward == 160 and state.progression_view().global_tool_tier == 4, "Store 2 inherits tool power and starts higher payout with Bonzi included")
-	check(state.select_store(1) and state.active_job_id == job and state.job_snapshot.pixels == [3, 1, 4], "Returning to a store restores its exact unfinished rug")
-	check(not state.open_next_store(), "Owned store cannot be bought twice")
-	check(state.select_store(2), "Owned store travel is free")
+	check(state.open_next_store() and state.active_store == 2 and state.cash == income_before - 2000, "Opening Store2 charges once and selects its starter kit")
+	check(state.progression_view().bonzi_tier == 0 and state.progression_view().early_reward == 20.0 * Rules.scale_for(2) and state.progression_view().global_tool_tier == 4 and not state.progression_view().wet_unlocked, "Store2 inherits brush power and starts at the preceding mastered payout with Bonzi included")
+	check(state.select_store(1) and state.active_job_id == job and state.job_snapshot.pixels == [3, 1, 4], "Returning restores the exact old unfinished rug")
+	check(not state.open_next_store() and state.select_store(2), "Owned-store visits are free and cannot duplicate opening purchases")
 	income_before = state.cash
 	advance(state, 120.0)
-	check(state.cash == income_before + 160 and state.stores["1"].bonzi_earned == 190 and state.stores["2"].bonzi_earned == 80, "Old and active stores produce concurrently at their own cycles")
-	state.start_job()
-	for index in 4: check(state.buy_tool_upgrade(), "Store 2 water hose milestone")
-	check(state.progression_view().hose_level == 4 and state.progression_view().global_tool_tier == 4, "Store 2's main track upgrades the hose without rewriting brush ownership")
-	check(state.select_store(1) and state.progression_view().global_tool_tier == 4 and state.progression_view().tool_width == 1.75, "Returning to old stores never downgrades the global brush")
-	state.select_store(2)
-	complete(state)
-	for index in 3: complete(state)
-	advance(state, 1080.0)
-	check(state.progression_view().bonzi_earned == 800 and state.progression_view().can_travel, "Store 2's local Bonzi target cannot be replaced by old-store earnings")
-	check(state.open_next_store() and state.active_store == 3, "Wet store opens only after its preceding store's goals")
-	state.start_job()
-	check(state.reward_for_current_job({"unique_clearance": 1.0, "surface_clearance": 1.0}) == 0, "Wet jobs cannot pay from dry-only snapshots")
-	check(state.reward_for_current_job({"wet_recipe": true, "unique_clearance": 1.0, "surface_clearance": 1.0, "water_clearance": 1.0, "extraction_clearance": 0.75, "wash_cycle_count": 3, "wash_cycle": 2}) == 1280, "Wet early reward requires the third wash and its extraction threshold")
-	check(state.reward_for_current_job({"wet_recipe": true, "unique_clearance": 0.5, "surface_clearance": 1.0, "water_clearance": 1.0, "extraction_clearance": 1.0, "wash_cycle_count": 3, "wash_cycle": 2, "overall_clearance": 1.0}) == 0, "Out-of-sequence wet progress and forged overall meters cannot pay")
-	check(state.reward_for_current_job({"wet_recipe": true, "unique_clearance": 1.0, "surface_clearance": 1.0, "water_clearance": 1.0, "extraction_clearance": 1.0, "wash_cycle_count": 3, "wash_cycle": 2}) == 2560, "Wet full reward remains exactly double")
+	check(state.cash == income_before + Rules.reward_cap(1) * 2.0 + 40.0 * Rules.scale_for(2), "Old and current stores produce concurrently at their independent saved full-rug rewards")
+	check(complete(state), "The second first-section place pays for ordinary brush cleaning")
 	state = reload_state(state)
-	check(state.active_store == 3 and state.stores.size() == 3 and state.progression_view().global_tool_tier == 4, "All stores, selection and permanent tools survive reload")
-	fund(state, 5000000)
-	for index in 4: check(state.buy_tool_upgrade(), "Wet kit milestone " + str(index + 1))
-	complete(state)
-	for index in 3: complete(state)
-	advance(state, 1200.0)
-	check(state.progression_view().can_travel and state.open_next_store() and state.active_store == 4, "Store 4 is reachable through wet capstone jobs and its own Bonzi earnings")
-	check(state.progression_view().wet_power >= 2.1 and state.progression_view().global_tool_tier == 4 and not state.progression_view().has_next_store, "Final authored store inherits every tool and has no imaginary next-store purchase")
-	check(state.buy_tool_upgrade() and state.progression_view().next_wet_power > state.progression_view().wet_power, "Later wet upgrades improve real wet power and preview the next gain")
-	var power: float = state.progression_view().wet_power
-	check(state.select_store(3) and state.progression_view().wet_power == power, "Earlier wet stores retain the strongest owned wet kit")
+	check(state._save_enabled and state.active_store == 2 and state.stores.size() == 2 and state.stores["1"].room_upgrades.walls == Rules.room_level_cap(1), "Independent mastery and the newly owned store survive reload")
 	state.start_job()
 	fund(state, Rules.MAX_MONEY)
 	var cap_job: String = state.active_job_id
-	check(not complete(state) and state.cash == Rules.MAX_MONEY and state.active_job_id == cap_job, "Wallet overflow rejects a job transaction without losing its rug or wrapping coins")
-	check(Rules.early_reward(1, 19) == 122 and Rules.early_reward(1, 20) == 135 and Rules.payout_cost(1, 19) == 356, "Payout levels continue beyond the twenty-milestone target")
-	check(Rules.early_reward(4, 1000000) == -1 and Rules.payout_cost(4, 1000000) == -1, "Extreme levels are guarded before non-finite or integer overflow")
+	check(not complete(state) and state.cash == Rules.MAX_MONEY and state.active_job_id == cap_job, "A full wallet rejects a reward without losing the rug or wrapping coins")
+	check(Rules.early_reward(4, 1000000) == -1 and Rules.payout_cost(4, 1000000) == -1, "Extreme legacy curve levels are guarded before non-finite arithmetic")
 	state.free()
+	check_room_automation_rewards()
 	check_offline()
 	check_migration()
 	check_ads()
@@ -172,6 +165,56 @@ func run() -> void:
 	print("PROGRESSION_VALIDATION %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
 
+func check_room_automation_rewards() -> void:
+	var state := new_state("room_automation")
+	state.cash = 10000
+	state.stores["1"].bonzi_tier = 0
+	state.stores["2"] = Rules.new_branch(2)
+	check(state.save_state(), "Two independent automation branches save")
+	var ids := ["floor", "plants", "window", "railings", "walls"]
+	var prices := [40, 25, 60, 35, 50]
+	var full_rewards := [40, 46, 50, 58, 62, 68]
+	var other_reward := 40.0 * Rules.scale_for(2)
+	for index in ids.size():
+		var cash_before: float = state.cash
+		state._test_ticks_msec += 120000
+		state._test_unix_time += 120.0
+		check(state.buy_room_upgrade(ids[index]), "Upgrade " + ids[index] + " during a pending Bonzi delivery")
+		check(state.cash == cash_before + float(full_rewards[index]) + other_reward - float(prices[index]), "Buying " + ids[index] + " first settles both stores at their previous full-rug rewards")
+		check(state.bonzi_reward_for_store(1) == float(full_rewards[index + 1]) and state.progression_view().bonzi_reward == float(full_rewards[index + 1]) and state.progression_view().full_reward == float(full_rewards[index + 1]), ids[index] + " increases player and Bonzi full-rug rewards together")
+		check(state.bonzi_reward_for_store(2) == other_reward, ids[index] + " leaves the other store's Bonzi reward unchanged")
+	check(state.stores["1"].bonzi_earned == 256 and state.stores["2"].bonzi_earned == other_reward * 5.0, "All five room improvements retain both branches' independent pre-upgrade delivery totals")
+	# A failed room write must roll back its pending deliveries as well as its
+	# price and levels, so retry can settle the old reward exactly once.
+	state._test_ticks_msec += 120000
+	state._test_unix_time += 120.0
+	var before: Dictionary = state._capture_state()
+	var before_ticks: int = state._last_ticks
+	var good_path: String = state._save_path
+	state._save_path += "/cannot-write.json"
+	check(not state.buy_room_upgrade("floor") and state._capture_state() == before and state._last_ticks == before_ticks, "Failed room write restores pending automation, cash, levels and settlement clock")
+	state._save_path = good_path
+	var cash_before: float = state.cash
+	var quote: Dictionary = state.room_upgrade_view("floor")
+	check(state.buy_room_upgrade("floor") and state.cash == cash_before + 68.0 + other_reward - float(quote.cost) and state.bonzi_reward_for_store(1) == float(quote.next_full), "Storage recovery settles the previous reward once, spends the local quote and changes future rug income")
+	advance(state, 60.0)
+	check(is_equal_approx(state.routine_remainder, 0.5) and is_equal_approx(float(state.stores["2"].routine_remainder), 0.5), "Shared reward changes preserve each branch's fractional cycle")
+	state = reload_state(state)
+	check(state.bonzi_reward_for_store(1) == float(quote.next_full) and state.bonzi_reward_for_store(2) == other_reward and is_equal_approx(state.routine_remainder, 0.5), "Room-based automation rewards and partial cycles survive reload")
+	state.free()
+	state = new_state("automation_wallet_cap")
+	state.stores["1"].bonzi_tier = 0
+	state.room_upgrade_view("floor") # Initialize the branch's modern income checkpoint.
+	state.cash = Rules.MAX_MONEY
+	check(state.save_state(), "A full-wallet fixture saves")
+	advance(state, 120.0)
+	check(state.cash == Rules.MAX_MONEY and state.automated_jobs == 0 and state.stores["1"].banked_orders == 1, "A full-rug delivery waits without partial payment or overflow in a full wallet")
+	state.cash = 0.0
+	check(state.save_state() and state.cash == 40.0 and state.automated_jobs == 1 and state.stores["1"].banked_orders == 0, "Making wallet space releases the banked full-rug reward once")
+	state = reload_state(state)
+	check(state.cash == 40.0 and state.automated_jobs == 1 and state.stores["1"].banked_orders == 0, "Reopening cannot duplicate the released banked delivery")
+	state.free()
+
 func check_offline() -> void:
 	var state := new_state("offline")
 	state.stores["1"].bonzi_tier = 2
@@ -179,11 +222,12 @@ func check_offline() -> void:
 	state.routine_remainder = 0.5
 	state.stores["2"].routine_remainder = 0.25
 	state.save_state()
+	var expected := 480.0 * 40.0 + 240.0 * 40.0 * Rules.scale_for(2)
 	state = reload_state(state, 12.0 * 3600.0)
-	check(state.cash == 38400 and state.return_reward == 38400 and state.return_seconds == 28800.0, "Twelve offline hours credit exactly eight hours from every owned branch")
+	check(state.cash == expected and state.return_reward == expected and state.return_seconds == 28800.0, "Twelve offline hours credit eight hours of full-rug rewards from every owned branch")
 	check(is_equal_approx(state.routine_remainder, 0.5) and is_equal_approx(float(state.stores["2"].routine_remainder), 0.25), "Offline accounting preserves each branch's partial cycle")
 	state = reload_state(state)
-	check(state.cash == 38400, "Repeated return cannot pay offline production twice")
+	check(state.cash == expected, "Repeated return cannot pay offline production twice")
 	state.free()
 
 func check_migration() -> void:
@@ -209,7 +253,8 @@ func check_migration() -> void:
 	check(state.cash == 777 and state.active_job_id == "neighborhood-13" and state.job_snapshot.pixels.size() == 2 and int(state.job_snapshot.pixels[0]) == 1 and int(state.job_snapshot.pixels[1]) == 9, "Version 1 migration preserves wallet and active rug")
 	check(view.tool_width >= 1.44 and float(view.bonzi_reward) * 3600.0 / float(view.bonzi_seconds) >= 450.0 and state.routine_remainder == 0.5, "Migration never downgrades owned brush power or prior maximum bot income")
 	check(view.bonzi_earned == 70 and state.manual_jobs == 12 and state.automated_jobs == 7, "Migration preserves existing earned milestones and counters")
-	check(JSON.parse_string(FileAccess.get_file_as_string(path)).version == 2, "Migrated state is durably upgraded once")
+	var migrated: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(path))
+	check(migrated.version == 3 and migrated.stores["1"].room_rules_version == Room.RULES_VERSION and migrated.stores["1"].room_upgrades.walls == 0, "Original version1 state upgrades durably to current room rules with an unpurchased wall track")
 	file = FileAccess.open(path, FileAccess.WRITE)
 	file.store_string(JSON.stringify(old))
 	file.close()
@@ -230,9 +275,9 @@ func check_ads() -> void:
 	check(state.request_reward_ad(offer.job_id), "A rejected receipt leaves the optional offer retryable")
 	var signals: Array[String] = []
 	var durable_at_signal: Array[bool] = []
-	state.ad_reward_granted.connect(func(_amount: int) -> void:
+	state.ad_reward_granted.connect(func(_amount: float) -> void:
 		signals.append("ad")
-		durable_at_signal.append(int(JSON.parse_string(FileAccess.get_file_as_string(state._save_path)).cash) == state.cash)
+		durable_at_signal.append(float(JSON.parse_string(FileAccess.get_file_as_string(state._save_path)).cash) == state.cash)
 	)
 	state.changed.connect(func() -> void: signals.append("changed"))
 	provider.resolve()

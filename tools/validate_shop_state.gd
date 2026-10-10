@@ -4,6 +4,7 @@ extends SceneTree
 const State := preload("res://scripts/shop_state.gd")
 var _paths: Array[String] = []
 var _checks: int = 0
+var _failures: int = 0
 
 
 func _initialize() -> void:
@@ -29,47 +30,53 @@ func _run() -> void:
 	state.save_job_snapshot({"unique_clearance": 0.75, "surface_clearance": 0.75, "pixels": [1, 2, 3]})
 	state = _reload(state)
 	_check(state.active_job_id == first and state.job_snapshot["pixels"].size() == 3, "Active carpet persists across reload")
-	_check(state.complete_job(first) and state.cash == 20 and state.manual_jobs == 1, "Saved eligible carpet pays 20")
+	_check(state.complete_job(first) and state.cash == 20 and state.manual_jobs == 1, "Saved early carpet settles its fixed first half")
 	_check(not state.complete_job(first) and state.cash == 20, "Repeated reward is rejected")
 	for _job in range(2):
 		_finish_one(state)
-	_check(state.blueprint_known("bonzi") and not state.owns("bonzi") and state.cash == 60, "Bonzi blueprint is permanent permission at three jobs")
-	_check(not state.build("bonzi") and state.cash == 60, "Unaffordable blueprint cannot be built")
+	_check(state.blueprint_known("bonzi") and not state.owns("bonzi") and state.cash == 100, "Bonzi blueprint is permanent permission at three jobs")
+	_check(not state.build("bonzi") and state.cash == 100, "Unaffordable blueprint cannot be built")
 	for _job in range(2):
 		_finish_one(state)
 	_advance(state, 10000.0)
-	_check(state.build("bonzi") and state.cash == 0 and state.output_per_hour() == 30.0, "Bonzi starts at purchase, with no earlier catch-up")
-	_check(not state.build("bonzi") and state.cash == 0, "Duplicate purchases do not charge")
+	_check(state.build_cost("bonzi") == 160 and state.build("bonzi") and state.cash == 20 and state.output_per_hour() == 30.0, "Bonzi charges its revised hire price and starts with no earlier catch-up")
+	_check(not state.build("bonzi") and state.cash == 20, "Duplicate purchases do not charge")
 	_advance(state, 60.0)
-	_check(state.save_state() and state.cash == 0 and is_equal_approx(state.routine_remainder, 0.5), "Only whole automated deliveries pay")
+	_check(state.save_state() and state.cash == 20 and is_equal_approx(state.routine_remainder, 0.5), "Only whole automated deliveries pay")
 	_check(is_equal_approx(state.seconds_to_delivery(), 60.0), "Delivery countdown uses remaining order fraction")
 	state = _reload(state)
 	_check(is_equal_approx(state.routine_remainder, 0.5), "Fractional routine order survives a reload")
 	_advance(state, 60.0)
 	state.save_state()
-	_check(state.cash == 10 and state.automated_jobs == 1, "One full order gives ten cash")
+	_check(state.cash == 60 and state.automated_jobs == 1, "Timed Bonzi still pays the unchanged full40 quote")
 	for _job in range(5):
 		_finish_one(state)
 	_check(state.blueprint_known("wide_brush") and state.blueprint_known("bonzi_mk2") and state.blueprint_known("intake"), "Job milestones reveal starter tools and modules")
-	# At 110 cash, the final old-rate delivery makes Mk II affordable before the debit.
+	_check(not state.build("bonzi_mk2") and state.build_cost("bonzi_mk2") == 16000, "The geometric middle tier requires its real price")
+	state.cash = state.build_cost("bonzi_mk2") + 15.0
+	state.save_state()
+	# Settle the old 120-second delivery before charging the new midpoint tier.
 	_advance(state, 120.0)
-	_check(state.build("bonzi_mk2") and state.cash == 0 and state.automated_jobs == 2, "Rate change settles old output before charging")
-	_check(state.capacity_per_hour() == 45.0 and state.output_per_hour() == 40.0 and state.bottleneck() == "Customer demand", "Mk II is demand-limited at forty orders/hour")
+	_check(state.build("bonzi_mk2") and state.cash == 55 and state.automated_jobs == 2, "Rate change settles old output before charging")
+	_check(state.capacity_per_hour() == 40.0 and state.output_per_hour() == 40.0 and state.bottleneck() == "Bonzi cycle", "Bonzi II follows its90-second cycle")
 	_advance(state, 45.0)
 	state.save_state()
 	_check(is_equal_approx(state.routine_remainder, 0.5), "New output applies only after installation")
-	for _job in range(5):
+	for _job in range(25):
 		_finish_one(state)
-	_check(state.build("intake") and state.output_per_hour() == 45.0, "Intake unlocks remaining Mk II capacity")
+	_check(not state.build("intake") and state.build_cost("intake") == 1600000, "The capstone Bonzi tier requires its real cap-scaled price")
+	state.cash = state.build_cost("intake") + 200.0
+	state.save_state()
+	_check(state.build("intake") and state.output_per_hour() == 60.0, "Bonzi III pays the same quote every60 seconds")
 	var pre_offline_cash: int = state.cash
 	var pre_offline_jobs: int = state.automated_jobs
 	state = _reload(state, 12.0 * 3600.0)
-	_check(state.cash == pre_offline_cash + 3600 and state.automated_jobs == pre_offline_jobs + 360, "Twelve hours away credits the eight-hour cap")
+	_check(state.cash == pre_offline_cash + 19200 and state.automated_jobs == pre_offline_jobs + 480, "Twelve hours away credits the eight-hour cap")
 	_check(is_equal_approx(state.routine_remainder, 0.5) and is_equal_approx(state.return_seconds, 28800.0), "Offline cap preserves the half-finished order")
-	_check(state.return_reward == 3600, "Return summary describes cash already credited")
+	_check(state.return_reward == 19200, "Return summary describes cash already credited")
 	state = _reload(state)
-	_check(state.cash == pre_offline_cash + 3600 and state.return_reward == 3600, "Reopening the return panel cannot pay twice")
-	_check(state.acknowledge_return() and state.return_reward == 0 and state.cash == pre_offline_cash + 3600, "Acknowledgement clears only the summary")
+	_check(state.cash == pre_offline_cash + 19200 and state.return_reward == 19200, "Reopening the return panel cannot pay twice")
+	_check(state.acknowledge_return() and state.return_reward == 0 and state.cash == pre_offline_cash + 19200, "Acknowledgement clears only the summary")
 	state = _reload(state)
 	_check(state.return_reward == 0, "Acknowledgement survives reload")
 	var before_backward: int = state.cash
@@ -77,7 +84,7 @@ func _run() -> void:
 	_check(state.cash == before_backward, "Backward wall clock awards no offline time")
 	_advance(state, 3600.0)
 	state.save_state()
-	_check(state.cash == before_backward + 450, "Online production follows elapsed monotonic time")
+	_check(state.cash == before_backward + 2400, "Online production follows elapsed monotonic time")
 	_check(state.build("wide_brush") and state.owns("wide_brush"), "The optional personal tool can be built")
 	_check(state.equipped_brush == "wide_brush", "Building the wider brush equips its benefit immediately")
 	state = _reload(state)
@@ -98,7 +105,7 @@ func _run() -> void:
 	state._process(12.0 * 3600.0)
 	_check(state.cash == pre_pause_cash, "Suspended app does not count absence as live production")
 	state._notification(Node.NOTIFICATION_APPLICATION_RESUMED)
-	_check(state.cash == pre_pause_cash + 3600 and state.return_reward == 3600, "Suspending and returning uses the same eight-hour absence cap")
+	_check(state.cash == pre_pause_cash + 19200 and state.return_reward == 19200, "Suspending and returning uses the same eight-hour absence cap")
 	state.acknowledge_return()
 	var main_path: String = state._save_path
 	state._save_path = main_path + "/missing-folder/save.json"
@@ -129,16 +136,16 @@ func _run() -> void:
 	_check(atomic.complete_and_start_next_job(active_before_failure, {"unique_clearance": 1.0, "surface_clearance": 1.0}).is_empty() and atomic.active_job_id == active_before_failure and atomic.cash == 20, "Failed atomic save keeps the current rug and reward ledger unchanged")
 	atomic._save_path = atomic_path
 	var perfect_next: String = atomic.complete_and_start_next_job(active_before_failure, {"unique_clearance": 0.99, "surface_clearance": 1.0})
-	_check(not perfect_next.is_empty() and perfect_next != active_before_failure and atomic.cash == 60 and atomic.manual_jobs == 2, "Retry atomically awards 40 for a perfect rug and reserves its replacement")
+	_check(not perfect_next.is_empty() and perfect_next != active_before_failure and atomic.cash == 60 and atomic.manual_jobs == 2, "Retry atomically awards40 for a perfect rug and reserves its replacement")
 	_check(atomic.complete_and_start_next_job(active_before_failure, {"unique_clearance": 1.0, "surface_clearance": 1.0}).is_empty() and atomic.cash == 60, "Repeated perfect atomic completion cannot pay twice")
 	atomic = _reload(atomic)
 	_check(atomic.cash == 60 and atomic.manual_jobs == 2 and atomic.active_job_id == perfect_next and atomic.job_snapshot.is_empty(), "Atomic perfect reward and next-rug reservation survive reload together")
 	atomic.free()
-	# Intake before Mk II is allowed, and honestly yields no immediate rate increase.
+	# Legacy button IDs cannot skip the actual Bonzi tier sequence.
 	var intake_first := _new_state("intake_first")
 	for _job in range(15):
 		_finish_one(intake_first)
-	_check(intake_first.build("bonzi") and intake_first.build("intake") and intake_first.output_per_hour() == 30.0, "Intake does not bypass the cleaner bottleneck")
+	_check(intake_first.build("bonzi") and not intake_first.build("intake") and intake_first.output_per_hour() == 30.0, "A legacy intake button cannot bypass Bonzi II")
 	var before_build: int = intake_first.cash
 	intake_first._save_path += "/cannot-write.json"
 	_check(not intake_first.build("wide_brush") and not intake_first.owns("wide_brush") and intake_first.cash == before_build and intake_first.equipped_brush == "hand_brush", "Failed purchase preserves cash, ownership and equipment")
@@ -184,7 +191,7 @@ func _run() -> void:
 		if FileAccess.file_exists(path + ".tmp"):
 			DirAccess.remove_absolute(ProjectSettings.globalize_path(path + ".tmp"))
 	print("VERIFIED: ", _checks, " shop ledger checks; save/resume, brush selection/migration, thresholds, one-time rewards/builds, production, offline cap, bottlenecks and failure rollback.")
-	quit(0)
+	quit(0 if _failures == 0 else 1)
 
 
 func _new_state(suffix: String) -> Node:
@@ -222,7 +229,7 @@ func _advance(state: Node, seconds: float) -> void:
 
 func _finish_one(state: Node) -> void:
 	var id: String = state.start_job()
-	_check(state.save_job_snapshot({"unique_clearance": 0.75, "surface_clearance": 0.75}) and state.complete_job(id), "Complete an eligible manual commission")
+	_check(state.save_job_snapshot({"unique_clearance": 1.0, "surface_clearance": 1.0}) and state.complete_job(id), "Complete a fully restored manual commission")
 
 
 func _check_manual_reward_tiers() -> void:
@@ -284,6 +291,5 @@ func _write_fixture(path: String, data: Dictionary) -> void:
 func _check(passed: bool, message: String) -> void:
 	_checks += 1
 	if not passed:
+		_failures += 1
 		printerr("FAILED: ", message)
-		quit(1)
-		assert(false, message)

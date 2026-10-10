@@ -7,12 +7,16 @@ const STORE_TOP_COLORS: Array[Color] = [
 	Color("daf1e4"),
 	Color("e1dffa"),
 	Color("fce5d5"),
+	Color("e1f4cc"),
+	Color("f4dff0"),
 ]
 const STORE_BOTTOM_COLORS: Array[Color] = [
 	Color("99d4ef"),
 	Color("b5ddd5"),
 	Color("c9c2e9"),
 	Color("f1c4b7"),
+	Color("badca6"),
+	Color("dcaed2"),
 ]
 
 var _gradient_top: Color = STORE_TOP_COLORS[0]

@@ -36,15 +36,42 @@ func _ready() -> void:
 func _voice(label: String, source: AudioStreamWAV, looping: bool = true) -> AudioStreamPlayer:
 	var voice := AudioStreamPlayer.new()
 	voice.name = label
-	var stream := source.duplicate() as AudioStreamWAV
-	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if looping else AudioStreamWAV.LOOP_DISABLED
-	stream.loop_begin = 0
-	# Production assets are 16-bit PCM; loop_end is a sample-frame offset.
-	stream.loop_end = stream.data.size() / (4 if stream.stereo else 2)
-	voice.stream = stream
 	voice.volume_db = -80.0
 	add_child(voice)
+	var frame_count := _sample_frame_count(source)
+	if frame_count <= 0:
+		push_warning("Audio source has no valid sample frames: " + label)
+		return voice
+	var stream := source.duplicate() as AudioStreamWAV
+	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD if looping and frame_count > 1 else AudioStreamWAV.LOOP_DISABLED
+	stream.loop_begin = 0
+	# The pinned WAV mixer can decode its end limit inclusively. The frame
+	# count is one past the final valid index; using it reads beyond PCM data.
+	stream.loop_end = frame_count - 1
+	voice.stream = stream
 	return voice
+
+static func _sample_frame_count(source: AudioStreamWAV) -> int:
+	if source == null or source.mix_rate <= 0 or source.data.is_empty():
+		return 0
+	var bytes := source.data.size()
+	var channels := 2 if source.stereo else 1
+	match source.format:
+		AudioStreamWAV.FORMAT_8_BITS, AudioStreamWAV.FORMAT_16_BITS:
+			var frame_bytes := channels * (2 if source.format == AudioStreamWAV.FORMAT_16_BITS else 1)
+			if bytes % frame_bytes != 0: return 0
+		AudioStreamWAV.FORMAT_IMA_ADPCM:
+			if bytes % channels != 0: return 0
+		AudioStreamWAV.FORMAT_QOA:
+			if bytes < 8: return 0 # The decoder needs a complete QOA header.
+		_:
+			return 0
+	# get_length accounts for format, channel count and compressed headers.
+	# Bytes/2 is valid only for mono PCM16, never for every imported WAV.
+	var duration := source.get_length()
+	if not is_finite(duration) or duration <= 0.0: return 0
+	var frames := roundi(duration * source.mix_rate)
+	return frames if frames > 0 and frames <= 2147483647 else 0
 
 func set_context(value: String) -> void:
 	context = value

@@ -1,6 +1,7 @@
 extends Node3D
 ## Fixed pool of broad, fast, matte runoff ribbons. Sources are funded by fresh
 ## LOCAL extraction; emitted packets remain world anchored and never follow tools.
+signal runoff_retired(packet_id: int, progress_target: float)
 
 const CAPACITY := 16
 const STATIONS := 18
@@ -40,6 +41,11 @@ var _stops := PackedFloat64Array()
 var _deadlines := PackedFloat64Array()
 var _last_supplied := PackedFloat64Array()
 var _bends := PackedFloat32Array()
+var _packet_ids := PackedInt64Array()
+var _progress_targets := PackedFloat64Array()
+var _retired_ids := PackedInt64Array()
+var _retired_targets := PackedFloat64Array()
+var _next_packet_id := 1
 
 
 func setup(texture: Texture2D = null, footprint: RefCounted = null) -> void:
@@ -57,6 +63,10 @@ func setup(texture: Texture2D = null, footprint: RefCounted = null) -> void:
 	_deadlines.resize(CAPACITY)
 	_last_supplied.resize(CAPACITY)
 	_bends.resize(CAPACITY)
+	_packet_ids.resize(CAPACITY)
+	_progress_targets.resize(CAPACITY)
+	_retired_ids.resize(CAPACITY)
+	_retired_targets.resize(CAPACITY)
 	batch = MultiMesh.new()
 	batch.transform_format = MultiMesh.TRANSFORM_3D
 	batch.use_custom_data = true
@@ -93,7 +103,7 @@ func begin_sources(_at: float) -> void:
 	sources_this_frame = 0
 
 
-func feed_source(center: Vector3, outward: Vector3, width: float, power: float, supplied_at: float) -> void:
+func feed_source(center: Vector3, outward: Vector3, width: float, power: float, supplied_at: float, progress_target: float = 0.0) -> void:
 	if batch == null or clock_seconds - supplied_at > SOURCE_GRACE or power <= 0.0:
 		return
 	var heading := Vector3(outward.x, 0.0, outward.z).normalized()
@@ -129,6 +139,9 @@ func feed_source(center: Vector3, outward: Vector3, width: float, power: float, 
 		_widths[slot] = clampf(width, 0.12, 1.25)
 		_powers[slot] = clampf(power, 0.0, 1.0)
 		_bends[slot] = sin(center.x * 2.3 + center.z * 1.7) * 0.105
+		_packet_ids[slot] = _next_packet_id
+		_next_packet_id += 1
+		_progress_targets[slot] = 0.0
 		active_packets += 1
 		emitted_packets += 1
 	else:
@@ -137,6 +150,10 @@ func feed_source(center: Vector3, outward: Vector3, width: float, power: float, 
 		_powers[slot] = lerpf(_powers[slot], clampf(power, 0.0, 1.0), 0.40)
 	_last_supplied[slot] = supplied_at
 	_deadlines[slot] = supplied_at + SOURCE_GRACE
+	# The caller owns earned progress. Visual power, width and packet counts
+	# never become currency, and stale/duplicate sources cannot raise this mark.
+	if is_finite(progress_target):
+		_progress_targets[slot] = maxf(_progress_targets[slot], clampf(progress_target, 0.0, 1.0))
 	sources_this_frame += 1
 	source_updates += 1
 	_update_packet(slot)
@@ -153,6 +170,7 @@ func end_sources() -> void:
 func advance(delta: float) -> void:
 	clock_seconds += maxf(delta, 0.0)
 	active_packets = 0
+	var retired_count := 0
 	for slot in CAPACITY:
 		if _active[slot] == 0:
 			continue
@@ -161,8 +179,13 @@ func advance(delta: float) -> void:
 			_feeding[slot] = 0
 			_stops[slot] = minf(_deadlines[slot], _births[slot] + MAX_FEED_AGE)
 		if age >= LIFETIME:
+			_retired_ids[retired_count] = _packet_ids[slot]
+			_retired_targets[retired_count] = _progress_targets[slot]
+			retired_count += 1
 			_active[slot] = 0
 			_feeding[slot] = 0
+			_packet_ids[slot] = 0
+			_progress_targets[slot] = 0.0
 			_hide_packet(slot)
 			continue
 		_update_packet(slot)
@@ -171,6 +194,10 @@ func advance(delta: float) -> void:
 		material.set_shader_parameter("water_clock", fmod(clock_seconds, 100.0))
 		batch.visible_instance_count = CAPACITY if active_packets > 0 else 0
 		node.visible = active_packets > 0
+	# Dispatch only after every disappearing ribbon is hidden. Cancellation
+	# and reset deliberately emit nothing; durable reconciliation is external.
+	for index in retired_count:
+		runoff_retired.emit(_retired_ids[index], _retired_targets[index])
 
 
 func reset() -> void:
@@ -182,6 +209,8 @@ func reset() -> void:
 	sources_this_frame = 0
 	_active.fill(0)
 	_feeding.fill(0)
+	_packet_ids.fill(0)
+	_progress_targets.fill(0.0)
 	_last_supplied.fill(-1000.0)
 	if batch != null:
 		for slot in CAPACITY:
@@ -214,7 +243,8 @@ func packet_debug(slot: int) -> Dictionary:
 		"age": maxf(0.0, clock_seconds - _births[slot]),
 		"front_distance": _front_distance(slot), "back_distance": _back_distance(slot),
 		"width": _widths[slot], "lifetime": LIFETIME, "power": _powers[slot],
-		"supplied_at": _last_supplied[slot]}
+		"supplied_at": _last_supplied[slot], "packet_id": _packet_ids[slot],
+		"progress_target": _progress_targets[slot]}
 
 
 func sample_packet(slot: int, along: float, across: float) -> Vector3:

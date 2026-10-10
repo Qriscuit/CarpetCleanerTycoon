@@ -1,6 +1,6 @@
 # Floating shop — Blender and Godot implementation
 
-Use **Open Game Editor.cmd** for the pinned **Godot 4.7.2 Mono/.NET** editor. **F5** launches `CarpetToy/scenes/production/floating_home.tscn`, now the main menu. Open that scene and use **F6** to preview it directly. The full Mono bundle includes `GodotSharp`; the installed .NET 8 SDK 8.0.400 supports the editor, while gameplay remains GDScript.
+Use **Open Game Editor.cmd** for the pinned **Godot 4.7.2 Mono/.NET** editor. **F5** launches `CarpetToy/scenes/production/rug_cleaning.tscn`, creating or resuming the last selected store's carpet. The cleaning Back button opens `CarpetToy/scenes/production/floating_home.tscn` for browsing stores and managing upgrades. Open that menu scene and use **F6** to preview it directly. The full Mono bundle includes `GodotSharp`; the installed .NET 8 SDK 8.0.400 supports the editor, while gameplay remains GDScript.
 
 ## Editable source and exported assets
 
@@ -27,7 +27,7 @@ Scene layout and behavior live in `CarpetToy/scripts/floating_home.gd`. The root
 
 The scene temporarily uses an expanding 390-unit short-side canvas and restores the prior window scaling when leaving. On mobile it requests sensor orientation while this home is active, then restores the previous orientation when leaving. Top controls and dock respect the device safe area; the model fits both available dimensions and remains framed through a full rotation. Portrait and landscape retain separate control positions rather than stretching a screenshot.
 
-The cleaning scene's icon Back control always returns to the production floating home, including direct gym entry. The original hub is a test scene. Bonzi's panel and purchase review show coins per bar duration: 10 coins every 120s at base, 90s with Mk II, or 80s with Mk II and Welcome Sign. The countdown shows the next +10 payout. Reward amounts and the save format are unchanged.
+The cleaning scene's icon Back control always returns to the production floating home, including direct gym entry. The original hub is a test scene. Bonzi's panels show the current store's full carpet earnings per cycle: every 120s at base, 90s with the second tier, or 60s at maximum. Upgrading room features raises that payment; Bonzi upgrades shorten the cycle. The cleaning shop also presents these upgrades beside the tools.
 
 Suspended income uses bounded wall-clock absence, like reopening the app, so a stopped live timer does not lose phone sleep time. Failed saves retain that bounded absence for retry without exposing uncommitted coins. Automated fixtures test this separately from the UI labeling issue.
 

@@ -1,11 +1,11 @@
 # Production and test scenes
 
-Open **Open Game Editor.cmd**, then press **F5** to play the production game. Use **F6** on a test scene for development. The launcher pins the complete **Godot 4.7.2 Mono/.NET** bundle; do not open this project with a standard build or another version. Gameplay remains GDScript.
+Open **Open Game Editor.cmd**, then press **F5** to open the last selected store's current carpet. A first launch creates its first paid rug; later launches restore the saved job and cleaning progress. Back opens the floating-store menu for browsing and management. Use **F6** on a test scene for development. The launcher pins the complete **Godot 4.7.2 Mono/.NET** bundle; do not open this project with a standard build or another version. Gameplay remains GDScript.
 
 | Folder | Scene | Purpose |
 | --- | --- | --- |
 | `CarpetToy/scenes/production/` | `floating_home.tscn` | Main menu; building opens or resumes a paid rug |
-| `CarpetToy/scenes/production/` | `rug_cleaning.tscn` | Shared cleaning world and customer jobs |
+| `CarpetToy/scenes/production/` | `rug_cleaning.tscn` | App/F5 entry; current store's saved carpet and customer jobs |
 | `CarpetToy/scenes/test/` | `shop_hub.tscn` | Original detailed menu, retained for testing |
 | `CarpetToy/scenes/test/` | `rug_cleaning_gym.tscn` | Reachable from Settings → Gym; two free exercises sharing the production world |
 | `CarpetToy/scenes/test/` | `starter_workshop.tscn`, `carpet_studio.tscn` | Earlier workshop and art inspection |
@@ -18,9 +18,9 @@ With no overlay open, the cleaning scene's icon Back control opens the floating 
 
 The production cleaning scene always creates or resumes a paid rug, even when run directly. The inherited `rug_cleaning_gym.tscn` and legacy `starter_workshop.tscn` explicitly set `practice_only = true`, so test scenes cannot become paid because of stale menu state.
 
-There is no scene reload between cleaning jobs. The active cleaning scene retains its rug meshes, soil controller and fixed 560-slot GPU dirt pool: arrival unrolls an already dust-textured rug, grows the small starter rocks and brings in the brush. Other pooled clumps stay invisible until brushed. Completion vacuums debris, rolls the rug away, shows the paid reward and refills the same pool for the next arrival. The icon Back control remains usable throughout.
+There is no scene reload between cleaning jobs. The active cleaning scene retains its rug meshes, soil controller and fixed 560-slot GPU dirt pool: arrival unrolls an already dust-textured rug, grows the small starter rocks and brings in the brush. Other pooled clumps stay invisible until brushed. Completion vacuums debris and briefly shows the result with a single Compare button; holding it shows the starting appearance and pauses automatic advancement. The window then opens and the rug rolls away before the same pool refills for the next arrival.
 
-Store 1 uses the lower of debris clearance and surface-dust clearance. High Street (Store 2) skips brushing and averages water and extraction only. Stores 3–4 average dry, water and extraction. Required dry and water stages must each reach 99% before advancing. Finishing at 75% or higher but below 99% pays the normal quote; 99% automatically pays double. Payment and reservation of the next job commit together before takeaway, so leaving during the transition cannot pay twice or lose the replacement job.
+The six authored stores in Section 1 use the lower of debris clearance and surface-dust clearance. Wet stages remain in the Gym and are reserved for a future section. Finishing at 75% or higher but below 99% pays the normal quote; 99% automatically pays double. Payment and reservation of the next job commit together before takeaway, so leaving during the transition cannot pay twice or lose the replacement job.
 
 The cleaning HUD keeps a gold wallet at the top-right. Reusable 2D reward coins linger briefly, then fly into it. Each arrival increments the displayed balance by that coin's exact value; it does not award money again. The saved balance already contains the full reward, so leaving before the burst finishes preserves all earnings.
 

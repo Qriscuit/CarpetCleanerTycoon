@@ -23,7 +23,7 @@ func run() -> void:
 		quit(2)
 		return
 	var state := root.get_node("ShopState")
-	check(ProjectSettings.get_setting("application/run/main_scene") == Routes.MAIN_MENU, "F5 starts the production menu")
+	check(ProjectSettings.get_setting("application/run/main_scene") == Routes.CLEANING, "F5 and app launch open the current production carpet")
 	check(not state.start_job().is_empty(), "Create an isolated resumable job")
 	var job_id: String = state.active_job_id
 	var cases := [

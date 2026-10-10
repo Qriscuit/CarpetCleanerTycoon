@@ -1,5 +1,7 @@
 [gd_scene format=4 uid="uid://cuepwvdn4bq4p"]
 
+[ext_resource type="PackedScene" path="res://scenes/room/upgrade_room.tscn" id="20_room"]
+
 [ext_resource type="Script" uid="uid://ddss3j6awmcv0" path="res://scripts/workshop.gd" id="1_a8y8r"]
 [ext_resource type="Texture2D" uid="uid://cwnehdg1qkb5j" path="res://assets/carpet/mint_meadow_mint_meadow_albedo.png" id="2_ww8gd"]
 [ext_resource type="Texture2D" uid="uid://hs6axuaqprqh" path="res://assets/carpet/mint_meadow_mint_meadow_normal.png" id="3_4ub7u"]
@@ -20,7 +22,8 @@ ambient_light_energy = 0.25
 reflected_light_source = 2
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i4f4b"]
-albedo_color = Color(0.7411765, 0.76862746, 0.7607843, 1)
+albedo_color = Color(0.90, 0.94, 0.91, 1)
+roughness = 1.0
 
 [sub_resource type="StandardMaterial3D" id="FloorMaterial"]
 albedo_color = Color(0.9, 0.96, 0.94, 1)
@@ -384,7 +387,7 @@ script = ExtResource("1_a8y8r")
 environment = SubResource("Environment")
 
 [node name="Ground" type="MeshInstance3D" parent="." unique_id=820511178]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.029, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.24, 0)
 material_override = SubResource("StandardMaterial3D_i4f4b")
 mesh = SubResource("FloorMesh")
 
@@ -393,6 +396,7 @@ transform = Transform3D(0.8660254, 0.44939703, -0.21918558, 0, 0.43837115, 0.898
 light_color = Color(1, 0.99, 0.97, 1)
 light_energy = 0.16
 shadow_enabled = true
+shadow_opacity = 0.45
 directional_shadow_mode = 0
 directional_shadow_max_distance = 12.0
 
@@ -409,6 +413,7 @@ size = 6.2
 far = 100.0
 
 [node name="WhiteTileFloor" type="Node3D" parent="." unique_id=1591371866]
+visible = false
 
 [node name="CeramicTiles_576_Instances" type="MultiMeshInstance3D" parent="WhiteTileFloor" unique_id=481929992]
 cast_shadow = 0
@@ -475,3 +480,6 @@ mesh = SubResource("ArrayMesh_grxto")
 [node name="GymUI" parent="." instance=ExtResource("9_hud")]
 
 [editable path="GymUI"]
+
+[node name="UpgradeRoom" parent="." instance=ExtResource("20_room")]
+scale = Vector3(0.9, 1, 0.9)

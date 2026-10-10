@@ -232,8 +232,10 @@ func run() -> void:
 	check(game.selected_rug == 0, "Gym starts on Rug 1")
 	check_practice_design()
 	check_tool(0)
-	for name: String in ["Wallet", "UpgradeButton", "PayoutCard", "PayoutUpgradeButton", "AdRewardButton"]:
+	check(game.hud.get_node_or_null("%PayoutCard") == null, "Practice inherits a HUD without the removed earnings footer")
+	for name: String in ["Wallet", "UpgradeButton", "AdRewardButton"]:
 		check(not game.hud.control(name).is_visible_in_tree(), "Gym hides production control " + name)
+	check(not game.hud.room_panel.is_visible_in_tree(), "Gym hides the room purchase modal")
 	check(game.soil.remaining == 560 and game.soil.batch_node.visible, "Rug 1 starts with its reusable 560-clump pool")
 	check(game.soil.surface_clearance() == 0.0 and not game.wet_recipe, "Rug 1 starts with dust and the brush recipe")
 	var pool_id: int = game.soil.batch.get_instance_id()

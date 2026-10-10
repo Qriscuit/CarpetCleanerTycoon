@@ -1,0 +1,369 @@
+[gd_scene load_steps=28 format=3]
+
+[ext_resource type="Script" path="res://scripts/bonzi_visual.gd" id="1_visual"]
+
+[sub_resource type="StandardMaterial3D" id="Material_mint"]
+albedo_color = Color(0.49, 0.86, 0.64, 1)
+roughness = 0.68
+
+[sub_resource type="StandardMaterial3D" id="Material_ivory"]
+albedo_color = Color(1, 0.976, 0.914, 1)
+roughness = 0.72
+
+[sub_resource type="StandardMaterial3D" id="Material_ink"]
+albedo_color = Color(0.11, 0.25, 0.23, 1)
+roughness = 0.86
+
+[sub_resource type="StandardMaterial3D" id="Material_brush"]
+albedo_color = Color(0.28, 0.62, 0.48, 1)
+roughness = 0.95
+
+[sub_resource type="StandardMaterial3D" id="Material_coral"]
+albedo_color = Color(0.98, 0.59, 0.48, 1)
+roughness = 0.73
+
+[sub_resource type="StandardMaterial3D" id="Material_status"]
+albedo_color = Color(0.93, 0.82, 0.46, 1)
+emission_enabled = true
+emission = Color(0.32, 0.24, 0.06, 1)
+emission_energy_multiplier = 0.35
+roughness = 0.55
+
+[sub_resource type="StandardMaterial3D" id="Material_dust"]
+transparency = 1
+shading_mode = 0
+vertex_color_use_as_albedo = true
+albedo_color = Color(1, 1, 1, 1)
+roughness = 1.0
+
+[sub_resource type="CylinderMesh" id="Mesh_chassis"]
+material = SubResource("Material_mint")
+top_radius = 0.194
+bottom_radius = 0.194
+height = 0.063
+radial_segments = 32
+rings = 1
+
+[sub_resource type="TorusMesh" id="Mesh_bumper"]
+material = SubResource("Material_ink")
+inner_radius = 0.187
+outer_radius = 0.208
+rings = 32
+ring_segments = 8
+
+[sub_resource type="CylinderMesh" id="Mesh_lid"]
+material = SubResource("Material_ivory")
+top_radius = 0.173
+bottom_radius = 0.19
+height = 0.026
+radial_segments = 32
+rings = 1
+
+[sub_resource type="TorusMesh" id="Mesh_lid_seam"]
+material = SubResource("Material_brush")
+inner_radius = 0.163
+outer_radius = 0.166
+rings = 32
+ring_segments = 4
+
+[sub_resource type="CylinderMesh" id="Mesh_wheel"]
+material = SubResource("Material_ink")
+top_radius = 0.04
+bottom_radius = 0.04
+height = 0.038
+radial_segments = 12
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_wheel_hub"]
+material = SubResource("Material_ivory")
+top_radius = 0.015
+bottom_radius = 0.015
+height = 0.04
+radial_segments = 12
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_motor"]
+material = SubResource("Material_ivory")
+top_radius = 0.025
+bottom_radius = 0.031
+height = 0.018
+radial_segments = 12
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_motor_cap"]
+material = SubResource("Material_mint")
+top_radius = 0.015
+bottom_radius = 0.019
+height = 0.012
+radial_segments = 12
+rings = 1
+
+[sub_resource type="BoxMesh" id="Mesh_brush_arm"]
+material = SubResource("Material_brush")
+size = Vector3(0.018, 0.009, 0.062)
+
+[sub_resource type="BoxMesh" id="Mesh_bristles"]
+material = SubResource("Material_ink")
+size = Vector3(0.027, 0.012, 0.025)
+
+[sub_resource type="SphereMesh" id="Mesh_eye"]
+material = SubResource("Material_ink")
+radius = 0.013
+height = 0.026
+radial_segments = 12
+rings = 6
+
+[sub_resource type="SphereMesh" id="Mesh_eye_shine"]
+material = SubResource("Material_ivory")
+radius = 0.0038
+height = 0.0076
+radial_segments = 8
+rings = 4
+
+[sub_resource type="SphereMesh" id="Mesh_cheek"]
+material = SubResource("Material_coral")
+radius = 0.014
+height = 0.028
+radial_segments = 12
+rings = 6
+
+[sub_resource type="TorusMesh" id="Mesh_smile"]
+material = SubResource("Material_ink")
+inner_radius = 0.013
+outer_radius = 0.017
+rings = 16
+ring_segments = 4
+
+[sub_resource type="CylinderMesh" id="Mesh_smile_mask"]
+material = SubResource("Material_ivory")
+top_radius = 0.019
+bottom_radius = 0.019
+height = 0.004
+radial_segments = 16
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_status_base"]
+material = SubResource("Material_mint")
+top_radius = 0.033
+bottom_radius = 0.035
+height = 0.006
+radial_segments = 16
+rings = 1
+
+[sub_resource type="CylinderMesh" id="Mesh_status_light"]
+material = SubResource("Material_status")
+top_radius = 0.013
+bottom_radius = 0.013
+height = 0.008
+radial_segments = 12
+rings = 1
+
+[sub_resource type="SphereMesh" id="Mesh_dust_puff"]
+material = SubResource("Material_dust")
+radius = 1.0
+height = 2.0
+radial_segments = 8
+rings = 4
+
+[sub_resource type="MultiMesh" id="MultiMesh_dust"]
+transform_format = 1
+use_colors = true
+visible_instance_count = 0
+mesh = SubResource("Mesh_dust_puff")
+custom_aabb = AABB(-0.3, 0, -0.35, 0.6, 0.11, 0.30)
+
+[node name="BonziCleaner" type="Node3D"]
+editor_description = "Bonzi: original editable mint and ivory cleaning companion. Root bottom sits at carpet height; forward is local -Z. Chassis diameter 0.416 m, height 0.138 m. Brushes sweep in front."
+script = ExtResource("1_visual")
+
+[node name="Body" type="Node3D" parent="."]
+
+[node name="MintChassis" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.0665, 0)
+mesh = SubResource("Mesh_chassis")
+
+[node name="SoftBumper" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.045, 0)
+scale = Vector3(1, 1.2, 1)
+mesh = SubResource("Mesh_bumper")
+
+[node name="IvoryLid" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.11, 0)
+mesh = SubResource("Mesh_lid")
+
+[node name="LidSeam" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.1235, 0)
+mesh = SubResource("Mesh_lid_seam")
+
+[node name="Face" type="Node3D" parent="Body"]
+position = Vector3(0, 0.123, -0.054)
+
+[node name="LeftEye" type="MeshInstance3D" parent="Body/Face"]
+position = Vector3(-0.033, 0, -0.012)
+scale = Vector3(0.85, 0.28, 1.12)
+mesh = SubResource("Mesh_eye")
+cast_shadow = 0
+
+[node name="RightEye" type="MeshInstance3D" parent="Body/Face"]
+position = Vector3(0.033, 0, -0.012)
+scale = Vector3(0.85, 0.28, 1.12)
+mesh = SubResource("Mesh_eye")
+cast_shadow = 0
+
+[node name="LeftEyeShine" type="MeshInstance3D" parent="Body/Face"]
+position = Vector3(-0.035, 0.0042, -0.016)
+scale = Vector3(1, 0.22, 1)
+mesh = SubResource("Mesh_eye_shine")
+cast_shadow = 0
+
+[node name="RightEyeShine" type="MeshInstance3D" parent="Body/Face"]
+position = Vector3(0.031, 0.0042, -0.016)
+scale = Vector3(1, 0.22, 1)
+mesh = SubResource("Mesh_eye_shine")
+cast_shadow = 0
+
+[node name="LeftCheek" type="MeshInstance3D" parent="Body/Face"]
+position = Vector3(-0.064, -0.0005, 0.005)
+scale = Vector3(1, 0.12, 0.46)
+mesh = SubResource("Mesh_cheek")
+cast_shadow = 0
+
+[node name="RightCheek" type="MeshInstance3D" parent="Body/Face"]
+position = Vector3(0.064, -0.0005, 0.005)
+scale = Vector3(1, 0.12, 0.46)
+mesh = SubResource("Mesh_cheek")
+cast_shadow = 0
+
+[node name="Smile" type="MeshInstance3D" parent="Body/Face"]
+position = Vector3(0, 0.001, 0.019)
+scale = Vector3(1, 0.6, 1)
+mesh = SubResource("Mesh_smile")
+cast_shadow = 0
+
+[node name="SmileUpperMask" type="MeshInstance3D" parent="Body/Face"]
+position = Vector3(0, 0.003, 0.006)
+scale = Vector3(1.08, 1, 0.64)
+mesh = SubResource("Mesh_smile_mask")
+cast_shadow = 0
+
+[node name="StatusButtonBase" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.127, 0.067)
+mesh = SubResource("Mesh_status_base")
+cast_shadow = 0
+
+[node name="WarmStatusLight" type="MeshInstance3D" parent="Body"]
+position = Vector3(0, 0.134, 0.067)
+mesh = SubResource("Mesh_status_light")
+cast_shadow = 0
+
+[node name="LeftWheel" type="MeshInstance3D" parent="."]
+position = Vector3(-0.183, 0.04, 0.024)
+rotation = Vector3(0, 0, 1.5707963)
+mesh = SubResource("Mesh_wheel")
+
+[node name="LeftWheelHub" type="MeshInstance3D" parent="."]
+position = Vector3(-0.185, 0.04, 0.024)
+rotation = Vector3(0, 0, 1.5707963)
+mesh = SubResource("Mesh_wheel_hub")
+
+[node name="RightWheel" type="MeshInstance3D" parent="."]
+position = Vector3(0.183, 0.04, 0.024)
+rotation = Vector3(0, 0, 1.5707963)
+mesh = SubResource("Mesh_wheel")
+
+[node name="RightWheelHub" type="MeshInstance3D" parent="."]
+position = Vector3(0.185, 0.04, 0.024)
+rotation = Vector3(0, 0, 1.5707963)
+mesh = SubResource("Mesh_wheel_hub")
+
+[node name="LeftBrushMotor" type="Node3D" parent="."]
+position = Vector3(-0.124, 0.017, -0.205)
+
+[node name="MotorHousing" type="MeshInstance3D" parent="LeftBrushMotor"]
+position = Vector3(0, 0.012, 0)
+mesh = SubResource("Mesh_motor")
+
+[node name="MintMotorCap" type="MeshInstance3D" parent="LeftBrushMotor"]
+position = Vector3(0, 0.024, 0)
+mesh = SubResource("Mesh_motor_cap")
+
+[node name="ArmA" type="Node3D" parent="LeftBrushMotor"]
+
+[node name="Stem" type="MeshInstance3D" parent="LeftBrushMotor/ArmA"]
+position = Vector3(0, 0, -0.038)
+mesh = SubResource("Mesh_brush_arm")
+
+[node name="SoftBristles" type="MeshInstance3D" parent="LeftBrushMotor/ArmA"]
+position = Vector3(0, -0.007, -0.069)
+mesh = SubResource("Mesh_bristles")
+
+[node name="ArmB" type="Node3D" parent="LeftBrushMotor"]
+rotation = Vector3(0, 2.094395, 0)
+
+[node name="Stem" type="MeshInstance3D" parent="LeftBrushMotor/ArmB"]
+position = Vector3(0, 0, -0.038)
+mesh = SubResource("Mesh_brush_arm")
+
+[node name="SoftBristles" type="MeshInstance3D" parent="LeftBrushMotor/ArmB"]
+position = Vector3(0, -0.007, -0.069)
+mesh = SubResource("Mesh_bristles")
+
+[node name="ArmC" type="Node3D" parent="LeftBrushMotor"]
+rotation = Vector3(0, 4.18879, 0)
+
+[node name="Stem" type="MeshInstance3D" parent="LeftBrushMotor/ArmC"]
+position = Vector3(0, 0, -0.038)
+mesh = SubResource("Mesh_brush_arm")
+
+[node name="SoftBristles" type="MeshInstance3D" parent="LeftBrushMotor/ArmC"]
+position = Vector3(0, -0.007, -0.069)
+mesh = SubResource("Mesh_bristles")
+
+[node name="RightBrushMotor" type="Node3D" parent="."]
+position = Vector3(0.124, 0.017, -0.205)
+
+[node name="MotorHousing" type="MeshInstance3D" parent="RightBrushMotor"]
+position = Vector3(0, 0.012, 0)
+mesh = SubResource("Mesh_motor")
+
+[node name="MintMotorCap" type="MeshInstance3D" parent="RightBrushMotor"]
+position = Vector3(0, 0.024, 0)
+mesh = SubResource("Mesh_motor_cap")
+
+[node name="ArmA" type="Node3D" parent="RightBrushMotor"]
+rotation = Vector3(0, 1.047198, 0)
+
+[node name="Stem" type="MeshInstance3D" parent="RightBrushMotor/ArmA"]
+position = Vector3(0, 0, -0.038)
+mesh = SubResource("Mesh_brush_arm")
+
+[node name="SoftBristles" type="MeshInstance3D" parent="RightBrushMotor/ArmA"]
+position = Vector3(0, -0.007, -0.069)
+mesh = SubResource("Mesh_bristles")
+
+[node name="ArmB" type="Node3D" parent="RightBrushMotor"]
+rotation = Vector3(0, 3.141593, 0)
+
+[node name="Stem" type="MeshInstance3D" parent="RightBrushMotor/ArmB"]
+position = Vector3(0, 0, -0.038)
+mesh = SubResource("Mesh_brush_arm")
+
+[node name="SoftBristles" type="MeshInstance3D" parent="RightBrushMotor/ArmB"]
+position = Vector3(0, -0.007, -0.069)
+mesh = SubResource("Mesh_bristles")
+
+[node name="ArmC" type="Node3D" parent="RightBrushMotor"]
+rotation = Vector3(0, 5.235988, 0)
+
+[node name="Stem" type="MeshInstance3D" parent="RightBrushMotor/ArmC"]
+position = Vector3(0, 0, -0.038)
+mesh = SubResource("Mesh_brush_arm")
+
+[node name="SoftBristles" type="MeshInstance3D" parent="RightBrushMotor/ArmC"]
+position = Vector3(0, -0.007, -0.069)
+mesh = SubResource("Mesh_bristles")
+
+[node name="DustSwirls" type="MultiMeshInstance3D" parent="."]
+visible = false
+cast_shadow = 0
+multimesh = SubResource("MultiMesh_dust")

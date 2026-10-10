@@ -1,10 +1,18 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=25 format=3]
 
 [ext_resource type="Script" path="res://scripts/cleaning_hud.gd" id="1_script"]
 [ext_resource type="Theme" path="res://resources/ui/mint_theme.tres" id="2_theme"]
 [ext_resource type="Texture2D" path="res://assets/ui/back.svg" id="3_back"]
 [ext_resource type="Texture2D" path="res://assets/floating_shop/CoinIcon.png" id="4_coin"]
-[ext_resource type="Texture2D" path="res://assets/ui/nav_items.svg" id="5_upgrade"]
+[ext_resource type="Texture2D" path="res://assets/ui/room_upgrades/cart.svg" id="5_upgrade"]
+
+[ext_resource type="PackedScene" path="res://scenes/ui/room_upgrade_panel.tscn" id="6_room"]
+[ext_resource type="Texture2D" path="res://assets/ui/room_upgrades/carpet_earnings.svg" id="7_earnings"]
+
+[ext_resource type="Texture2D" path="res://assets/floating_shop/BonziIcon.png" id="8_bonzi"]
+[ext_resource type="Texture2D" path="res://assets/ui/room_upgrades/video_play.svg" id="9_video"]
+[ext_resource type="Texture2D" path="res://assets/ui/room_upgrades/video_locked.svg" id="10_locked_video"]
+[ext_resource type="Texture2D" path="res://assets/ui/room_upgrades/video_active.svg" id="11_active_video"]
 
 [sub_resource type="StyleBoxFlat" id="UpgradesPanel"]
 content_margin_left = 16.0
@@ -40,9 +48,9 @@ corner_radius_bottom_left = 20
 
 [sub_resource type="StyleBoxFlat" id="ProgressPanel"]
 content_margin_left = 10.0
-content_margin_top = 9.0
+content_margin_top = 6.0
 content_margin_right = 10.0
-content_margin_bottom = 9.0
+content_margin_bottom = 6.0
 bg_color = Color(1, 1, 1, 0.96)
 border_width_left = 2
 border_width_top = 2
@@ -53,6 +61,22 @@ corner_radius_top_left = 20
 corner_radius_top_right = 20
 corner_radius_bottom_right = 20
 corner_radius_bottom_left = 20
+
+[sub_resource type="StyleBoxFlat" id="CarpetEarningsPanel"]
+content_margin_left = 10.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 4.0
+bg_color = Color(0.949, 0.988, 0.945, 0.98)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 3
+border_color = Color(0.64, 0.8, 0.72, 1)
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
 
 [sub_resource type="StyleBoxFlat" id="ProgressTrack"]
 bg_color = Color(0.86, 0.9, 0.83, 1)
@@ -119,6 +143,54 @@ corner_radius_top_right = 20
 corner_radius_bottom_left = 20
 corner_radius_bottom_right = 20
 
+[sub_resource type="StyleBoxFlat" id="VideoNormal"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.83, 0.94, 0.96, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 4
+border_color = Color(0.25, 0.58, 0.65, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_left = 18
+corner_radius_bottom_right = 18
+
+[sub_resource type="StyleBoxFlat" id="VideoHover"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.90, 0.98, 0.99, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 4
+border_color = Color(0.25, 0.58, 0.65, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_left = 18
+corner_radius_bottom_right = 18
+
+[sub_resource type="StyleBoxFlat" id="VideoPressed"]
+content_margin_left = 8.0
+content_margin_top = 8.0
+content_margin_right = 8.0
+content_margin_bottom = 8.0
+bg_color = Color(0.68, 0.88, 0.92, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25, 0.58, 0.65, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_left = 18
+corner_radius_bottom_right = 18
+
 [node name="CleaningHUD" type="CanvasLayer"]
 script = ExtResource("1_script")
 
@@ -135,14 +207,14 @@ theme = ExtResource("2_theme")
 [node name="CleaningProgress" type="PanelContainer" parent="HUD"]
 unique_name_in_owner = true
 offset_left = 190.0
-offset_top = 16.0
+offset_top = 96.0
 offset_right = 530.0
-offset_bottom = 72.0
+offset_bottom = 140.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("ProgressPanel")
 
 [node name="ProgressArea" type="Control" parent="HUD/CleaningProgress"]
-custom_minimum_size = Vector2(0, 34)
+custom_minimum_size = Vector2(0, 28)
 layout_mode = 2
 mouse_filter = 2
 
@@ -171,8 +243,8 @@ grow_vertical = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
 theme_override_colors/font_outline_color = Color(1, 1, 1, 0.82)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 20
+theme_override_constants/outline_size = 1
+theme_override_font_sizes/font_size = 24
 text = "0%"
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -195,6 +267,51 @@ text_overrun_behavior = 3
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="EarningsPerCarpet" type="PanelContainer" parent="HUD"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 48)
+offset_left = 220.0
+offset_top = 146.0
+offset_right = 500.0
+offset_bottom = 194.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("CarpetEarningsPanel")
+
+[node name="EarningsRow" type="HBoxContainer" parent="HUD/EarningsPerCarpet"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="CarpetEarningsIcon" type="TextureRect" parent="HUD/EarningsPerCarpet/EarningsRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("7_earnings")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CarpetEarningsValue" type="Label" parent="HUD/EarningsPerCarpet/EarningsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.14, 0.32, 0.29, 1)
+theme_override_font_sizes/font_size = 26
+text = "40"
+vertical_alignment = 1
+
+[node name="PerCarpetLabel" type="Label" parent="HUD/EarningsPerCarpet/EarningsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.14, 0.32, 0.29, 1)
+theme_override_font_sizes/font_size = 16
+text = "Per carpet"
+vertical_alignment = 1
+
 [node name="HomeButton" type="Button" parent="HUD"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(56, 56)
@@ -215,23 +332,23 @@ action_mode = 1
 [node name="FinishJobButton" type="Button" parent="HUD"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(148, 56)
-offset_left = 286.0
-offset_top = 924.0
-offset_right = 434.0
-offset_bottom = 980.0
+custom_minimum_size = Vector2(104, 56)
+offset_left = 600.0
+offset_top = 928.0
+offset_right = 704.0
+offset_bottom = 984.0
 theme_type_variation = &"PrimaryButton"
-theme_override_font_sizes/font_size = 17
-text = "Finish job"
+theme_override_font_sizes/font_size = 20
+text = "Finish"
 action_mode = 1
 
 [node name="Wallet" type="PanelContainer" parent="HUD"]
 unique_name_in_owner = true
 z_index = 30
-offset_left = 572.0
+offset_left = 548.0
 offset_top = 16.0
 offset_right = 704.0
-offset_bottom = 72.0
+offset_bottom = 84.0
 mouse_filter = 1
 theme_override_styles/panel = SubResource("RewardPanel")
 
@@ -243,7 +360,7 @@ alignment = 1
 
 [node name="WalletIcon" type="TextureRect" parent="HUD/Wallet/WalletRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(34, 34)
+custom_minimum_size = Vector2(42, 42)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
@@ -256,18 +373,18 @@ unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.35, 0.27, 0.11, 1)
-theme_override_font_sizes/font_size = 23
+theme_override_font_sizes/font_size = 32
 text = "0"
 vertical_alignment = 1
 
 [node name="UpgradeButton" type="Button" parent="HUD"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(64, 64)
+custom_minimum_size = Vector2(56, 56)
 offset_left = 16.0
-offset_top = 84.0
-offset_right = 80.0
-offset_bottom = 148.0
-tooltip_text = "Brush upgrades"
+offset_top = 928.0
+offset_right = 72.0
+offset_bottom = 984.0
+tooltip_text = "Shop for tool upgrades"
 theme_type_variation = &"SecondaryButton"
 theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
 theme_override_colors/font_hover_color = Color(0.12, 0.25, 0.23, 1)
@@ -280,127 +397,37 @@ theme_override_styles/hover = SubResource("BackHover")
 theme_override_styles/pressed = SubResource("BackPressed")
 theme_override_styles/focus = SubResource("BackFocus")
 icon = ExtResource("5_upgrade")
-icon_max_width = 54
-expand_icon = true
-action_mode = 1
-
-[node name="PayoutCard" type="PanelContainer" parent="HUD"]
-unique_name_in_owner = true
-offset_left = 50.0
-offset_top = 900.0
-offset_right = 532.0
-offset_bottom = 984.0
-mouse_filter = 2
-tooltip_text = "Rug earnings at 75% clean. Complete the rug for double."
-theme_override_styles/panel = SubResource("ProgressPanel")
-
-[node name="Values" type="HBoxContainer" parent="HUD/PayoutCard"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 8
-
-[node name="RugValueIcon" type="TextureRect" parent="HUD/PayoutCard/Values"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(32, 40)
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-texture = ExtResource("4_coin")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="Early" type="VBoxContainer" parent="HUD/PayoutCard/Values"]
-layout_mode = 2
-size_flags_horizontal = 3
-mouse_filter = 2
-theme_override_constants/separation = 2
-alignment = 1
-
-[node name="Threshold" type="Label" parent="HUD/PayoutCard/Values/Early"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.38, 0.48, 0.42, 1)
-theme_override_font_sizes/font_size = 14
-text = "75% rug value"
-horizontal_alignment = 1
-
-[node name="EarlyValue" type="Label" parent="HUD/PayoutCard/Values/Early"]
-unique_name_in_owner = true
-layout_mode = 2
-mouse_filter = 1
-theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
-theme_override_font_sizes/font_size = 18
-text = "20"
-horizontal_alignment = 1
-clip_text = true
-
-[node name="Full" type="VBoxContainer" parent="HUD/PayoutCard/Values"]
-visible = false
-layout_mode = 2
-size_flags_horizontal = 3
-mouse_filter = 2
-theme_override_constants/separation = 2
-alignment = 1
-
-[node name="Threshold" type="Label" parent="HUD/PayoutCard/Values/Full"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.38, 0.48, 0.42, 1)
-theme_override_font_sizes/font_size = 14
-text = "99%"
-horizontal_alignment = 1
-
-[node name="FullValue" type="Label" parent="HUD/PayoutCard/Values/Full"]
-unique_name_in_owner = true
-layout_mode = 2
-mouse_filter = 1
-theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
-theme_override_font_sizes/font_size = 18
-text = "40"
-horizontal_alignment = 1
-clip_text = true
-
-[node name="PayoutUpgradeButton" type="Button" parent="HUD"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(128, 56)
-offset_left = 542.0
-offset_top = 914.0
-offset_right = 670.0
-offset_bottom = 970.0
-tooltip_text = "Increase rug earnings"
-theme_type_variation = &"PrimaryButton"
-theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
-theme_override_colors/font_hover_color = Color(0.12, 0.25, 0.23, 1)
-theme_override_colors/font_pressed_color = Color(0.12, 0.25, 0.23, 1)
-theme_override_colors/font_hover_pressed_color = Color(0.12, 0.25, 0.23, 1)
-theme_override_colors/font_focus_color = Color(0.12, 0.25, 0.23, 1)
-theme_override_font_sizes/font_size = 16
-disabled = true
-text = "Buy 80"
-icon = ExtResource("4_coin")
-icon_max_width = 22
+icon_max_width = 48
 expand_icon = true
 action_mode = 1
 
 [node name="AdRewardButton" type="Button" parent="HUD"]
 unique_name_in_owner = true
 visible = false
-custom_minimum_size = Vector2(128, 56)
-offset_left = 576.0
-offset_top = 84.0
-offset_right = 704.0
-offset_bottom = 140.0
-tooltip_text = "Watch an ad for coins"
+custom_minimum_size = Vector2(96, 56)
+offset_left = 250.0
+offset_top = 928.0
+offset_right = 346.0
+offset_bottom = 984.0
+tooltip_text = "Watch a video for 2× earnings on this carpet"
 theme_type_variation = &"SecondaryButton"
 theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
 theme_override_colors/font_hover_color = Color(0.12, 0.25, 0.23, 1)
 theme_override_colors/font_pressed_color = Color(0.12, 0.25, 0.23, 1)
 theme_override_colors/font_hover_pressed_color = Color(0.12, 0.25, 0.23, 1)
 theme_override_colors/font_focus_color = Color(0.12, 0.25, 0.23, 1)
-theme_override_font_sizes/font_size = 16
-text = "▶  +20"
-icon = ExtResource("4_coin")
-icon_max_width = 22
+theme_override_colors/font_disabled_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/icon_disabled_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 22
+theme_override_styles/normal = SubResource("VideoNormal")
+theme_override_styles/hover = SubResource("VideoHover")
+theme_override_styles/pressed = SubResource("VideoPressed")
+theme_override_styles/disabled = SubResource("VideoNormal")
+theme_override_styles/focus = SubResource("BackFocus")
+theme_override_constants/h_separation = 6
+text = "2×"
+icon = ExtResource("9_video")
+icon_max_width = 36
 expand_icon = true
 action_mode = 1
 
@@ -418,7 +445,7 @@ mouse_filter = 2
 [node name="UpgradeSheet" type="Control" parent="HUD"]
 unique_name_in_owner = true
 visible = false
-z_index = 25
+z_index = 50
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -446,31 +473,24 @@ offset_bottom = 685.0
 mouse_filter = 2
 theme_override_styles/panel = SubResource("UpgradesPanel")
 
-[node name="Contents" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel"]
-layout_mode = 0
+[node name="ShopHeading" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel"]
+unique_name_in_owner = true
 offset_left = 16.0
 offset_top = 16.0
 offset_right = 256.0
-offset_bottom = 354.0
+offset_bottom = 72.0
 mouse_filter = 2
-theme_override_constants/separation = 8
-alignment = 1
+theme_override_constants/separation = 12
 
-[node name="Heading" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 8
-
-[node name="ToolDrawerTitle" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/Heading"]
-unique_name_in_owner = true
+[node name="ShopTitle" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopHeading"]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
 theme_override_font_sizes/font_size = 22
-text = "Brush"
+text = "Shop"
 
-[node name="CloseUpgradesButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/Heading"]
+[node name="CloseUpgradesButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/ShopHeading"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(70, 56)
 layout_mode = 2
@@ -484,12 +504,67 @@ theme_override_font_sizes/font_size = 16
 text = "Done"
 action_mode = 1
 
-[node name="CurrentToolCard" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
+
+[node name="ShopContentsScroll" type="ScrollContainer" parent="HUD/UpgradeSheet/UpgradesPanel"]
+unique_name_in_owner = true
+offset_left = 16.0
+offset_top = 80.0
+offset_right = 256.0
+offset_bottom = 354.0
+horizontal_scroll_mode = 0
+
+[node name="ShopColumns" type="Control" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="Contents" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = 256.0
+offset_bottom = 354.0
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Heading" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="ToolDrawerTitle" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents/Heading"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 22
+text = "Brush"
+
+
+[node name="ToolCardsScroll" type="ScrollContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 1
+follow_focus = true
+horizontal_scroll_mode = 0
+
+[node name="ToolCards" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents/ToolCardsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="CurrentToolCard" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents/ToolCardsScroll/ToolCards"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 10
 
-[node name="CurrentToolPreview" type="TextureRect" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/CurrentToolCard"]
+[node name="CurrentToolPreview" type="TextureRect" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents/ToolCardsScroll/ToolCards/CurrentToolCard"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(72, 80)
 layout_mode = 2
@@ -498,21 +573,21 @@ texture = ExtResource("5_upgrade")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Words" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/CurrentToolCard"]
+[node name="Words" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents/ToolCardsScroll/ToolCards/CurrentToolCard"]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_constants/separation = 2
 alignment = 1
 
-[node name="State" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/CurrentToolCard/Words"]
+[node name="State" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents/ToolCardsScroll/ToolCards/CurrentToolCard/Words"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
 theme_override_font_sizes/font_size = 13
 text = "Using"
 
-[node name="CurrentToolName" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/CurrentToolCard/Words"]
+[node name="CurrentToolName" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents/ToolCardsScroll/ToolCards/CurrentToolCard/Words"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
@@ -522,7 +597,7 @@ text = "Hand brush"
 clip_text = true
 text_overrun_behavior = 3
 
-[node name="CurrentToolStats" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/CurrentToolCard/Words"]
+[node name="CurrentToolStats" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents/ToolCardsScroll/ToolCards/CurrentToolCard/Words"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 1
@@ -531,13 +606,13 @@ theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
 theme_override_font_sizes/font_size = 15
 text = "↔ 1.00×\n✦ 1.00×"
 
-[node name="NextToolCard" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
+[node name="NextToolCard" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents/ToolCardsScroll/ToolCards"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 10
 
-[node name="NextToolPreview" type="TextureRect" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/NextToolCard"]
+[node name="NextToolPreview" type="TextureRect" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents/ToolCardsScroll/ToolCards/NextToolCard"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(72, 80)
 layout_mode = 2
@@ -546,21 +621,21 @@ texture = ExtResource("5_upgrade")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Words" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/NextToolCard"]
+[node name="Words" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents/ToolCardsScroll/ToolCards/NextToolCard"]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 theme_override_constants/separation = 2
 alignment = 1
 
-[node name="State" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/NextToolCard/Words"]
+[node name="State" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents/ToolCardsScroll/ToolCards/NextToolCard/Words"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
 theme_override_font_sizes/font_size = 13
 text = "Next"
 
-[node name="NextToolName" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/NextToolCard/Words"]
+[node name="NextToolName" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents/ToolCardsScroll/ToolCards/NextToolCard/Words"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
@@ -570,7 +645,7 @@ text = "Wide brush"
 clip_text = true
 text_overrun_behavior = 3
 
-[node name="NextToolStats" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/Contents/NextToolCard/Words"]
+[node name="NextToolStats" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents/ToolCardsScroll/ToolCards/NextToolCard/Words"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 1
@@ -579,7 +654,7 @@ theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
 theme_override_font_sizes/font_size = 15
 text = "↔ 1.25×\n✦ 1.10×"
 
-[node name="ToolUpgradeButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/Contents"]
+[node name="ToolUpgradeButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/Contents"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 56)
 layout_mode = 2
@@ -597,7 +672,157 @@ icon_max_width = 22
 expand_icon = true
 action_mode = 1
 
-[node name="WetUpgradeRows" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel"]
+[node name="BonziContents" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns"]
+unique_name_in_owner = true
+visible = false
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="BonziHeading" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 30)
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 22
+text = "Bonzi"
+
+[node name="BonziCardsScroll" type="ScrollContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="BonziCards" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents/BonziCardsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="CurrentBonziCard" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents/BonziCardsScroll/BonziCards"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="CurrentBonziPreview" type="TextureRect" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents/BonziCardsScroll/BonziCards/CurrentBonziCard"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 80)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("8_bonzi")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Words" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents/BonziCardsScroll/BonziCards/CurrentBonziCard"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="State" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents/BonziCardsScroll/BonziCards/CurrentBonziCard/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
+theme_override_font_sizes/font_size = 13
+text = "Using"
+
+[node name="CurrentBonziName" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents/BonziCardsScroll/BonziCards/CurrentBonziCard/Words"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 16
+text = "Not hired"
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="CurrentBonziStats" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents/BonziCardsScroll/BonziCards/CurrentBonziCard/Words"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 1
+tooltip_text = "Bonzi's current earnings and automatic cleaning cycle."
+theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
+theme_override_font_sizes/font_size = 15
+text = "No earnings yet"
+
+[node name="NextBonziCard" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents/BonziCardsScroll/BonziCards"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="NextBonziPreview" type="TextureRect" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents/BonziCardsScroll/BonziCards/NextBonziCard"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 80)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("8_bonzi")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Words" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents/BonziCardsScroll/BonziCards/NextBonziCard"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="State" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents/BonziCardsScroll/BonziCards/NextBonziCard/Words"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
+theme_override_font_sizes/font_size = 13
+text = "Next"
+
+[node name="NextBonziName" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents/BonziCardsScroll/BonziCards/NextBonziCard/Words"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 16
+text = "Bonzi I"
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="NextBonziStats" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents/BonziCardsScroll/BonziCards/NextBonziCard/Words"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 1
+tooltip_text = "Upgrading Bonzi shortens the cleaning cycle; room upgrades raise its earnings."
+theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
+theme_override_font_sizes/font_size = 15
+text = "40 coins\nEvery 120s"
+
+[node name="BonziStatus" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.31, 0.45, 0.41, 1)
+theme_override_font_sizes/font_size = 13
+text = "Complete 3 paid carpets to hire"
+autowrap_mode = 2
+
+[node name="BonziUpgradeButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/BonziContents"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 56)
+layout_mode = 2
+theme_type_variation = &"PrimaryButton"
+theme_override_colors/font_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_hover_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_pressed_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_hover_pressed_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_colors/font_focus_color = Color(0.12, 0.25, 0.23, 1)
+theme_override_font_sizes/font_size = 16
+disabled = true
+text = "Hire 100"
+icon = ExtResource("4_coin")
+icon_max_width = 22
+expand_icon = true
+action_mode = 1
+
+
+[node name="WetUpgradeRows" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
@@ -608,20 +833,20 @@ offset_bottom = 544.0
 mouse_filter = 2
 theme_override_constants/separation = 10
 
-[node name="HoseUpgradeRow" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows"]
+[node name="HoseUpgradeRow" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/WetUpgradeRows"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 84)
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="Words" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/HoseUpgradeRow"]
+[node name="Words" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/WetUpgradeRows/HoseUpgradeRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 alignment = 1
 
-[node name="HoseUpgradeTitle" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/HoseUpgradeRow/Words"]
+[node name="HoseUpgradeTitle" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/WetUpgradeRows/HoseUpgradeRow/Words"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
@@ -630,7 +855,7 @@ theme_override_font_sizes/font_size = 16
 text = "Hose · Lv 1 / 5"
 clip_text = true
 
-[node name="HoseUpgradeStats" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/HoseUpgradeRow/Words"]
+[node name="HoseUpgradeStats" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/WetUpgradeRows/HoseUpgradeRow/Words"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
@@ -639,7 +864,7 @@ theme_override_font_sizes/font_size = 12
 text = "Flow 1.00× → 1.50×"
 clip_text = true
 
-[node name="HoseUpgradeButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/HoseUpgradeRow"]
+[node name="HoseUpgradeButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/WetUpgradeRows/HoseUpgradeRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(104, 56)
 layout_mode = 2
@@ -653,20 +878,20 @@ icon_max_width = 18
 expand_icon = true
 action_mode = 1
 
-[node name="SqueegeeUpgradeRow" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows"]
+[node name="SqueegeeUpgradeRow" type="HBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/WetUpgradeRows"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 84)
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="Words" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/SqueegeeUpgradeRow"]
+[node name="Words" type="VBoxContainer" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/WetUpgradeRows/SqueegeeUpgradeRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 alignment = 1
 
-[node name="SqueegeeUpgradeTitle" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/SqueegeeUpgradeRow/Words"]
+[node name="SqueegeeUpgradeTitle" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/WetUpgradeRows/SqueegeeUpgradeRow/Words"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
@@ -675,7 +900,7 @@ theme_override_font_sizes/font_size = 16
 text = "Squeegee · Lv 1 / 5"
 clip_text = true
 
-[node name="SqueegeeUpgradeStats" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/SqueegeeUpgradeRow/Words"]
+[node name="SqueegeeUpgradeStats" type="Label" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/WetUpgradeRows/SqueegeeUpgradeRow/Words"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
@@ -684,7 +909,7 @@ theme_override_font_sizes/font_size = 12
 text = "Power 1.00× → 1.50×"
 clip_text = true
 
-[node name="SqueegeeUpgradeButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/WetUpgradeRows/SqueegeeUpgradeRow"]
+[node name="SqueegeeUpgradeButton" type="Button" parent="HUD/UpgradeSheet/UpgradesPanel/ShopContentsScroll/ShopColumns/WetUpgradeRows/SqueegeeUpgradeRow"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(104, 56)
 layout_mode = 2
@@ -697,3 +922,15 @@ icon = ExtResource("4_coin")
 icon_max_width = 18
 expand_icon = true
 action_mode = 1
+
+[node name="RoomHint" type="Label" parent="HUD"]
+unique_name_in_owner = true
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.22, 0.37, 0.30, 1)
+theme_override_colors/font_outline_color = Color(0.94, 0.97, 0.92, 0.9)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 14
+text = "Tap the room to upgrade"
+horizontal_alignment = 1
+
+[node name="RoomUpgradePanel" parent="HUD" instance=ExtResource("6_room")]

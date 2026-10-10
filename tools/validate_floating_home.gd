@@ -49,7 +49,7 @@ func run() -> void:
 		quit(1)
 		return
 	var ledger := root.get_node("ShopState")
-	check(ProjectSettings.get_setting("application/run/main_scene")=="res://scenes/production/floating_home.tscn","F5 launches the floating main menu")
+	check(ProjectSettings.get_setting("application/run/main_scene")=="res://scenes/production/rug_cleaning.tscn","F5 launches the current carpet; Back opens this menu")
 	home=load("res://scenes/production/floating_home.tscn").instantiate()
 	check(home.get_node_or_null("%ShopViewport") != null,"3D viewport authored in saved scene")
 	check(home.get_node_or_null("%ShopTap") is Button,"Building tap target authored in saved scene")

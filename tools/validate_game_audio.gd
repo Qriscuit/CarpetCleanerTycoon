@@ -77,7 +77,7 @@ func check_assets_and_envelopes() -> void:
 		var stream := voices[index].stream as AudioStreamWAV
 		check(stream != null and stream.format == AudioStreamWAV.FORMAT_16_BITS and stream.mix_rate == 44100, "Runtime voice uses the intended PCM source: " + str(voices[index].name))
 		if stream == null: continue
-		check(stream.loop_mode == AudioStreamWAV.LOOP_FORWARD and stream.loop_begin == 0 and stream.loop_end == expected_frames[index], "Runtime loop has exact sample-frame bounds: " + str(voices[index].name))
+		check(stream.loop_mode == AudioStreamWAV.LOOP_FORWARD and stream.loop_begin == 0 and stream.loop_end == expected_frames[index] - 1, "Runtime loop ends at the last valid sample-frame index: " + str(voices[index].name))
 		check(stream.data.size() == expected_frames[index] * (4 if index == 0 else 2), "Loop covers all source frames: " + str(voices[index].name))
 	audio.set_context("cleaning")
 	audio.feed_brush(1.5, 1.0, true)

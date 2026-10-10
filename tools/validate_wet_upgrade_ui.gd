@@ -61,8 +61,8 @@ func run() -> void:
 			await create_timer(0.21).timeout
 			await settle()
 			var label := "%s store %d" % [str(dimensions), store_id]
-			check(not hud.control("FullValue").is_visible_in_tree(), "Double-reward row stays hidden " + label)
-			check(hud.control("EarlyValue").text.contains("160") and hud.control("EarlyValue").text.contains("200"), "Single payout preview shows from and to " + label)
+			check(hud.get_node_or_null("%PayoutCard") == null and hud.get_node_or_null("%EarlyValue") == null and hud.get_node_or_null("%FullValue") == null, "Persistent earnings footer is removed " + label)
+			check(hud._progression.early_reward == 160 and hud._progression.full_reward == 320 and hud.get_node_or_null("%PayoutUpgradeButton") == null, "Reward quotes remain available without the footer or generic purchase button " + label)
 			check(not hud.control("HoseUpgradeRow").is_visible_in_tree(), "No duplicate hose upgrade " + label)
 			check(hud.control("ToolDrawerTitle").text == ("Hose" if store_id >= 2 else "Brush"), "Main upgrade matches store tool " + label)
 			check(hud.control("SqueegeeUpgradeRow").is_visible_in_tree() == (store_id >= 2), "Squeegee unlocks in second store " + label)
@@ -165,9 +165,9 @@ func check_store_checklist() -> void:
 	state.stores["2"].final_tool_jobs = 3
 	sheet.refresh()
 	check(not sheet.action_for("intake").disabled, "Opening enables when all visible requirements pass")
-	sheet.show_tab("shop")
+	sheet.show_tab("items")
 	check(not sheet.get_node("%TravelGoals").visible, "Checklist is only shown in Stores")
-	check(sheet.rows["wide_brush"].get_node("Row/Words/Title").text.contains("Water hose"), "Shop 2 main offer is hose")
+	check(sheet.rows["wide_brush"].get_node("Row/Words/Title").text.contains("Water hose"), "Store2 Tools retains the main hose offer")
 	check(sheet.rows["bonzi"].get_node("Row/Words/Title").text.contains("Squeegee"), "Shop 2 squeegee is directly below hose")
 	check(state.select_store(1), "Checklist navigation visits an earlier owned store")
 	sheet.show_tab("plans")

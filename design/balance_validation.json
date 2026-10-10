@@ -1,4 +1,5 @@
 {
+  "historical_note": "Pacing results predate staged brush/Bonzi prices. Run tools/simulate_first_shop_balance.py for current results; this file is preserved as a historical reference.",
   "default_discrete_first_route": {
     "bonzi_min": 5.0,
     "high_street_min": 29.0,

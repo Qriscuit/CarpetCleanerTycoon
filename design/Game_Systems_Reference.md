@@ -1,20 +1,22 @@
 # Current game systems reference
 
-Updated: 29 September 2026. This document describes the implemented project, including the Store 2 recipe, Store 3 unlock fixes, mobile performance pass and ten-pass dark surface cleaning with demand-driven debris recycling and immediate contact spawning. It is a code reference, not a list of proposed features. Paths are relative to this document; `res://` in Godot refers to the `CarpetToy` directory.
+Updated: 9 October 2026. This document describes the implemented project, including six brush stores in one section, bounded room earnings, authored visual milestones and save migration. It is a code reference, not a list of proposed features. Paths are relative to this document; `res://` in Godot refers to the `CarpetToy` directory.
+
+Section 1 has six stores with five independent accessory ladders per store. Fully upgraded carpet rewards grow from 400,000 in the first store to 400 AF in the sixth. Real makeovers are spread across each store's upgrade cap; extra income levels retain the final authored mesh. See [First_Shop_Balance.md](First_Shop_Balance.md) and [Room_Upgrades.md](Room_Upgrades.md) for current curves and pacing. The production catalog has 24 rugs; water and extraction remain available in Gym and in code for future sections.
 
 ## 1. Start here
 
-The game has four stores, a shared wallet, paid cleaning jobs, independent store upgrades, Bonzi automation, and a free Gym. The main scene is the floating shop. Paid jobs use one cleaning scene whose required tools depend on the active store.
+The game has one playable section of six stores, a shared wallet, paid brush jobs, independent store upgrades, Bonzi automation, and a free Gym. The main scene is production cleaning: app launch or F5 opens or resumes the last selected store's carpet. Back opens the floating shop for store browsing and management. Section completion is tracked, but no second section can be entered until one is authored.
 
 | Area | Main files | Responsibility |
 | --- | --- | --- |
 | Project startup | [project.godot](../CarpetToy/project.godot), [scene_routes.gd](../CarpetToy/scripts/scene_routes.gd) | Main scene, autoload, renderer, shared navigation destinations |
 | Persistent game state | [shop_state.gd](../CarpetToy/scripts/shop_state.gd) | Wallet, stores, jobs, purchases, automation, save/load and reward validation |
-| Economy rules | [progression.gd](../CarpetToy/scripts/progression.gd) | Prices, payout formulas, tool strengths, store names and Bonzi cycles |
+| Economy rules | [progression.gd](../CarpetToy/scripts/progression.gd), [room_upgrades.gd](../CarpetToy/scripts/room_upgrades.gd) | Sections, store caps, accessory curves, visual milestones, tool strengths and Bonzi cycles |
 | Home | [floating_home.tscn](../CarpetToy/scenes/production/floating_home.tscn), [floating_home.gd](../CarpetToy/scripts/floating_home.gd) | Store preview, paid-job entry, management sheets, Gym entry and settings |
 | Paid cleaning | [rug_cleaning.tscn](../CarpetToy/scenes/production/rug_cleaning.tscn), [workshop.gd](../CarpetToy/scripts/workshop.gd) | Input, tool selection, recipe setup, job progress, transitions and VFX integration |
 | Carpet state | [dirt_controller.gd](../CarpetToy/scripts/dirt_controller.gd) | Dirt simulation, coverage/water/extraction masks, progress and rug snapshots |
-| Cleaning UI | [cleaning_hud.tscn](../CarpetToy/scenes/ui/cleaning_hud.tscn), [cleaning_hud.gd](../CarpetToy/scripts/cleaning_hud.gd) | Wallet display, progress, Finish, payout upgrades, tool drawer and coin animation |
+| Cleaning UI | [cleaning_hud.tscn](../CarpetToy/scenes/ui/cleaning_hud.tscn), [cleaning_hud.gd](../CarpetToy/scripts/cleaning_hud.gd), [room_upgrade_panel.gd](../CarpetToy/scripts/room_upgrade_panel.gd) | Wallet display, progress, Finish, floating accessory offers, tool drawer and coin animation |
 | Management UI | [compact_shop.tscn](../CarpetToy/scenes/ui/compact_shop.tscn), [compact_shop.gd](../CarpetToy/scripts/compact_shop.gd) | Shop, Tools, Stores and Bonzi sheets |
 | Gym | [rug_cleaning_gym.tscn](../CarpetToy/scenes/test/rug_cleaning_gym.tscn), [gym.gd](../CarpetToy/scripts/gym.gd), [gym_hud.gd](../CarpetToy/scripts/gym_hud.gd) | Repeatable free exercises, tool previews, instant wet/dry shortcuts and camera toggle |
 | Hose | [water_jet.gd](../CarpetToy/scripts/water_jet.gd), [water_hose_profile.gd](../CarpetToy/scripts/water_hose_profile.gd), [water_soak.gd](../CarpetToy/scripts/water_soak.gd) | Water flight/contact, visible stream, upgrade shape and passive soaking |
@@ -35,40 +37,27 @@ Home previews both owned and locked stores. Tapping an owned store enters or res
 
 `floating_home.gd` lazily creates the compact management sheet. Its tabs are internally named `shop`, `items`, `plans` and `bonzi`; `plans` is the visible **Stores** tab. The old names of reusable rows, such as `wide_brush` or `intake`, are UI identifiers, not proof that those old purchases are still offered there.
 
-Opening the production cleaning scene directly also creates or resumes a paid job. Opening Gym sets `practice_only = true`; Gym never converts an exercise into a commission.
+`project.godot` starts `scenes/production/rug_cleaning.tscn`. The workshop reads the saved `active_store` and creates or resumes that branch's paid job and rug snapshot. Opening Gym sets `practice_only = true`; Gym never converts an exercise into a commission.
 
 ## 3. Stores, recipes and completion
 
 ### Required stages
 
-| Store | Name | Required stages | Overall completion |
-| --- | --- | --- | --- |
-| 1 | Neighborhood | Brush | `dry` |
-| 2 | High Street | Water, then squeegee | `(water + extraction) / 2` |
-| 3 | Wash House | Brush, water, then squeegee | `(dry + water + extraction) / 3` |
-| 4 | Restoration Studio | Brush, water, then squeegee | `(dry + water + extraction) / 3` |
+All six stores in Section 1 require brushing. Their names are Neighborhood, High Street, Wash House, Restoration Studio, Grand Arcade and Royal Gallery. Completion is `dry = min(unique_clearance, surface_clearance)`, so removing visible clumps alone does not finish a carpet while surface dust remains.
 
-All fractions are between 0 and 1. `dry = min(unique_clearance, surface_clearance)`, so removing visible clumps alone does not finish dry cleaning while surface dust remains. Water and extraction fractions are averages over real carpet pixels, excluding empty corners and fringe gaps.
+All fractions are between 0 and 1. `WET_FIRST_STORE = 7` reserves water mechanics for future sections; `SECTION_COUNT = 1` prevents access to them today. Gym still supports water and extraction practice. The shared wet recipe code measures real carpet pixels, gates each preceding stage at 99%, and supports three washing/extraction rounds. Its first future wet store skips dry brushing; later wet recipes include it.
 
-Store 2 uses `workshop.water_only_recipe = true` and `soil.set_recipe(true, true)`. The saved flag is `skip_dry_stage`. Its dry mask is cleared and its dirt clumps are hidden; dry cleaning contributes nothing to its progress. Existing wet/extraction data is retained when loading an older Store 2 job. A new Store 2 rug begins dry with the hose selected.
-
-The next stage becomes available when the preceding stage reaches 99%:
-
-- Store 2: hose until water coverage reaches 0.99, then squeegee.
-- Stores 3 and 4: brush until both dry measures reach 0.99; hose until water reaches 0.99; then squeegee.
-- Paid tool selection cannot bypass this order. `dirt_controller.recommended_tool()` decides the available tool; internal indices are Brush `0`, Squeegee `1`, Hose `2`.
-
-The hose stops depositing water when its stage completes. Tool changes are coordinated with stroke release, including the case where the final airborne water contact arrives after release.
+`dirt_controller.recommended_tool()` coordinates recipe stages; internal indices are Brush `0`, Squeegee `1`, Hose `2`. The retained wet runtime stops hose deposition at stage completion and handles airborne contacts after release. It does not add a water stage to any current paid store.
 
 ### Finish and rewards
 
 At 75% overall completion, the player may press Finish for the normal payout. At 99%, the job automatically finishes for twice that amount. These are overall recipe percentages, not percentages of the currently selected stage.
 
-For example, in Store 2 with `water = 0.99`, the normal payout becomes available at `extraction = 0.51`: `(0.99 + 0.51) / 2 = 0.75`. Both stages at 0.99 produce 99% overall completion. This preserves the requirement to water the whole rug before extraction while allowing early completion during extraction.
+For current paid jobs, both dry measures must reach 75% for an early finish or 99% for the full reward.
 
 `workshop.update_contract_status()` drives the progress meter, Finish availability and automatic finish from the same overall value. `shop_state.reward_for_current_job()` independently validates the snapshot and recomputes the recipe total; it does not trust a submitted `overall_clearance` field. The ledger rejects nonfinite/out-of-range values and later-stage progress before the preceding stage is complete. A very small numeric tolerance handles floating-point threshold arithmetic.
 
-The payout upgrade UI shows only the normal **75%** payout, its current-to-next amount and purchase cost. The 99% reward is still calculated as double; it is not a second price that the player must buy.
+Each floating accessory offer shows the full carpet reward's current-to-next amount, the next purchase price, and progress toward the next authored makeover. Early finish still pays half that full amount.
 
 ### Rug appearance is separate from the recipe
 
@@ -79,62 +68,72 @@ The payout upgrade UI shows only the normal **75%** payout, its current-to-next 
 - `indigo_weave.tres`: three passes; lengthwise brushing is more effective.
 - `gym_brush.tres` and `gym_water.tres`: the two Gym exercises.
 
-The three production rug resources are not three independent stages. Current paid entry selects Mint Meadow and repeats that selected rug; the store determines which cleaning stages it requires. Free workshop cycling and Gym selection are separate behaviors.
+`rug_catalog.gd` provides 24 production designs, selected by the store's completed-job count. The reserved `active_rug_id` persists through reloads and purchases. Rug art is separate from the cleaning recipe; free workshop cycling and Gym selection remain separate behaviors.
 
 ## 4. Upgrade economy and tool carryover
 
-`progression.gd` is the primary balance file. For store `s`, let `S = 8^(s - 1)`, and let `p` be that store's payout-upgrade count.
+`progression.gd` defines section size, store scales and reward/upgrade caps. `room_upgrades.gd` defines five independent accessory curves: floor, plants, window, railings and walls. For store `s`, `S = STORE_SCALES[s - 1]`; the former `8^(s - 1)` scale is retained only for legacy migration.
+
+| Store | S | Levels per accessory | Maximum full carpet reward | Current authored makeovers |
+| --- | --- | --- | --- | --- |
+| 1 | `1` | 50 | 400,000 | 15, 30, 45 |
+| 2 | `1e4` | 75 | 400 million | 25, 50, 75 |
+| 3 | `1e7` | 100 | 4 trillion | 30, 60, 90 |
+| 4 | `1e11` | 125 | `4e17` | 40, 80, 120 |
+| 5 | `1e16` | 150 | `4e24` | 50, 100, 150 |
+| 6 | `1e23` | 175 | 400 AF (`4e32`) | 50, 100, 150 |
+
+Growth is solved separately for each store so maxing all five accessories reaches the exact full-reward cap. Authored makeover count comes from each accessory's definition. `visual_milestones_for()` divides the cap by that count, rounds the interval down to a multiple of five below 50 or ten at/above 50, and keeps intervals at least one. Thus 50 upgrades/five makeovers gives 10/20/30/40/50; 175/three gives 50/100/150. After the final mesh, any remaining purchases increase earnings and the offer reads **Makeovers complete**.
 
 | Rule | Current value |
 | --- | --- |
-| Normal job payout | `S * round(20 * 1.1^p)` |
-| Perfect job payout | `2 * normal payout` |
-| Next payout-upgrade price | `S * round(25 * 1.15^p)` |
-| Four incremental tool-upgrade prices | `[80, 200, 500, 1000] * S` |
+| Cleaning share | Base `20S` plus purchased accessory contributions, progressively earned during material removal; early Finish settles the unpaid remainder of this half |
+| Restoration share | The same half quote, awarded only at 99% |
+| Full carpet total | `2 * cleaning half quote`, bounded by the store reward cap |
+| Next accessory price | Independent category base cost × store scale × solved store growth raised to its current level |
+| Four incremental tool-upgrade prices | `round(3P * (R/P)^f)` at `f = 0, 1/3, 2/3, 1`, where `P=40S` and `R` is the store's full reward cap |
 | Next-store opening price | `2000 * S`, based on the store being completed |
 | Local Bonzi earnings required to open next store | `100 * S` |
 | Qualifying paid jobs at the maximum main-tool level | 3 |
 
-Prices are incremental, not cumulative labels. All purchases use the same wallet. Each store has independent payout, tool and Bonzi fields. Maximum money is `9,000,000,000,000,000`; calculations and save validation enforce that bound.
+Prices are incremental. All purchases use one wallet. Each store has independent room, tool and Bonzi fields. Currency uses finite whole-valued float64 up to `1e60`; normal-sized coins remain exact, while large idle amounts use float64's relative precision. Shared `money.gd` labels K/M/B/T then AA onward, with AF=`1e30`. Integer job counters retain a separate 9-quadrillion cap. The generic `early_reward()`/`payout_cost()` formulas in `progression.gd` support legacy migration; accessory curves are authoritative.
 
-Store 1's main upgrade is the brush. From Store 2 onward, the main upgrade is the **hose**, with the **squeegee** as an independent purchase below it in portrait or beside it in the short landscape drawer. Four purchases take each wet tool from displayed Lv 1 to Lv 5; saved levels run from 0 to 4. `buy_tool_upgrade()` deliberately routes to `buy_hose_upgrade()` in wet stores.
+Each current store sells four local brush upgrades, saved as levels 0–4. Global numerical stage is `(store_id - 1) * 4 + local_level`, up to 24. Nine authored brush models cover these stages through `dry_visual_tier()`; width reaches 1.75× and power continues growing by 12% per numerical stage after stage 8. The strongest owned brush remains available when revisiting earlier stores. Modern rule-4 reloads preserve the brush field independently of unused hose fields.
 
-Hose and squeegee strength steps are `[1.0, 1.2, 1.45, 1.75, 2.1]`. Wet stores have base multipliers `1`, `2.1` and `4.41` for Stores 2, 3 and 4. Effective strength is the strongest applicable owned upgrade, calculated separately for each tool. It does not decrease when revisiting an earlier store. Maximum current wet strength is 9.261; the mask painter has a finite safety ceiling of 16.
+Gym and the future wet-store code retain independent hose/squeegee levels 0–4 with strength steps `[1.0, 1.2, 1.45, 1.75, 2.1]`. Current paid stores do not sell those upgrades. The shared mask painter has a finite strength ceiling of 16.
 
 The effective hose shape level is the highest owned hose level. Its profile changes the visible column, impact radius, actual wetting radius, passive spread radius and spread rate together. Paid direct-flow strength is normalized in `workshop._configure_hose_upgrade()` so the profile multiplier and ledger strength are not counted twice. Gym deliberately previews the profile's own direct-flow ladder.
 
-Dry-tool width, strength and models come from `TOOL_WIDTHS`, `TOOL_POWERS` and [tool_progression_visual.gd](../CarpetToy/scripts/tool_progression_visual.gd). The code retains legacy Store 2 brush tiers and their assets for existing owners. New Store 2 hose purchases do **not** increase the old brush field. Do not remove that compatibility data simply because the current Store 2 UI no longer sells brushes.
+Dry-tool width, strength and models come from `TOOL_WIDTHS`, `TOOL_POWERS`, `dry_power()` and [tool_progression_visual.gd](../CarpetToy/scripts/tool_progression_visual.gd). Old wet purchases are credited to the corresponding brush track during rule-4 migration; their saved hose/squeegee fields are retained.
 
 Purchasing a payout upgrade during a job updates the unpaid quote for that rug without replacing its identity or resetting progress. Buying a tool during a job applies it immediately.
 
-## 5. Store unlock requirements and the third-shop fix
+## 5. Store and section completion
 
-Travel checks belong to `shop_state.progression_view()` and `open_next_store()`. The Stores sheet summarizes the named tool, paid-job count, local Bonzi earnings and opening coins in two compact lines. Completed displayed counters stop at their target; incomplete counters remain exact, so 15,999 coins cannot round up to a 16,000-coin requirement. The full balances and qualification explanation remain in tooltips, using `travel_requirements` and `travel_blockers` from the ledger.
+Travel checks belong to `shop_state.store_mastered()`, `progression_view()` and `open_next_store()`. Each store requires all five accessory ladders at its cap, all four brush upgrades, the final Bonzi tier, three paid rugs with real use of the max local brush, and `100S` local Bonzi earnings. Opening the next store also costs `2000S`. Stores displays these actual requirements; eligibility compares saved amounts.
 
-| Unlock | Required main tool in current store | Qualifying paid rugs | Bonzi coins earned in current store | Coins spent to open |
+| Unlock | Completed room levels | Required main tool | Final Bonzi tier | Qualifying paid rugs |
 | --- | --- | --- | --- | --- |
-| Store 1 → Store 2 | Brush: 4 upgrades | 3 | 100 | 2,000 |
-| Store 2 → Store 3 | Hose: 4 upgrades / displayed Lv 5 | 3 | 800 | 16,000 |
-| Store 3 → Store 4 | Hose: 4 upgrades / displayed Lv 5 | 3 | 6,400 | 128,000 |
+| Store 1 → 2 | 250 | Four brush upgrades | Yes | 3 |
+| Store 2 → 3 | 375 | Four brush upgrades | Yes | 3 |
+| Store 3 → 4 | 500 | Four brush upgrades | Yes | 3 |
+| Store 4 → 5 | 625 | Four brush upgrades | Yes | 3 |
+| Store 5 → 6 | 750 | Four brush upgrades | Yes | 3 |
 
-The last store has no next-store purchase. Payout level is **not** currently a travel requirement, despite the compatibility `TRAVEL_LEVEL_TARGET` constant and `payout_level_target` view field remaining in the code. Maximum squeegee level is also not a travel requirement.
+`section_progress()` counts mastered stores out of six. Mastering Store 6 completes Section 1; no seventh store or next-section purchase exists while `SECTION_COUNT = 1`. When more sections are authored, crossing a section boundary requires completion of all six preceding stores. Old owned stores remain owned after migration even when new mastery requirements are incomplete.
 
 ### What counts as one qualifying rug
 
 1. It must be a paid job in the store whose checklist is being completed.
 2. Its required main tool must be at saved level 4 when used.
-3. That tool must actually change the rug: a brush reduces surface dust or pushes an uncredited clump off the carpet, or a hose contact increases the wet mask. Delayed clump clearance is also detected.
+3. The brush must actually reduce surface dust or push an uncredited clump off the carpet. Delayed clump clearance is also detected.
 4. The job must then finish for a valid payout. Either the 75% or 99% payout qualifies.
 
-Owning the tool, moving it off the rug, using the wrong tool, or practicing in Gym does not qualify. Holding a hose still **does** qualify if its direct or passive contact wets the carpet. Upgrading to the maximum during a job also qualifies if the upgraded tool is then used before finishing. If the water stage was already complete before the upgrade, use the hose on the next rug.
+Owning the tool, moving it off the rug, or practicing in Gym does not qualify. Upgrading to the maximum during a job qualifies if the upgraded brush is then used before finishing. The future wet path retains real hose-contact tracking for its own main-tool requirement.
 
 `note_current_tool_used(tool_index)` records real use. `_record_completed_job()` increases `final_tool_jobs`, capped at 3, when that used job is paid. The old field name `job_started_with_final_tool` remains for save compatibility, but it is no longer a rule requiring the upgrade before the rug began.
 
-The previous Store 3 gate still checked Store 2's brush field even though wet tools had separate upgrades. It also missed stationary hose usage and excluded jobs upgraded midway. Current checks use `_travel_tool_level()`, which selects the hose in wet stores, and actual contact notifications from `workshop._apply_hose_water()`.
-
-Existing Store 2 brush investment is credited toward the hose level by taking the greater of the saved hose and legacy brush levels. Existing qualifying counts and paid purchases are retained. This is a compatibility migration, not a free unlock of every store.
-
-If a store remains locked, inspect its checklist while visiting the immediately preceding store. When visiting an older owned shop, Stores provides a **View** action that visits the relevant shop and displays its checklist; it does not buy the locked shop. Bonzi earnings are local cumulative earnings, not total wallet income. The opening price is separate: earning 800 Bonzi coins in Store 2 does not replace the 16,000-coin opening price. An already-owned store should be entered with **Visit**, not bought again.
+If a store remains locked, inspect its checklist while visiting the immediately preceding store. When visiting an older owned shop, Stores provides a **View** action that visits the relevant shop and displays its checklist; it does not buy the locked shop. Bonzi earnings are local cumulative earnings, separate from opening coins. An already-owned store is entered with **Visit**.
 
 ## 6. Bonzi, live production and offline earnings
 
@@ -142,9 +141,13 @@ Bonzi earns automatically in every owned store, including stores the player is n
 
 | Bonzi state | Purchase to reach it | Payment per cycle | Cycle length |
 | --- | --- | --- | --- |
-| Starter | `100 * S` from unowned; included in new later stores | `10 * S` | 120 seconds |
-| Second tier | `300 * S` | `20 * S` | 90 seconds |
-| Third tier | `900 * S` | `40 * S` | 60 seconds |
+| Starter | `4P` from unowned; included in new later stores | Current store's base full-clean reward | 120 seconds |
+| Second tier | `round(4P * sqrt(R/P))` | Same base full-clean reward | 90 seconds |
+| Third tier | `4R` | Same base full-clean reward | 60 seconds |
+
+All owned tiers pay the same current full rug value as the player in that store. Bonzi upgrades only shorten the cycle. Floor, plant, window, railing and wall upgrades increase its full-clean quote and live/offline Bonzi payment together. An unupgraded store pays `40 * S` per order at every owned tier. After three local rugs, Home's unowned Bonzi caption becomes Hire Bonzi and explains the automatic/offline benefit at the current hire price; this hint never spends coins or opens a modal.
+
+`shop_state.bonzi_reward_for_store(store_id)` is the authoritative delivery quote and returns zero for unowned Bonzi. `progression_view().bonzi_reward` supplies the owned bar's current payment. The purchase preview and faster-tier offer use `progression_view().full_reward`, so they show the same coins with the next cycle length, including before Bonzi is owned. `Progression.bot_reward(store_id, tier, full_clean_reward)` requires the complete reward quote as its third argument, so callers cannot silently omit room upgrades.
 
 `_produce(seconds)` retains fractional cycle progress per store in `routine_remainder`. Whole deliveries increment wallet balance, local `bonzi_earned`, local automated jobs and the global automated-job count. If the wallet cannot hold the next payment, deliveries remain in `banked_orders` instead of disappearing.
 
@@ -154,40 +157,59 @@ Delivery payments are saved immediately; partial-cycle state is checkpointed per
 
 Old version-1 absence is settled at its original automation rate before migration changes future rates. The legacy blueprint and build APIs remain compatibility interfaces; they are not the authority for current store pricing.
 
+### Bonzi on the carpet
+
+An owned Bonzi (`bonzi_tier >= 0` in the visited store) appears during paid dry brushing. The editable `scenes/tools/bonzi_cleaner.tscn` contains a circular mint/ivory chassis, face, bumper, wheels and two counterrotating front brush motors. `bonzi_visual.gd` animates the motors and a fixed twelve-puff dust MultiMesh; these visuals do not grant cleaning progress.
+
+`bonzi_cleaner.gd` walks five overlapping lanes at 0.12 m/s and turns at 2 radians/s. It reverses the same route at the far end instead of teleporting. Contact is sampled at 20 Hz through `dirt_controller.apply_bonzi_stroke`: timed, monotonic mask removal plus one-time suction of the existing clump progress IDs. It uses a separate contact footprint and never changes the finger's pass buffers, tool width or strength. Manual mask writes also remain monotonic so an older held stroke cannot restore dust Bonzi has removed.
+
+The workshop authorizes motion only while focused, in the cleaning phase, with the rug fully revealed and no upgrade panel, finish request or suspended simulation. Bonzi remains idle while a panel is open and hides for rug arrival, completion and departure. Its brush helper operates in all six current stores. The retained future wet path hands mixed recipes over to the hose after dry completion.
+
+Continuous autonomous progress starts a two-second snapshot checkpoint only when the timer is stopped; finger release and Back still save immediately. Reloading restores the existing dust/debris snapshot and restarts the route without a new save field. Replacement rugs reuse the same robot and debris pools. `manual_debris_cleared` distinguishes late finger-driven debris clearance from autonomous suction, so Bonzi cannot satisfy final-tool usage requirements. Full dry completion uses the existing 99% job transaction and pays that visible carpet once. The separately timed live/offline orders share the store's full-clean value, but a visible sweep grants no extra routine-order payment. Validate with `tools/validate_bonzi_cleaner.gd -- --shop-test` and add `--bonzi-capture` for renders.
+
 ## 7. Job lifecycle, rewards and persistence
 
 ### Paid-job sequence
 
 1. `start_job()` resumes the branch's active job or assigns a new unique job ID and payout quote.
 2. `workshop._ready()` configures the store recipe, restores its snapshot and starts rug arrival.
-3. Cleaning modifies the existing soil/mask state. A one-shot timer batches snapshot saves; releasing a stroke and leaving also save progress.
-4. `finish_rug()` checks readiness, reserves the cosmetic coin display and asks `complete_and_start_next_job()` to pay the rug and reserve its replacement in one transaction.
+3. Cleaning modifies the existing soil/mask state. Cleared brush dirt fades in 0.6 seconds; its permanent disappearance IDs gate payable dry progress. Wet payments follow natural runoff retirement, with a durable pending removal watermark for interrupted/interior effects. Hose water alone never earns money. A 0.2-second one-shot timer batches `record_cleaning_progress()` transactions that save the mask and paid share together; release and Back checkpoint immediately.
+4. `finish_rug()` reserves the remaining cosmetic count-up and asks `complete_and_start_next_job()` to settle the total at half the current quote for an early 75% Finish, or the full quote at 99%, subtracting already-paid cleaning money. It reserves the next carpet atomically. The wallet counts during suction, before Compare hides the cleaning HUD.
 5. Only after that transaction succeeds does the completed rug vacuum/roll away and the next rug arrive.
 6. The next rug reuses the existing scene, meshes and dirt pool; it is not a fresh scene load.
 
 A second tap with the old job ID cannot pay again. A process restart during the departure animation opens the already-reserved replacement. If the transaction fails, the current rug remains available and the UI can retry; it does not animate away an unpaid job. [rug_roll.gd](../CarpetToy/scripts/rug_roll.gd) and the vertex deformation in [soil_surface.gdshader](../CarpetToy/scripts/soil_surface.gdshader) implement the roll.
 
-Coins flying into the HUD are visual feedback only. `cleaning_hud.gd` uses a fixed pool of 24 coin sprites and tracks reserved/queued display amounts. The ledger has already credited the real wallet before coin arrival. Animation must never directly grant currency.
+The wallet animation never grants currency. `show_cleaning_reward()` counts already-saved money over 0.24 seconds with a 6% pulse, merging frequent credits without allocating particles. Purchases immediately show the durable post-spend balance. The existing fixed 24-coin pool remains for legacy/ad presentations; it cannot limit progressive payments. A job's `job_cleaning_paid` and `job_cleaning_progress` prevent duplicate credit after replay, reload or store travel. Mid-carpet renovations increase the current quote; only new removal progress triggers any catch-up. At 99%, total earned money still equals the displayed full carpet quote.
+
+`carpet_ad_offer()` describes the current carpet's video state; `request_carpet_reward_ad()` requests a provider-verified receipt for that exact job and store. A successful transaction doubles its full quote, sets `job_ad_boost`, doubles any already-paid cleaning share and records the receipt together. The separate `carpet_ad_reward_granted` signal animates only that durable top-up. Early/full totals are 40/80 for a base 40 carpet. Skips, failures, a wrong nonce, stale job/store, reused receipt or failed save cannot grant a boost. Verified failed writes can retry without another video. The production button uses `set_carpet_ad_offer()` with HIDDEN, LOCKED, READY, REQUESTING and ACTIVE states; free practice hides it. No ad SDK or provider is configured, so paid carpets show LOCKED. Pending videos suspend soil, Bonzi, purchases and wallet presentation; focus return preserves that pause. The legacy completed-job ad API remains available for detached callers, but the live cleaning button requests the current carpet.
+
+After suction, `completion_reveal.gd` presents only a small **Compare** button, centered at the bottom in portrait and placed at the lower right in landscape. Full restoration pauses for 2.4 seconds and early finish for 1.1 seconds before automatic departure. Holding Compare shows the recorded starting appearance and pauses the timer; release, canceled gestures, a second finger or focus loss restore the actual result. Release leaves at least 0.9 seconds to view it again. `rug_view_rect()` reserves the 148×56 action and its safe spacing while retaining the shared 20-degree pitch and zero yaw. Portrait retains the gentle reveal push; landscape fits the complete room into the full-height area beside Compare, preserving the cleaning carpet's scale. The reveal uses the same proportional phone/tablet scale as the cleaning HUD. `continue_now()` remains available to internal callers, with no visible Next control.
+
+Before the rug curls and departs, both upright casements swing outward around their complete vertical side edges. The fixed frame matches their closed pose; top and bottom hinge points remain attached throughout opening and closing. All four window tiers retain the same clear rug corridor and exact closed reset. `validate_window_edge_hinges.gd` checks the actual authored vertices and hinge lines; `--window-hinge-capture` saves production-angle closed/half/open previews.
 
 ### Save layout
 
-The ledger writes version **2** JSON to `user://neighborhood_shop_v1.json`. The filename retains `v1` for continuity; that suffix is not the current schema version. On normal Windows Godot installations, `user://` is under the application's Godot `app_userdata` directory. Use Godot's resolved user-data directory when locating it instead of guessing from a different project's name.
+The ledger writes version **3** JSON with full float precision to `user://neighborhood_shop_v1.json`. The filename retains `v1` for continuity. On Windows, `user://` lives under Godot's `app_userdata` directory; use the resolved user-data directory when locating it.
 
-Global fields include cash, active store, job serial, aggregate manual/automated counts, legacy ownership/blueprints, offline-return data, completed reward records and ad receipts. `stores` maps string IDs `"1"` through `"4"` to branches. Each branch contains:
+Global fields include cash, active store, job serial, aggregate manual/automated counts, legacy ownership/blueprints, offline-return data, completed reward records and ad receipts. `stores` maps owned string IDs `"1"` through `"6"` to branches. Each branch contains:
 
 - `payout_level`, `tool_level`, `hose_level`, `squeegee_level`, `bonzi_tier`.
+- `room_rules_version` (currently 4), `room_upgrades`, `room_base_early`, `room_income_origins`.
 - `bonzi_earned`, `manual_jobs`, `automated_jobs`, `routine_remainder`, `banked_orders`, `final_tool_jobs`.
 - `active_job_id`, `job_snapshot`, `job_early_reward`, `job_started_with_final_tool`, `job_final_tool_used`.
+- `job_cleaning_paid`, `job_cleaning_progress`: whole-valued paid money and the eligible removal high-water mark for this carpet, both initially zero for old unfinished saves.
+- `job_ad_boost`: one verified 2× video boost for this active carpet, initially false for older saves and reset for the replacement. Timed Bonzi orders use the base room quote.
 
 Purchases, store switches and rewards capture state before mutation. `_commit()` writes a temporary JSON file, flushes it, then renames it over the ledger. `_finish_transaction()` restores the captured state if the commit fails. Unreadable or unsupported saves are preserved and further saving is disabled rather than overwriting them with defaults. A player-requested reset is a separate, confirmed operation in Home settings.
 
-`_restore_state()` migrates old saves. Missing wet-tool fields in old later-store wash-kit purchases are seeded from their paid legacy tier. Store 2's old brush level contributes to its hose credit. Saved Store 2 rugs are normalized to the two-stage recipe when loaded by the workshop; only obsolete dry work is removed, not saved water/extraction.
+`_restore_state()` accepts prior outer ledger versions 1/2 and migrates old accessory rules to rule 4. The wallet, owned stores, paid rewards, robot tiers, counters and rug identity/state are retained. Purchased visual tiers move to equivalent milestones on the new cap; historical progress after the last mesh maps into the remaining earnings levels. Old wet investments contribute to the corresponding brush track. Unpaid rug quotes are recalculated within the store's new ceiling; an old first-store AF quote is not grandfathered into future payments. Modern rule-4 branches are left on their current curve, including on rollback/reload. Version-1 historical absence still uses `LEGACY_ROUTINE_REWARD = 10`; future orders use the dynamic full-clean quote.
 
 ### Rug snapshots
 
-`dirt_controller.make_snapshot()` produces a version-1 **rug snapshot**, independent of the outer version-2 ledger. It contains clump positions, velocities, growth, clearing/credit state, original scatter positions, recipe flags and base64 byte masks for coverage and, when applicable, water and extracted water. Masks are quantized to 8-bit values for storage. `restore_snapshot()` validates lengths, finite values and `extracted <= water` before rebuilding the state.
+`dirt_controller.make_snapshot()` produces a version-1 **rug snapshot**, independent of the outer version-3 ledger. It contains clump positions, velocities, growth, clearing/credit state, original scatter positions, recipe flags and base64 byte masks for coverage and, when applicable, water and extracted water. Masks are quantized to 8-bit values. `restore_snapshot()` validates lengths, finite values and `extracted <= water` before rebuilding the state.
 
-Paired fields `recycled` and `debris_age` preserve free slots and partially faded floor debris. The `debris_policy: 2` marker and ordered `floor_debris` indices preserve demand-driven reclamation. The legacy `pending_emissions` key is written empty; older requests are validated and discarded to prevent dirt appearing at obsolete brush contacts after resume. Validation rejects impossible free/fading states, invalid indices and malformed requests before modifying live progress. Old elapsed-time ages are discarded so old saves adopt indefinite retention; original positions and progress remain. For snapshots also missing scatter baselines, untouched uncredited sources recover their anchor from their saved position. Requested fades and existing motion continue after resume.
+Paired fields `recycled` and `debris_age` preserve free slots and partial fades. The existing `debris_policy: 2` marker and legacy `floor_debris` remain readable; old cleared floor clumps now resume a natural 0.6-second fade. Additive `retired_credits` flags retain each original disappearance even when its visual slot is emitted again. `earned_clearance` and `cleaning_pending_clearance` carry eligible and pending monetary removal targets. The legacy `pending_emissions` key is written empty; old requests are validated and discarded to prevent obsolete births. Validation rejects malformed arrays and retirement without an original credit before modifying live progress. Original positions, masks and motion remain preserved.
 
 Do not change the mask dimensions, pool size or snapshot fields without considering migration. Cosmetic splashes, trails, emitted parcels and runoff are not saved. On re-entry they restart; the authoritative carpet state persists.
 
@@ -216,7 +238,7 @@ The production dirt batch contains 560 pooled clumps, drawn as a `MultiMesh`. Br
 
 Debris uses bounded velocities, gravity, friction and an active list. All original dirt is brushable immediately, with 25 visible starter seeds. Fixed source positions also sample actual surface removal once per pass; when their own clump is already out, they can borrow any available slot. Visual identity and extraction location can therefore differ while each slot's progress credit stays permanent. Reversals require at least 0.22 rug units or twice the head's half-depth, whichever is larger.
 
-Landing fully outside earns a slot's one-time progress credit. Settled floor debris stays indefinitely. New dirty extraction demand that draws down the 64-slot reserve starts 0.6-second shrink animations on the oldest eligible settled, credited floor clumps. Free and currently fading slots together replenish the reserve. Completed fades return slots to supply without emitting anything; subsequent current brush contact can reuse them. Full-pool cosmetic emissions are skipped instead of replayed later. Launch makes a clump fully visible and requests rendering during the input event; physics moves it on the first tick without a growth wait. Clean strokes and idle time create no new demand. Rebrushing cancels reclamation. Pause freezes work, vacuum starts from current visible sizes, and water-only recipes clear the dry state. Settled retained debris requires no physics processing. See [implementation and validation](Brush_Dirt_Layers.md).
+Landing fully outside earns a slot's one-time cleaning-progress credit. After settling, cleared floor dirt naturally shrinks away over 0.6 seconds. Each original slot receives one permanent disappearance credit when that fade finishes; the cleaning payout uses the lower of disappeared-clump clearance and actual surface clearance. Reusing a visual slot cannot repeat its original payment. Completed fades return slots to supply without emitting anything; subsequent current brush contact can reuse them. Full-pool cosmetic emissions are skipped instead of replayed later. Launch makes a clump fully visible and requests rendering during the input event; physics moves it on the first tick without a growth wait. Clean strokes and idle time create no new demand. Rebrushing cancels a fade while the clump is in contact. Pause freezes work, vacuum starts from current visible sizes, and water-only recipes clear the dry state. Physics sleeps after motion and fades finish. See [implementation and validation](Brush_Dirt_Layers.md).
 
 `soil_surface.gdshader` combines the rug texture, tint, coverage and wetness. Wetness darkens the carpet and adjusts roughness/specular response. It also contains the roll deformation, so UVs remain associated with the undeformed rug during transitions.
 
@@ -268,11 +290,15 @@ Mouse and touch share the same world-space cleaning implementation. `workshop.mo
 
 Touch-to-mouse emulation is disabled in `project.godot`. The scripts explicitly route touch: a gesture belongs to either the HUD or the rug; dragging off a button cancels the tap. A second finger cancels cleaning and prevents the gesture from becoming a stray purchase. Focus loss, Back, modals and scene departure terminate active strokes.
 
-Production cleaning currently uses the overhead orthographic view. Its framing reserves the Finish/payout band before Finish appears, so reaching 75% does not change the zoom. The **Gym** has the top/angled camera toggle. [gym_camera.gd](../CarpetToy/scripts/gym_camera.gd) fits either orthographic camera into the same HUD-safe region; both use the same ray-based input, not separate control mappings.
+Production cleaning uses an orthographic camera with adjustable pitch/yaw, currently 20 degrees from top-down and zero yaw for a straight view. It fits room geometry to the HUD's shared world rectangle. Portrait has a compact header and bottom actions; landscape places the controls beside a full-height diorama. The wider room leaves clear floor aisles around the unchanged carpet, and its foundation is visible above the surrounding ground. Finish retains its reserved slot when hidden, and wallet text does not change the camera fit. The **Gym** has the top/angled camera toggle. [gym_camera.gd](../CarpetToy/scripts/gym_camera.gd) fits these views into the HUD-safe region; all use the same ray-based input.
 
-HUD layouts account for safe insets, portrait/landscape space and mobile orientation changes. Runtime `_layout()` methods in the HUD scripts still position authored controls, so changing a scene offset alone may not change the final runtime layout. Use [Editing_UI_in_Godot.md](Editing_UI_in_Godot.md) for the editor workflow.
+HUD layouts account for safe insets, portrait/landscape space and mobile orientation changes. The cleaning HUD chooses its scale from screen proportions: **Phone Portrait Width** defaults to 390 logical units, **Phone Landscape Height** to 360, and **Tablet Short Side** to 640. The safe area's long-to-short-side ratio blends the tablet reference into the selected phone reference between 1.45 and 1.75. Lower reference values enlarge the HUD; higher values leave more room for the diorama. This keeps high-resolution phone text and controls proportional to the screen rather than letting native pixel count shrink them.
 
-The cleaning upgrade drawer pauses cleaning and transitions, blocks background input and restores focus when closed. Store 1 shows the brush upgrade. Wet stores show the hose as the main comparison without a duplicate hose row; the squeegee upgrade is below it in portrait and in the adjacent column in landscape. Management Stores puts its unlock checklist first in the scroll area, followed by the store rows and opening purchase. Opening has a confirmation panel.
+The scale is `max(safe_short_side / reference_short_side, 44 / (56 * pixels_per_unit))`, where `pixels_per_unit` maps viewport units to window pixels. The second term is a minimum-touch fallback that keeps a 56-unit action at least 44 physical pixels tall. HUD scaling is independent of the expanding 720×1000 world reference canvas; the camera consumes the resulting `workshop_view_rect()` while carpet geometry stays unchanged. Runtime `_layout()` methods still position authored controls, so changing a scene offset alone may not change the final runtime layout. Use [Editing_UI_in_Godot.md](Editing_UI_in_Godot.md) for the sizing and spacing settings.
+
+Before scaling, the dry progress percentage uses font size 24 with a one-unit outline. The Per carpet plaque is 48 units high and up to 280 wide, with amount font size 26, dark caption size 16 and a 6-unit gap below progress. The footer reserves cart 56×56, video 96×56 and Finish 104×56 with 12-unit gaps. Finish always has its plain name and font size 20. The wallet retains font size 32 and a 42×42 coin. These defaults remain authored in `cleaning_hud.tscn` and composed by `cleaning_hud.gd`.
+
+The cleaning upgrade drawer pauses cleaning and transitions, blocks background input and restores focus when closed. `ShopContentsScroll / ShopColumns` contains the tool and Bonzi offers, placed beside each other in wide layouts and stacked in narrow portrait. Each offer has authored current/next artwork, statistics and its own purchase action outside its comparison-card scroller; Done stays fixed above the body. A released tap outside closes the shop, while canceled drags or multiple fingers retain it without cleaning underneath. `UpgradeSheet` renders above the wallet. All six current stores show brush upgrades; the retained wet drawer layout belongs to future wet stores. Floating accessory offers count purchases toward the next real visual milestone and show **Makeovers complete** after the last mesh. Management Stores displays section progress, the current unlock checklist, store rows and opening purchase. Opening has a confirmation panel.
 
 ## 10. Gym behavior
 
@@ -331,9 +357,11 @@ The scripts below are regression entry points, not claims that every script was 
 
 | Concern | Validators in `tools/` |
 | --- | --- |
-| Economy and progression | [validate_progression.gd](../tools/validate_progression.gd), [validate_wet_upgrades.gd](../tools/validate_wet_upgrades.gd), [validate_store_unlock.gd](../tools/validate_store_unlock.gd) |
-| Store recipes and transitions | [validate_second_store_wet.gd](../tools/validate_second_store_wet.gd), [validate_store_loop.gd](../tools/validate_store_loop.gd), [validate_contract.gd](../tools/validate_contract.gd), [validate_rug_transition.gd](../tools/validate_rug_transition.gd) |
+| Economy, sections and mastery | [validate_section_progression.gd](../tools/validate_section_progression.gd), [validate_room_economy.gd](../tools/validate_room_economy.gd), [validate_first_shop_mastery.gd](../tools/validate_first_shop_mastery.gd), [validate_progression.gd](../tools/validate_progression.gd) |
+| Authored makeovers and accessory interaction | [validate_visual_milestones.gd](../tools/validate_visual_milestones.gd), [validate_room_interaction.gd](../tools/validate_room_interaction.gd), [validate_rapid_room_upgrades.gd](../tools/validate_rapid_room_upgrades.gd), [validate_workshop_walls.gd](../tools/validate_workshop_walls.gd) |
+| Current paid recipes and transitions | [validate_store_loop.gd](../tools/validate_store_loop.gd), [validate_contract.gd](../tools/validate_contract.gd), [validate_rug_transition.gd](../tools/validate_rug_transition.gd), [validate_completion_choreography.gd](../tools/validate_completion_choreography.gd) |
 | Saves, automation and rewards | [validate_shop_state.gd](../tools/validate_shop_state.gd), [validate_automation_reset.gd](../tools/validate_automation_reset.gd), [validate_coin_rewards.gd](../tools/validate_coin_rewards.gd) |
+| Bonzi's autonomous brush | [validate_bonzi_cleaner.gd](../tools/validate_bonzi_cleaner.gd): ownership, real dust/debris, pauses, checkpoints, reward and wet-stage handoff |
 | Layout, navigation and touch | [validate_wet_upgrade_ui.gd](../tools/validate_wet_upgrade_ui.gd), [validate_editable_hud.gd](../tools/validate_editable_hud.gd), [validate_shop_ui.gd](../tools/validate_shop_ui.gd), [validate_scene_routes.gd](../tools/validate_scene_routes.gd), [validate_home_settings.gd](../tools/validate_home_settings.gd), [validate_brush_input.gd](../tools/validate_brush_input.gd) |
 | Dirt and cleaning masks | [validate_cleaning.gd](../tools/validate_cleaning.gd), [validate_brush_recycling.gd](../tools/validate_brush_recycling.gd), [validate_dirt_pool.gd](../tools/validate_dirt_pool.gd), [validate_dirt_reentry.gd](../tools/validate_dirt_reentry.gd), [validate_wet_cleaning.gd](../tools/validate_wet_cleaning.gd), [validate_rotated_squeegee.gd](../tools/validate_rotated_squeegee.gd) |
 | Gym, hose and squeegee | [validate_gym.gd](../tools/validate_gym.gd), [validate_hose_upgrades.gd](../tools/validate_hose_upgrades.gd), [validate_water_jet.gd](../tools/validate_water_jet.gd), [validate_squeegee_controls.gd](../tools/validate_squeegee_controls.gd) |
@@ -341,7 +369,7 @@ The scripts below are regression entry points, not claims that every script was 
 
 Known limits and distinctions:
 
-- The earlier validation baseline has 12 failures in `validate_shop_state.gd` tied to old Bonzi economy expectations. Do not describe the whole repository suite as green until that legacy suite is reconciled with the current progression rules.
+- The earlier 12 ShopState baseline failures were reconciled with the staged upgrade economy; the current focused ShopState pass completed 229 checks with zero failures. This does not establish that every unrelated repository check was run.
 - [reward_ad_service.gd](../CarpetToy/scripts/reward_ad_service.gd) is a provider adapter, not an installed advertising SDK. No configured provider means no ad availability or reward. A provider must support availability, request and receipt verification; the ledger prevents duplicate job rewards/receipt reuse.
 - A successful desktop validation or APK signature check does not establish frame rate, thermal behavior, touch feel or lifecycle correctness on every Android device. Device profiling and playtesting remain necessary.
 - VFX timing and color are stylized. There is no general fluid solver, mass-conserving water transport or persistent off-carpet puddle simulation.
@@ -352,10 +380,12 @@ Known limits and distinctions:
 | Desired change | Edit or inspect |
 | --- | --- |
 | Finish percentage or perfect threshold | `shop_state.gd`: `MANUAL_COMPLETION_THRESHOLD`, `PERFECT_COMPLETION_THRESHOLD`; verify workshop and ledger tests together |
-| Store 2 stage requirements | `workshop.gd`: recipe setup/restore; `dirt_controller.gd`: `set_recipe()`, `recommended_tool()`, `overall_clearance()`; `shop_state.gd`: `_job_clearance()` |
-| Store unlock requirements | `shop_state.gd`: `progression_view()`, `_travel_tool_level()`, `note_current_tool_used()`, `open_next_store()`; `progression.gd`: `CAPSTONE_JOBS` |
+| Current section size, store caps or future wet boundary | `progression.gd`: `STORES_PER_SECTION`, `SECTION_COUNT`, `ROOM_LEVEL_CAPS`, `REWARD_CAPS`, `WET_FIRST_STORE`; recipe setup/restore remains in `workshop.gd` |
+| Store and section unlock requirements | `shop_state.gd`: `store_mastered()`, `section_progress()`, `progression_view()`, `note_current_tool_used()`, `open_next_store()` |
+| Accessory visual milestones | `room_upgrades.gd`: definitions and `visual_milestones_for()`; add matching authored tiers to `scenes/room/upgrade_room.tscn` |
 | Explain lock requirements in UI | `compact_shop.gd`: `refresh()` Stores branch; `compact_shop.tscn`: `TravelGoals` |
-| Job payout, upgrade costs, Bonzi rates | `progression.gd`; ledger transaction tests must still pass |
+| Job payout, upgrade costs, Bonzi rates | `progression.gd` and `room_upgrades.gd`; ledger transaction tests must still pass |
+| Bonzi's on-rug model, motion and cleaning | `scenes/tools/bonzi_cleaner.tscn`, `bonzi_visual.gd`, `bonzi_cleaner.gd`, `dirt_controller.gd`: `apply_bonzi_stroke()`; validate simultaneous manual brushing |
 | Preserve or migrate paid upgrades | `shop_state.gd`: `_restore_state()`, `_valid_progression_save()`; avoid ad hoc writes to the player's JSON |
 | Hose width, passive spread and level scaling | `water_hose_profile.gd`: arrays and `for_level()`; `water_soak.gd`: radius/strength functions |
 | Hose middle width or flight shape | `water_jet.gd`: widening constants, flight/history sampling; `water_jet.gdshader`: silhouette modulation |
@@ -377,4 +407,4 @@ Known limits and distinctions:
 
 [Implementation_Coverage.md](Implementation_Coverage.md) tracks feature coverage and validation. [Store_Progression_v0_3_Draft.md](Store_Progression_v0_3_Draft.md) provides economy context, despite its historical filename. [Scene_Navigation.md](Scene_Navigation.md), [Water_Jet.md](Water_Jet.md) and [Squeegee_Water_VFX.md](Squeegee_Water_VFX.md) cover narrower systems. [home-screen/IMPLEMENTATION.md](home-screen/IMPLEMENTATION.md) and [Editing_UI_in_Godot.md](Editing_UI_in_Godot.md) describe authored UI work.
 
-[Metagame_v0_2.md](Metagame_v0_2.md) and [Water_Blobs.md](Water_Blobs.md) describe earlier designs. Where older prose mentions an 85% finish threshold, a three-stage Store 2, brush-based Store 2 travel, or a forward squeegee water column, that is not the current behavior. Resolve disagreements against the active scene references and code documented above.
+[Metagame_v0_2.md](Metagame_v0_2.md), [Store_Progression_v0_3_Draft.md](Store_Progression_v0_3_Draft.md) and [Water_Blobs.md](Water_Blobs.md) contain historical designs. Earlier four-store wet progression, optional room mastery, first-store AF earnings and five-purchase finish refinements are superseded by the six-store section rules above. Resolve disagreements against active code and current cap/milestone documentation.

@@ -209,7 +209,7 @@ func rug_view_rect() -> Rect2:
 func _layout() -> void:
 	super._layout()
 	if not is_node_ready() or get_viewport() == null: return
-	for node_name in ["Wallet", "PayoutCard", "PayoutUpgradeButton", "UpgradeButton", "AdRewardButton", "UpgradeSheet"]:
+	for node_name in ["Wallet", "UpgradeButton", "AdRewardButton", "UpgradeSheet", "RoomHint"]:
 		control(node_name).hide()
 	var ui_scale := (get_node("HUD") as Control).scale.x
 	var raw_safe := _safe_rect()

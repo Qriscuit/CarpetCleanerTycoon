@@ -3,6 +3,8 @@ extends Control
 ## Main menu. The .tscn owns all visible controls and 3D assets.
 const Pop = preload("res://scripts/ui/button_pop.gd")
 const Routes = preload("res://scripts/scene_routes.gd")
+const Money = preload("res://scripts/money.gd")
+const Progression = preload("res://scripts/progression.gd")
 @export var animate_shop := true
 @export_range(0.0, 20.0) var rotation_speed_degrees := 7.0
 @export var preview_safe_insets := Vector4.ZERO
@@ -33,7 +35,6 @@ var mouse_settings_origin := Vector2.ZERO
 var mouse_settings_dragged := false
 var store_materials: Array[StandardMaterial3D] = []
 var store_colors: Array[Color] = []
-const STORE_NAMES := ["Neighborhood", "High Street", "Wash House", "Restoration"]
 const STORE_SLIDE_SECONDS := 0.62
 var incoming_store_materials: Array[StandardMaterial3D] = []
 var incoming_store_colors: Array[Color] = []
@@ -149,12 +150,19 @@ func _layout() -> void:
 	var safe := _safe_rect()
 	var margin := 18.0
 	var wide := safe.size.x > safe.size.y * 1.2
+	# Keep the balance prominent while reserving space for the store caption.
+	var cash_font: Font = %Cash.get_theme_font("font")
+	var number_width: float = cash_font.get_string_size(%Cash.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 32).x
+	var available_number_width := maxf(safe.size.x - margin * 2.0 - 52.0 - 88.0 - 8.0 - 68.0, 28.0)
+	var cash_font_size := clampi(int(floor(32.0 * minf(1.0, available_number_width / maxf(number_width, 1.0)))), 20, 32)
+	if %Cash.get_theme_font_size("font_size") != cash_font_size:
+		%Cash.add_theme_font_size_override("font_size", cash_font_size)
 	%TopBar.position = safe.position + Vector2(margin, 16)
-	%TopBar.size = Vector2(maxf(safe.size.x-margin*2, 0), 52)
+	%TopBar.size = Vector2(maxf(safe.size.x-margin*2, 0), 60)
 	var dock_width := minf(340.0, safe.size.x-margin*2)
 	%Dock.position = Vector2(safe.get_center().x-dock_width/2, safe.end.y-102)
 	%Dock.size = Vector2(dock_width, 84)
-	var top := safe.position.y + (18.0 if wide else 86.0)
+	var top := safe.position.y + (18.0 if wide else 94.0)
 	var bottom: float = %Dock.position.y - (14.0 if wide else 34.0)
 	var area := Rect2(Vector2(safe.position.x+margin, top), Vector2(safe.size.x-margin*2, maxf(bottom-top, 100)))
 	# The render is fitted using both available dimensions, never cropped to fill.
@@ -169,9 +177,9 @@ func _layout() -> void:
 	%IncomingShopCamera.size = %ShopCamera.size
 	%ShopTap.position = _building_home_position + %BuildingView.size * Vector2(.10,.08)
 	%ShopTap.size = %BuildingView.size * Vector2(.80,.84)
-	%StatusMessage.position = safe.position+Vector2(margin,74)
+	%StatusMessage.position = safe.position+Vector2(margin,82)
 	%StatusMessage.size = Vector2(safe.size.x-margin*2, 44)
-	%ReturnNotice.position = Vector2(safe.get_center().x-130, safe.position.y+74)
+	%ReturnNotice.position = Vector2(safe.get_center().x-130, safe.position.y+82)
 	%ReturnNotice.size = Vector2(260, 44)
 	%SettingsPanel.size = Vector2(minf(300,safe.size.x-36),280)
 	%SettingsPanel.position = safe.get_center()-%SettingsPanel.size*.5
@@ -255,9 +263,14 @@ func _release_shop() -> void:
 
 func _refresh() -> void:
 	%Cash.text = _cash_text(state.cash)
-	%Cash.tooltip_text = "%d coins" % state.cash
+	%Cash.tooltip_text = "%s coins" % _cash_text(state.cash)
+	_layout.call_deferred()
 	%ReturnNotice.visible = state.return_reward > 0 and not %StatusMessage.visible
 	%ReturnNotice.text = "+%s while away · Got it" % _cash_text(state.return_reward)
+	var progression: Dictionary = state.progression_view()
+	var hire_ready := int(progression.store_id) == 1 and int(progression.bonzi_tier) < 0 and int(progression.local_jobs) >= 3
+	(%NavBonzi.get_node("CaptionContent/Caption") as Label).text = "Hire Bonzi" if hire_ready else "Bonzi"
+	%NavBonzi.tooltip_text = "Hire Bonzi · %s coins. Cleans automatically and earns coins while away." % _cash_text(state.build_cost("bonzi")) if hire_ready else "Bonzi"
 	if last_active_store != state.active_store:
 		last_active_store = state.active_store
 		if not _selecting_store:
@@ -281,7 +294,7 @@ func _prepare_shop_palette(pivot: Node3D, materials: Array[StandardMaterial3D], 
 			colors.append(original.albedo_color)
 
 func _apply_store_palette(materials: Array[StandardMaterial3D], colors: Array[Color], id: int) -> void:
-	var hues := [0.0, -0.16, 0.09, 0.22]
+	var hues := [0.0, -0.16, 0.09, 0.22, -0.31, 0.36]
 	for index in materials.size():
 		var original := colors[index]
 		materials[index].albedo_color = Color.from_hsv(fposmod(original.h + hues[id - 1], 1.0), original.s, original.v, original.a) if original.s > 0.15 else original
@@ -364,12 +377,12 @@ func _settle_store_transition() -> void:
 		_update_store_preview()
 
 func _refresh_store_caption() -> void:
-	%StoreLabel.text = "%d · %s" % [preview_store, STORE_NAMES[preview_store - 1]]
+	%StoreLabel.text = "%d · %s\nSection %d · %d/%d" % [preview_store, Progression.store_name(preview_store), Progression.section_for(preview_store), Progression.store_in_section(preview_store), Progression.STORES_PER_SECTION]
 	var owned: Array = state.progression_view().owned_store_ids
-	%ShopTap.tooltip_text = "Open " + STORE_NAMES[preview_store - 1] if preview_store in owned else "View store milestones"
+	%ShopTap.tooltip_text = "Open " + Progression.store_name(preview_store) if preview_store in owned else "View store milestones"
 
 func preview_location(id: int) -> void:
-	if changing_scene or id < 1 or id > 4: return
+	if changing_scene or id < 1 or id > Progression.STORE_COUNT: return
 	if store_transition_active:
 		queued_store = id
 		return
@@ -392,16 +405,11 @@ func preview_location(id: int) -> void:
 func _swipe_store(delta: Vector2) -> bool:
 	if absf(delta.x) < 48 or absf(delta.x) < absf(delta.y) * 1.4: return false
 	var current := queued_store if queued_store >= 1 else preview_store
-	preview_location(clampi(current + (1 if delta.x < 0 else -1), 1, 4))
+	preview_location(clampi(current + (1 if delta.x < 0 else -1), 1, Progression.STORE_COUNT))
 	return true
 
-func _cash_text(amount: int) -> String:
-	if amount >= 1_000_000_000_000_000: return "%.1fQ" % (float(amount) / 1_000_000_000_000_000.0)
-	if amount >= 1_000_000_000_000: return "%.1fT" % (float(amount) / 1_000_000_000_000.0)
-	if amount >= 1_000_000_000: return "%.1fB" % (float(amount)/1_000_000_000.0)
-	if amount >= 1_000_000: return "%.1fM" % (float(amount)/1_000_000.0)
-	if amount >= 10_000: return "%.1fK" % (float(amount)/1_000.0)
-	return str(amount)
+func _cash_text(amount: float) -> String:
+	return Money.format(amount)
 
 func acknowledge_return() -> void:
 	if not state.acknowledge_return():

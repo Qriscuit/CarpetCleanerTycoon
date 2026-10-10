@@ -2,26 +2,50 @@ extends CanvasLayer
 ## Sparse, phone-safe overlay for the rug-cleaning window.
 
 signal reward_finished
-signal coin_arrived(value: int)
+signal coin_arrived(value: float)
 signal upgrades_changed(is_open: bool)
-signal request_payout_upgrade
+signal request_room_upgrade(id: String)
 signal request_tool_upgrade
 signal request_hose_upgrade
 signal request_squeegee_upgrade
+signal request_bonzi_upgrade
 signal request_rewarded_ad
+signal composition_changed
 
 const COIN_POOL_SIZE := 24
+const CLEANING_COUNT_SECONDS := 0.24
 const COIN_TEXTURE := preload("res://assets/floating_shop/CoinIcon.png")
+const Money := preload("res://scripts/money.gd")
+const Progression := preload("res://scripts/progression.gd")
+const AD_VIDEO_PLAY := preload("res://assets/ui/room_upgrades/video_play.svg")
+const AD_VIDEO_LOCKED := preload("res://assets/ui/room_upgrades/video_locked.svg")
+const AD_VIDEO_ACTIVE := preload("res://assets/ui/room_upgrades/video_active.svg")
+enum CarpetAdState { HIDDEN, LOCKED, READY, REQUESTING, ACTIVE }
 
 @export var preview_safe_insets := Vector4.ZERO
+@export_group("Responsive layout")
+@export_range(360.0, 440.0, 10.0) var phone_portrait_width := 390.0
+@export_range(340.0, 400.0, 10.0) var phone_landscape_height := 360.0
+@export_range(560.0, 800.0, 20.0) var tablet_short_side := 640.0
+@export_range(8.0, 32.0, 1.0) var layout_edge := 16.0
+@export_range(8.0, 24.0, 1.0) var layout_gap := 12.0
+@export_range(4.0, 12.0, 1.0) var earnings_gap := 6.0
+@export_range(240.0, 320.0, 1.0) var landscape_rail_width := 280.0
+@export_range(240.0, 400.0, 1.0) var progress_max_width := 340.0
+@export_range(40.0, 56.0, 1.0) var progress_height := 44.0
+@export_range(40.0, 56.0, 1.0) var earnings_height := 48.0
+@export_range(56.0, 72.0, 1.0) var action_height := 56.0
+@export_range(60.0, 84.0, 1.0) var wallet_height := 68.0
+@export_range(8.0, 32.0, 1.0) var world_gutter := 16.0
+@export_range(1.15, 1.6, 0.05) var landscape_aspect_threshold := 1.35
 @export_group("Progress colors")
 @export var progress_colors: PackedColorArray = [Color("e76c62"), Color("dfb13d"), Color("63b66e"), Color("559bdd")]
 
-var displayed_gold := 0
-var _actual_balance := 0
-var pending_reward := 0
-var _reserved_reward := 0
-var _queued_rewards: Array[int] = []
+var displayed_gold := 0.0
+var _actual_balance := 0.0
+var pending_reward := 0.0
+var _reserved_reward := 0.0
+var _queued_rewards: Array[float] = []
 var _coin_nodes: Array[TextureRect] = []
 var _coin_flights: Array[Dictionary] = []
 var _wallet_tween: Tween
@@ -32,22 +56,31 @@ var _focus_before_modal: Control
 var _background_focus_modes: Dictionary = {}
 var _progression: Dictionary = {}
 var _purchases_allowed := false
-var _ad_available := false
-var _ad_amount := 0
+var _carpet_ad_state := CarpetAdState.HIDDEN
 var _tool_textures: Dictionary = {}
+var _room_anchor_screen := Vector2.ZERO
+var _layout_info: Dictionary = {}
+var _shop_stacked := false
+var _cleaning_pending := 0.0
+var _cleaning_count_start := 0.0
+var _cleaning_count_time := 0.0
+var _wallet_paused := false
+@onready var room_panel: Control = $HUD/RoomUpgradePanel
 
 
 func _ready() -> void:
 	_coin_rng.randomize()
 	_create_coin_pool()
 	set_process(false)
-	(control("PayoutUpgradeButton") as Button).pressed.connect(_on_payout_upgrade_pressed)
+	room_panel.purchase_requested.connect(func(id: String): request_room_upgrade.emit(id))
+	room_panel.close_requested.connect(close_upgrades)
 	(control("ToolUpgradeButton") as Button).pressed.connect(_on_tool_upgrade_pressed)
 	(control("HoseUpgradeButton") as Button).pressed.connect(_on_wet_upgrade_pressed.bind("hose"))
 	(control("SqueegeeUpgradeButton") as Button).pressed.connect(_on_wet_upgrade_pressed.bind("squeegee"))
+	(control("BonziUpgradeButton") as Button).pressed.connect(_on_bonzi_upgrade_pressed)
 	(control("AdRewardButton") as Button).pressed.connect(_on_ad_reward_pressed)
-	control("RugValueIcon").texture = _svg_texture('<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><g stroke="#4f8875" stroke-width="3" stroke-linecap="round"><path d="M11 5v5m9-5v5m9-5v5m9-5v5M11 38v5m9-5v5m9-5v5m9-5v5"/><rect x="7" y="10" width="34" height="28" rx="7" fill="#bee1c4"/><path d="M15 17h18v14H15z" fill="#f8f3db"/></g><circle cx="34" cy="33" r="10" fill="#ffd468" stroke="#d4a342" stroke-width="2"/><path d="m34 27 2 4 4 1-3 3v4l-3-2-4 2 1-4-3-3 4-1z" fill="#fff8d9"/></svg>')
 	set_progression({}, false)
+	_refresh_carpet_ad()
 	get_viewport().size_changed.connect(_layout)
 	_layout.call_deferred()
 
@@ -58,8 +91,9 @@ func control(node_name: String) -> Control:
 
 func action_buttons() -> Array[Button]:
 	var buttons: Array[Button] = []
-	for node_name in ["UpgradeButton", "CloseUpgradesButton", "PayoutUpgradeButton", "ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton", "AdRewardButton"]:
+	for node_name in ["UpgradeButton", "CloseUpgradesButton", "ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton", "BonziUpgradeButton", "AdRewardButton"]:
 		buttons.append(control(node_name) as Button)
+	buttons.append_array(room_panel.action_buttons())
 	return buttons
 
 
@@ -74,8 +108,9 @@ func set_wet_stage(round_number: int, round_count: int, ready: bool, complete: b
 	stage.show()
 	var value := control("ProgressValue") as Label
 	value.offset_top = 14.0
-	value.add_theme_font_size_override("font_size", 18)
+	value.add_theme_font_size_override("font_size", 22)
 	control("CleaningProgress").tooltip_text = "Clean water · carpet restored" if complete else "Wash %d of %d · %s" % [current_round, count, "Squeegee out the water" if ready else "Spray anywhere on the carpet to soak the whole rug"]
+	_layout()
 
 
 func clear_wet_stage() -> void:
@@ -83,8 +118,9 @@ func clear_wet_stage() -> void:
 	control("ProgressStage").hide()
 	var value := control("ProgressValue") as Label
 	value.offset_top = 0.0
-	value.add_theme_font_size_override("font_size", 20)
+	value.add_theme_font_size_override("font_size", 24)
 	control("CleaningProgress").tooltip_text = ""
+	_layout()
 
 
 func set_progression(view: Dictionary, purchases_allowed: bool = true) -> void:
@@ -95,22 +131,12 @@ func set_progression(view: Dictionary, purchases_allowed: bool = true) -> void:
 	if not is_node_ready(): return
 	# An unaffordable offer still shows its benefit and price. A negative cost
 	# means the progression is complete; can_upgrade_* controls interaction only.
-	var payout_available := int(view.get("payout_cost", -1)) >= 0
-	var tool_available := int(view.get("tool_cost", -1)) >= 0
-	var early := int(view.get("early_reward", 20))
-	var full := int(view.get("full_reward", 40))
-	(control("EarlyValue") as Label).text = "%s → %s" % [_money_text(early), _money_text(int(view.get("next_early", early)))] if payout_available else _money_text(early)
-	(control("FullValue") as Label).text = "%s → %s" % [_money_text(full), _money_text(int(view.get("next_full", full)))] if payout_available else _money_text(full)
-	var payout_button := control("PayoutUpgradeButton") as Button
-	payout_button.text = "Buy %s" % _money_text(int(view.get("payout_cost", 0))) if payout_available else "Max"
-	payout_button.tooltip_text = "Increase rug earnings · %d coins" % int(view.get("payout_cost", 0)) if payout_available else "Maximum rug earnings"
-	payout_button.icon = COIN_TEXTURE if payout_available else null
+	var tool_available := float(view.get("tool_cost", -1.0)) >= 0.0
 	var store_id := int(view.get("store_id", 1))
-	var wet := store_id >= 2
+	var wet := bool(view.get("wet_unlocked", false))
 	var tier := clampi(int(view.get("wet_tool_level", 0)) + (4 if store_id == 4 else 0), 0, 8) if wet else clampi(int(view.get("global_tool_tier", 0)), 0, 8)
-	var next_tier := mini(tier + 1, 8) if wet else clampi(maxi(tier, (store_id - 1) * 4 + int(view.get("tool_level", 0)) + 1), 0, 8)
+	var next_tier := mini(tier + 1, 8) if wet else clampi(int(view.get("next_global_tool_tier", tier)), 0, 8)
 	var current_texture := _tool_texture(tier, wet)
-	(control("UpgradeButton") as Button).icon = current_texture
 	control("CurrentToolPreview").texture = current_texture
 	control("NextToolPreview").texture = _tool_texture(next_tier, wet)
 	(control("CurrentToolName") as Label).text = str(view.get("tool_name", "Hand brush"))
@@ -120,17 +146,17 @@ func set_progression(view: Dictionary, purchases_allowed: bool = true) -> void:
 	(control("ToolDrawerTitle") as Label).text = "Hose" if wet else "Brush"
 	control("NextToolCard").visible = tool_available
 	var tool_button := control("ToolUpgradeButton") as Button
-	tool_button.text = "Buy %s" % _money_text(int(view.get("tool_cost", 0))) if tool_available else "Max"
-	tool_button.tooltip_text = "%s · %d coins" % [str(view.get("next_tool_name", "Upgrade brush")), int(view.get("tool_cost", 0))] if tool_available else "Maximum tool level"
+	tool_button.text = "Buy %s" % _money_text(float(view.get("tool_cost", 0.0))) if tool_available else "Max"
+	tool_button.tooltip_text = "%s · %s coins" % [str(view.get("next_tool_name", "Upgrade brush")), _money_text(float(view.get("tool_cost", 0.0)))] if tool_available else "Maximum tool level"
 	tool_button.icon = COIN_TEXTURE if tool_available else null
-	var wet_unlocked := bool(view.get("wet_unlocked", store_id >= 2))
+	var wet_unlocked := bool(view.get("wet_unlocked", false))
 	control("HoseUpgradeRow").visible = wet_unlocked and not wet
 	control("SqueegeeUpgradeRow").visible = wet_unlocked
 	control("WetUpgradeRows").visible = wet_unlocked
 	for kind in ["hose", "squeegee"]:
 		var prefix := "Hose" if kind == "hose" else "Squeegee"
 		var level := int(view.get(kind + "_level", 0))
-		var cost := int(view.get(kind + "_cost", -1))
+		var cost := float(view.get(kind + "_cost", -1.0))
 		(control(prefix + "UpgradeTitle") as Label).text = "%s · Lv %d / 5" % [prefix, level + 1]
 		var power := float(view.get(kind + "_power", 1.0))
 		var next_power := float(view.get("next_" + kind + "_power", power))
@@ -138,71 +164,95 @@ func set_progression(view: Dictionary, purchases_allowed: bool = true) -> void:
 		var button := control(prefix + "UpgradeButton") as Button
 		button.text = "Buy %s" % _money_text(cost) if cost >= 0 else "Max"
 		button.icon = COIN_TEXTURE if cost >= 0 else null
-		button.tooltip_text = ("Wider water + faster soaking" if kind == "hose" else "Remove more water with every pass") + (" · %d coins" % cost if cost >= 0 else " · Maximum level")
-	control("UpgradeButton").tooltip_text = "Hose + squeegee upgrades" if wet_unlocked else "Brush upgrades"
+		button.tooltip_text = ("Wider water + faster soaking" if kind == "hose" else "Remove more water with every pass") + (" · %s coins" % _money_text(cost) if cost >= 0 else " · Maximum level")
+	control("UpgradeButton").tooltip_text = "Shop for tools + Bonzi upgrades"
+	var full_reward := float(view.get("carpet_full_reward", view.get("full_reward", 0.0)))
+	control("EarningsPerCarpet").visible = full_reward > 0.0
+	(control("CarpetEarningsValue") as Label).text = _money_text(full_reward)
+	control("EarningsPerCarpet").tooltip_text = "%s coins per fully cleaned carpet" % _money_text(full_reward)
+	_set_bonzi_offer(view)
 	_refresh_availability()
 	_layout()
 
 
-func set_ad_offer(amount: int, available: bool) -> void:
-	var next_amount := maxi(amount, 0)
-	var next_available := available and next_amount > 0
-	if next_amount == _ad_amount and next_available == _ad_available: return
-	_ad_amount = next_amount
-	_ad_available = next_available
+func set_carpet_ad_offer(state: CarpetAdState) -> void:
+	if state == _carpet_ad_state: return
+	_carpet_ad_state = state
 	if not is_node_ready(): return
-	(control("AdRewardButton") as Button).text = "▶  +%s" % _money_text(_ad_amount)
-	control("AdRewardButton").tooltip_text = "Watch an ad for %d coins" % _ad_amount
-	control("AdRewardButton").visible = _ad_available
+	_refresh_carpet_ad()
 	_refresh_availability()
 	_layout()
+
+
+func set_ad_offer(amount: float, available: bool) -> void:
+	# Compatibility for detached legacy HUD previews. Production supplies the
+	# current carpet's verified offer state and never displays a receipt amount.
+	set_carpet_ad_offer(CarpetAdState.READY if available and amount > 0.0 else CarpetAdState.HIDDEN)
+
+
+func _refresh_carpet_ad() -> void:
+	var button := control("AdRewardButton") as Button
+	button.visible = _carpet_ad_state != CarpetAdState.HIDDEN
+	button.text = "…" if _carpet_ad_state == CarpetAdState.REQUESTING else "2×"
+	button.icon = AD_VIDEO_LOCKED if _carpet_ad_state == CarpetAdState.LOCKED else (AD_VIDEO_ACTIVE if _carpet_ad_state == CarpetAdState.ACTIVE else AD_VIDEO_PLAY)
+	match _carpet_ad_state:
+		CarpetAdState.LOCKED: button.tooltip_text = "Watch a video for 2× on this carpet · video unavailable"
+		CarpetAdState.READY: button.tooltip_text = "Watch a video for 2× earnings on this carpet"
+		CarpetAdState.REQUESTING: button.tooltip_text = "Waiting for the video reward to be verified"
+		CarpetAdState.ACTIVE: button.tooltip_text = "2× earnings active on this carpet"
+		_: button.tooltip_text = ""
 
 
 func _tool_stats(width: float, power: float) -> String:
 	return "↔ %.2f×\n✦ %.2f×" % [width, power]
 
 
-func _money_text(amount: int) -> String:
-	var divisor := 1.0
-	var suffix := ""
-	if amount >= 1_000_000_000_000_000:
-		divisor = 1_000_000_000_000_000.0
-		suffix = "Q"
-	elif amount >= 1_000_000_000_000:
-		divisor = 1_000_000_000_000.0
-		suffix = "T"
-	elif amount >= 1_000_000_000:
-		divisor = 1_000_000_000.0
-		suffix = "B"
-	elif amount >= 1_000_000:
-		divisor = 1_000_000.0
-		suffix = "M"
-	elif amount >= 10_000:
-		divisor = 1000.0
-		suffix = "K"
-	if suffix.is_empty(): return str(amount)
-	var number := "%.1f" % (float(amount) / divisor)
-	if number.ends_with(".0"): number = number.left(number.length() - 2)
-	return number + suffix
+func _money_text(amount: float) -> String:
+	return Money.format(amount)
+
+
+func _set_bonzi_offer(view: Dictionary) -> void:
+	control("BonziContents").visible = view.has("bonzi_tier")
+	var tier := int(view.get("bonzi_tier", -1))
+	var next_tier := mini(tier + 1, 2)
+	var cost := float(view.get("bonzi_cost", -1.0))
+	var hired := tier >= 0
+	var locked := not hired and int(view.get("local_jobs", 0)) < 3
+	var titles := ["Bonzi I", "Bonzi II", "Bonzi III"]
+	(control("CurrentBonziName") as Label).text = titles[clampi(tier, 0, 2)] if hired else "Not hired"
+	(control("NextBonziName") as Label).text = titles[clampi(next_tier, 0, 2)]
+	(control("CurrentBonziStats") as Label).text = "%s coins\nEvery %ds" % [_money_text(float(view.get("bonzi_reward", 0.0))), int(view.get("bonzi_seconds", 0))] if hired else "No earnings yet"
+	(control("NextBonziStats") as Label).text = "%s coins\nEvery %ds" % [_money_text(float(view.get("full_reward", 0.0))), int(Progression.bot_seconds(next_tier))]
+	control("CurrentBonziPreview").modulate = Color.WHITE if hired else Color(1,1,1,0.35)
+	(control("CurrentBonziPreview").get_parent().get_node("Words/State") as Label).text = "Working" if hired else "Current"
+	(control("NextBonziPreview").get_parent().get_node("Words/State") as Label).text = "Next" if hired else "Hire"
+	control("NextBonziCard").visible = cost >= 0.0
+	var button := control("BonziUpgradeButton") as Button
+	button.text = ("Hire " if not hired else "Buy ") + _money_text(cost) if cost >= 0.0 else "Max"
+	button.icon = COIN_TEXTURE if cost >= 0.0 else null
+	button.tooltip_text = "Complete 3 paid carpets to hire Bonzi" if locked else ("%s coins · automatic cleaning every %ds" % [_money_text(cost), int(Progression.bot_seconds(next_tier))] if cost >= 0.0 else "Bonzi is at maximum speed")
 
 
 func _refresh_availability() -> void:
 	if not is_node_ready(): return
 	var ready := _purchases_allowed and pending_reward == 0 and not _progression.is_empty()
-	var payout_cost := int(_progression.get("payout_cost", -1))
-	var tool_cost := int(_progression.get("tool_cost", -1))
-	var payout := control("PayoutUpgradeButton") as Button
+	var tool_cost := float(_progression.get("tool_cost", -1.0))
 	var tool := control("ToolUpgradeButton") as Button
-	payout.disabled = not ready or upgrades_open() or not bool(_progression.get("can_upgrade_payout", payout_cost >= 0)) or payout_cost < 0 or _actual_balance < payout_cost
 	tool.disabled = not ready or not bool(_progression.get("can_upgrade_tool", tool_cost >= 0)) or tool_cost < 0 or _actual_balance < tool_cost
-	(control("AdRewardButton") as Button).disabled = not _ad_available or not _purchases_allowed or pending_reward > 0 or upgrades_open()
+	var bonzi_cost := float(_progression.get("bonzi_cost", -1.0))
+	(control("BonziUpgradeButton") as Button).disabled = not ready or not bool(_progression.get("can_upgrade_bonzi", false)) or bonzi_cost < 0.0 or _actual_balance < bonzi_cost
+	var bonzi_locked := int(_progression.get("bonzi_tier", -1)) < 0 and int(_progression.get("local_jobs", 0)) < 3
+	var bonzi_status := control("BonziStatus") as Label
+	bonzi_status.text = "Paid carpets: %d / 3 to hire" % mini(int(_progression.get("local_jobs", 0)), 3) if bonzi_locked else ("Max speed" if bonzi_cost < 0.0 else ("Need %s coins" % _money_text(bonzi_cost) if _actual_balance < bonzi_cost else ""))
+	bonzi_status.visible = not bonzi_status.text.is_empty()
+	(control("AdRewardButton") as Button).disabled = _carpet_ad_state != CarpetAdState.READY or not _purchases_allowed or pending_reward > 0 or upgrades_open()
 	for kind in ["hose", "squeegee"]:
 		var button := control(("Hose" if kind == "hose" else "Squeegee") + "UpgradeButton") as Button
-		var cost := int(_progression.get(kind + "_cost", -1))
+		var cost := float(_progression.get(kind + "_cost", -1.0))
 		button.disabled = not ready or not bool(_progression.get("wet_unlocked", false)) or not bool(_progression.get("can_upgrade_" + kind, false)) or cost < 0 or _actual_balance < cost
 	var done := control("CloseUpgradesButton")
 	var focusable: Array[Control] = [done]
-	for node_name in ["ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton"]:
+	for node_name in ["ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton", "BonziUpgradeButton"]:
 		var button := control(node_name) as Button
 		if button.is_visible_in_tree() and not button.disabled: focusable.append(button)
 		elif upgrades_open() and button.has_focus(): done.grab_focus()
@@ -212,14 +262,14 @@ func _refresh_availability() -> void:
 		button.focus_previous = button.get_path_to(focusable[(index + focusable.size() - 1) % focusable.size()])
 
 
-func _on_payout_upgrade_pressed() -> void:
-	if not (control("PayoutUpgradeButton") as Button).disabled:
-		request_payout_upgrade.emit()
-
-
 func _on_tool_upgrade_pressed() -> void:
 	if upgrades_open() and not (control("ToolUpgradeButton") as Button).disabled:
 		request_tool_upgrade.emit()
+
+
+func _on_bonzi_upgrade_pressed() -> void:
+	if upgrades_open() and not (control("BonziUpgradeButton") as Button).disabled:
+		request_bonzi_upgrade.emit()
 
 
 func _on_wet_upgrade_pressed(kind: String) -> void:
@@ -230,7 +280,7 @@ func _on_wet_upgrade_pressed(kind: String) -> void:
 
 
 func _on_ad_reward_pressed() -> void:
-	if _ad_available and not (control("AdRewardButton") as Button).disabled:
+	if _carpet_ad_state == CarpetAdState.READY and not (control("AdRewardButton") as Button).disabled:
 		request_rewarded_ad.emit()
 
 
@@ -273,14 +323,19 @@ func _tool_texture(tier: int, wet: bool) -> Texture2D:
 	return texture
 
 
-func initialize_wallet(balance: int) -> void:
+func initialize_wallet(balance: float) -> void:
 	# Re-entering shows the durable balance, even if the previous view closed
 	# halfway through a purely cosmetic payout.
-	_actual_balance = maxi(balance, 0)
-	pending_reward = 0
-	_reserved_reward = 0
+	_actual_balance = maxf(balance, 0.0)
+	pending_reward = 0.0
+	_reserved_reward = 0.0
 	_queued_rewards.clear()
 	_reward_running = false
+	_cleaning_pending = 0.0
+	_cleaning_count_start = 0.0
+	_cleaning_count_time = 0.0
+	if _wallet_tween != null and _wallet_tween.is_valid(): _wallet_tween.kill()
+	if is_node_ready(): control("Wallet").scale = Vector2.ONE
 	set_process(false)
 	for index in _coin_nodes.size():
 		_coin_nodes[index].hide()
@@ -288,36 +343,83 @@ func initialize_wallet(balance: int) -> void:
 	_refresh_wallet()
 
 
-func reserve_reward(amount: int) -> void:
+func reserve_reward(amount: float) -> void:
 	# Call before the ledger emits its balance change so those coins wait for
 	# their flight. Ordinary automation income is never held back.
-	var value := maxi(amount, 0)
+	var value := maxf(amount, 0.0)
 	_reserved_reward += value
 	pending_reward += value
 	_refresh_availability()
 
 
-func cancel_reserved_reward(amount: int) -> void:
-	var value := mini(maxi(amount, 0), _reserved_reward)
-	_reserved_reward -= value
-	pending_reward -= value
+func cancel_reserved_reward(amount: float) -> void:
+	var value := minf(maxf(amount, 0.0), _reserved_reward)
+	_reserved_reward = maxf(_reserved_reward - value, 0.0)
+	pending_reward = maxf(pending_reward - value, 0.0)
 	_refresh_wallet()
 
 
-func sync_wallet(balance: int) -> void:
-	_actual_balance = maxi(balance, 0)
+func sync_wallet(balance: float) -> void:
+	var next_balance := maxf(balance, 0.0)
+	# Buying spends already-earned money. Its durable result is shown at once,
+	# rather than deducting a cosmetic cleaning credit for a second time.
+	if next_balance < _actual_balance:
+		_cleaning_pending = 0.0
+		_cleaning_count_start = 0.0
+	_actual_balance = next_balance
 	_refresh_wallet()
 
 
-func show_reward(amount: int, balance: int) -> void:
+func show_cleaning_reward(amount: float, balance: float, _origin_screen: Vector2 = Vector2.INF) -> void:
+	# The ledger has already credited this money. One bounded count accumulator
+	# handles arbitrary repeated removals without consuming coin-pool slots.
+	if not Money.is_valid(amount) or not Money.is_valid(balance): return
+	if amount <= 0.0:
+		sync_wallet(balance)
+		return
+	var reserved := minf(amount,_reserved_reward)
+	_reserved_reward = maxf(_reserved_reward - reserved,0.0)
+	pending_reward = maxf(pending_reward - reserved,0.0)
+	_actual_balance = balance
+	_cleaning_pending = minf(_cleaning_pending + amount,maxf(balance - pending_reward,0.0))
+	_cleaning_count_start = _cleaning_pending
+	_cleaning_count_time = 0.0
+	set_process(true)
+	_pulse_wallet(1.06)
+	_refresh_wallet()
+
+
+func set_wallet_paused(paused: bool) -> void:
+	_wallet_paused = paused
+	if _wallet_tween != null and _wallet_tween.is_valid():
+		if paused: _wallet_tween.pause()
+		else: _wallet_tween.play()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT: set_wallet_paused(true)
+	elif what == NOTIFICATION_APPLICATION_FOCUS_IN: set_wallet_paused(_carpet_ad_state == CarpetAdState.REQUESTING)
+
+
+func _pulse_wallet(peak: float) -> void:
+	if not is_node_ready(): return
+	var wallet := control("Wallet")
+	if _wallet_tween != null and _wallet_tween.is_valid(): _wallet_tween.kill()
+	_wallet_tween = create_tween()
+	_wallet_tween.tween_property(wallet,"scale",Vector2.ONE * peak,0.06).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_wallet_tween.tween_property(wallet,"scale",Vector2.ONE,0.18).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	if _wallet_paused: _wallet_tween.pause()
+
+
+func show_reward(amount: float, balance: float) -> void:
 	if amount <= 0:
 		sync_wallet(balance)
 		return
 	# Direct callers may omit reservation; the live game reserves before commit.
 	if _reserved_reward < amount:
 		reserve_reward(amount - _reserved_reward)
-	_reserved_reward -= amount
-	_actual_balance = maxi(balance, 0)
+	_reserved_reward = maxf(_reserved_reward - amount, 0.0)
+	_actual_balance = maxf(balance, 0.0)
 	_queued_rewards.append(amount)
 	_reward_running = true
 	set_process(true)
@@ -333,10 +435,10 @@ func active_coin_count() -> int:
 
 
 func _refresh_wallet() -> void:
-	displayed_gold = maxi(_actual_balance - pending_reward, 0)
+	displayed_gold = maxf(_actual_balance - pending_reward - _cleaning_pending, 0.0)
 	if not is_node_ready(): return
 	(control("WalletValue") as Label).text = _money_text(displayed_gold)
-	control("Wallet").tooltip_text = "%d coins" % displayed_gold
+	control("Wallet").tooltip_text = "%s coins" % _money_text(displayed_gold)
 	_refresh_availability()
 	_layout()
 
@@ -360,22 +462,29 @@ func _create_coin_pool() -> void:
 func _launch_queued_rewards() -> void:
 	while not _queued_rewards.is_empty():
 		var amount := _queued_rewards[0]
-		var count := mini(16, maxi(1, ceili(float(amount) / 2.0)))
+		# Clamp the visual count before integer conversion; even AF rewards use
+		# the same small pool and never cast a monetary value to int64.
+		var count := clampi(ceili(minf(amount / 2.0, 16.0)), 1, 16)
 		var available: Array[int] = []
 		for index in _coin_flights.size():
 			if _coin_flights[index].is_empty(): available.append(index)
 		if available.size() < count: return
 		_queued_rewards.pop_front()
-		var base_value := floori(float(amount) / float(count))
-		var remainder := amount % count
+		var base_value := floorf(amount / float(count))
+		var remainder := amount - base_value * float(count)
+		var assigned := 0.0
 		var phase := _coin_rng.randf_range(0.0, TAU)
 		for order in count:
 			var angle := phase + TAU * float(order) / float(count)
 			var radius := _coin_rng.randf_range(0.085, 0.15)
 			var slot := available[order]
+			var coin_value := base_value + (1.0 if float(order) < remainder else 0.0)
+			if order == count - 1:
+				coin_value = maxf(amount - assigned, 0.0)
+			assigned += coin_value
 			_coin_flights[slot] = {
 				"time": -float(order) * 0.024,
-				"value": base_value + (1 if order < remainder else 0),
+				"value": coin_value,
 				"offset": Vector2(cos(angle), sin(angle)) * radius,
 				"linger": 0.34 + float(order) * 0.013,
 				"spin": _coin_rng.randf_range(-0.7, 0.7),
@@ -383,6 +492,13 @@ func _launch_queued_rewards() -> void:
 
 
 func _process(delta: float) -> void:
+	if _wallet_paused: return
+	if _cleaning_pending > 0.0:
+		_cleaning_count_time = minf(_cleaning_count_time + maxf(delta,0.0),CLEANING_COUNT_SECONDS)
+		var fraction := _cleaning_count_time / CLEANING_COUNT_SECONDS
+		_cleaning_pending = _cleaning_count_start * (1.0 - fraction) * (1.0 - fraction)
+		if _cleaning_count_time >= CLEANING_COUNT_SECONDS: _cleaning_pending = 0.0
+		_refresh_wallet()
 	# Coins keep travelling while the drawer pauses the rug, so purchase buttons
 	# can unlock as soon as the displayed wallet catches up with the ledger.
 	var safe := _safe_rect()
@@ -423,17 +539,21 @@ func _process(delta: float) -> void:
 		coin.rotation = float(flight.spin) * (1.0 - minf(elapsed, 1.0))
 	_launch_queued_rewards()
 	if _queued_rewards.is_empty() and active_coin_count() == 0:
-		set_process(false)
+		set_process(_cleaning_pending > 0.0)
+		# The durable wallet is authoritative. Reset by completed flight state
+		# instead of letting high-value subtraction residue keep buying locked.
+		pending_reward = _reserved_reward
+		_refresh_wallet()
 		if _reward_running and _reserved_reward == 0:
 			_reward_running = false
 			reward_finished.emit()
 
 
 func _arrive_coin(index: int) -> void:
-	var value: int = _coin_flights[index].value
+	var value: float = float(_coin_flights[index].value)
 	_coin_nodes[index].hide()
 	_coin_flights[index].clear()
-	pending_reward = maxi(pending_reward - value, 0)
+	pending_reward = maxf(pending_reward - value, 0.0)
 	_refresh_wallet()
 	var wallet := control("Wallet")
 	if _wallet_tween != null and _wallet_tween.is_valid(): _wallet_tween.kill()
@@ -445,12 +565,10 @@ func _arrive_coin(index: int) -> void:
 
 func open_upgrades() -> void:
 	if upgrades_open(): return
-	_focus_before_modal = get_viewport().gui_get_focus_owner()
-	_background_focus_modes.clear()
-	for node_name in ["HomeButton", "FinishJobButton", "UpgradeButton", "PayoutUpgradeButton", "AdRewardButton"]:
-		var button := control(node_name)
-		_background_focus_modes[button] = button.focus_mode
-		button.focus_mode = Control.FOCUS_NONE
+	_begin_modal()
+	(control("ToolCardsScroll") as ScrollContainer).scroll_vertical = 0
+	(control("BonziCardsScroll") as ScrollContainer).scroll_vertical = 0
+	(control("ShopContentsScroll") as ScrollContainer).scroll_vertical = 0
 	control("UpgradeSheet").show()
 	_refresh_availability()
 	_layout()
@@ -465,10 +583,40 @@ func open_upgrades() -> void:
 	upgrades_changed.emit(true)
 
 
+func open_room_upgrade(view: Dictionary, allowed: bool, anchor_screen: Vector2 = Vector2.INF) -> void:
+	if upgrades_open() or view.is_empty(): return
+	_begin_modal()
+	_room_anchor_screen = anchor_screen if anchor_screen.is_finite() else _safe_rect().get_center()
+	room_panel.show_offer(view, allowed)
+	_refresh_availability()
+	_layout()
+	upgrades_changed.emit(true)
+
+
+func set_room_upgrade_anchor(anchor_screen: Vector2) -> void:
+	_room_anchor_screen = anchor_screen
+	room_panel.set_item_anchor((get_node("HUD") as Control).get_global_transform().affine_inverse() * anchor_screen)
+
+
+func refresh_room_upgrade(view: Dictionary, allowed: bool) -> void:
+	if room_panel.visible:
+		room_panel.refresh_offer(view, allowed and pending_reward == 0)
+
+
+func _begin_modal() -> void:
+	_focus_before_modal = get_viewport().gui_get_focus_owner()
+	_background_focus_modes.clear()
+	for node_name in ["HomeButton", "FinishJobButton", "UpgradeButton", "AdRewardButton"]:
+		var button := control(node_name)
+		_background_focus_modes[button] = button.focus_mode
+		button.focus_mode = Control.FOCUS_NONE
+
+
 func close_upgrades() -> void:
 	if not upgrades_open(): return
 	if _modal_tween != null and _modal_tween.is_valid(): _modal_tween.kill()
 	control("UpgradeSheet").hide()
+	room_panel.hide()
 	_refresh_availability()
 	for button in _background_focus_modes:
 		if is_instance_valid(button): button.focus_mode = _background_focus_modes[button]
@@ -479,17 +627,43 @@ func close_upgrades() -> void:
 		control("UpgradeButton").grab_focus()
 	_focus_before_modal = null
 	upgrades_changed.emit(false)
+	_layout()
 
 
 func upgrades_open() -> bool:
-	return is_node_ready() and control("UpgradeSheet").visible
+	return is_node_ready() and (control("UpgradeSheet").visible or room_panel.visible)
+
+
+func drag_tool_contents(origin: Vector2, relative: Vector2) -> void:
+	if not control("UpgradeSheet").visible: return
+	var scroll_names := ["ShopContentsScroll", "ToolCardsScroll", "BonziCardsScroll"] if _shop_stacked else ["ToolCardsScroll", "BonziCardsScroll", "ShopContentsScroll"]
+	for name: String in scroll_names:
+		var scroll := control(name) as ScrollContainer
+		if not scroll.is_visible_in_tree() or not scroll.get_global_rect().has_point(origin): continue
+		if scroll.get_v_scroll_bar().max_value <= scroll.get_v_scroll_bar().page: continue
+		scroll.scroll_vertical -= roundi(relative.y / maxf(scroll.get_global_transform().get_scale().y, 0.01))
+		return
+
+
+func modal_contains_point(point: Vector2) -> bool:
+	if room_panel.visible: return room_panel.get_node("%Card").get_global_rect().has_point(point)
+	return control("UpgradeSheet").visible and control("UpgradesPanel").get_global_rect().has_point(point)
+
+
+func _button_contains_point(button: Control, point: Vector2) -> bool:
+	if not button.get_global_rect().has_point(point): return false
+	var parent := button.get_parent()
+	while parent is Control:
+		if parent.clip_contents and not parent.get_global_rect().has_point(point): return false
+		parent = parent.get_parent()
+	return true
 
 
 func blocks_point(point: Vector2) -> bool:
 	# The full-screen root ignores input. Only the visible controls keep a press
 	# from starting a brush stroke beneath them.
 	if upgrades_open(): return true
-	for node_name in ["CleaningProgress", "HomeButton", "FinishJobButton", "Wallet", "UpgradeButton", "PayoutCard", "PayoutUpgradeButton", "AdRewardButton"]:
+	for node_name in ["CleaningProgress", "EarningsPerCarpet", "HomeButton", "FinishJobButton", "Wallet", "UpgradeButton", "AdRewardButton"]:
 		var node := control(node_name)
 		if node.is_visible_in_tree() and node.get_global_rect().has_point(point):
 			return true
@@ -498,8 +672,9 @@ func blocks_point(point: Vector2) -> bool:
 
 func visible_button_at(point: Vector2, buttons: Array[Button]) -> Button:
 	for button in buttons:
-		if upgrades_open() and button not in [control("CloseUpgradesButton"), control("ToolUpgradeButton"), control("HoseUpgradeButton"), control("SqueegeeUpgradeButton")]: continue
-		if button.is_visible_in_tree() and not button.disabled and button.get_global_rect().has_point(point):
+		if room_panel.visible and button not in room_panel.action_buttons(): continue
+		if control("UpgradeSheet").visible and button not in [control("CloseUpgradesButton"), control("ToolUpgradeButton"), control("HoseUpgradeButton"), control("SqueegeeUpgradeButton"), control("BonziUpgradeButton")]: continue
+		if button.is_visible_in_tree() and not button.disabled and _button_contains_point(button, point):
 			return button
 	return null
 
@@ -521,96 +696,174 @@ func _safe_rect() -> Rect2:
 	return Rect2(Vector2(inset.x, inset.y), Vector2(maxf(viewport_size.x - inset.x - inset.z, 1.0), maxf(viewport_size.y - inset.y - inset.w, 1.0)))
 
 
+func progress_block_rect() -> Rect2:
+	var block := control("CleaningProgress").get_global_rect()
+	# Keep the cleaning frame reserved while completion temporarily hides
+	# the entire HUD, so the next rug returns to the same camera position.
+	if control("EarningsPerCarpet").visible:
+		block = block.merge(control("EarningsPerCarpet").get_global_rect())
+	return block
+
+
+func layout_metrics() -> Dictionary:
+	# Viewport rectangles are the single composition contract for the camera.
+	# Local visibility keeps the frame stable while completion hides the HUD.
+	if _layout_info.is_empty() and is_node_ready(): _layout()
+	return _layout_info.duplicate(true)
+
+
+func workshop_view_rect() -> Rect2:
+	var metrics := layout_metrics()
+	return metrics.get("world_rect", _safe_rect())
+
+
+func _viewport_rect(local_rect: Rect2) -> Rect2:
+	var transform := (get_node("HUD") as Control).get_global_transform()
+	return Rect2(transform * local_rect.position, local_rect.size * transform.get_scale())
+
+
+func _maximum_wallet_width(font: Font) -> float:
+	var width := 136.0
+	for suffix: String in Money.SUFFIXES:
+		width = maxf(width, font.get_string_size("999.9" + suffix, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 32).x + 76.0)
+	return width
+
+
 func _layout() -> void:
 	if not is_node_ready() or get_viewport() == null:
 		return
-	# The world keeps its 720x1000 reference canvas. Scale this overlay alone
-	# so a 56-unit button remains at least 44 screen pixels in phone landscape.
+	# Size the overlay from screen proportions, independently of the world's
+	# 720x1000 canvas. A high-density phone must have the same readable HUD as
+	# its small preview; raw pixel count is only a minimum-touch fallback.
 	var viewport_size := get_viewport().get_visible_rect().size
 	var window_size := Vector2(DisplayServer.window_get_size())
+	if DisplayServer.get_name() == "headless": window_size = Vector2(get_window().size)
 	var pixels_per_unit := minf(window_size.x / maxf(viewport_size.x, 1.0), window_size.y / maxf(viewport_size.y, 1.0))
-	var ui_scale := clampf(44.0 / (56.0 * maxf(pixels_per_unit, 0.01)), 1.0, 2.5)
-	(get_node("HUD") as Control).scale = Vector2.ONE * ui_scale
 	var raw_safe := _safe_rect()
+	var landscape := raw_safe.size.x > raw_safe.size.y * landscape_aspect_threshold
+	var short_side := minf(raw_safe.size.x, raw_safe.size.y)
+	var elongation := maxf(raw_safe.size.x, raw_safe.size.y) / maxf(short_side, 1.0)
+	# Squarer tablet screens retain room for the diorama; elongated phones use
+	# a compact design canvas with larger labels and thumb-sized actions.
+	var phone_weight := clampf((elongation - 1.45) / 0.30, 0.0, 1.0)
+	var phone_reference := phone_landscape_height if landscape else phone_portrait_width
+	var reference_short_side := lerpf(tablet_short_side, phone_reference, phone_weight)
+	var ui_scale := maxf(short_side / reference_short_side, 44.0 / (56.0 * maxf(pixels_per_unit, 0.01)))
+	(get_node("HUD") as Control).scale = Vector2.ONE * ui_scale
 	var safe := Rect2(raw_safe.position / ui_scale, raw_safe.size / ui_scale)
-	var edge := 16.0
+	var edge := layout_edge
+	var rail_left := safe.position.x + edge
 	var home := control("HomeButton")
 	home.position = safe.position + Vector2(edge, edge)
 	home.size = Vector2(56.0, 56.0)
-	var progress := control("CleaningProgress")
-	var progress_width := minf(340.0, maxf(160.0, safe.size.x - edge * 2.0))
-	progress.position = Vector2(safe.get_center().x - progress_width * 0.5, safe.position.y + edge)
-	progress.size = Vector2(progress_width, 56.0)
 	var wallet := control("Wallet")
 	var wallet_value := control("WalletValue") as Label
-	var max_wallet_width := maxf(112.0, safe.size.x - home.size.x - edge * 3.0 - 12.0)
-	var number_width := wallet_value.get_theme_font("font").get_string_size(wallet_value.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 23).x
-	var font_size := clampi(floori(23.0 * minf(1.0, (max_wallet_width - 68.0) / maxf(number_width, 1.0))), 12, 23)
-	if wallet_value.get_theme_font_size("font_size") != font_size:
-		wallet_value.add_theme_font_size_override("font_size", font_size)
-	wallet.size = Vector2(maxf(112.0, wallet.get_combined_minimum_size().x), 56.0)
-	wallet.position = Vector2(safe.end.x - wallet.size.x - edge, safe.position.y + edge)
+	if wallet_value.get_theme_font_size("font_size") != 32:
+		wallet_value.add_theme_font_size_override("font_size", 32)
+	var wallet_font := wallet_value.get_theme_font("font")
+	# Reserve the widest compact amount once for the composition, regardless
+	# of the current balance. Currency changes cannot move the cleaning frame.
+	var minimum_rail := home.size.x + layout_gap + _maximum_wallet_width(wallet_font)
+	var rail_width := minf(maxf(landscape_rail_width, minimum_rail), safe.size.x - edge * 2.0)
+	var rail_right := rail_left + rail_width
+	var progress := control("CleaningProgress")
+	var progress_width := minf(progress_max_width, rail_width if landscape else safe.size.x - edge * 2.0)
+	var number_width := wallet_font.get_string_size(wallet_value.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 32).x
+	wallet.size = Vector2(maxf(136.0, number_width + 76.0), wallet_height)
+	wallet.position = Vector2((rail_right if landscape else safe.end.x - edge) - wallet.size.x, safe.position.y + edge)
 	wallet.pivot_offset = wallet.size * 0.5
-	if Rect2(wallet.position, wallet.size).intersects(Rect2(progress.position, progress.size).grow(12.0)) or Rect2(home.position, home.size).intersects(Rect2(progress.position, progress.size).grow(12.0)):
-		progress.position.y += 68.0
+	var header_bottom := safe.position.y + edge + maxf(home.size.y, wallet_height)
+	progress.size = Vector2(progress_width, maxf(progress_height, 56.0 if control("ProgressStage").visible else 0.0))
+	progress.position = Vector2(rail_left + (rail_width - progress_width) * 0.5 if landscape else safe.get_center().x - progress_width * 0.5, header_bottom + layout_gap)
+	var earnings := control("EarningsPerCarpet")
+	earnings.size = Vector2(minf(280.0, progress_width), earnings_height)
+	earnings.position = Vector2(progress.position.x + (progress.size.x - earnings.size.x) * 0.5, progress.position.y + progress.size.y + earnings_gap)
 	var upgrade := control("UpgradeButton")
-	upgrade.size = Vector2(64.0, 64.0)
-	upgrade.position = Vector2(safe.position.x + edge, progress.position.y + progress.size.y + 12.0)
-	var payout := control("PayoutCard")
-	var buy := control("PayoutUpgradeButton")
+	upgrade.size = Vector2(action_height, action_height)
+	var action_y := safe.end.y - edge - action_height
+	upgrade.position = Vector2(rail_left, action_y)
 	var finish := control("FinishJobButton")
-	finish.size = Vector2(maxf(148.0, finish.get_combined_minimum_size().x), 56.0)
-	var buy_button := buy as Button
-	# expand_icon does not reserve icon width in a Button's minimum size. Keep
-	# the coin legible even when a later store has a five- or six-digit price.
-	var buy_text_width := buy_button.get_theme_font("font").get_string_size(buy_button.text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, buy_button.get_theme_font_size("font_size")).x
-	buy.size = Vector2(maxf(128.0, buy_text_width + (70.0 if buy_button.icon != null else 40.0)), 56.0)
-	var landscape := safe.size.x > safe.size.y * 1.35
-	if landscape:
-		payout.size = Vector2(280.0, 84.0)
-		payout.position = Vector2(safe.end.x - payout.size.x - edge, safe.end.y - edge - 152.0)
-		buy.position = Vector2(payout.position.x + (payout.size.x - buy.size.x) * 0.5, payout.position.y + 96.0)
-		finish.position = Vector2(safe.position.x + edge, safe.end.y - finish.size.y - edge)
-	else:
-		var total_width := minf(620.0, safe.size.x - edge * 2.0)
-		payout.size = Vector2(total_width - buy.size.x - 10.0, 84.0)
-		payout.position = Vector2(safe.get_center().x - total_width * 0.5, safe.end.y - payout.size.y - edge)
-		buy.position = Vector2(payout.position.x + payout.size.x + 10.0, payout.position.y + (payout.size.y - buy.size.y) * 0.5)
-		finish.position = Vector2(safe.get_center().x - finish.size.x * 0.5, payout.position.y - finish.size.y - 12.0)
-	for node_name in ["EarlyValue", "FullValue"]:
-		var label := control(node_name) as Label
-		var current := int(_progression.get("early_reward" if node_name == "EarlyValue" else "full_reward", 20 if node_name == "EarlyValue" else 40))
-		var next := int(_progression.get("next_early" if node_name == "EarlyValue" else "next_full", current))
-		var offered := int(_progression.get("payout_cost", -1)) >= 0
-		var available := maxf(48.0, payout.size.x - 68.0)
-		var font := label.get_theme_font("font")
-		var preview := "%s → %s" % [_money_text(current), _money_text(next)] if offered else _money_text(current)
-		label.tooltip_text = "%d → %d coins" % [current, next] if offered else "%d coins" % current
-		var base_font := 18
-		if offered and font.get_string_size(preview, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16).x > available:
-			preview = "%s\n→ %s" % [_money_text(current), _money_text(next)]
-			base_font = 16
-		label.text = preview
-		var width := 1.0
-		for line in preview.split("\n"):
-			width = maxf(width, font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1.0, base_font).x)
-		label.add_theme_font_size_override("font_size", clampi(floori(float(base_font) * minf(1.0, available / width)), 12, base_font))
+	finish.size = Vector2(maxf(104.0, finish.get_combined_minimum_size().x), action_height)
+	finish.position = Vector2((rail_right if landscape else safe.end.x - edge) - finish.size.x, action_y)
+	room_panel.set_item_anchor((get_node("HUD") as Control).get_global_transform().affine_inverse() * _room_anchor_screen)
+	room_panel.layout_in(safe)
+	var hint := control("RoomHint")
 	var ad := control("AdRewardButton")
-	ad.size = Vector2(maxf(128.0, ad.get_combined_minimum_size().x), 56.0)
-	ad.position = Vector2(safe.end.x - ad.size.x - edge, progress.position.y + progress.size.y + 12.0)
+	ad.size = Vector2(maxf(96.0, ad.get_combined_minimum_size().x), action_height)
+	var action_rect := Rect2(upgrade.position, upgrade.size).merge(Rect2(finish.position, finish.size))
+	var ad_gap_left := upgrade.position.x + upgrade.size.x + layout_gap
+	var ad_gap_right := finish.position.x - layout_gap
+	ad.position = Vector2((ad_gap_left + ad_gap_right - ad.size.x) * 0.5, action_y)
+	if ad.visible: action_rect = action_rect.merge(Rect2(ad.position, ad.size))
+	hint.size = Vector2(safe.end.x - edge - ad_gap_left, 22.0)
+	hint.position = Vector2(ad_gap_left, action_y + (action_height - hint.size.y) * 0.5)
+	hint.visible = not landscape and not finish.visible and not ad.visible and not upgrades_open()
+	var header_rect := Rect2(home.position, home.size).merge(Rect2(wallet.position, wallet.size)).merge(Rect2(progress.position, progress.size))
+	if earnings.visible: header_rect = header_rect.merge(Rect2(earnings.position, earnings.size))
+	var world_rect: Rect2
+	var rail_rect := Rect2()
+	if landscape:
+		rail_rect = Rect2(Vector2(safe.position.x, safe.position.y), Vector2(edge + rail_width, safe.size.y))
+		world_rect = Rect2(Vector2(rail_right + world_gutter, safe.position.y + edge), Vector2(maxf(1.0, safe.end.x - edge - rail_right - world_gutter), maxf(1.0, safe.size.y - edge * 2.0)))
+	else:
+		var world_top := header_rect.end.y + world_gutter
+		var world_bottom := action_rect.position.y - world_gutter
+		world_rect = Rect2(Vector2(safe.position.x + edge, world_top), Vector2(maxf(1.0, safe.size.x - edge * 2.0), maxf(1.0, world_bottom - world_top)))
+	var content_rects := {}
+	for node_name: String in ["HomeButton", "Wallet", "CleaningProgress", "EarningsPerCarpet", "UpgradeButton", "FinishJobButton", "AdRewardButton", "RoomHint"]:
+		var node := control(node_name)
+		# Finishing a rug reveals its button without moving the room. Wallet
+		# pulses are presentation only and never change the camera reservation.
+		if node.visible or node_name == "FinishJobButton":
+			content_rects[node_name] = _viewport_rect(Rect2(node.position, node.size))
+	var previous_world: Rect2 = _layout_info.get("world_rect", Rect2())
+	_layout_info = {"mode": "landscape" if landscape else "portrait", "safe_rect": raw_safe, "world_rect": _viewport_rect(world_rect), "header_rect": _viewport_rect(header_rect), "action_rect": _viewport_rect(action_rect), "rail_rect": _viewport_rect(rail_rect), "content_rects": content_rects, "ui_scale": ui_scale}
+	if not previous_world.is_equal_approx(_layout_info.world_rect): composition_changed.emit()
 	var panel := control("UpgradesPanel")
-	var wet_rows := control("WetUpgradeRows")
-	var contents := panel.get_node("Contents") as Control
-	var has_wet := wet_rows.visible
-	var main_height := 338.0 if control("NextToolCard").visible else 228.0
-	var wet_height := 178.0 if control("HoseUpgradeRow").visible else 84.0
-	var side_by_side := has_wet and landscape
-	var panel_width := 584.0 if side_by_side else (340.0 if has_wet else 272.0)
-	var panel_height := maxf(main_height, wet_height) + 32.0 if side_by_side else main_height + 32.0 + (wet_height + 12.0 if has_wet else 0.0)
-	panel.size = Vector2(minf(panel_width, safe.size.x - edge * 2.0), minf(panel_height, safe.size.y - edge * 2.0))
-	contents.position = Vector2(16.0, 16.0)
-	contents.size = Vector2(240.0 if side_by_side else panel.size.x - 32.0, main_height)
-	wet_rows.position = Vector2(272.0, 80.0) if side_by_side else Vector2(16.0, main_height + 28.0)
-	wet_rows.size = Vector2(panel.size.x - 288.0 if side_by_side else panel.size.x - 32.0, wet_height)
+	_layout_shop(panel, safe, edge)
 	panel.position = Vector2(safe.position.x + edge, clampf(safe.get_center().y - panel.size.y * 0.5, safe.position.y + edge, safe.end.y - panel.size.y - edge))
 	panel.pivot_offset = panel.size * 0.5
+
+
+func _layout_shop(panel: Control, safe: Rect2, edge: float) -> void:
+	var contents := control("Contents")
+	var bonzi := control("BonziContents")
+	var wet_rows := control("WetUpgradeRows")
+	var has_bonzi := bonzi.visible
+	var has_wet := wet_rows.visible
+	var available := safe.size - Vector2.ONE * edge * 2.0
+	var adjacent := (has_bonzi or has_wet) and available.x >= 584.0
+	_shop_stacked = has_bonzi and not adjacent
+	var tool_height := 300.0 if control("NextToolCard").visible else 204.0
+	var bonzi_height := 326.0 if control("NextBonziCard").visible else 230.0
+	var wet_height := (178.0 if control("HoseUpgradeRow").visible else 84.0) if has_wet else 0.0
+	var requested_width := 584.0 if adjacent else (340.0 if has_wet else 304.0)
+	var requested_body := maxf(tool_height,bonzi_height) if adjacent and has_bonzi else tool_height
+	if _shop_stacked: requested_body += bonzi_height + 16.0
+	if has_wet: requested_body += wet_height + 12.0
+	panel.size = Vector2(minf(requested_width, available.x), minf(requested_body + 96.0, available.y))
+	var heading := control("ShopHeading")
+	heading.position = Vector2(16,16)
+	heading.size = Vector2(panel.size.x - 32.0,56.0)
+	var scroll := control("ShopContentsScroll") as ScrollContainer
+	scroll.position = Vector2(16,80)
+	scroll.size = Vector2(panel.size.x - 32.0,maxf(panel.size.y - 96.0,40.0))
+	var columns := control("ShopColumns")
+	var usable_width := scroll.size.x - scroll.get_v_scroll_bar().get_combined_minimum_size().x
+	var column_width := (usable_width - 16.0) * 0.5 if adjacent else usable_width
+	var body_height := scroll.size.y if adjacent or not has_bonzi else requested_body
+	var tool_min := contents.get_combined_minimum_size().y
+	var bonzi_min := bonzi.get_combined_minimum_size().y if has_bonzi else 0.0
+	if adjacent and has_bonzi:
+		body_height = maxf(body_height,maxf(tool_min,bonzi_min) + (wet_height + 12.0 if has_wet else 0.0))
+	var tools_end := tool_height if _shop_stacked else maxf(tool_min,body_height - (wet_height + 12.0 if has_wet and not adjacent else 0.0))
+	contents.position = Vector2.ZERO
+	contents.size = Vector2(column_width,tools_end)
+	bonzi.position = Vector2(column_width + 16.0,0.0) if adjacent else Vector2(0,tools_end + 16.0)
+	bonzi.size = Vector2(column_width,bonzi_height if _shop_stacked else maxf(bonzi_min,body_height - (wet_height + 12.0 if has_wet else 0.0)))
+	if has_wet:
+		wet_rows.position = Vector2(column_width + 16.0,body_height - wet_height) if adjacent else Vector2(0,(bonzi.position.y + bonzi.size.y if has_bonzi else tools_end) + 12.0)
+		wet_rows.size = Vector2(column_width,wet_height)
+	var content_height := maxf(contents.position.y + contents.size.y,bonzi.position.y + bonzi.size.y if has_bonzi else 0.0)
+	if has_wet: content_height = maxf(content_height,wet_rows.position.y + wet_rows.size.y)
+	columns.custom_minimum_size = Vector2(0,content_height)

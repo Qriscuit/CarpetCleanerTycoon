@@ -21,9 +21,10 @@ func fresh(suffix: String) -> Node:
 	state._test_ticks_msec = 0
 	root.add_child(state)
 	state.set_process(false)
-	state.cash = 500
-	state.manual_jobs = 10
-	state._refresh_blueprints()
+	state.cash = 5000
+	for index in 3:
+		var job: String = state.start_job()
+		check(not state.complete_and_start_next_job(job, {"unique_clearance": 1.0, "surface_clearance": 1.0}).is_empty(), "Complete fixture commission %d through the local ledger" % (index + 1))
 	check(state.build("bonzi"), "Build Bonzi fixture")
 	return state
 
@@ -36,26 +37,28 @@ func run() -> void:
 		quit(2)
 		return
 	var state := fresh("sleep")
-	for interval: int in [120,90,80]:
+	for interval: int in [120,90,60]:
 		var before: int = state.cash
 		advance(state,interval-1)
 		state._process(0.0)
 		check(state.cash == before, "No early payment before %ds bar finishes" % interval)
 		advance(state,1)
 		state._process(0.0)
-		check(state.cash == before+10 and state.seconds_to_delivery() == interval, "Exactly ten coins per completed %ds bar" % interval)
-		if interval == 120: check(state.build("bonzi_mk2"), "Install Mk II")
-		elif interval == 90: check(state.build("intake"), "Install intake")
+		check(state.cash == before+40 and state.seconds_to_delivery() == interval and state.progression_view().bonzi_reward == 40 and state.progression_view().full_reward == 40, "The same full-rug reward pays per completed %ds bar" % interval)
+		if interval in [120, 90]:
+			var alias := "bonzi_mk2" if interval == 120 else "intake"
+			state.cash = state.build_cost(alias) + 5000.0
+			check(state.save_state() and state.build(alias), "Install the next tier at its revised price")
 	var before_sleep: int = state.cash
 	state._notification(Node.NOTIFICATION_APPLICATION_PAUSED)
 	advance(state,160,true)
 	state._notification(Node.NOTIFICATION_APPLICATION_PAUSED)
 	state._notification(Node.NOTIFICATION_APPLICATION_RESUMED)
-	check(state.cash == before_sleep+20 and state.return_reward == 20, "Device sleep earns two bars even with a stopped live clock")
+	check(state.cash == before_sleep+80 and state.return_reward == 80 and is_equal_approx(float(state.routine_remainder), 2.0 / 3.0), "Device sleep earns two full rugs and retains the partial cycle with a stopped live clock")
 	state._notification(Node.NOTIFICATION_APPLICATION_RESUMED)
 	state._process(0.0)
-	check(state.cash == before_sleep+20, "Repeated resume and next frame do not pay twice")
-	check(state.acknowledge_return() and state.cash == before_sleep+20 and state.return_reward == 0, "Away acknowledgement grants no extra coins")
+	check(state.cash == before_sleep+80, "Repeated resume and next frame do not pay twice")
+	check(state.acknowledge_return() and state.cash == before_sleep+80 and state.return_reward == 0, "Away acknowledgement grants no extra coins")
 	var before_cap: int = state.cash
 	state._notification(Node.NOTIFICATION_APPLICATION_PAUSED)
 	advance(state,12*3600,true)
@@ -67,12 +70,12 @@ func run() -> void:
 	check(state.cash == before_cap and state.return_reward == 0, "Failed retry also keeps summary unchanged")
 	state._save_path = path
 	state._process(0.0)
-	check(state.cash == before_cap+3600 and state.return_reward == 3600 and state.return_seconds == 28800, "Successful retry pays only the eight-hour cap once")
+	check(state.cash == before_cap+19200 and state.return_reward == 19200 and state.return_seconds == 28800 and is_equal_approx(float(state.routine_remainder), 2.0 / 3.0), "Successful retry pays 480 full rugs within the eight-hour cap once and retains the fractional cycle")
 	state._process(0.0)
-	check(state.cash == before_cap+3600, "Discarded hours cannot leak into the next live frame")
-	advance(state,80)
+	check(state.cash == before_cap+19200, "Discarded hours cannot leak into the next live frame")
+	advance(state,60)
 	state._process(0.0)
-	check(state.cash == before_cap+3610, "Live production restarts at the normal bar length")
+	check(state.cash == before_cap+19240, "Live production restarts at the final 60-second cycle")
 	check(state.build("wide_brush"), "Own an equipped tool before resetting")
 	check(not state.start_job().is_empty(), "Have an active job before resetting")
 	state.save_job_snapshot({"unique_clearance":0.5,"surface_clearance":0.5})
@@ -107,17 +110,17 @@ func run() -> void:
 	late._notification(Node.NOTIFICATION_APPLICATION_RESUMED)
 	late._notification(Node.NOTIFICATION_APPLICATION_PAUSED)
 	late._save_path = late_path
-	check(late.save_state() and late.cash == late_cash+10, "Late paused save can retry the previous absence without losing it")
+	check(late.save_state() and late.cash == late_cash+40, "Late paused save can retry the previous absence without losing it")
 	advance(late,120,true)
 	late._notification(Node.NOTIFICATION_APPLICATION_RESUMED)
-	check(late.cash == late_cash+20 and late.return_reward == 20, "Second absence pays separately without duplicating the earlier retry")
+	check(late.cash == late_cash+80 and late.return_reward == 80, "Second absence pays separately without duplicating the earlier retry")
 	late._notification(Node.NOTIFICATION_APPLICATION_PAUSED)
 	advance(late,-120,true)
 	late._notification(Node.NOTIFICATION_APPLICATION_RESUMED)
-	check(late.cash == late_cash+20, "Backward wall-clock change grants no suspended income")
+	check(late.cash == late_cash+80, "Backward wall-clock change grants no suspended income")
 	advance(late,120)
 	late._process(0.0)
-	check(late.cash == late_cash+30, "Live bar still pays normally after a backward wall-clock change")
+	check(late.cash == late_cash+120, "Live bar still pays normally after a backward wall-clock change")
 	late.free()
 	for file_path: String in paths:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(file_path))

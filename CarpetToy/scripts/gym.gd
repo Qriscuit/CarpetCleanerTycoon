@@ -227,5 +227,5 @@ func frame_carpet() -> void:
 	overhead = not camera_oblique
 	GymCamera.frame(camera, viewport_size, space, camera_oblique)
 
-func _show_ad_reward(_amount: int) -> void:
+func _show_ad_reward(_amount: float) -> void:
 	pass

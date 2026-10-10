@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" path="res://assets/floating_shop/FloatingShop.glb" id="3_e7wop"]
 [ext_resource type="Texture2D" path="res://assets/floating_shop/CoinIcon.png" id="4_qoqbj"]
 [ext_resource type="Texture2D" path="res://assets/floating_shop/SettingsIcon.png" id="5_bkqbt"]
-[ext_resource type="Texture2D" path="res://assets/floating_shop/FloatingShop.png" id="6_77kit"]
+[ext_resource type="Texture2D" path="res://assets/ui/room_upgrades/cart.svg" id="6_77kit"]
 [ext_resource type="Texture2D" path="res://assets/floating_shop/BrushIcon.png" id="7_xawj1"]
 [ext_resource type="Texture2D" path="res://assets/floating_shop/BlueprintIcon.png" id="8_esa3y"]
 [ext_resource type="Texture2D" path="res://assets/floating_shop/BonziIcon.png" id="9_0806d"]
@@ -635,7 +635,7 @@ layout_mode = 0
 offset_left = 18.0
 offset_top = 16.0
 offset_right = 372.0
-offset_bottom = 68.0
+offset_bottom = 76.0
 mouse_filter = 2
 
 [node name="WalletPill" type="PanelContainer" parent="TopBar" unique_id=230010448]
@@ -644,10 +644,10 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_l0rt6")
 
 [node name="WalletContents" type="HBoxContainer" parent="TopBar/WalletPill" unique_id=1221999775]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/separation = 6
 
 [node name="Coin" type="TextureRect" parent="TopBar/WalletPill/WalletContents" unique_id=1962505777]
-custom_minimum_size = Vector2(37, 37)
+custom_minimum_size = Vector2(42, 42)
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("4_qoqbj")
@@ -658,7 +658,7 @@ stretch_mode = 5
 unique_name_in_owner = true
 custom_minimum_size = Vector2(28, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 23
+theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 text = "0"
 vertical_alignment = 1

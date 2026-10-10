@@ -4,13 +4,19 @@ const Routes = preload("res://scripts/scene_routes.gd")
 const Pop = preload("res://scripts/ui/button_pop.gd")
 const ShopLedger = preload("res://scripts/shop_state.gd")
 const Progression = preload("res://scripts/progression.gd")
+const Money = preload("res://scripts/money.gd")
 const RugCatalog = preload("res://scripts/rug_catalog.gd")
 const WaterJet = preload("res://scripts/water_jet.gd")
 const HoseProfile = preload("res://scripts/water_hose_profile.gd")
 const SqueegeeMotion = preload("res://scripts/squeegee_motion.gd")
+const WorkshopCamera = preload("res://scripts/gym_camera.gd")
+const BonziCleaner = preload("res://scripts/bonzi_cleaner.gd")
+const CleaningHUD = preload("res://scripts/cleaning_hud.gd")
 const SQUEEGEE_WATER_SCENE = preload("res://scenes/effects/squeegee_water.tscn")
 @export var practice_only := false
 @export var animate_rug_changes := true
+@export_range(15.0, 45.0, 1.0) var room_view_pitch_from_top := 20.0
+@export_range(-30.0, 30.0, 1.0) var room_view_yaw_degrees := 0.0
 enum RugPhase { ARRIVING, GROWING, TOOL_ENTERING, CLEANING, VACUUMING, REVEAL, DEPARTING }
 var rug_phase := RugPhase.ARRIVING
 var rug_roll := preload("res://scripts/rug_roll.gd").new()
@@ -18,6 +24,9 @@ var transition_tween: Tween
 var leaving_scene := false
 
 const CARPET_PLANE_Y := 0.067
+const BRUSH_IDLE_LIFT := 0.24
+const BRUSH_LOWER_SECONDS := 0.09
+const BRUSH_RAISE_SECONDS := 0.16
 const BRUSH_X_LIMIT := 2.4
 const BRUSH_Z_MIN := -2.58
 const BRUSH_Z_MAX := 2.82
@@ -43,6 +52,8 @@ var progress_card: PanelContainer
 var dirty := true
 var overhead := true
 var brush_dragging := false
+var brush_visual_lift := BRUSH_IDLE_LIFT
+var brush_lift_tween: Tween
 var brush_home := Transform3D.IDENTITY
 var last_brush_position := Vector3.ZERO
 var state_label: Label
@@ -52,6 +63,10 @@ var progress_fraction := 0.0
 var active_touch := -1
 var stroke_time := 0
 var soil: Node
+var bonzi: Node3D
+var application_focused := true
+var carpet_video_pending := false
+var completed_full_quote := 0.0
 var selected_tool := 0
 var tool_nodes: Array[Node3D] = []
 var tool_buttons: Array[Button] = []
@@ -86,23 +101,52 @@ var squeegee_water: Node3D
 var squeegee_motion := SqueegeeMotion.new()
 var cached_purchase_state := false
 var snapshot_timer: Timer
+var cleaning_reward_timer: Timer
+var cleaning_reward_committing := false
+var wet_earned_clearance := 0.0
+var wet_pending_clearance := 0.0
+var wet_reward_age := 0.0
+const CLEANING_REWARD_INTERVAL := 0.20
+const RUNOFF_REWARD_TAIL := 2.70
 var rug_initialized := false
-var last_dry_remaining := -1
 @onready var hud: CanvasLayer = $GymUI
 var hud_touch := -1
 var hud_button: Button
 var hud_touch_origin := Vector2.ZERO
 var hud_touch_canceled := false
+var modal_mouse_down := false
+var modal_mouse_origin := Vector2.ZERO
+var modal_mouse_canceled := false
+@onready var room: Node3D = get_node_or_null("UpgradeRoom")
+var room_press_id := ""
+var room_pointer := -2
+var room_press_origin := Vector2.ZERO
+var room_touch_canceled := false
+var room_offer_anchor := Vector3.ZERO
+var room_purchase_committing := false
 var held_touches: Dictionary = {}
 var touch_chord := false
 var next_job_pending := false
 var finish_requested := false
 var auto_finish_queued := false
 var replacement_job_id := ""
-var completed_reward := 0
+var completed_reward := 0.0
 var completed_fraction := 0.0
 var completed_full_restore := false
 var completion_reveal: CanvasLayer
+var completion_focus: CanvasLayer
+var completion_zoom := 0.0
+var completion_focus_tween: Tween
+var completion_motion_paused := false
+var completion_camera_from := Transform3D.IDENTITY
+var completion_camera_from_size := 1.0
+var completion_camera_from_zoom := 0.0
+var completion_camera_viewport := Vector2.ZERO
+var completion_camera_progress := 0.0
+var completion_camera_returning := false
+const COMPLETION_ZOOM_SECONDS := 0.42
+const WINDOW_OPEN_SECONDS := 0.42
+const DEPARTURE_LIFT := 0.13
 var rug_comparison := preload("res://scripts/rug_comparison.gd").new()
 var _resumed_rug := false
 var original_scale_size := Vector2i.ZERO
@@ -150,25 +194,36 @@ func _ready() -> void:
 	contact_point = brush.position + brush.basis * TOOL_PIVOTS[0]
 	last_brush_position = contact_point
 	bind_ui()
+	if is_instance_valid(room) and shop_state != null:
+		room.set_levels(shop_state.room_upgrade_levels(), int(shop_state.active_store))
 	completion_reveal = preload("res://scenes/ui/completion_reveal.tscn").instantiate()
 	add_child(completion_reveal)
 	completion_reveal.continued.connect(skip_completion_reveal)
 	completion_reveal.comparison_changed.connect(_set_completion_comparison)
 	completion_reveal.layout_changed.connect(_frame_completion_reveal)
+	completion_focus = preload("res://scripts/completion_focus.gd").new()
+	add_child(completion_focus)
 	if shop_state != null:
 		hud.initialize_wallet(shop_state.cash)
 		shop_state.changed.connect(_sync_wallet)
 		shop_state.ad_reward_granted.connect(_show_ad_reward)
+		shop_state.carpet_ad_reward_granted.connect(_show_carpet_ad_reward)
 	soil = preload("res://scripts/dirt_controller.gd").new()
 	# Workshop owns the 75% manual and 99% automatic rules for both modes.
 	soil.automatic_completion_enabled = false
 	soil.head_half = Vector2(0.44, 0.11) if wide_brush else soil.HEAD_HALF
 	add_child(soil)
 	soil.progress_changed.connect(update_progress)
+	soil.manual_debris_cleared.connect(_on_manual_debris_cleared)
 	soil.surface_changed.connect(update_surface_progress)
+	soil.cleaning_material_removed.connect(_queue_cleaning_earnings)
 	soil.vacuum_started.connect(on_vacuum_started)
 	soil.vacuum_finished.connect(on_vacuum_finished)
 	soil.setup($RugDisplay)
+	bonzi = BonziCleaner.new()
+	bonzi.name = "Bonzi"
+	add_child(bonzi)
+	bonzi.setup(soil)
 	wet_recipe = paid_contract and bool(shop_state.progression_view().get("wet_unlocked", false))
 	water_only_recipe = wet_recipe and int(shop_state.active_store) == Progression.WET_FIRST_STORE
 	soil.set_recipe(wet_recipe, water_only_recipe)
@@ -185,6 +240,9 @@ func _ready() -> void:
 		restored_snapshot["wet_recipe"] = wet_recipe
 		restored_snapshot["skip_dry_stage"] = water_only_recipe
 		_resumed_rug = soil.restore_snapshot(restored_snapshot)
+		if _resumed_rug:
+			wet_earned_clearance = clampf(float(restored_snapshot.get("earned_clearance", 0.0)), 0.0, 0.99)
+			wet_pending_clearance = clampf(float(restored_snapshot.get("cleaning_pending_clearance", wet_earned_clearance)), 0.0, 0.99)
 		applied_strength = -1.0
 		_sync_progression()
 	_sync_wet_runtime_state()
@@ -193,6 +251,11 @@ func _ready() -> void:
 	snapshot_timer.wait_time = 0.5
 	add_child(snapshot_timer)
 	snapshot_timer.timeout.connect(save_contract_progress)
+	cleaning_reward_timer = Timer.new()
+	cleaning_reward_timer.one_shot = true
+	cleaning_reward_timer.wait_time = CLEANING_REWARD_INTERVAL
+	add_child(cleaning_reward_timer)
+	cleaning_reward_timer.timeout.connect(_flush_cleaning_earnings)
 	start_rug_arrival()
 	get_viewport().size_changed.connect(frame_carpet)
 	if "--capture" in OS.get_cmdline_user_args():
@@ -206,11 +269,62 @@ func _ready() -> void:
 		print("RENDER_INFO: draw_calls=",RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME)," primitives=",RenderingServer.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME))
 		get_tree().quit()
 
+func _physics_process(delta: float) -> void:
+	if not is_instance_valid(bonzi) or not is_instance_valid(soil):
+		return
+	# A restored/canceled visual still owes the removed water, never a second
+	# reward. Release its durable watermark after the bounded runoff tail.
+	if paid_contract and wet_recipe and application_focused and not carpet_video_pending and rug_phase == RugPhase.CLEANING and not hud.upgrades_open() and not finish_requested and wet_pending_clearance > wet_earned_clearance:
+		wet_reward_age += delta
+		if wet_reward_age >= RUNOFF_REWARD_TAIL:
+			_release_pending_runoff()
+	var owned := _bonzi_owned()
+	var was_running: bool = bonzi.running
+	bonzi.visible = owned and soil.recommended_tool() == 0 and rug_phase == RugPhase.CLEANING and not leaving_scene
+	bonzi.set_running(_bonzi_can_clean())
+	bonzi.advance(delta)
+	if wet_recipe and owned and (was_running or bonzi.running) and soil.recommended_tool() != 0:
+		bonzi.set_running(false)
+		bonzi.hide()
+		if not brush_dragging:
+			_advance_wet_tool.call_deferred()
+
+func _bonzi_can_clean() -> bool:
+	return _bonzi_owned() and soil.recommended_tool() == 0 and application_focused and not carpet_video_pending and rug_phase == RugPhase.CLEANING and not leaving_scene and not finish_requested and not contract_finished and not hud.upgrades_open() and not soil.simulation_suspended and not soil.completion_started and soil.reveal_progress >= 1.0
+
+func _bonzi_owned() -> bool:
+	return paid_contract and not water_only_recipe and int(cached_progression.get("bonzi_tier", -1)) >= 0
+
 func _input(event: InputEvent) -> void:
+	if not application_focused or carpet_video_pending: return
 	if rug_phase == RugPhase.REVEAL:
 		return # The reveal owns its gestures; the hidden cleaning HUD cannot act.
 	if event.device == -1:
 		return
+	# A shop dismissal owns its entire gesture, including the release after
+	# closing, so the same click cannot begin a stroke on the rug underneath.
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and hud.upgrades_open():
+		if event.pressed:
+			modal_mouse_down = true
+			modal_mouse_origin = event.position
+			modal_mouse_canceled = false
+			if not hud.modal_contains_point(event.position):
+				end_stroke()
+				get_viewport().set_input_as_handled()
+				return
+		elif modal_mouse_down:
+			var started_outside: bool = not hud.modal_contains_point(modal_mouse_origin)
+			var ended_outside: bool = not hud.modal_contains_point(event.position)
+			modal_mouse_down = false
+			if started_outside:
+				if ended_outside and not modal_mouse_canceled: hud.close_upgrades()
+				get_viewport().set_input_as_handled()
+				return
+	if event is InputEventMouseMotion and modal_mouse_down:
+		if event.position.distance_to(modal_mouse_origin) > TOUCH_DRAG_THRESHOLD: modal_mouse_canceled = true
+		if hud.upgrades_open() and not hud.modal_contains_point(modal_mouse_origin):
+			get_viewport().set_input_as_handled()
+			return
 	# Real touch is routed on release because mouse emulation is disabled. A
 	# gesture belongs to one surface until every finger is up: a canceled swipe
 	# cannot become a button tap or a new brush stroke behind the HUD.
@@ -219,6 +333,7 @@ func _input(event: InputEvent) -> void:
 			held_touches[event.index] = true
 			if held_touches.size() > 1:
 				touch_chord = true
+				room_touch_canceled = true
 				hud_touch_canceled = true
 				if is_instance_valid(hud_button):
 					Pop.reset(hud_button)
@@ -240,6 +355,7 @@ func _input(event: InputEvent) -> void:
 			held_touches.erase(event.index)
 			if event.index == hud_touch:
 				var activate: bool = not event.canceled and not hud_touch_canceled and not touch_chord and is_instance_valid(hud_button) and hud.visible_button_at(event.position, touch_buttons) == hud_button
+				var dismiss_modal: bool = hud.upgrades_open() and not event.canceled and not hud_touch_canceled and not touch_chord and not hud.modal_contains_point(hud_touch_origin) and not hud.modal_contains_point(event.position)
 				var button := hud_button
 				hud_touch = -1
 				hud_button = null
@@ -252,6 +368,8 @@ func _input(event: InputEvent) -> void:
 					button.pressed.emit()
 				elif is_instance_valid(button):
 					Pop.reset(button)
+				elif dismiss_modal:
+					hud.close_upgrades()
 				return
 			if held_touches.is_empty():
 				touch_chord = false
@@ -261,11 +379,20 @@ func _input(event: InputEvent) -> void:
 				hud_touch_canceled = true
 				if is_instance_valid(hud_button):
 					Pop.reset(hud_button)
+					hud_button = null
+			if not touch_chord and not is_instance_valid(hud_button):
+				if hud.room_panel.visible and hud.room_panel.get_node("%Card").get_global_rect().has_point(hud_touch_origin):
+					hud.room_panel.drag_contents(event.relative)
+				else:
+					hud.drag_tool_contents(hud_touch_origin, event.relative)
 			get_viewport().set_input_as_handled()
 			return
 		if touch_chord:
 			get_viewport().set_input_as_handled()
 			return
+	if _route_room_pointer(event):
+		get_viewport().set_input_as_handled()
+		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed and active_touch == -1:
 		end_stroke()
 	elif event is InputEventScreenTouch and event.index == active_touch and (not event.pressed or event.canceled):
@@ -285,24 +412,120 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 
 func _unhandled_input(event: InputEvent) -> void:
-	if rug_phase != RugPhase.CLEANING or leaving_scene or soil.completion_started or brush_dragging or event.device == -1 or touch_chord or hud_touch != -1:
+	if not application_focused or carpet_video_pending or rug_phase != RugPhase.CLEANING or leaving_scene or soil.completion_started or brush_dragging or event.device == -1 or touch_chord or hud_touch != -1:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 		if not hud.blocks_point(event.position):
+			if _begin_room_press(event.position, -1): return
 			begin_stroke(event.position, false)
 	elif event is InputEventScreenTouch and event.pressed and not event.canceled:
+		if not hud.blocks_point(event.position) and _begin_room_press(event.position, event.index): return
 		if not hud.blocks_point(event.position) and not hud.blocks_point(event.position + TOUCH_CONTACT_OFFSET):
 			active_touch = event.index
 			begin_stroke(event.position, true)
 
+
+func _begin_room_press(point: Vector2, pointer: int) -> bool:
+	if not is_instance_valid(room) or not paid_contract or hud.upgrades_open(): return false
+	# A finger sits below its brush head. Reserve the intended carpet contact
+	# before picking the room underneath the finger, especially on wide aisles.
+	if pointer >= 0 and _touch_contact_is_on_carpet(point): return false
+	var id: String = room.pick_upgrade(camera, point)
+	if id.is_empty(): return false
+	end_stroke()
+	room_press_id = id
+	room_pointer = pointer
+	room_press_origin = point
+	room_touch_canceled = false
+	get_viewport().set_input_as_handled()
+	return true
+
+
+func _touch_contact_is_on_carpet(point: Vector2) -> bool:
+	var contact_screen := point + TOUCH_CONTACT_OFFSET
+	var origin := camera.project_ray_origin(contact_screen)
+	var direction := camera.project_ray_normal(contact_screen)
+	if absf(direction.y) < 0.00001: return false
+	var distance := (CARPET_PLANE_Y - origin.y) / direction.y
+	if distance <= 0.0: return false
+	var hit := origin + direction * distance
+	var rug_half: Vector2 = soil.RUG_HALF + Vector2(0.06, 0.06)
+	return absf(hit.x) <= rug_half.x and absf(hit.z) <= rug_half.y
+
+
+func _route_room_pointer(event: InputEvent) -> bool:
+	if room_press_id.is_empty(): return false
+	var release := false
+	var canceled := false
+	var point := room_press_origin
+	if event is InputEventMouseMotion and room_pointer == -1:
+		point = event.position
+	elif event is InputEventScreenDrag and event.index == room_pointer:
+		point = event.position
+	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and room_pointer == -1:
+		point = event.position
+		release = not event.pressed
+	elif event is InputEventScreenTouch and event.index == room_pointer:
+		point = event.position
+		release = not event.pressed or event.canceled
+		canceled = event.canceled
+	else:
+		return false
+	if point.distance_to(room_press_origin) > TOUCH_DRAG_THRESHOLD:
+		room_touch_canceled = true
+	if release:
+		var id := room_press_id
+		room_press_id = ""
+		room_pointer = -2
+		if not canceled and not room_touch_canceled and not touch_chord and room.pick_upgrade(camera, point) == id:
+			open_room_upgrade(id, point)
+	return true
+
+
+func open_room_upgrade(id: String, screen_point: Vector2 = Vector2.INF) -> void:
+	if carpet_video_pending or not paid_contract or not is_instance_valid(room) or rug_phase != RugPhase.CLEANING or leaving_scene or finish_requested or hud.upgrades_open(): return
+	var view: Dictionary = shop_state.room_upgrade_view(id)
+	if view.is_empty(): return
+	end_stroke()
+	room_offer_anchor = room.anchor_world_near(id, camera, screen_point)
+	room.set_selected(id, room_offer_anchor)
+	hud.open_room_upgrade(view, _can_purchase(), camera.unproject_position(room_offer_anchor))
+
+
+func _refresh_room_offer_anchor() -> void:
+	if is_instance_valid(hud) and hud.is_node_ready() and hud.room_panel.visible:
+		hud.set_room_upgrade_anchor(camera.unproject_position(room_offer_anchor))
+
+
+func _purchase_room(id: String) -> void:
+	if room_purchase_committing or not _can_purchase() or not hud.room_panel.visible or hud.room_panel.selected_id != id: return
+	var previous_levels: Dictionary = shop_state.room_upgrade_levels()
+	room_purchase_committing = true
+	var purchased: bool = shop_state.buy_room_upgrade(id)
+	room_purchase_committing = false
+	if purchased:
+		room.play_upgrade(id, shop_state.room_upgrade_levels(), room_offer_anchor, previous_levels)
+		room.set_selected(id, room_offer_anchor)
+		update_contract_status()
+	else:
+		hud.room_panel.get_node("%Status").text = "Couldn't save. Coins unchanged."
+		hud.room_panel.get_node("%Status").show()
+		hud.room_panel.layout_in(hud._safe_rect())
+
+func _on_room_upgrade_finished(_id: String) -> void:
+	if is_instance_valid(hud) and is_instance_valid(hud.room_panel):
+		if hud.room_panel.visible:
+			hud.refresh_room_upgrade(shop_state.room_upgrade_view(hud.room_panel.selected_id), _can_purchase())
+
 func begin_stroke(screen_position: Vector2, touch_input: bool) -> void:
-	if rug_phase != RugPhase.CLEANING or leaving_scene or hud.upgrades_open() or soil.completion_started:
+	if not application_focused or carpet_video_pending or rug_phase != RugPhase.CLEANING or leaving_scene or hud.upgrades_open() or soil.completion_started or soil.simulation_suspended:
 		return
 	# Placement is not a sweep from the parked tool: only held motion rakes dirt.
 	if selected_tool == 0:
 		soil.begin_pass()
 	move_brush_to_screen(screen_position, touch_input)
 	brush_dragging = true
+	_set_brush_engaged(true)
 	stroke_time = Time.get_ticks_msec()
 	set_brush_instruction(true)
 	_sync_water_emitter()
@@ -315,6 +538,7 @@ func end_stroke() -> void:
 		soil.end_pass()
 	brush_dragging = false
 	active_touch = -1
+	_set_brush_engaged(false)
 	_sync_water_emitter()
 	if is_instance_valid(squeegee_water):
 		squeegee_water.end_stroke()
@@ -329,7 +553,25 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST and is_node_ready():
 		back()
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+		application_focused = false
+		if is_instance_valid(hud): hud.set_wallet_paused(true)
+		if is_instance_valid(cleaning_reward_timer): cleaning_reward_timer.paused = true
+		modal_mouse_down = false
+		modal_mouse_canceled = false
+		if is_instance_valid(bonzi): bonzi.set_running(false)
+		if is_instance_valid(room): room.set_completion_paused(true)
+		if rug_phase in [RugPhase.REVEAL, RugPhase.DEPARTING]:
+			completion_motion_paused = true
+			if completion_focus_tween != null and completion_focus_tween.is_valid(): completion_focus_tween.pause()
+			if transition_tween != null and transition_tween.is_valid(): transition_tween.pause()
+			if is_instance_valid(completion_focus): completion_focus.reset()
+			if is_instance_valid(room): room.set_completion_paused(true)
+		room_press_id = ""
+		room_pointer = -2
 		end_stroke()
+		# Keep disappearance, payout presentation and the finishing vacuum on
+		# the same paused clock while the player cannot see the wallet.
+		if is_instance_valid(soil): soil.suspend_simulation(true)
 		_cancel_wet_runtime_effects()
 		if is_instance_valid(hud_button):
 			Pop.reset(hud_button)
@@ -337,6 +579,19 @@ func _notification(what: int) -> void:
 		hud_button = null
 		held_touches.clear()
 		touch_chord = false
+	elif what == NOTIFICATION_APPLICATION_FOCUS_IN:
+		application_focused = true
+		if is_instance_valid(hud): hud.set_wallet_paused(carpet_video_pending)
+		if is_instance_valid(cleaning_reward_timer): cleaning_reward_timer.paused = carpet_video_pending
+		if is_instance_valid(soil): soil.suspend_simulation(carpet_video_pending or leaving_scene or hud.upgrades_open() or rug_phase not in [RugPhase.CLEANING, RugPhase.VACUUMING])
+		if is_instance_valid(room): room.set_completion_paused(false)
+		if completion_motion_paused:
+			completion_motion_paused = false
+			if completion_focus_tween != null and completion_focus_tween.is_valid(): completion_focus_tween.play()
+			if transition_tween != null and transition_tween.is_valid(): transition_tween.play()
+		if is_node_ready() and is_instance_valid(soil) and is_instance_valid(hud):
+			update_contract_status()
+			if wet_recipe: _advance_wet_tool.call_deferred()
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
@@ -344,6 +599,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 func back() -> void:
+	if carpet_video_pending: return
 	if hud.upgrades_open():
 		hud.close_upgrades()
 	else:
@@ -351,6 +607,11 @@ func back() -> void:
 
 func _sync_wallet() -> void:
 	hud.sync_wallet(shop_state.cash)
+	if is_instance_valid(room):
+		if not room_purchase_committing:
+			room.set_levels(shop_state.room_upgrade_levels(), int(shop_state.active_store))
+		if hud.room_panel.visible:
+			hud.refresh_room_upgrade(shop_state.room_upgrade_view(hud.room_panel.selected_id), _can_purchase())
 	_sync_progression()
 
 func _sync_progression() -> void:
@@ -359,6 +620,7 @@ func _sync_progression() -> void:
 	if updating_progression or shop_state == null or not paid_contract or leaving_scene or not is_inside_tree(): return
 	updating_progression = true
 	var view: Dictionary = shop_state.progression_view()
+	view["carpet_full_reward"] = completed_full_quote if (contract_finished or finish_requested) and completed_full_quote > 0.0 else shop_state.current_job_full_reward()
 	dry_tool_power = float(view.get("tool_power", 1.0))
 	if wet_recipe:
 		_ensure_wet_runtime()
@@ -376,20 +638,32 @@ func _sync_progression() -> void:
 			tool_visuals.apply_tier(int(view.global_tool_tier), tool_width)
 			applied_visual_tier = int(view.global_tool_tier)
 		if rug_phase == RugPhase.CLEANING: place_selected_tool()
-	var allowed := rug_phase == RugPhase.CLEANING and not finish_requested and not leaving_scene
+	var offer: Dictionary = shop_state.carpet_ad_offer()
+	_sync_carpet_video_pause(bool(offer.get("requesting", false)) and str(offer.get("job_id", "")) == contract_job_id)
+	var allowed := application_focused and not carpet_video_pending and rug_phase == RugPhase.CLEANING and not finish_requested and not leaving_scene
 	if cached_progression != view or cached_purchase_state != allowed:
 		hud.set_progression(view, allowed)
 		cached_progression = view
 		cached_purchase_state = allowed
-	var offer: Dictionary = shop_state.reward_offer()
-	hud.set_ad_offer(int(offer.get("amount", 0)), shop_state.reward_ad_available())
+	var ad_state := CleaningHUD.CarpetAdState.HIDDEN
+	if not contract_finished and not finish_requested and not leaving_scene:
+		ad_state = CleaningHUD.CarpetAdState.ACTIVE if bool(offer.get("boosted", false)) else (CleaningHUD.CarpetAdState.REQUESTING if carpet_video_pending else (CleaningHUD.CarpetAdState.READY if bool(offer.get("available", false)) else CleaningHUD.CarpetAdState.LOCKED))
+	hud.set_carpet_ad_offer(ad_state)
 	updating_progression = false
 
-func _purchase_payout() -> void:
-	if not _can_purchase(): return
-	end_stroke()
-	if shop_state.buy_payout_upgrade(): update_contract_status()
-	_sync_progression()
+
+func _sync_carpet_video_pause(requesting: bool) -> void:
+	if carpet_video_pending == requesting: return
+	carpet_video_pending = requesting
+	if requesting:
+		end_stroke()
+		if is_instance_valid(bonzi): bonzi.set_running(false)
+		_cancel_wet_runtime_effects()
+	if is_instance_valid(soil): soil.suspend_simulation(requesting or not application_focused or leaving_scene or hud.upgrades_open() or rug_phase not in [RugPhase.CLEANING, RugPhase.VACUUMING])
+	if is_instance_valid(hud): hud.set_wallet_paused(requesting or not application_focused)
+	if is_instance_valid(cleaning_reward_timer): cleaning_reward_timer.paused = requesting or not application_focused
+	update_contract_status()
+	if not requesting and wet_recipe: _advance_wet_tool.call_deferred()
 
 func _purchase_tool() -> void:
 	if not _can_purchase(): return
@@ -414,21 +688,37 @@ func _purchase_squeegee() -> void:
 	if shop_state.buy_squeegee_upgrade():
 		_sync_progression()
 
+
+func _purchase_bonzi() -> void:
+	if not _can_purchase(): return
+	end_stroke()
+	if shop_state.buy_bonzi_upgrade():
+		_sync_progression()
+
 func _can_purchase() -> bool:
-	return paid_contract and rug_phase == RugPhase.CLEANING and not finish_requested and not leaving_scene and hud.pending_reward == 0
+	return application_focused and not carpet_video_pending and paid_contract and rug_phase == RugPhase.CLEANING and not finish_requested and not leaving_scene and hud.pending_reward == 0
 
 func _request_rewarded_ad() -> void:
-	if not _can_purchase() or not shop_state.reward_ad_available(): return
+	if not _can_purchase() or not bool(shop_state.carpet_ad_offer().get("available", false)): return
 	end_stroke()
-	shop_state.request_reward_ad(str(shop_state.reward_offer().get("job_id", "")))
+	if not save_contract_progress(): return
+	shop_state.request_carpet_reward_ad(contract_job_id)
+	_sync_progression()
 
-func _show_ad_reward(amount: int) -> void:
+func _show_ad_reward(amount: float) -> void:
 	if leaving_scene: return
 	hud.reserve_reward(amount)
 	hud.show_reward(amount, shop_state.cash)
 
+
+func _show_carpet_ad_reward(amount: float) -> void:
+	if leaving_scene or not is_inside_tree() or not paid_contract: return
+	if amount > 0.0:
+		hud.reserve_reward(amount)
+		hud.show_cleaning_reward(amount, shop_state.cash)
+
 func _advance_wet_tool() -> void:
-	if leaving_scene or not is_inside_tree() or not wet_recipe or brush_dragging or rug_phase != RugPhase.CLEANING or finish_requested: return
+	if not application_focused or carpet_video_pending or leaving_scene or not is_inside_tree() or not wet_recipe or brush_dragging or rug_phase != RugPhase.CLEANING or finish_requested or hud.upgrades_open() or soil.simulation_suspended: return
 	if soil.advance_wash_cycle():
 		# Retire old spray/ridges before the next round; no airborne parcel
 		# from a prior hose session may pre-wet the following wash.
@@ -464,6 +754,8 @@ func _ensure_wet_runtime() -> void:
 			add_child(squeegee_water)
 		if squeegee_water.impact == null:
 			squeegee_water.setup(soil.footprint, soil.surface_pixels, soil.MASK_SIZE, soil)
+		if not squeegee_water.runoff_retired.is_connected(_on_runoff_retired):
+			squeegee_water.runoff_retired.connect(_on_runoff_retired)
 	_configure_hose_upgrade(hose_upgrade_level, hose_direct_power)
 	_configure_squeegee_upgrade(squeegee_upgrade_level, squeegee_power)
 	_sync_wet_runtime_state()
@@ -552,19 +844,26 @@ func _cancel_wet_runtime_effects() -> void:
 			water.set_emission_locked(soil.water_stage_complete())
 
 func _on_upgrades_changed(open: bool) -> void:
+	if not open:
+		modal_mouse_down = false
+		modal_mouse_canceled = false
 	end_stroke()
 	if open:
+		if is_instance_valid(bonzi): bonzi.set_running(false)
 		_cancel_wet_runtime_effects()
 		soil.suspend_simulation(true)
 		if transition_tween != null and transition_tween.is_valid():
 			transition_tween.pause()
 	else:
-		soil.suspend_simulation(rug_phase not in [RugPhase.CLEANING, RugPhase.VACUUMING])
-		if transition_tween != null and transition_tween.is_valid():
+		if is_instance_valid(room): room.clear_selection()
+		soil.suspend_simulation(carpet_video_pending or not application_focused or leaving_scene or rug_phase not in [RugPhase.CLEANING, RugPhase.VACUUMING])
+		if application_focused and transition_tween != null and transition_tween.is_valid():
 			transition_tween.play()
 	update_contract_status()
+	if not open and wet_recipe: _advance_wet_tool.call_deferred()
 
 func move_brush_to_screen(screen_position: Vector2, touch_input: bool) -> void:
+	if not application_focused or carpet_video_pending: return
 	var stroke_origin := last_brush_position
 	var stroke_started := stroke_time
 	var accumulate_squeegee := brush_dragging and wet_recipe and selected_tool == 1
@@ -581,6 +880,10 @@ func move_brush_to_screen(screen_position: Vector2, touch_input: bool) -> void:
 	target.z = clampf(target.z, BRUSH_Z_MIN, BRUSH_Z_MAX)
 	target.y = soil.brush_surface_height(target, current_head_half())
 	if brush_dragging:
+		# Motion has real carpet contact, even if it arrives during the short
+		# lowering animation. Only the visual is lifted; the dirt plane never is.
+		if selected_tool == 0 and brush_visual_lift > 0.0:
+			_set_brush_engaged(true, true)
 		var now := Time.get_ticks_msec()
 		var dt := float(now - stroke_time) / 1000.0
 		if last_brush_position.distance_squared_to(target) > 0.00001:
@@ -599,6 +902,7 @@ func move_brush_to_screen(screen_position: Vector2, touch_input: bool) -> void:
 	_sync_water_emitter()
 
 func apply_selected_tool_stroke(world_from: Vector3, world_to: Vector3, elapsed: float) -> void:
+	if not application_focused or carpet_video_pending or rug_phase != RugPhase.CLEANING or leaving_scene or finish_requested or hud.upgrades_open() or soil.simulation_suspended: return
 	if selected_tool == 0:
 		_apply_selected_tool_strength()
 		var dry_before: float = soil.surface_coverage_total
@@ -619,10 +923,13 @@ func apply_selected_tool_stroke(world_from: Vector3, world_to: Vector3, elapsed:
 			previous_heading = squeegee_motion.heading
 		var before: float = soil.extraction_coverage_total
 		soil.apply_squeegee_stroke(world_from, world_to, elapsed, squeegee_motion.heading, previous_heading)
+		if paid_contract and soil.extraction_coverage_total > before:
+			wet_pending_clearance = maxf(wet_pending_clearance, shop_state.cleaning_clearance_for_snapshot(soil.make_progress_snapshot()))
+			wet_reward_age = 0.0
 		if is_instance_valid(squeegee_water):
 			var splash_contact := world_to
 			splash_contact.y = soil.squeegee_surface_height(world_to, squeegee_motion.heading)
-			squeegee_water.feed_stroke(world_from, splash_contact, elapsed, maxf(0.0, soil.extraction_coverage_total - before), squeegee_motion.heading, squeegee_motion.speed)
+			squeegee_water.feed_stroke(world_from, splash_contact, elapsed, maxf(0.0, soil.extraction_coverage_total - before), squeegee_motion.heading, squeegee_motion.speed, wet_pending_clearance)
 
 func _update_brush_audio(world_from: Vector3, world_to: Vector3, elapsed: float, removed: bool) -> void:
 	if not is_instance_valid(game_audio): return
@@ -645,6 +952,7 @@ func select_tool(index: int) -> void:
 	switching_tool = true
 	end_stroke()
 	selected_tool = index
+	_set_brush_engaged(false, true)
 	for i in tool_nodes.size():
 		tool_nodes[i].visible = i == selected_tool
 		if i < tool_buttons.size():
@@ -669,13 +977,31 @@ func place_selected_tool() -> void:
 		var heading: Vector3 = squeegee_motion.heading
 		pose = Basis(Vector3.UP, atan2(-heading.x, -heading.z)).scaled(Vector3.ONE * 0.77)
 		contact_point.y = soil.squeegee_surface_height(contact_point, heading)
-	var hover := 0.0
+	var hover := brush_visual_lift if selected_tool == 0 else 0.0
 	if selected_tool == 2:
 		pose = Basis(Vector3.RIGHT, deg_to_rad(55.0)).scaled(Vector3.ONE * 1.12)
 		hover = 0.14
 	tool.transform = Transform3D(pose, contact_point + Vector3.UP * hover - pose * TOOL_PIVOTS[selected_tool])
 	if wet_recipe and selected_tool == 2:
 		tool.position.y += WaterJet.LAUNCH_HEIGHT - 0.14
+
+func _set_brush_engaged(engaged: bool, immediate := false) -> void:
+	if brush_lift_tween != null and brush_lift_tween.is_valid():
+		brush_lift_tween.kill()
+	var target := 0.0 if engaged else BRUSH_IDLE_LIFT
+	if immediate or leaving_scene or not is_inside_tree() or rug_phase != RugPhase.CLEANING or selected_tool != 0:
+		_set_brush_visual_lift(target)
+		return
+	if is_equal_approx(brush_visual_lift, target): return
+	brush_lift_tween = create_tween()
+	brush_lift_tween.tween_method(_set_brush_visual_lift, brush_visual_lift, target, BRUSH_LOWER_SECONDS if engaged else BRUSH_RAISE_SECONDS).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+func _set_brush_visual_lift(amount: float) -> void:
+	brush_visual_lift = amount
+	# Arrival owns the complete tool transform until cleaning begins. Updating
+	# only height here also preserves tool tier scaling and the pointer anchor.
+	if selected_tool == 0 and rug_phase == RugPhase.CLEANING and is_instance_valid(brush):
+		brush.position.y = contact_point.y + amount - (brush.basis * TOOL_PIVOTS[0]).y
 
 func current_head_half() -> Vector2:
 	if wet_recipe and selected_tool == 1:
@@ -744,24 +1070,76 @@ func _selected_rug_definition() -> Resource:
 		return RugCatalog.load_definition(RugCatalog.IDS[selected_rug])
 	return rugs[selected_rug]
 
-func update_progress(remaining: int, _total: int) -> void:
-	# Surface-mask changes are credited at stroke time. A clump may cross the
-	# carpet edge later under physics, so credit that real unique-dirt delta here.
-	if paid_contract and rug_phase == RugPhase.CLEANING and selected_tool == 0 and last_dry_remaining >= 0 and remaining < last_dry_remaining:
-		shop_state.note_current_tool_used(0)
-	last_dry_remaining = remaining
+func update_progress(_remaining: int, _total: int) -> void:
 	update_contract_status()
 	queue_snapshot_save()
+
+func _on_manual_debris_cleared() -> void:
+	# Late physical dirt clearance belongs to finger brushing. Bonzi's suction
+	# reports progress separately and cannot qualify the player's final tool.
+	if paid_contract and rug_phase == RugPhase.CLEANING and selected_tool == 0:
+		shop_state.note_current_tool_used(0)
 
 
 func update_surface_progress() -> void:
 	update_contract_status()
 	queue_snapshot_save()
+	_queue_cleaning_earnings()
+
+func _queue_cleaning_earnings() -> void:
+	if not paid_contract or not is_instance_valid(cleaning_reward_timer) or rug_phase != RugPhase.CLEANING or contract_finished or finish_requested or leaving_scene: return
+	if cleaning_reward_timer.is_stopped(): cleaning_reward_timer.start()
+
+func _on_runoff_retired(_packet_id: int, progress_target: float) -> void:
+	if not paid_contract or not wet_recipe or contract_finished or finish_requested or leaving_scene: return
+	wet_earned_clearance = maxf(wet_earned_clearance, minf(progress_target, wet_pending_clearance))
+	_queue_cleaning_earnings()
+
+func _release_pending_runoff() -> void:
+	wet_earned_clearance = maxf(wet_earned_clearance, wet_pending_clearance)
+	_queue_cleaning_earnings()
+
+func _payment_snapshot() -> Dictionary:
+	var snapshot: Dictionary = soil.make_snapshot()
+	var actual_removal: float = shop_state.cleaning_clearance_for_snapshot(snapshot)
+	var eligible: float = soil.removed_dry_clearance()
+	if wet_recipe:
+		var dry_share: float = 0.0 if water_only_recipe else eligible / float(1 + soil.WASH_CYCLES)
+		eligible = maxf(dry_share, wet_earned_clearance)
+		eligible = minf(eligible, actual_removal)
+	snapshot["earned_clearance"] = clampf(eligible, 0.0, 0.99)
+	# Reloading an L8 mask can slightly lower its reconstructed fraction. Keep
+	# the visual tail within this snapshot; the ledger retains paid high-water.
+	snapshot["cleaning_pending_clearance"] = minf(wet_pending_clearance, maxf(actual_removal, 0.0))
+	return snapshot
+
+func _flush_cleaning_earnings(force: bool = false) -> bool:
+	if not paid_contract or contract_finished or cleaning_reward_committing or not is_instance_valid(soil) or not is_instance_valid(shop_state) or shop_state.active_job_id != contract_job_id: return true
+	if not force and (leaving_scene or finish_requested or carpet_video_pending or rug_phase != RugPhase.CLEANING or not application_focused): return true
+	var snapshot := _payment_snapshot()
+	var reward: float = shop_state.preview_cleaning_reward(contract_job_id, snapshot)
+	if reward < 0.0: return false
+	# Commit the masks and payment together; the HUD only animates saved coins.
+	if reward > 0.0: hud.reserve_reward(reward)
+	cleaning_reward_committing = true
+	var credited: float = shop_state.record_cleaning_progress(contract_job_id, snapshot)
+	cleaning_reward_committing = false
+	if credited < 0.0:
+		if reward > 0.0: hud.cancel_reserved_reward(reward)
+		contract_save_failed = true
+		if is_instance_valid(cleaning_reward_timer) and not leaving_scene: cleaning_reward_timer.start(0.75)
+		return false
+	if credited > 0.0: hud.show_cleaning_reward(credited, shop_state.cash)
+	contract_save_failed = false
+	return true
 
 
 func queue_snapshot_save() -> void:
 	if paid_contract and snapshot_timer != null and snapshot_timer.is_inside_tree() and not contract_finished:
-		snapshot_timer.start()
+		if is_instance_valid(bonzi) and bonzi.running:
+			if snapshot_timer.is_stopped(): snapshot_timer.start(2.0)
+		else:
+			snapshot_timer.start(0.5)
 
 
 func update_contract_status() -> void:
@@ -787,21 +1165,19 @@ func update_contract_status() -> void:
 	progress_bar.value = display_fraction * 100.0
 	progress_fill.bg_color = color
 	progress_fill.shadow_color = Color(color, 0.42)
-	finish_button.visible = rug_phase == RugPhase.CLEANING and not hud.upgrades_open() and not contract_finished and not finish_requested and contract_ready and (not auto_finish_ready or contract_save_failed)
+	finish_button.visible = application_focused and rug_phase == RugPhase.CLEANING and not carpet_video_pending and not hud.upgrades_open() and not contract_finished and not finish_requested and contract_ready and (not auto_finish_ready or contract_save_failed)
 	finish_button.disabled = not finish_button.visible
 	if wet_recipe and is_instance_valid(water):
 		water.set_emission_locked(soil.water_stage_complete())
-	if paid_contract:
-		var payout: int = shop_state.reward_for_current_job(soil.make_progress_snapshot())
-		finish_button.text = "Finish · %s" % hud._money_text(payout) if payout > 0 else "Finish job"
-		finish_button.tooltip_text = "%d coins" % payout if payout > 0 else "Finish this rug"
+	finish_button.text = "Finish"
+	finish_button.tooltip_text = "Finish this carpet"
 	# Mask updates change cleanliness, not prices or owned equipment. Wallet /
 	# purchase signals refresh those separately; only phase availability needs
 	# checking here. Avoid rebuilding the ledger view and tool poses per stroke.
-	var purchases_allowed := rug_phase == RugPhase.CLEANING and not finish_requested and not leaving_scene
+	var purchases_allowed := application_focused and not carpet_video_pending and rug_phase == RugPhase.CLEANING and not finish_requested and not leaving_scene
 	if paid_contract and (cached_progression.is_empty() or cached_purchase_state != purchases_allowed):
 		_sync_progression()
-	if rug_phase == RugPhase.CLEANING and not hud.upgrades_open() and auto_finish_ready and not contract_finished and not finish_requested and not auto_finish_queued and not contract_save_failed:
+	if application_focused and rug_phase == RugPhase.CLEANING and not carpet_video_pending and not hud.upgrades_open() and auto_finish_ready and not contract_finished and not finish_requested and not auto_finish_queued and not contract_save_failed:
 		auto_finish_queued = true
 		finish_rug.call_deferred()
 
@@ -818,32 +1194,31 @@ func toggle_view() -> void:
 	frame_carpet()
 
 func frame_carpet() -> void:
-	if rug_phase == RugPhase.REVEAL:
+	if rug_phase in [RugPhase.REVEAL, RugPhase.DEPARTING]:
 		_frame_completion_reveal()
 		return
-	overhead = true
+	_frame_workshop_camera()
+
+func _frame_workshop_camera() -> void:
+	if not is_instance_valid(camera) or not camera.is_inside_tree(): return
+	overhead = false
 	var viewport_size := get_viewport().get_visible_rect().size
-	var aspect := maxf(viewport_size.x, 1.0) / maxf(viewport_size.y, 1.0)
-	camera.keep_aspect = Camera3D.KEEP_HEIGHT
-	camera.size = maxf(4.35, 2.2 / aspect)
-	camera.position = Vector3(0.0, 9.0, -0.20)
-	# Reserve the earnings/Finish band even before Finish appears. A short
-	# phone must expose every fringe without zooming when the rug reaches 75%.
+	var space := Rect2(Vector2(16.0, 100.0), viewport_size - Vector2(32.0, 200.0))
+	# The HUD owns the composition rectangle. Camera fitting and touch-space
+	# reservations therefore share one layout at every size and orientation.
 	if is_instance_valid(hud) and hud.is_node_ready():
 		hud._layout()
-		var safe: Rect2 = hud._safe_rect()
-		if safe.size.x <= safe.size.y * 1.35:
-			var ui_scale: float = hud.get_node("HUD").scale.y
-			var top: float = hud.control("UpgradeButton").get_global_rect().end.y + 8.0 * ui_scale
-			var bottom: float = hud.control("PayoutCard").get_global_rect().position.y - 80.0 * ui_scale
-			var available_height := maxf(bottom - top, viewport_size.y * 0.25)
-			var available_width := maxf(safe.size.x - 32.0 * ui_scale, viewport_size.x * 0.25)
-			camera.size = maxf(camera.size, maxf(3.48 * viewport_size.y / available_height, 2.20 * viewport_size.y / available_width))
-			camera.position.z = (0.5 - (top + bottom) * 0.5 / viewport_size.y) * camera.size
-			camera.position.x = (0.5 - safe.get_center().x / viewport_size.x) * camera.size * aspect
-	camera.rotation_degrees = Vector3(-90, 0, 0)
-	if soil != null:
+		space = hud.workshop_view_rect()
+	WorkshopCamera.frame_workshop(camera, viewport_size, space, _workshop_geometry_bounds(), room_view_pitch_from_top, room_view_yaw_degrees)
+	_refresh_room_offer_anchor()
+	if soil != null and rug_phase not in [RugPhase.REVEAL, RugPhase.DEPARTING]:
 		soil.request_render()
+
+func _workshop_geometry_bounds(open_window: bool = false) -> AABB:
+	if is_instance_valid(room) and room.is_inside_tree() and room.has_method("geometry_fit_bounds_local"):
+		var local_bounds: AABB = room.geometry_fit_bounds_local(open_window)
+		return (room.global_transform * local_bounds).grow(0.03)
+	return WorkshopCamera.DEPARTURE_CLEARANCE if open_window else WorkshopCamera.WORKSHOP_CLEARANCE
 
 func on_vacuum_started() -> void:
 	rug_phase = RugPhase.VACUUMING
@@ -872,8 +1247,14 @@ func on_vacuum_finished() -> void:
 	touch_chord = false
 	hud_touch = -1
 	hud_button = null
+	completion_zoom = 0.0
 	completion_reveal.show_reveal(completed_full_restore, completed_fraction, rug_comparison.available, completed_reward, rug_comparison.label)
 	_frame_completion_reveal()
+	if is_instance_valid(room): room.start_completion_breeze()
+	if completion_focus_tween != null and completion_focus_tween.is_valid(): completion_focus_tween.kill()
+	completion_focus_tween = create_tween()
+	completion_focus_tween.tween_method(_set_reveal_focus, 0.0, 1.0, COMPLETION_ZOOM_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	completion_focus_tween.tween_callback(completion_focus.reset)
 	if completed_full_restore and is_instance_valid(game_audio):
 		game_audio.play_completion()
 
@@ -884,36 +1265,117 @@ func _capture_rug_before() -> void:
 func _set_completion_comparison(before: bool) -> void:
 	if not is_instance_valid(soil): return
 	if before and rug_phase != RugPhase.REVEAL: return
+	if before:
+		# A held comparison should always be sharp and still, even if it starts
+		# during the short camera easing at the beginning of the reveal.
+		if completion_focus_tween != null and completion_focus_tween.is_valid(): completion_focus_tween.kill()
+		_set_completion_zoom(1.0)
+		if is_instance_valid(completion_focus): completion_focus.reset()
 	# Only GPU render state changes. Saved masks, dirt and rewards remain intact.
 	rug_comparison.set_before(soil, before)
 
 func _dismiss_completion_reveal() -> void:
+	if completion_focus_tween != null and completion_focus_tween.is_valid(): completion_focus_tween.kill()
+	completion_zoom = 0.0
+	completion_motion_paused = false
+	completion_camera_progress = 0.0
+	completion_camera_returning = false
+	if is_instance_valid(completion_focus): completion_focus.reset()
+	if is_instance_valid(room): room.reset_completion_motion()
 	_set_completion_comparison(false)
 	if is_instance_valid(completion_reveal): completion_reveal.dismiss()
 	if is_instance_valid(hud): hud.show()
 
 func _frame_completion_reveal() -> void:
-	if leaving_scene or not is_inside_tree() or rug_phase != RugPhase.REVEAL or not is_instance_valid(completion_reveal) or not completion_reveal.is_inside_tree(): return
+	if leaving_scene or not is_inside_tree() or rug_phase not in [RugPhase.REVEAL, RugPhase.DEPARTING] or not is_instance_valid(completion_reveal) or not completion_reveal.is_inside_tree(): return
 	var viewport_size := get_viewport().get_visible_rect().size
 	var space: Rect2 = completion_reveal.rug_view_rect()
-	camera.keep_aspect = Camera3D.KEEP_HEIGHT
-	camera.size = maxf(3.65 * viewport_size.y / maxf(space.size.y, 1.0), 2.3 * viewport_size.y / maxf(space.size.x, 1.0))
-	camera.position = Vector3((0.5 - space.get_center().x / viewport_size.x) * camera.size * viewport_size.x / viewport_size.y, 9.0, (0.5 - space.get_center().y / viewport_size.y) * camera.size)
-	camera.rotation_degrees = Vector3(-90, 0, 0)
+	_frame_workshop_camera()
+	var wide_transform := camera.global_transform
+	var wide_size := camera.size
+	if completion_reveal.is_landscape_layout():
+		# A short screen has room for the full diorama beside Compare. Keep
+		# its cleaning scale instead of cropping the architecture for a push-in.
+		WorkshopCamera.frame_workshop(camera, viewport_size, space, _workshop_geometry_bounds(), room_view_pitch_from_top, room_view_yaw_degrees)
+	else:
+		WorkshopCamera.frame_reveal(camera, viewport_size, space, wide_size, room_view_pitch_from_top, room_view_yaw_degrees)
+	var close_transform := camera.global_transform
+	var close_size := camera.size
+	if rug_phase == RugPhase.DEPARTING:
+		WorkshopCamera.frame_departure(camera, viewport_size, hud._safe_rect().grow(-16.0), wide_size, _workshop_geometry_bounds(true), room_view_pitch_from_top, room_view_yaw_degrees)
+		var departure_transform := camera.global_transform
+		var departure_size := camera.size
+		# Preserve the exact camera at a phase boundary, including internal
+		# continuation halfway through the reveal. Refit if the screen rotates.
+		if not viewport_size.is_equal_approx(completion_camera_viewport):
+			completion_camera_from = departure_transform if completion_camera_returning else wide_transform.interpolate_with(close_transform, completion_camera_from_zoom)
+			completion_camera_from_size = departure_size if completion_camera_returning else lerpf(wide_size, close_size, completion_camera_from_zoom)
+			completion_camera_viewport = viewport_size
+		var target_transform := wide_transform if completion_camera_returning else departure_transform
+		var target_size := wide_size if completion_camera_returning else departure_size
+		camera.global_transform = completion_camera_from.interpolate_with(target_transform, completion_camera_progress)
+		camera.size = lerpf(completion_camera_from_size, target_size, completion_camera_progress)
+		return
+	camera.global_transform = wide_transform.interpolate_with(close_transform, completion_zoom)
+	camera.size = lerpf(wide_size, close_size, completion_zoom)
+
+func _set_completion_zoom(amount: float) -> void:
+	completion_zoom = clampf(amount, 0.0, 1.0)
+	_frame_completion_reveal()
+
+func _set_reveal_focus(amount: float) -> void:
+	_set_completion_zoom(amount)
+	# Blur only the moving frames. The complete rug remains sharp for the
+	# appreciation/compare beat, and the HUD is on a higher canvas layer.
+	completion_focus.set_blur_amount(sin(clampf(amount, 0.0, 1.0) * PI) * 0.55)
+
+func _set_departure_focus(amount: float) -> void:
+	completion_camera_progress = clampf(amount, 0.0, 1.0)
+	completion_zoom = lerpf(completion_camera_from_zoom, 0.0, completion_camera_progress)
+	_frame_completion_reveal()
+	completion_focus.set_blur_amount(sin(clampf(amount, 0.0, 1.0) * PI))
+
+func _capture_completion_camera(returning: bool) -> void:
+	completion_camera_from = camera.global_transform
+	completion_camera_from_size = camera.size
+	completion_camera_from_zoom = completion_zoom
+	completion_camera_viewport = get_viewport().get_visible_rect().size
+	completion_camera_progress = 0.0
+	completion_camera_returning = returning
+
+func _return_completion_camera() -> void:
+	_capture_completion_camera(true)
 
 func skip_completion_reveal() -> void:
 	if leaving_scene or rug_phase != RugPhase.REVEAL: return
 	_set_completion_comparison(false)
 	completion_reveal.dismiss()
+	_capture_completion_camera(false)
 	rug_phase = RugPhase.DEPARTING
+	if completion_focus_tween != null and completion_focus_tween.is_valid(): completion_focus_tween.kill()
 	_cancel_transition()
 	transition_tween = create_tween()
+	# Return to the whole room before opening its exit; never hide the opening
+	# or the roll behind a lingering fullscreen blur.
+	transition_tween.tween_method(_set_departure_focus, 0.0, 1.0, COMPLETION_ZOOM_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	transition_tween.tween_callback(completion_focus.reset)
+	if is_instance_valid(room):
+		transition_tween.tween_method(room.set_window_open_amount, room.window_open_amount, 1.0, WINDOW_OPEN_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	transition_tween.tween_method(_roll_departure,0.0,1.0,0.65).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	transition_tween.tween_property($RugDisplay,"position:z",_offscreen_z(-1.0),0.32).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	transition_tween.tween_property($RugDisplay,"position:z",_offscreen_z(-1.0),0.46).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	# Settle back into the working view while the completed rug is offscreen.
+	# The next rug then rolls into a stationary room instead of snapping cameras
+	# when start_rug_arrival reapplies the normal cleaning frame.
+	transition_tween.tween_callback(_return_completion_camera)
+	transition_tween.tween_method(_set_departure_focus, 0.0, 1.0, COMPLETION_ZOOM_SECONDS).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	if is_instance_valid(room):
+		transition_tween.parallel().tween_method(room.set_window_open_amount, 1.0, 0.0, 0.32).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	transition_tween.tween_callback(completion_focus.reset)
 	transition_tween.tween_callback(next_rug)
 
 func _roll_departure(amount: float) -> void:
 	rug_roll.set_roll(amount,1.0)
+	$RugDisplay.position.y = amount * DEPARTURE_LIFT
 
 func _roll_arrival(amount: float) -> void:
 	rug_roll.set_roll(amount,-1.0)
@@ -930,6 +1392,10 @@ func start_rug_arrival() -> void:
 	_cancel_transition()
 	_cancel_wet_runtime_effects()
 	rug_phase = RugPhase.ARRIVING
+	if is_instance_valid(bonzi):
+		bonzi.reset_route()
+		bonzi.hide()
+	_set_brush_engaged(false, true)
 	frame_carpet()
 	soil.suspend_simulation(true)
 	soil.set_reveal_progress(0.0)
@@ -973,7 +1439,7 @@ func _bring_in_tool() -> void:
 func _tool_arrival_finished() -> void:
 	if leaving_scene: return
 	rug_phase = RugPhase.CLEANING
-	soil.suspend_simulation(false)
+	soil.suspend_simulation(carpet_video_pending or not application_focused or hud.upgrades_open())
 	_capture_rug_before()
 	select_tool(soil.recommended_tool() if wet_recipe else 0)
 	update_contract_status()
@@ -987,8 +1453,8 @@ func save_contract_progress() -> bool:
 		if is_instance_valid(snapshot_timer): snapshot_timer.stop()
 		return true
 	if is_instance_valid(soil) and is_instance_valid(shop_state) and shop_state.active_job_id == contract_job_id:
-		var snapshot: Dictionary = soil.make_snapshot()
-		if shop_state.save_job_snapshot(snapshot):
+		var snapshot: Dictionary = _payment_snapshot()
+		if _flush_cleaning_earnings(true):
 			# A successful release/Back checkpoint supersedes the pending timer.
 			# Keep that existing retry opportunity if the immediate write fails.
 			if is_instance_valid(snapshot_timer): snapshot_timer.stop()
@@ -1007,18 +1473,25 @@ func finish_contract() -> void:
 
 func finish_rug() -> void:
 	auto_finish_queued = false
-	if rug_phase != RugPhase.CLEANING or leaving_scene or hud.upgrades_open() or soil == null or soil.completion_started or contract_finished or finish_requested:
+	if not application_focused or rug_phase != RugPhase.CLEANING or carpet_video_pending or leaving_scene or hud.upgrades_open() or soil == null or soil.completion_started or contract_finished or finish_requested:
 		return
 	if not ShopLedger.completion_reached(soil.overall_clearance(), CONTRACT_TARGET):
 		return
 	if wet_recipe and (soil.wash_cycle != soil.WASH_CYCLES - 1 or not soil.water_stage_complete() or soil.extraction_clearance() < CONTRACT_TARGET):
 		return
 	finish_requested = true
+	completed_full_quote = shop_state.current_job_full_reward() if paid_contract else 0.0
+	if is_instance_valid(bonzi):
+		bonzi.set_running(false)
+		bonzi.hide()
 	completed_fraction = soil.overall_clearance()
 	completed_full_restore = soil.all_washes_complete() if wet_recipe else ShopLedger.completion_reached(completed_fraction, AUTO_FINISH_TARGET)
 	end_stroke()
 	if paid_contract:
-		var completed_snapshot: Dictionary = soil.make_snapshot()
+		var completed_snapshot: Dictionary = _payment_snapshot()
+		# Finishing takes the remaining material offscreen. Early finish settles
+		# only removal work; the restoration half is added solely at 99%.
+		completed_snapshot["earned_clearance"] = shop_state.cleaning_clearance_for_snapshot(completed_snapshot)
 		# Reserve only the visual count-up before the transaction emits changed.
 		# The ledger owns the payout; coin arrivals never grant actual currency.
 		completed_reward = shop_state.reward_for_current_job(completed_snapshot)
@@ -1026,16 +1499,20 @@ func finish_rug() -> void:
 		replacement_job_id = shop_state.complete_and_start_next_job(contract_job_id, completed_snapshot)
 		if replacement_job_id.is_empty():
 			hud.cancel_reserved_reward(completed_reward)
-			completed_reward = 0
+			completed_reward = 0.0
+			completed_full_quote = 0.0
 			_sync_wallet()
 			shop_state.job_snapshot = completed_snapshot.duplicate(true)
 			finish_requested = false
 			contract_save_failed = true
 			update_contract_status()
 			return
+		hud.show_cleaning_reward(completed_reward, shop_state.cash)
+		completed_reward = 0.0
 	contract_finished = true
 	contract_save_failed = false
 	snapshot_timer.stop()
+	if is_instance_valid(cleaning_reward_timer): cleaning_reward_timer.stop()
 	update_contract_status()
 	soil.start_vacuum(true, completed_full_restore)
 
@@ -1043,12 +1520,13 @@ func next_rug() -> void:
 	if leaving_scene or next_job_pending or not soil.vacuum_complete or not contract_finished:
 		return
 	next_job_pending = true
+	completed_full_quote = 0.0
 	_dismiss_completion_reveal()
 	_resumed_rug = false
 	rug_phase = RugPhase.ARRIVING
 	if paid_contract:
 		hud.show_reward(completed_reward,shop_state.cash)
-		completed_reward = 0
+		completed_reward = 0.0
 		contract_job_id = replacement_job_id
 		replacement_job_id = ""
 		shop_state.contract_mode = true
@@ -1059,6 +1537,9 @@ func next_rug() -> void:
 	# loading, or scene replacement occurs between rugs.
 	soil.set_reveal_progress(0.0)
 	soil.configure_rug(_selected_rug_definition())
+	wet_earned_clearance = 0.0
+	wet_pending_clearance = 0.0
+	wet_reward_age = 0.0
 	contract_finished = false
 	finish_requested = false
 	auto_finish_queued = false
@@ -1071,6 +1552,9 @@ func next_rug() -> void:
 
 func return_to_shop() -> void:
 	if leaving_scene: return
+	# Leaving removes every remaining runoff visual from the screen. Preserve
+	# its funded work in the same checkpoint as the carpet and wallet.
+	if paid_contract and wet_recipe: _release_pending_runoff()
 	_dismiss_completion_reveal()
 	leaving_scene = true
 	_cancel_transition()
@@ -1082,6 +1566,8 @@ func return_to_shop() -> void:
 	get_tree().change_scene_to_file(Routes.MAIN_MENU)
 
 func _exit_tree() -> void:
+	if brush_lift_tween != null and brush_lift_tween.is_valid():
+		brush_lift_tween.kill()
 	_dismiss_completion_reveal()
 	if is_instance_valid(game_audio): game_audio.set_context("off")
 	leaving_scene = true
@@ -1090,6 +1576,8 @@ func _exit_tree() -> void:
 		shop_state.changed.disconnect(_sync_wallet)
 	if is_instance_valid(shop_state) and shop_state.ad_reward_granted.is_connected(_show_ad_reward):
 		shop_state.ad_reward_granted.disconnect(_show_ad_reward)
+	if is_instance_valid(shop_state) and shop_state.carpet_ad_reward_granted.is_connected(_show_carpet_ad_reward):
+		shop_state.carpet_ad_reward_granted.disconnect(_show_carpet_ad_reward)
 	save_contract_progress()
 	if original_scale_size != Vector2i.ZERO:
 		var window := get_window()
@@ -1128,8 +1616,12 @@ func bind_ui() -> void:
 	upgrade_button.pressed.connect(hud.open_upgrades)
 	close_upgrades.pressed.connect(hud.close_upgrades)
 	hud.upgrades_changed.connect(_on_upgrades_changed)
-	hud.request_payout_upgrade.connect(_purchase_payout)
+	hud.composition_changed.connect(frame_carpet, CONNECT_DEFERRED)
+	hud.request_room_upgrade.connect(_purchase_room)
+	if is_instance_valid(room): room.upgrade_finished.connect(_on_room_upgrade_finished)
+	hud.reward_finished.connect(_sync_wallet)
 	hud.request_tool_upgrade.connect(_purchase_tool)
+	hud.request_bonzi_upgrade.connect(_purchase_bonzi)
 	if hud.has_signal("request_hose_upgrade"):
 		hud.request_hose_upgrade.connect(_purchase_hose)
 	if hud.has_signal("request_squeegee_upgrade"):

@@ -148,7 +148,7 @@ func run() -> void:
 	var saved := FileAccess.get_file_as_bytes(state._save_path)
 	var pool := resource_ids()
 	var colors: Array = []
-	for store_id in range(2, 5):
+	for store_id in range(2, Rules.STORE_COUNT + 1):
 		touch_swipe(Vector2(-88, 4))
 		check(home.store_transition_active, "Touch swipe animates rather than replacing the shop instantly")
 		check(home.preview_store == store_id, "Touch swipe targets the next shop")
@@ -170,9 +170,9 @@ func run() -> void:
 	# Last/first edges consume a swipe while keeping the same store and scene.
 	mouse_swipe(Vector2(-100, 0))
 	await frames()
-	check(not home.store_transition_active and home.preview_store == 4, "Swiping beyond the last store does not animate a phantom shop")
+	check(not home.store_transition_active and home.preview_store == Rules.STORE_COUNT, "Swiping beyond the last store does not animate a phantom shop")
 	check(not home.changing_scene and state.active_job_id.is_empty(), "A boundary swipe cannot become an accidental cleaning tap")
-	for store_id in [3, 2, 1]:
+	for store_id in range(Rules.STORE_COUNT - 1, 0, -1):
 		mouse_swipe(Vector2(94, -5))
 		check(home.store_transition_active and home.preview_store == store_id, "Mouse dragging navigates backward with a real slide")
 		await settle_transition()
@@ -204,7 +204,7 @@ func run() -> void:
 		var canvas: SubViewportContainer = home.get_node("%BuildingView")
 		var base_rect := canvas.get_global_rect()
 		var old_store: int = home.displayed_store
-		var target := old_store + 1 if old_store < 4 else old_store - 1
+		var target := old_store + 1 if old_store < Rules.STORE_COUNT else old_store - 1
 		var direction := 1 if target > old_store else -1
 		var old_bounds := projected_bounds(home.get_node("%ShopPivot"))
 		home.preview_location(target)
@@ -303,6 +303,13 @@ func run() -> void:
 	home.open_management("plans")
 	check(not home.store_transition_active and home.get_node("%Management").visible, "Management settles the carousel before opening")
 	check(home.displayed_store == 4, "Management background uses the arrived store")
+	var sheet: Control = home.management
+	check(sheet.get_node("%SheetNote").text.contains("0/6 stores mastered"), "Stores sheet describes first-section completion")
+	for id in range(1, Rules.STORE_COUNT + 1):
+		var row_id: String = sheet.PLAN_ROW_IDS[id - 1]
+		check(sheet.rows[row_id].visible and sheet.actions[row_id] == "store:%d" % id, "Stores sheet exposes destination %d" % id)
+		check(sheet.action_for(row_id).disabled, "Unopened destinations cannot be visited and the current store has no redundant action")
+	check(sheet.rows.next_section.visible and sheet.action_for("next_section").disabled and sheet.actions.next_section.is_empty(), "The next section is visible and unavailable")
 	home.close_management()
 	home.enter_cleaning()
 	check(home.get_node("%Management").visible and home.management.current_tab == "plans" and state.active_job_id.is_empty(), "A settled locked shop opens store milestones without starting a rug")
@@ -384,6 +391,24 @@ func run() -> void:
 	await settle_transition()
 	check_idle(3)
 	check(state.active_store == 3, "Queued owned navigation selects the branch when its slide starts")
+	# Added stores use the same carousel and Stores-sheet selection contract.
+	for id in range(5, Rules.STORE_COUNT + 1): state.stores[str(id)] = Rules.new_branch(id)
+	check(state.save_state(), "The six-store fixture uses an isolated save")
+	home.open_management("plans")
+	await frames()
+	check(sheet.get_node("%TravelGoals").visible and sheet.get_node("%TravelTitle").text.begins_with("Master "), "Owning six stores retains the mastery checklist needed to complete the section")
+	check(sheet.actions.store_6 == "store:6" and not sheet.action_for("store_6").disabled, "Store six becomes visitable in the section sheet")
+	sheet.action_for("store_6").pressed.emit()
+	check(state.active_store == 6, "The Stores-sheet action selects the sixth owned store")
+	home.close_management()
+	await settle_transition()
+	check_idle(6)
+	home.preview_location(5)
+	await settle_transition()
+	check_idle(5)
+	check(state.active_store == 5, "Carousel selects the fifth owned store")
+	home.preview_location(3)
+	await settle_transition()
 	var reloaded := Ledger.new()
 	reloaded._save_path = state._save_path
 	reloaded._test_ticks_msec = 0
@@ -391,7 +416,7 @@ func run() -> void:
 	reloaded._save_enabled = false
 	root.add_child(reloaded)
 	reloaded.set_process(false)
-	check(reloaded.active_store == 3 and reloaded.stores.size() == 4, "Reload restores the arrived active shop and ownership")
+	check(reloaded.active_store == 3 and reloaded.stores.size() == Rules.STORE_COUNT, "Reload restores the arrived active shop and all six stores")
 	reloaded.free()
 	check(resource_ids() == pool, "Owned selection and save/reload keep carousel resources unchanged")
 	# Entering a settled owned shop still runs the original cleaning route.
