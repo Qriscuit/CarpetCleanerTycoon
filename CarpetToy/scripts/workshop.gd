@@ -103,6 +103,8 @@ var cached_purchase_state := false
 var snapshot_timer: Timer
 var cleaning_reward_timer: Timer
 var cleaning_reward_committing := false
+var dry_earned_base := 0.0
+var dry_surface_base := 0.0
 var wet_earned_clearance := 0.0
 var wet_pending_clearance := 0.0
 var wet_reward_age := 0.0
@@ -241,6 +243,10 @@ func _ready() -> void:
 		restored_snapshot["skip_dry_stage"] = water_only_recipe
 		_resumed_rug = soil.restore_snapshot(restored_snapshot)
 		if _resumed_rug:
+			# L8 reconstruction can slightly increase apparent cleanliness.
+			# Preserve earned work and count only subsequent surface removal.
+			dry_earned_base = float(restored_snapshot.get("dry_cleaning_clearance", restored_snapshot.get("surface_clearance", soil.surface_clearance())))
+			dry_surface_base = soil.surface_clearance()
 			wet_earned_clearance = clampf(float(restored_snapshot.get("earned_clearance", 0.0)), 0.0, 0.99)
 			wet_pending_clearance = clampf(float(restored_snapshot.get("cleaning_pending_clearance", wet_earned_clearance)), 0.0, 0.99)
 		applied_strength = -1.0
@@ -427,10 +433,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _begin_room_press(point: Vector2, pointer: int) -> bool:
 	if not is_instance_valid(room) or not paid_contract or hud.upgrades_open(): return false
+	var badge_id: String = hud.room_badge_at_point(point)
 	# A finger sits below its brush head. Reserve the intended carpet contact
 	# before picking the room underneath the finger, especially on wide aisles.
-	if pointer >= 0 and _touch_contact_is_on_carpet(point): return false
-	var id: String = room.pick_upgrade(camera, point)
+	if badge_id.is_empty() and pointer >= 0 and _touch_contact_is_on_carpet(point): return false
+	var id: String = badge_id if not badge_id.is_empty() else room.pick_upgrade(camera, point)
 	if id.is_empty(): return false
 	end_stroke()
 	room_press_id = id
@@ -477,7 +484,8 @@ func _route_room_pointer(event: InputEvent) -> bool:
 		var id := room_press_id
 		room_press_id = ""
 		room_pointer = -2
-		if not canceled and not room_touch_canceled and not touch_chord and room.pick_upgrade(camera, point) == id:
+		var badge_id: String = hud.room_badge_at_point(point)
+		if not canceled and not room_touch_canceled and not touch_chord and (badge_id == id or room.pick_upgrade(camera, point) == id):
 			open_room_upgrade(id, point)
 	return true
 
@@ -579,6 +587,8 @@ func _notification(what: int) -> void:
 		hud_button = null
 		held_touches.clear()
 		touch_chord = false
+		if is_node_ready() and is_instance_valid(soil) and is_instance_valid(hud):
+			update_contract_status()
 	elif what == NOTIFICATION_APPLICATION_FOCUS_IN:
 		application_focused = true
 		if is_instance_valid(hud): hud.set_wallet_paused(carpet_video_pending)
@@ -645,6 +655,11 @@ func _sync_progression() -> void:
 		hud.set_progression(view, allowed)
 		cached_progression = view
 		cached_purchase_state = allowed
+	var room_available := {}
+	if is_instance_valid(room):
+		for id: String in room.CATEGORIES:
+			room_available[id] = bool(shop_state.room_upgrade_view(id).get("can_upgrade", false))
+	hud.set_room_upgrade_availability(room_available)
 	var ad_state := CleaningHUD.CarpetAdState.HIDDEN
 	if not contract_finished and not finish_requested and not leaving_scene:
 		ad_state = CleaningHUD.CarpetAdState.ACTIVE if bool(offer.get("boosted", false)) else (CleaningHUD.CarpetAdState.REQUESTING if carpet_video_pending else (CleaningHUD.CarpetAdState.READY if bool(offer.get("available", false)) else CleaningHUD.CarpetAdState.LOCKED))
@@ -1047,6 +1062,8 @@ func select_rug(index: int) -> void:
 	_cancel_wet_runtime_effects()
 	selected_rug = index
 	soil.configure_rug(_selected_rug_definition())
+	dry_earned_base = 0.0
+	dry_surface_base = 0.0
 	for i in rug_buttons.size():
 		rug_buttons[i].set_pressed_no_signal(i == index)
 	for button in tool_buttons:
@@ -1073,6 +1090,7 @@ func _selected_rug_definition() -> Resource:
 func update_progress(_remaining: int, _total: int) -> void:
 	update_contract_status()
 	queue_snapshot_save()
+	_queue_cleaning_earnings()
 
 func _on_manual_debris_cleared() -> void:
 	# Late physical dirt clearance belongs to finger brushing. Bonzi's suction
@@ -1102,11 +1120,15 @@ func _release_pending_runoff() -> void:
 func _payment_snapshot() -> Dictionary:
 	var snapshot: Dictionary = soil.make_snapshot()
 	var actual_removal: float = shop_state.cleaning_clearance_for_snapshot(snapshot)
-	var eligible: float = soil.removed_dry_clearance()
+	var eligible: float = actual_removal
 	if wet_recipe:
+		eligible = soil.removed_dry_clearance()
 		var dry_share: float = 0.0 if water_only_recipe else eligible / float(1 + soil.WASH_CYCLES)
 		eligible = maxf(dry_share, wet_earned_clearance)
 		eligible = minf(eligible, actual_removal)
+	else:
+		eligible = minf(actual_removal, dry_earned_base + maxf(0.0, soil.surface_clearance() - dry_surface_base))
+		snapshot["dry_cleaning_clearance"] = clampf(eligible, 0.0, 0.99)
 	snapshot["earned_clearance"] = clampf(eligible, 0.0, 0.99)
 	# Reloading an L8 mask can slightly lower its reconstructed fraction. Keep
 	# the visual tail within this snapshot; the ledger retains paid high-water.
@@ -1211,6 +1233,11 @@ func _frame_workshop_camera() -> void:
 		space = hud.workshop_view_rect()
 	WorkshopCamera.frame_workshop(camera, viewport_size, space, _workshop_geometry_bounds(), room_view_pitch_from_top, room_view_yaw_degrees)
 	_refresh_room_offer_anchor()
+	if is_instance_valid(room) and is_instance_valid(hud) and hud.is_node_ready():
+		var points := {}
+		for id: String in room.CATEGORIES:
+			points[id] = camera.unproject_position(room.badge_anchor_world(id))
+		hud.set_room_upgrade_positions(points)
 	if soil != null and rug_phase not in [RugPhase.REVEAL, RugPhase.DEPARTING]:
 		soil.request_render()
 
@@ -1537,6 +1564,8 @@ func next_rug() -> void:
 	# loading, or scene replacement occurs between rugs.
 	soil.set_reveal_progress(0.0)
 	soil.configure_rug(_selected_rug_definition())
+	dry_earned_base = 0.0
+	dry_surface_base = 0.0
 	wet_earned_clearance = 0.0
 	wet_pending_clearance = 0.0
 	wet_reward_age = 0.0

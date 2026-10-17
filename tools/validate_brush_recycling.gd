@@ -1,5 +1,5 @@
 extends SceneTree
-## Ten-pass extraction, natural disappearance, permanent credit and bounded reuse.
+## Ten-pass extraction, retained floor dirt, cleaning income and bounded reuse.
 var checks := 0
 var failures := 0
 var soil: Node
@@ -114,46 +114,59 @@ func run() -> void:
 		var contact_position: Vector3 = soil.positions[borrowed_slot]
 		soil._physics_process(1.0 / 60.0)
 		check(soil.positions[borrowed_slot] != contact_position, "Borrowed dirt moves on the first physics tick instead of growing in place")
-	check(soil.timed_debris.is_empty(), "Airborne contact cannot disappear or grant retirement credit prematurely")
-	check(soil.retired_credit_count == 0 and removal_events == 0,"Birth and brush contact alone cannot count as removed dirt")
+	check(soil.timed_debris.is_empty(), "Airborne contact cannot disappear or retire visual slots prematurely")
+	check(soil.retired_credit_count == 0 and soil.removed_dry_clearance() > 0.0 and is_equal_approx(soil.removed_dry_clearance(), soil.surface_clearance()), "Brush cleaning earns payable progress immediately, before visual retirement")
 	advance(10.0)
-	check(soil.timed_debris.is_empty() and soil.floor_debris.is_empty() and soil.recycled.count(true) > 0, "Settled outside clumps naturally disappear and return their slots")
-	check(soil.retired_credit_count == soil.retired_credits.count(true) and soil.retired_credit_count > 0 and removal_events > 0,"Natural disappearance emits removal and retires each original credit once")
-	check(not soil.is_physics_processing(), "Finished natural fades need no idle physics")
+	check(soil.timed_debris.is_empty() and not soil.floor_debris.is_empty() and soil.recycled.count(true) == 0, "Settled outside clumps remain visible until dirty strokes need pool space")
+	var retained_full_size := true
+	for i in soil.floor_debris:
+		retained_full_size = retained_full_size and soil._visible_debris_growth(i) == 1.0 and soil.debris_age[i] == -1.0
+	check(retained_full_size and soil.retired_credit_count == 0, "Settled floor dirt stays full size without retiring original identities")
+	check(not soil.is_physics_processing(), "Retained floor dirt needs no idle physics")
+	var retained_idle: Dictionary = soil.make_snapshot()
+	advance(20.0)
+	check(soil.make_snapshot() == retained_idle, "Elapsed idle time cannot fade settled dirt or change payable cleaning")
 	for pass_index in 6:
 		swipe()
 	check(soil.free_slots.is_empty(), "Repeated extraction can draw the entire available pool before reuse")
-	check(soil.make_snapshot().pending_emissions.is_empty() and soil.timed_debris.size() <= soil.batch.instance_count, "Natural fades stay within the fixed pool and no delayed births are queued")
+	check(soil.make_snapshot().pending_emissions.is_empty() and soil.timed_debris.size() <= soil.DEBRIS_POOL_BUFFER, "Demand fades stay bounded and no delayed births are queued")
 	check(soil.remaining == soil.credited.count(false), "Borrowing visual identities preserves the one-time progress ledger")
 	# Actual dirty strokes, not a test call to the reclamation helper, cause pressure.
 	floor_fixture(64)
-	# A saved retained floor now resumes all eligible clumps' natural timers;
-	# its64 previously retired slots remain immediately available to contact.
-	check(soil.restore_snapshot(JSON.parse_string(JSON.stringify(soil.make_snapshot()))),"Retained-floor fixture resumes through the production JSON loader")
-	check(soil.timed_debris.size() == 496 and soil.floor_debris.is_empty(),"Every eligible retained clump resumes a natural fade without new brush demand")
+	# A saved retained floor stays visible; its 64 retired reserve slots remain
+	# immediately available while actual dirty contact requests replacements.
+	check(soil.restore_snapshot(JSON.parse_string(JSON.stringify(soil.make_snapshot()))), "Retained-floor fixture resumes through the production JSON loader")
+	check(soil.timed_debris.is_empty() and soil.floor_debris.size() == 496 and not soil.is_physics_processing(), "JSON restore preserves retained floor dirt without starting idle fades")
 	soil.begin_pass()
 	soil.stroke(Vector3(0, 0.067, -1.9), Vector3(0, 0.067, 1.9), 0.2)
-	check(soil.free_slots.is_empty() and soil.timed_debris.size() == 496 and soil.make_snapshot().pending_emissions.is_empty(), "New dirt uses the reserve while bounded natural fades finish without queueing late births")
+	check(soil.free_slots.is_empty() and soil.timed_debris.size() == 64 and soil.floor_debris.size() == 432 and soil.make_snapshot().pending_emissions.is_empty(), "Dirty contact uses the reserve and requests only 64 floor fades without queueing late births")
 	var fading: int = soil.timed_debris[0]
 	var born: int = soil.awakened.count(true)
+	var earned_before_duplicate: float = soil.removed_dry_clearance()
 	soil.stroke(Vector3(0, 0.067, -1.9), Vector3(0, 0.067, 1.9), 0.2)
-	check(soil.awakened.count(true) == born and soil.make_snapshot().pending_emissions.is_empty(), "Duplicate same-pass events cannot manufacture extra extraction requests")
+	check(soil.awakened.count(true) == born and soil.make_snapshot().pending_emissions.is_empty() and soil.removed_dry_clearance() == earned_before_duplicate, "Duplicate same-pass events cannot manufacture extra births or cleaning income")
+	soil.end_pass()
+	soil.begin_pass()
+	soil.stroke(Vector3(0, 0.067, -1.9), Vector3(0, 0.067, 1.9), 0.2)
+	check(soil.free_slots.is_empty() and soil.awakened.count(true) == born and soil.removed_dry_clearance() > earned_before_duplicate and soil.retired_credit_count == 64, "A new dirty pass earns cleaning income even when all 560 visual slots are busy")
 	soil.end_pass()
 	advance(0.30)
-	check(soil._visible_debris_growth(fading) > 0.0 and soil._visible_debris_growth(fading) < 1.0, "A naturally retiring clump shrinks smoothly before0.6 seconds")
-	check(not soil.retired_credits[fading],"A partially visible clump has not earned its disappearance credit")
+	check(soil._visible_debris_growth(fading) > 0.0 and soil._visible_debris_growth(fading) < 1.0, "A demand-retiring clump shrinks smoothly before 0.6 seconds")
+	check(not soil.retired_credits[fading],"A partial demand fade has not retired its original visual identity")
 	var mid_fade: Dictionary = soil.make_snapshot()
 	soil.suspend_simulation(true)
 	advance(10.0)
-	check(soil.make_snapshot() == mid_fade, "Pause freezes fades and earned progress")
+	check(soil.make_snapshot() == mid_fade, "Pause freezes demand fades and earned cleaning")
 	soil.suspend_simulation(false)
 	var json_snapshot: Dictionary = JSON.parse_string(JSON.stringify(mid_fade))
-	check(soil.restore_snapshot(json_snapshot), "Natural fade and retirement state survive the real JSON save format")
-	check(soil.floor_debris == mid_fade.floor_debris and soil.make_snapshot().pending_emissions.is_empty() and absf(soil.debris_age[fading] - 0.3) < 0.00001 and soil.retired_credit_count == 64, "Resume preserves the partial shrink and permanent credits without delayed extraction")
+	check(soil.restore_snapshot(json_snapshot), "Demand fade and retirement state survive the real JSON save format")
+	check(soil.floor_debris == mid_fade.floor_debris and soil.timed_debris.size() == 64 and soil.make_snapshot().pending_emissions.is_empty() and absf(soil.debris_age[fading] - 0.3) < 0.00001 and soil.retired_credit_count == 64, "Resume preserves the partial shrink, retained floor queue and permanent credits")
+	var earnings_before_fade: float = soil.removed_dry_clearance()
+	var events_before_fade := removal_events
 	advance(0.4)
-	check(soil.free_slots.size() >= 496 and soil.recycled[fading] and soil.growth[fading] == 0.0 and soil.retired_credits[fading], "Disappeared slots stay invisible and retain credit after release")
+	check(soil.free_slots.size() == 64 and soil.recycled[fading] and soil.growth[fading] == 0.0 and soil.retired_credits[fading], "Only demand-requested slots disappear and return invisibly to the pool")
 	check(soil.remaining == 0 and soil.credited.count(true) == 560, "Reclamation and replacement never grant duplicate credit")
-	check(soil.retired_credit_count == 560,"Previously retired reserve slots cannot earn retirement credit a second time")
+	check(soil.retired_credit_count == 128 and soil.removed_dry_clearance() == earnings_before_fade and removal_events == events_before_fade, "Visual retirement cannot grant additional cleaning income or removal events")
 	advance(8.0)
 	var returned_slots: Array[int] = soil.free_slots.duplicate()
 	soil.begin_pass()
@@ -169,7 +182,7 @@ func run() -> void:
 			current_contact = current_contact and soil.growth[i] == 0.0
 	check(current_contact and respawned > 0, "Returned slots spawn immediately at new contact; unused returned slots stay hidden")
 	advance(8.0)
-	check(soil.retired_credit_count == 560,"Reused cosmetic dirt never increases the original retirement ledger")
+	check(soil.retired_credit_count == soil.retired_credits.count(true) and soil.retired_credit_count <= 560, "Reuse preserves the bounded original retirement ledger")
 	var idle: Dictionary = soil.make_snapshot()
 	advance(20.0)
 	check(soil.make_snapshot() == idle and not soil.is_physics_processing(), "After motion and fades finish, elapsed time creates no dirt or further reclamation")
@@ -178,26 +191,46 @@ func run() -> void:
 	floor_fixture(0)
 	soil.coverage_values.fill(0.0)
 	soil.surface_coverage_total = 0.0
+	var clean_income: float = soil.removed_dry_clearance()
 	swipe()
-	check(soil.timed_debris.is_empty() and soil.make_snapshot().pending_emissions.is_empty(), "A clean stroke cannot manufacture extraction or demand reclamation")
-	# Older elapsed-time and retained-floor saves resume natural disappearance.
+	check(soil.timed_debris.is_empty() and soil.make_snapshot().pending_emissions.is_empty() and soil.removed_dry_clearance() == clean_income, "A clean stroke cannot manufacture extraction, demand reclamation or cleaning income")
+	# Older elapsed-time saves migrate to retained floor dirt without carrying
+	# obsolete ages. Only subsequent actual dirty contact may start a fade.
 	floor_fixture(0)
+	soil._process(0.0)
+	check(soil.batch.visible_instance_count == 560, "A full retained pool renders all 560 clumps simultaneously")
 	var legacy: Dictionary = soil.make_snapshot()
 	legacy.erase("debris_policy")
 	legacy.erase("floor_debris")
 	legacy.erase("pending_emissions")
 	legacy.erase("retired_credits")
 	legacy.debris_age[0] = 3.3
-	check(soil.restore_snapshot(legacy) and soil.debris_age[0] == 0.0 and soil.floor_debris.is_empty() and soil.timed_debris.size() == 560, "Old floor snapshots resume all natural fades without carrying obsolete lifetime ages")
+	check(soil.restore_snapshot(legacy) and soil.debris_age[0] == -1.0 and soil.floor_debris.size() == 560 and soil.timed_debris.is_empty(), "Old elapsed-time snapshots migrate to retained floor dirt without obsolete lifetime ages")
 	advance(10.0)
-	check(soil.growth[0] == 0.0 and soil.timed_debris.is_empty() and soil.retired_credit_count == 560, "Migrated floor dirt disappears naturally and preserves every original credit")
+	check(soil.growth[0] == 1.0 and soil.timed_debris.is_empty() and soil.floor_debris.size() == 560 and soil.retired_credit_count == 0, "Migrated floor dirt remains full size during idle time")
+	var full_pool_income_before: float = soil.removed_dry_clearance()
+	swipe()
+	check(soil.free_slots.is_empty() and soil.timed_debris.size() == 64 and soil.floor_debris.size() == 496 and soil.removed_dry_clearance() > full_pool_income_before, "Dirty work earns with a completely retained pool and requests bounded replacement fades")
+	advance(1.0)
+	check(soil.free_slots.size() == 64 and soil.retired_credit_count == 64 and soil.floor_debris.size() == 496, "Migrated dirt releases only the slots requested by fresh cleaning")
+	# Cosmetic clumps which already retired their original identities can be
+	# requested again without issuing duplicate retirement or payout events.
+	floor_fixture(0)
+	soil.retired_credits.fill(true)
+	soil.retired_credit_count = 560
+	swipe()
+	var reused_income: float = soil.removed_dry_clearance()
+	var reused_events := removal_events
+	advance(1.0)
+	check(soil.retired_credit_count == 560 and soil.retired_credits.count(true) == 560 and soil.removed_dry_clearance() == reused_income and removal_events == reused_events, "Reused cosmetic dirt never re-retires an original identity or grants fade income")
+	floor_fixture(560)
 	var stable: Dictionary = soil.make_snapshot()
 	var hidden_legacy: Dictionary = JSON.parse_string(JSON.stringify(stable))
 	hidden_legacy.erase("retired_credits")
-	check(soil.restore_snapshot(hidden_legacy) and soil.retired_credit_count == 560,"Old hidden credited slots infer prior retirement rather than becoming fresh income")
+	check(soil.restore_snapshot(hidden_legacy) and soil.retired_credit_count == 560,"Old hidden credited slots infer prior retirement rather than becoming fresh visual identities")
 	var events_before_idle := removal_events
 	advance(10.0)
-	check(removal_events == events_before_idle and soil.retired_credit_count == 560,"Restoring already-hidden old dirt cannot replay removal income")
+	check(removal_events == events_before_idle and soil.retired_credit_count == 560,"Restoring already-hidden old dirt cannot replay retirement events")
 	stable = soil.make_snapshot()
 	for field: String in ["debris_age", "floor_debris", "pending_emissions", "debris_policy", "retired_credits", "retired_count"]:
 		var invalid: Dictionary = JSON.parse_string(JSON.stringify(stable))
@@ -215,7 +248,7 @@ func run() -> void:
 	queued_legacy.pending_emissions = [{"source": 0, "velocity": [0, 0.9, 4]}]
 	check(soil.restore_snapshot(queued_legacy) and soil.make_snapshot().pending_emissions.is_empty(), "Old valid queued requests load safely and are discarded")
 	advance(8.0)
-	check(soil.free_slots.size() == 560 and soil.recycled[fading] and soil.remaining == 0 and soil.retired_credit_count == 560, "Loading an old queue cannot spawn stale dirt or duplicate earned retirement credit")
+	check(soil.free_slots.size() == 64 and soil.floor_debris.size() == 496 and soil.recycled[fading] and soil.remaining == 0 and soil.retired_credit_count == 128, "Loading an old queue preserves retained dirt and cannot spawn stale dirt or duplicate retirement")
 	soil.set_recipe(true, true)
 	check(soil.free_slots.is_empty() and soil.floor_debris.is_empty() and soil.timed_debris.is_empty() and not soil.is_physics_processing(), "Water-only recipe clears all dry pool demand and simulation")
 	soil.free()

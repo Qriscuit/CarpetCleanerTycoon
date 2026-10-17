@@ -4,6 +4,7 @@ signal purchase_requested(id: String)
 signal close_requested
 
 const Money := preload("res://scripts/money.gd")
+const Progression := preload("res://scripts/progression.gd")
 const ICON_PATH := "res://assets/ui/room_upgrades/"
 const ICONS := {
 	"floor": preload(ICON_PATH + "floor.svg"),
@@ -56,18 +57,28 @@ func refresh_offer(view: Dictionary, allowed: bool) -> void:
 	%Icon.texture = ICONS.get(str(view.get("id", selected_id)), ICONS.floor)
 	%Title.text = TITLES.get(str(view.get("id", selected_id)), str(view.get("title", "Workshop")))
 	var cost := float(view.get("cost", -1.0))
-	%Tier.text = "LEVEL %d · MAX" % int(view.get("level", 0)) if cost < 0 else "LEVEL %d  →  %d" % [int(view.get("level", 0)), int(view.get("next_level", 1))]
+	var level := maxi(0, int(view.get("level", 0)))
+	var cap := maxi(1, int(view.get("max_level", Progression.room_level_cap(int(view.get("store_id", 1))))))
+	var maxed := level >= cap
+	%Tier.text = "LEVEL %d · MAX" % level if maxed else "LEVEL %d  →  %d" % [level, int(view.get("next_level", level + 1))]
 	%Icon.tooltip_text = str(view.get("description", ""))
 	%CleanValue.text = _money(float(view.get("full_reward", 0.0))) if cost < 0 else "%s → %s" % [_money(float(view.get("full_reward", 0.0))), _money(float(view.get("next_full", 0.0)))]
 	var wallet := maxf(0.0, float(view.get("wallet_before", 0.0)))
 	var affordable := bool(view.get("can_upgrade", false))
-	%Buy.disabled = not allowed or not affordable or cost < 0
-	%Buy.text = "Upgrade   ·   %s" % _money(cost) if cost >= 0 else "Fully upgraded"
-	%Buy.tooltip_text = "Spend %s coins to upgrade" % _money(cost) if cost >= 0 else "Fully upgraded"
+	%Buy.disabled = not allowed or not affordable or cost < 0 or maxed
+	%Buy.text = "Fully upgraded" if maxed else ("Upgrade   ·   %s" % _money(cost) if cost >= 0 else "Unavailable")
+	%Buy.tooltip_text = "Fully upgraded" if maxed else ("Spend %s coins to upgrade" % _money(cost) if cost >= 0 else "Upgrade unavailable")
 	var visual_step := maxi(1, int(view.get("visual_step", 1)))
 	var progress := clampf(float(view.get("milestone_progress", 0.0)), 0.0, 1.0)
-	var makeovers_complete := int(view.get("next_visual_level", -1)) < 0
-	%ProgressState.text = "Makeovers complete" if makeovers_complete else "%d / %d" % [roundi(progress * float(visual_step)), visual_step]
+	if maxed:
+		progress = 1.0
+		%ProgressState.text = "Fully upgraded"
+	elif int(view.get("next_visual_level", -1)) < 0:
+		# The last authored look can arrive before the income ladder ends.
+		progress = clampf(float(level) / float(cap), 0.0, 1.0)
+		%ProgressState.text = "%d / %d" % [level, cap]
+	else:
+		%ProgressState.text = "%d / %d" % [roundi(progress * float(visual_step)), visual_step]
 	%ProgressState.tooltip_text = str(view.get("description", ""))
 	_set_progress(progress)
 	%Status.text = ""
@@ -88,7 +99,7 @@ func _set_progress(value: float) -> void:
 		return
 	if _fill_tween != null and _fill_tween.is_valid():
 		_fill_tween.kill()
-	# Start a fresh segment after each authored visual transformation.
+	# Start a fresh segment when progress moves to its next upgrade target.
 	if _last_progress < 0.0 or value < _last_progress:
 		%TransformationProgress.value = 0.0
 	_last_progress = value

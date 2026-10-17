@@ -370,7 +370,7 @@ static func manual_reward_for(snapshot: Dictionary) -> int:
 	# Compatibility preview for a fresh starter rug with no installments paid.
 	var fraction := minf(float(debris), float(surface))
 	var eligible: Variant = snapshot.get("earned_clearance",fraction)
-	if not _unit_fraction(eligible) or float(eligible) > fraction + COMPLETION_EPSILON: return 0
+	if not _unit_fraction(eligible) or float(eligible) > float(surface) + COMPLETION_EPSILON: return 0
 	return PERFECT_REWARD if completion_reached(fraction,PERFECT_COMPLETION_THRESHOLD) else MANUAL_REWARD
 
 
@@ -770,11 +770,12 @@ func _eligible_cleaning_clearance(snapshot: Dictionary, store_id: int = -1) -> f
 	var eligible: Variant = snapshot.get("earned_clearance", actual)
 	if not _unit_fraction(eligible) or float(eligible) > actual + COMPLETION_EPSILON: return -1.0
 	if snapshot.has("cleaning_pending_clearance") and float(snapshot.cleaning_pending_clearance) > actual + COMPLETION_EPSILON: return -1.0
+	if snapshot.has("dry_cleaning_clearance") and float(snapshot.dry_cleaning_clearance) > actual + COMPLETION_EPSILON: return -1.0
 	return minf(float(eligible), actual)
 
 
 static func _payment_snapshot_fractions_valid(snapshot: Dictionary) -> bool:
-	for key: String in ["unique_clearance", "surface_clearance", "water_clearance", "extraction_clearance", "earned_clearance", "cleaning_pending_clearance"]:
+	for key: String in ["unique_clearance", "surface_clearance", "water_clearance", "extraction_clearance", "earned_clearance", "cleaning_pending_clearance", "dry_cleaning_clearance"]:
 		if snapshot.has(key) and not _unit_fraction(snapshot[key]): return false
 	return true
 
@@ -783,19 +784,19 @@ func _saved_payment_snapshot_valid(snapshot: Dictionary, store_id: int) -> bool:
 	if not _payment_snapshot_fractions_valid(snapshot): return false
 	# Old snapshots can omit every added payment field. New fields always
 	# require genuine removal fractions, including in inactive saved shops.
-	if snapshot.has("earned_clearance") or snapshot.has("cleaning_pending_clearance"):
+	if snapshot.has("earned_clearance") or snapshot.has("cleaning_pending_clearance") or snapshot.has("dry_cleaning_clearance"):
 		return _eligible_cleaning_clearance(snapshot, store_id) >= 0.0
 	return true
 
 
 func cleaning_clearance_for_snapshot(snapshot: Dictionary, store_id: int = -1) -> float:
-	# Water applied is preparation. Only removed dry dirt and extraction earn
-	# the cleaning half; the remaining half is reserved for full restoration.
+	# Dry cleaning earns as dirt leaves the fabric. The visual clumps may stay
+	# on screen; water applied remains preparation for the extraction earnings.
 	for key: String in ["unique_clearance", "surface_clearance"]:
 		if not _unit_fraction(snapshot.get(key)): return -1.0
-	var dry := minf(float(snapshot.unique_clearance),float(snapshot.surface_clearance))
 	var id := active_store if store_id < 0 else store_id
-	if id < Progression.WET_FIRST_STORE: return dry
+	if id < Progression.WET_FIRST_STORE: return float(snapshot.surface_clearance)
+	var dry := minf(float(snapshot.unique_clearance),float(snapshot.surface_clearance))
 	if snapshot.get("wet_recipe") != true: return -1.0
 	for key: String in ["water_clearance", "extraction_clearance"]:
 		if not _unit_fraction(snapshot.get(key)): return -1.0

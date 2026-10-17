@@ -78,7 +78,7 @@ var growth: Array[float] = []
 var initial_growth := PackedFloat32Array()
 var awakened: Array[bool] = []
 var credited: Array[bool] = []
-# Each original credit becomes payable only once its dirt has disappeared.
+# Track original visual retirements independently of cleaning income.
 # Visual pool slots may be reused; these flags never reset within a carpet.
 var retired_credits: Array[bool] = []
 var retired_credit_count := 0
@@ -622,7 +622,6 @@ func _cancel_debris_timer(i: int) -> void:
 	request_render()
 
 func _age_debris(delta: float) -> void:
-	var removed := false
 	for slot in range(timed_debris.size() - 1, -1, -1):
 		var i := timed_debris[slot]
 		debris_age[i] += delta
@@ -646,11 +645,11 @@ func _age_debris(delta: float) -> void:
 		if credited[i] and not retired_credits[i]:
 			retired_credits[i] = true
 			retired_credit_count += 1
-			removed = true
-	if removed: cleaning_material_removed.emit()
 
 func removed_dry_clearance() -> float:
-	return minf(surface_clearance(), float(retired_credit_count) / maxf(initial.size(), 1))
+	# A brush earns for dirt pulled from the fabric, regardless of how long
+	# its cosmetic clump remains visible or which pool slot represents it.
+	return surface_clearance()
 
 static func swept_head_hits(start: Vector2, finish: Vector2, point: Vector2, half: Vector2) -> bool:
 	# Segment versus expanded rectangle: fast swipes cannot tunnel between events.
@@ -835,10 +834,9 @@ func _physics_process(delta: float) -> void:
 			moving[i] = false
 			active.remove_at(slot)
 			if outside and credited[i] and debris_age[i] < 0.0:
-				# Cleared dirt now fades naturally, synchronizing its disappearance
-				# with cleaning earnings rather than waiting for pool demand.
-				debris_age[i] = 0.0
-				timed_debris.append(i)
+				# Keep full-sized dirt on the floor until fresh extraction needs
+				# its slot. Settling and idle time never start a fade.
+				floor_debris.append(i)
 	if changed:
 		manual_debris_cleared.emit()
 		progress_changed.emit(remaining, initial.size())
@@ -1552,13 +1550,8 @@ func restore_snapshot(snapshot: Dictionary) -> bool:
 			floor_debris.append(int(value))
 		# Older saves may carry validated cosmetic extraction requests. Drop
 		# them: replay would spawn dirt after the original contact has ended.
-	# Resume cleared floor dirt with the new natural fade, preserving saved
-	# animation ages and permanent credit identities.
-	for i in initial.size():
-		if credited[i] and cleared[i] and not moving[i] and not recycled[i] and growth[i] > 0.0 and debris_age[i] < 0.0 and clump_is_outside(i):
-			debris_age[i] = 0.0
-			timed_debris.append(i)
-	floor_debris.clear()
+	# Retained floor debris stays visible across reloads. Only saved fades
+	# resume; loading a carpet cannot create new reclamation demand.
 	surface_coverage_total = 0.0
 	water_coverage_total = 0.0
 	extraction_coverage_total = 0.0

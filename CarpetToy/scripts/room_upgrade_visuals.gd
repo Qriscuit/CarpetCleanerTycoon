@@ -5,6 +5,7 @@ extends Node3D
 const CATEGORIES := ["floor", "plants", "window", "railings", "walls"]
 const RoomUpgrades = preload("res://scripts/room_upgrades.gd")
 const UpgradeEffect = preload("res://scripts/room_upgrade_effect.gd")
+const StructuralMotion = preload("res://scripts/room_upgrade_motion.gd")
 signal upgrade_finished(category: String)
 const UPGRADE_DURATION := 0.90
 const UPGRADE_SWAP_TIME := 0.18
@@ -16,7 +17,7 @@ const UPGRADE_WIDEN := {"floor": Vector3(1.003, 0.975, 1.003), "plants": Vector3
 const RETRIGGER_SPRING := 135.0
 const RETRIGGER_DAMPING := 12.0
 const RETRIGGER_KICK := 12.0
-const UPGRADE_BASES := {"floor": -0.012, "plants": 0.035, "window": 0.10, "railings": 0.045, "walls": 0.0}
+const UPGRADE_BASES := {"floor": -0.012}
 const EFFECT_RADII := {"floor": 0.40, "plants": 0.28, "window": 1.23, "railings": 0.31, "walls": 0.33}
 const EFFECT_HEIGHTS := {"floor": 0.45, "plants": 1.03, "window": 1.40, "railings": 0.72, "walls": 1.70}
 const GROUP_NAMES := {"floor": "Floor", "plants": "Plants", "window": "Window", "railings": "Railings", "walls": "Walls"}
@@ -27,12 +28,22 @@ const ANCHORS := {
 	"railings": Vector3(2.16, 0.44, 0.15),
 	"walls": Vector3(2.37, 0.85, -0.16),
 }
+# One quiet marker per ladder, spread around the rug rather than repeated on
+# every pot or rail. These anchors remain stable through all visual makeovers.
+const BADGE_ANCHORS := {
+	"floor": Vector3(-1.48, 0.025, 1.52),
+	"plants": Vector3(1.78, 0.62, 2.42),
+	"window": Vector3(0.0, 0.83, -2.80),
+	"railings": Vector3(-2.16, 0.50, -0.65),
+	"walls": Vector3(2.10, 1.48, -2.86),
+}
 var levels: Dictionary = {"floor": 0, "plants": 0, "window": 0, "railings": 0, "walls": 0}
 var store_id := 1
 var visual_tiers: Dictionary = {"floor": 0, "plants": 0, "window": 0, "railings": 0, "walls": 0}
 var upgrade_effects: Dictionary = {}
 var _upgrade_animations: Dictionary = {}
 var _tier_transforms: Dictionary = {}
+var _structural_motion := StructuralMotion.new()
 # Keep the four corner pots batched while scaling each about its own saucer.
 # Surface overrides are cached once and restored after each purchase burst.
 var _plant_upgrade_parts: Dictionary = {}
@@ -93,6 +104,7 @@ func _cache_upgrade_parts() -> void:
 			if model != null and not _tier_transforms.has(path):
 				_tier_transforms[path] = model.transform
 	_cache_plant_upgrade_parts()
+	_structural_motion.setup(self)
 
 func _cache_plant_upgrade_parts() -> void:
 	if not _plant_upgrade_parts.is_empty(): return
@@ -199,6 +211,8 @@ func _animate_plants(amount: Vector3) -> void:
 
 func upgrade_scale(category: String) -> Vector3:
 	if category == "plants": return _plant_upgrade_scales.get(int(visual_tiers.plants), Vector3.ONE)
+	if category in ["window", "walls", "railings"]:
+		return _structural_motion.scale_for(category, int(visual_tiers[category]))
 	var path := "%s/Tier%d" % [GROUP_NAMES[category], int(visual_tiers[category])]
 	var model := get_node_or_null(path) as Node3D
 	if model == null or not _tier_transforms.has(path): return Vector3.ONE
@@ -266,6 +280,8 @@ func _restore_category_transform(category: String) -> void:
 		var model := get_node_or_null(path) as Node3D
 		if model != null and _tier_transforms.has(path):
 			model.transform = _tier_transforms[path]
+	if category in ["window", "walls", "railings"]:
+		_structural_motion.restore(category)
 	if category == "plants":
 		for tier: int in _plant_upgrade_parts:
 			_plant_upgrade_scales[tier] = Vector3.ONE
@@ -316,8 +332,11 @@ func _animate_upgrade(category: String, time: float, impulse: float = 0.0) -> vo
 	if category == "plants":
 		_animate_plants(amount)
 		return
-	# The window's hinges still rotate in their own local space. The rug and
-	# structural foundation are siblings and never inherit purchase motion.
+	if category in ["window", "walls", "railings"]:
+		# Breathe above each fixed foot or mount, without moving the scene's
+		# authored origins, window hinges, or the two railing banks together.
+		_structural_motion.animate(category, int(visual_tiers[category]), amount)
+		return
 	var pivot := Vector3(0, float(UPGRADE_BASES[category]), 0)
 	var path := "%s/Tier%d" % [GROUP_NAMES[category], int(visual_tiers[category])]
 	var model := get_node_or_null(path) as Node3D
@@ -372,6 +391,8 @@ func set_window_open_amount(amount: float) -> void:
 		# Rotate around the authored vertical side edge. Keeping the closed
 		# basis outside the rotation fixes its bottom and top throughout the swing.
 		hinge.basis = closed_basis * Basis(Vector3.UP, -side * WINDOW_OPEN_ANGLE * window_open_amount)
+	if is_upgrade_active("window"):
+		_structural_motion.animate("window", int(visual_tiers.window), upgrade_scale("window"))
 
 func window_clear_aperture_world() -> Dictionary:
 	# Conservative horizontal corridor through all decorative frame tiers.
@@ -421,6 +442,9 @@ func set_levels(values: Dictionary, active_store_id: int = -1) -> void:
 
 func anchor_world(category: String) -> Vector3:
 	return to_global(ANCHORS.get(category, Vector3.ZERO))
+
+func badge_anchor_world(category: String) -> Vector3:
+	return to_global(BADGE_ANCHORS.get(category, Vector3.ZERO))
 
 func geometry_fit_bounds_local(include_open_window: bool = false) -> AABB:
 	# The right wall and shallow outward door use a narrow extra foundation

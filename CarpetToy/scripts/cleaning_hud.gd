@@ -20,6 +20,9 @@ const Progression := preload("res://scripts/progression.gd")
 const AD_VIDEO_PLAY := preload("res://assets/ui/room_upgrades/video_play.svg")
 const AD_VIDEO_LOCKED := preload("res://assets/ui/room_upgrades/video_locked.svg")
 const AD_VIDEO_ACTIVE := preload("res://assets/ui/room_upgrades/video_active.svg")
+const UpgradeBadge := preload("res://scripts/ui/upgrade_badge.gd")
+const ROOM_BADGE_SIZE := 24.0
+const SHOP_BADGE_BUTTONS := ["ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton", "BonziUpgradeButton"]
 enum CarpetAdState { HIDDEN, LOCKED, READY, REQUESTING, ACTIVE }
 
 @export var preview_safe_insets := Vector4.ZERO
@@ -65,12 +68,18 @@ var _cleaning_pending := 0.0
 var _cleaning_count_start := 0.0
 var _cleaning_count_time := 0.0
 var _wallet_paused := false
+var _room_upgrade_badges: Dictionary = {}
+var _shop_upgrade_badges: Dictionary = {}
+var _room_upgrade_available: Dictionary = {}
+var _room_upgrade_positions: Dictionary = {}
+var _upgrade_badge_refresh_queued := false
 @onready var room_panel: Control = $HUD/RoomUpgradePanel
 
 
 func _ready() -> void:
 	_coin_rng.randomize()
 	_create_coin_pool()
+	_create_upgrade_badges()
 	set_process(false)
 	room_panel.purchase_requested.connect(func(id: String): request_room_upgrade.emit(id))
 	room_panel.close_requested.connect(close_upgrades)
@@ -87,6 +96,92 @@ func _ready() -> void:
 
 func control(node_name: String) -> Control:
 	return get_node("%" + node_name) as Control
+
+
+func _create_upgrade_badges() -> void:
+	var marker_layer := Control.new()
+	marker_layer.name = "RoomUpgradeBadges"
+	marker_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	$HUD.add_child(marker_layer)
+	$HUD.move_child(marker_layer, $HUD/CoinLayer.get_index())
+	for id: String in ["floor", "plants", "window", "railings", "walls"]:
+		var badge := UpgradeBadge.new()
+		badge.name = id.capitalize() + "UpgradeBadge"
+		badge.custom_minimum_size = Vector2.ONE * ROOM_BADGE_SIZE
+		badge.size = badge.custom_minimum_size
+		marker_layer.add_child(badge)
+		_room_upgrade_badges[id] = badge
+	for node_name: String in ["UpgradeButton"] + SHOP_BADGE_BUTTONS:
+		var badge := UpgradeBadge.new()
+		badge.name = "UpgradeBadge"
+		var side := 22.0 if node_name == "UpgradeButton" else 18.0
+		badge.custom_minimum_size = Vector2.ONE * side
+		badge.size = badge.custom_minimum_size
+		control(node_name).add_child(badge)
+		badge.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+		badge.offset_left = -side - 2.0
+		badge.offset_right = -2.0
+		badge.offset_top = 2.0
+		badge.offset_bottom = side + 2.0
+		_shop_upgrade_badges[node_name] = badge
+
+
+func set_room_upgrade_availability(available: Dictionary) -> void:
+	_room_upgrade_available = available.duplicate()
+	_queue_upgrade_badge_refresh()
+
+
+func set_room_upgrade_positions(points: Dictionary) -> void:
+	_room_upgrade_positions = points.duplicate()
+	_layout_room_upgrade_badges()
+	_queue_upgrade_badge_refresh()
+
+
+func _layout_room_upgrade_badges() -> void:
+	if not is_node_ready(): return
+	var inverse := ($HUD as Control).get_global_transform().affine_inverse()
+	var world: Rect2 = workshop_view_rect()
+	var bounds := Rect2(inverse * world.position, world.size / ($HUD as Control).scale).grow(-ROOM_BADGE_SIZE * 0.5 - 2.0)
+	for id: String in _room_upgrade_badges:
+		if not _room_upgrade_positions.has(id): continue
+		var point: Vector2 = inverse * (_room_upgrade_positions[id] as Vector2)
+		point = point.clamp(bounds.position, bounds.end)
+		var badge: TextureRect = _room_upgrade_badges[id]
+		badge.position = point - badge.size * 0.5
+
+
+func _queue_upgrade_badge_refresh() -> void:
+	# Cleaning income reserves and credits its coins in one synchronous turn.
+	# Coalesce that temporary purchase gate so an already-affordable marker
+	# does not shrink and pop again on every cleaning payout.
+	if _upgrade_badge_refresh_queued or not is_node_ready(): return
+	_upgrade_badge_refresh_queued = true
+	_refresh_upgrade_badges.call_deferred()
+
+
+func _refresh_upgrade_badges() -> void:
+	_upgrade_badge_refresh_queued = false
+	if not is_node_ready(): return
+	var ready := _purchases_allowed and pending_reward == 0 and not _progression.is_empty()
+	for id: String in _room_upgrade_badges:
+		_room_upgrade_badges[id].set_available(ready and not upgrades_open() and bool(_room_upgrade_available.get(id, false)) and _room_upgrade_positions.has(id))
+	var any_shop := false
+	for node_name: String in SHOP_BADGE_BUTTONS:
+		var button := control(node_name) as Button
+		var eligible := ready and not button.disabled
+		_shop_upgrade_badges[node_name].set_available(eligible)
+		any_shop = any_shop or eligible
+	_shop_upgrade_badges["UpgradeButton"].set_available(any_shop and not upgrades_open())
+
+
+func room_badge_at_point(screen_point: Vector2) -> String:
+	if upgrades_open() or not _purchases_allowed or pending_reward > 0 or _progression.is_empty(): return ""
+	for id: String in _room_upgrade_badges:
+		var badge: TextureRect = _room_upgrade_badges[id]
+		# The explicit category keeps a tap on a raised marker associated with
+		# its object, even when the marker sits above its physical picking box.
+		if bool(_room_upgrade_available.get(id, false)) and badge.available and badge.is_visible_in_tree() and badge.get_global_rect().has_point(screen_point): return id
+	return ""
 
 
 func action_buttons() -> Array[Button]:
@@ -250,6 +345,7 @@ func _refresh_availability() -> void:
 		var button := control(("Hose" if kind == "hose" else "Squeegee") + "UpgradeButton") as Button
 		var cost := float(_progression.get(kind + "_cost", -1.0))
 		button.disabled = not ready or not bool(_progression.get("wet_unlocked", false)) or not bool(_progression.get("can_upgrade_" + kind, false)) or cost < 0 or _actual_balance < cost
+	_queue_upgrade_badge_refresh()
 	var done := control("CloseUpgradesButton")
 	var focusable: Array[Control] = [done]
 	for node_name in ["ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton", "BonziUpgradeButton"]:
@@ -823,6 +919,7 @@ func _layout() -> void:
 	_layout_shop(panel, safe, edge)
 	panel.position = Vector2(safe.position.x + edge, clampf(safe.get_center().y - panel.size.y * 0.5, safe.position.y + edge, safe.end.y - panel.size.y - edge))
 	panel.pivot_offset = panel.size * 0.5
+	_layout_room_upgrade_badges()
 
 
 func _layout_shop(panel: Control, safe: Rect2, edge: float) -> void:

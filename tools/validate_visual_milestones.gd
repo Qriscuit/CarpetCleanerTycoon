@@ -30,6 +30,15 @@ func all_levels(level: int) -> Dictionary:
 	return levels
 
 
+func panel_offer(id: String, level: int, store_id: int) -> Dictionary:
+	var cap := Progression.room_level_cap(store_id)
+	return {"id": id, "store_id": store_id, "level": level, "next_level": mini(level + 1, cap),
+		"max_level": cap, "maxed": level >= cap, "cost": 10 if level < cap else -1,
+		"can_upgrade": level < cap, "visual_step": Room.visual_step_for(id, store_id),
+		"next_visual_level": Room.next_visual_level(id, level, store_id),
+		"milestone_progress": Room.milestone_progress(id, level, store_id)}
+
+
 func run() -> void:
 	check(Room.visual_milestones_for(50, 5) == [10, 20, 30, 40, 50], "Five makeovers over50 upgrades demarcate every ten levels")
 	check(Room.visual_milestones_for(175, 3) == [50, 100, 150], "Three makeovers over175 upgrades demarcate50,100,150")
@@ -83,8 +92,25 @@ func run() -> void:
 	root.add_child(panel)
 	panel.show_offer({"id": "walls", "level": 14, "next_level": 15, "cost": 10, "can_upgrade": true, "visual_step": 15, "next_visual_level": 15, "milestone_progress": 14.0 / 15.0}, true)
 	check(panel.get_node("%ProgressState").text == "14 / 15", "Panel counts purchases across the actual authored segment")
-	panel.refresh_offer({"id": "walls", "level": 45, "next_level": 46, "cost": 10, "can_upgrade": true, "visual_step": 15, "next_visual_level": -1, "milestone_progress": 1.0}, true)
-	check(panel.get_node("%ProgressState").text == "Makeovers complete" and not panel.get_node("%Buy").disabled, "Final mesh does not pretend the remaining income purchases earn another makeover")
+	for store_id: int in range(1, 7):
+		var cap := Progression.room_level_cap(store_id)
+		for id: String in Room.IDS:
+			var milestones := Room.visual_milestones(id, store_id)
+			var last := milestones[-1]
+			if last < cap:
+				for level: int in [last, mini(last + 1, cap - 1), cap - 1]:
+					panel.refresh_offer(panel_offer(id, level, store_id), true)
+					check(panel.get_node("%ProgressState").text == "%d / %d" % [level, cap]
+						and not panel.get_node("%Buy").disabled and panel.get_node("%Buy").text != "Fully upgraded",
+						"%s store%d final look at%d shows the remaining real upgrade ladder" % [id, store_id, level])
+					check(is_equal_approx(panel._last_progress, float(level) / float(cap)) and panel._last_progress < 1.0,
+						"%s store%d income progress at%d stays incomplete until its cap" % [id, store_id, level])
+			panel.refresh_offer(panel_offer(id, cap, store_id), true)
+			check(panel.get_node("%ProgressState").text == "Fully upgraded" and panel.get_node("%Buy").disabled
+				and panel.get_node("%Buy").text == "Fully upgraded" and panel._last_progress == 1.0,
+				"%s store%d completes only at its actual level%d cap" % [id, store_id, cap])
+	await create_timer(0.3).timeout
+	check(panel.get_node("%TransformationProgress").value == 1.0, "The actual cap fills the displayed progress bar")
 	panel.free()
 	room.free()
 	print("VISUAL_MILESTONES_RESULT checks=%d failures=%d" % [checks, failures])

@@ -57,8 +57,8 @@ func check_dry_and_full() -> void:
 	check(state.record_cleaning_progress(job,snapshot(0.25)) == 5.0 and state.cash == 5.0, "Progress commits coins and its snapshot together")
 	check(state.job_snapshot.mask_marker == "real-work" and state._branch().job_cleaning_paid == 5.0 and state._branch().job_cleaning_progress == 0.25, "The paid amount and watermark share the saved rug")
 	check(state.record_cleaning_progress(job,snapshot(0.25)) == 0.0 and state.cash == 5.0, "A repeated snapshot never pays again")
-	check(state.record_cleaning_progress(job,snapshot(0.60,0.25)) == 0.0, "Material still visible on screen can save cleaning without earning early")
-	check(state.record_cleaning_progress(job,snapshot(0.60,0.50)) == 5.0 and state.cash == 10.0, "The disappearance watermark unlocks only newly eligible coins")
+	check(state.record_cleaning_progress(job,snapshot(0.60,0.25)) == 0.0, "Saving a caller's unchanged eligible watermark cannot repay old work")
+	check(state.record_cleaning_progress(job,snapshot(0.60,0.50)) == 5.0 and state.cash == 10.0, "A higher eligible removal watermark unlocks only newly earned coins")
 	state = reload_state(state)
 	check(state.active_job_id == job and state.record_cleaning_progress(job,snapshot(0.60,0.50)) == 0.0 and state.cash == 10.0, "Reload and replay retain already-paid cleaning")
 	check(state.record_cleaning_progress(job,snapshot(0.99)) == 10.0 and state.cash == 20.0, "99% exhausts exactly the first half")
@@ -82,9 +82,31 @@ func check_early() -> void:
 	check(state.save_job_snapshot(snapshot(0.75)) and state.complete_job(job) and state.cash == 40.0 and state.active_job_id.is_empty(), "The no-replacement completion API settles the complete first half")
 	job = state.start_job()
 	check(not state.complete_and_start_next_job(job,snapshot(0.75,0.0)).is_empty(), "A valid early exit can finish before any material is eligible")
-	check(state.completed_rewards[job].amount == 20.0 and state.cash == 60.0, "Early Finish pays the half quote even before deferred material disappearance pays installments")
+	check(state.completed_rewards[job].amount == 20.0 and state.cash == 60.0, "Early Finish settles the half quote even before a caller has flushed installments")
 	state = reload_state(state)
 	check(state.cash == 60.0 and state._save_enabled, "The early half settlement remains a valid durable save")
+	state.free()
+
+func check_dry_extraction_before_collection() -> void:
+	var state := fresh("dry_extraction")
+	var job: String = state.start_job()
+	var airborne := {"unique_clearance":0.0,"surface_clearance":0.25,"earned_clearance":0.25,"dry_cleaning_clearance":0.25,"mask_marker":"extracted-with-visible-clumps"}
+	check(state.cleaning_clearance_for_snapshot(airborne) == 0.25 and state.record_cleaning_progress(job,airborne) == 5.0, "Dry surface extraction pays while every original physical clump remains uncollected")
+	check(state.reward_for_current_job(airborne) == 0.0 and state.complete_and_start_next_job(job,airborne).is_empty(), "Extraction income cannot complete a carpet whose physical dirt is still on it")
+	check(state.record_cleaning_progress(job,airborne) == 0.0 and state.cash == 5.0, "Repeated contact with the same extracted patch cannot pay twice")
+	state = reload_state(state)
+	check(state.active_job_id == job and state.job_snapshot.mask_marker == "extracted-with-visible-clumps" and state.record_cleaning_progress(job,airborne) == 0.0 and state.cash == 5.0, "JSON reload preserves extracted work and its paid watermark before dirt collection")
+	var collected := airborne.duplicate(true)
+	collected.unique_clearance = 1.0
+	check(state.record_cleaning_progress(job,collected) == 0.0 and state.cash == 5.0, "Later visual dirt collection cannot repay the extracted surface")
+	var surface_done := airborne.duplicate(true)
+	surface_done.surface_clearance = 0.99
+	surface_done.earned_clearance = 0.99
+	surface_done.dry_cleaning_clearance = 0.99
+	check(state.record_cleaning_progress(job,surface_done) == 15.0 and state.cash == 20.0, "A fully extracted dry surface exhausts exactly the cleaning half with clumps still present")
+	check(not state._completion_snapshot_valid(surface_done) and state.complete_and_start_next_job(job,surface_done).is_empty() and state.cash == 20.0, "Physical cleanliness still gates completion after the surface earns its entire half")
+	surface_done.unique_clearance = 0.99
+	check(state.reward_for_current_job(surface_done) == 20.0 and not state.complete_and_start_next_job(job,surface_done).is_empty() and state.cash == 40.0, "Physical completion settles only the restoration half after earlier extraction earnings")
 	state.free()
 
 func check_failures_and_validation() -> void:
@@ -102,7 +124,7 @@ func check_failures_and_validation() -> void:
 	state._save_path = real_path
 	for invalid: Dictionary in [{"unique_clearance":NAN,"surface_clearance":0.5},snapshot(0.5,0.6),{"unique_clearance":0.5,"surface_clearance":INF},{"unique_clearance":0.5,"surface_clearance":0.5,"earned_clearance":-0.1},{"unique_clearance":0.5,"surface_clearance":0.5,"rug_id":"wrong-rug"}]:
 		check(state.preview_cleaning_reward(job,invalid) == -1.0 and state.record_cleaning_progress(job,invalid) == -1.0 and state._capture_state() == before, "Invalid progress cannot alter a saved installment")
-	for field: String in ["earned_clearance", "cleaning_pending_clearance"]:
+	for field: String in ["earned_clearance", "cleaning_pending_clearance", "dry_cleaning_clearance"]:
 		for invalid: Variant in [NAN, INF, -0.1, 0.6, "0.5"]:
 			var malformed := snapshot(0.5)
 			malformed[field] = invalid
@@ -170,7 +192,7 @@ func check_travel_upgrade_migration() -> void:
 		var bad := fixture.duplicate(true)
 		bad.stores["1"].job_cleaning_progress = invalid
 		check(not state._valid_save(bad), "Saved progress watermarks reject invalid fractions")
-	for field: String in ["earned_clearance", "cleaning_pending_clearance"]:
+	for field: String in ["earned_clearance", "cleaning_pending_clearance", "dry_cleaning_clearance"]:
 		for invalid: Variant in [NAN, INF, -0.1, 0.6, "0.5"]:
 			var bad := fixture.duplicate(true)
 			bad.job_snapshot[field] = invalid
@@ -181,10 +203,11 @@ func check_travel_upgrade_migration() -> void:
 	var valid := fixture.duplicate(true)
 	valid.job_snapshot.earned_clearance = 0.5
 	valid.job_snapshot.cleaning_pending_clearance = 0.5
+	valid.job_snapshot.dry_cleaning_clearance = 0.5
 	valid.stores["1"].job_snapshot = valid.job_snapshot.duplicate(true)
 	check(state._valid_save(valid), "Valid optional payment marks retain additive save compatibility")
 	state.free()
-	for pair: Array in [["cleaning_pending_clearance", NAN], ["earned_clearance", -0.1], ["cleaning_pending_clearance", 0.6]]:
+	for pair: Array in [["cleaning_pending_clearance", NAN], ["earned_clearance", -0.1], ["cleaning_pending_clearance", 0.6], ["dry_cleaning_clearance", NAN], ["dry_cleaning_clearance", 0.6]]:
 		state = fresh("malformed_%d" % checks)
 		state.start_job()
 		state.record_cleaning_progress(state.active_job_id,snapshot(0.5))
@@ -303,6 +326,7 @@ func check_wet_mask_roundtrip() -> void:
 func run() -> void:
 	check_dry_and_full()
 	check_early()
+	check_dry_extraction_before_collection()
 	check_failures_and_validation()
 	check_travel_upgrade_migration()
 	check_wet_and_large()

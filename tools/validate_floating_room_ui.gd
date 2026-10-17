@@ -100,11 +100,13 @@ func assert_transformation_progress(completed_steps: int, description: String) -
 	var next := ROOM_RULES.next_visual_level(id, level, store_id)
 	var previous := ROOM_RULES.milestone_start(id, level, store_id)
 	var segment := maxi(1, next - previous)
-	var expected := 1.0 if next < 0 else float(completed_steps) / float(segment)
+	var cap := PROGRESSION.room_level_cap(store_id)
+	var maxed := level >= cap
+	var expected := float(level) / float(cap) if next < 0 else float(completed_steps) / float(segment)
 	var bar := game.hud.room_panel.get_node("%TransformationProgress") as Range
-	check(absf(bar.value - expected) < 0.015, description + ": bar shows completed upgrades toward the next transformation")
-	var counter := "Makeovers complete" if next < 0 else "%d / %d" % [completed_steps, segment]
-	check(game.hud.room_panel.get_node("%ProgressState").text == counter, description + ": counter follows the authored makeover segment")
+	check(absf(bar.value - expected) < 0.015, description + ": bar shows completed upgrades toward the current target")
+	var counter := "Fully upgraded" if maxed else ("%d / %d" % [level, cap] if next < 0 else "%d / %d" % [completed_steps, segment])
+	check(game.hud.room_panel.get_node("%ProgressState").text == counter, description + ": counter follows its makeover segment or actual cap")
 
 
 func run() -> void:

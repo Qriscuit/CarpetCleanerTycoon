@@ -60,26 +60,21 @@ func run() -> void:
 	for i in soil.active:
 		check(soil.velocities[i].z > 0 and absf(soil.velocities[i].x) < soil.velocities[i].z * 0.6, "Positive Z fling with bounded X scatter")
 	check(soil.remaining == 560, "Contact alone does not count as removed")
-	check(soil.retired_credit_count == 0,"Brushing visible dirt alone cannot claim disappearance income")
+	check(soil.retired_credit_count == 0 and soil.removed_dry_clearance() > 0.0 and is_equal_approx(soil.removed_dry_clearance(), soil.surface_clearance()), "Cleaning earns payable surface progress immediately while all dirt is still visible")
 	workshop.end_stroke()
-	for _tick: int in 300:
-		soil._physics_process(1.0 / 60.0)
-		if not soil.timed_debris.is_empty(): break
-	check(not soil.timed_debris.is_empty(),"Off-rug settled dirt starts a natural disappearance timer")
-	if not soil.timed_debris.is_empty():
-		var fading: int = soil.timed_debris[0]
-		check(not soil.retired_credits[fading] and soil._visible_debris_growth(fading) > 0.0,"A visible newly-settled clump is not yet retired")
-		var visible_start: float = soil._visible_debris_growth(fading)
-		for _tick: int in 18: soil._physics_process(1.0 / 60.0)
-		check(soil._visible_debris_growth(fading) > 0.0 and soil._visible_debris_growth(fading) < visible_start,"Natural disappearance shrinks smoothly across its0.6-second lifetime")
 	settle(soil)
+	check(not soil.floor_debris.is_empty() and soil.timed_debris.is_empty(), "Off-rug settled dirt stays retained until brush demand needs pool space")
+	var retained_full_size := true
+	for i in soil.floor_debris:
+		retained_full_size = retained_full_size and soil._visible_debris_growth(i) == 1.0 and not soil.retired_credits[i]
+	check(retained_full_size, "Newly settled dirt remains full size without visual retirement")
 	check(soil.remaining < 560, "Settled off-rug clumps count after the stroke")
 	check(absf(soil.mask.get_pixel(128, 208).r - 0.9) < 0.01, "First pass removes one tenth of the dust")
-	check(soil.floor_debris.is_empty() and soil.timed_debris.is_empty() and soil.retired_credit_count > 0, "First-pass outside dirt naturally disappears without pool pressure")
-	for i: int in soil.positions.size():
-		if soil.retired_credits[i]:
-			check(soil.credited[i] and soil.recycled[i] and soil.growth[i] == 0.0,"Disappeared original dirt stays hidden and keeps its permanent credit")
-	check(soil.removed_dry_clearance() > 0.0 and soil.removed_dry_clearance() <= soil.surface_clearance(),"Removal-based income clearance cannot outrun earned surface cleaning")
+	check(not soil.floor_debris.is_empty() and soil.timed_debris.is_empty() and soil.retired_credit_count == 0, "First-pass floor dirt remains visible without pool pressure")
+	var retained_idle: Dictionary = soil.make_snapshot()
+	settle(soil)
+	check(soil.make_snapshot() == retained_idle and not soil.is_physics_processing(), "Idle retained dirt consumes no simulation or extra cleaning income")
+	check(soil.removed_dry_clearance() > 0.0 and is_equal_approx(soil.removed_dry_clearance(), soil.surface_clearance()), "Payable cleaning equals removed surface dirt independently of visual collection")
 	# A negative stroke and touch input use the same world projection.
 	workshop.reset_rug()
 	var screen: Vector2 = camera.unproject_position(Vector3(0.0, 0.067, 0.7)) - workshop.TOUCH_CONTACT_OFFSET
@@ -123,13 +118,14 @@ func run() -> void:
 	workshop.update_contract_status()
 	var combined := minf(soil.unique_clearance(), soil.surface_clearance())
 	check(is_equal_approx(workshop.progress_fraction, combined) and workshop.state_label.text == "%d%%" % floori(combined * 100.0 + 0.0001), "The one meter reports the dirtier of debris and surface dust")
-	check(soil.active.is_empty() and soil.floor_debris.is_empty() and soil.timed_debris.is_empty() and not soil.is_physics_processing(), "Completed natural fades cost no idle simulation ticks")
-	check(soil.retired_credit_count == 560 and soil.retired_credits.count(true) == 560,"Ten real sweeps retire each original clump exactly once")
+	check(soil.active.is_empty() and not soil.floor_debris.is_empty() and soil.timed_debris.is_empty() and not soil.is_physics_processing(), "Completed sweeps retain floor dirt without idle simulation ticks")
+	check(soil.retired_credit_count == soil.retired_credits.count(true) and soil.retired_credit_count <= 560, "Demand reclamation preserves each original visual retirement identity")
+	check(is_equal_approx(soil.removed_dry_clearance(), soil.surface_clearance()), "Full cleaning pays for surface removal while retained floor dirt remains visible")
 	for i in soil.positions.size():
-		check(soil.credited[i] and soil.retired_credits[i] and (soil.clump_is_outside(i) or (soil.recycled[i] and soil.growth[i] == 0.0)), "Every final dirt source retains credit after leaving the rug or returning invisibly to the pool")
+		check(soil.credited[i] and (soil.clump_is_outside(i) or (soil.recycled[i] and soil.growth[i] == 0.0)), "Every final dirt source retains credit after leaving the rug or returning invisibly to the pool")
 	workshop.reset_rug()
 	check(soil.remaining == 560 and workshop.dirty, "Reset restores dirt and progress")
-	check(soil.retired_credit_count == 0 and soil.retired_credits.count(true) == 0,"A fresh rug resets its independent disappearance ledger")
+	check(soil.retired_credit_count == 0 and soil.retired_credits.count(true) == 0,"A fresh rug resets its independent visual retirement ledger")
 	check(soil.mask.get_pixel(64, 100).r > 0.9, "Reset restores full soil cover")
 	# Sub-pixel, slow strokes must still move dirt in the current direction.
 	soil.awakened[0] = true
@@ -154,7 +150,7 @@ func run() -> void:
 	workshop.toggle_view()
 	workshop.move_brush_to_screen(camera.unproject_position(Vector3(1.8, 0.067, 0)), false)
 	check(absf(brush.position.x - 1.8) < 0.01, "Top-view projection also reaches tiles")
-	print("CLEANING CHECKS COMPLETE: ", checks," checks, ",failures, " failures; mouse/touch, swept hits, both fling directions, surface contact, natural disappearance, full removal, reset and idle sleep.")
+	print("CLEANING CHECKS COMPLETE: ", checks," checks, ",failures, " failures; mouse/touch, swept hits, both fling directions, surface contact, retained floor dirt, cleaning income, full removal, reset and idle sleep.")
 	workshop.free()
 	quit(0 if failures == 0 else 1)
 

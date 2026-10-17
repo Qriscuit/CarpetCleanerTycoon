@@ -74,6 +74,7 @@ func cache_plant_parts() -> void:
 			plant_parts[part.mesh.get_instance_id()] = {"pivots":part.pivots, "tier":tier}
 
 func deformed_vertex(mesh: MeshInstance3D, vertex: Vector3) -> Vector3:
+	vertex = game.room._structural_motion.deformed_vertex(mesh, vertex)
 	if not plant_parts.has(mesh.get_instance_id()): return vertex
 	var part: Dictionary = plant_parts[mesh.get_instance_id()]
 	var scale: Vector3 = game.room._plant_upgrade_scales.get(part.tier, Vector3.ONE)

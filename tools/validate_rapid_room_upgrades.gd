@@ -87,7 +87,7 @@ func assert_next_quote(id: String) -> void:
 		id + " refreshes the current level and next price before another frame")
 	check(button().text.contains(MONEY.format(float(quote.cost))), id + " labels its latest independent price")
 	check(not button().disabled, id + " leaves its affordable native Upgrade button enabled during VFX")
-	var counter := "Makeovers complete" if int(quote.next_visual_level) < 0 else "%d / %d" % [int(quote.level) - ROOM.milestone_start(id, int(quote.level), ledger.active_store), int(quote.visual_step)]
+	var counter := "%d / %d" % [int(quote.level), int(quote.max_level)] if int(quote.next_visual_level) < 0 else "%d / %d" % [int(quote.level) - ROOM.milestone_start(id, int(quote.level), ledger.active_store), int(quote.visual_step)]
 	check(panel.get_node("%ProgressState").text == counter,
 		id + " refreshes its transformation step immediately")
 	check(panel.get_node("%CleanValue").text == "%s → %s" % [MONEY.format(float(quote.full_reward)), MONEY.format(float(quote.next_full))],
@@ -321,10 +321,73 @@ func validate_gates() -> void:
 		tap(button().get_global_rect().get_center())
 	check(ledger._capture_state() == before, "Rapid final-level touches cannot exceed the store cap or spend extra money")
 	advance_feedback(0.95)
-	check(int(room.levels.walls) == cap and int(room.visual_tiers.walls) == ROOM.visual_count("walls") and game.hud.room_panel.get_node("%ProgressState").text == "Makeovers complete",
-		"The final income upgrade retains the last authored mesh without promising another makeover")
+	check(int(room.levels.walls) == cap and int(room.visual_tiers.walls) == ROOM.visual_count("walls") and game.hud.room_panel.get_node("%ProgressState").text == "Fully upgraded",
+		"The final income upgrade retains the last authored mesh and completes at its actual cap")
 	tap(game.hud.room_panel.get_node("%Close").get_global_rect().get_center())
 	check(game.soil.make_snapshot() == original_rug and ledger.active_job_id == original_job, "All blocked/retried purchases preserve the live carpet")
+
+
+func set_completion_fixture(id: String, level: int) -> void:
+	var branch: Dictionary = ledger._branch()
+	branch.room_upgrades[id] = level
+	branch.payout_level = ROOM.total_levels(branch.room_upgrades)
+	ledger.cash = 1000000000.0
+	check(ledger.save_state(), "%s completion fixture saves its real level%d" % [id, level])
+	ledger.changed.emit()
+	room.set_process(false)
+
+
+func validate_completion_progress() -> void:
+	var cap := ROOM.Progression.room_level_cap(ledger.active_store)
+	var panel: Control = game.hud.room_panel
+	for id: String in ROOM.IDS:
+		var milestones := ROOM.visual_milestones(id, ledger.active_store)
+		var last := milestones[-1]
+		check(last < cap, id + " first-store fixture leaves income upgrades after its last visual makeover")
+		set_completion_fixture(id, last - 1)
+		game.open_room_upgrade(id)
+		await settle()
+		var quote: Dictionary = ledger.room_upgrade_view(id)
+		var wallet: float = ledger.cash
+		tap(button().get_global_rect().get_center())
+		room.set_process(false)
+		check(int(ledger.room_upgrade_levels()[id]) == last and ledger.cash == wallet - float(quote.cost),
+			id + " buys its last authored makeover once at the quoted price")
+		check(panel.get_node("%ProgressState").text == "%d / %d" % [last, cap]
+			and not button().disabled and button().text != "Fully upgraded",
+			id + " last visual makeover immediately shows its remaining upgrade levels")
+		await create_timer(0.3).timeout
+		check(absf(panel.get_node("%TransformationProgress").value - float(last) / float(cap)) < 0.005,
+			id + " last visual makeover keeps its displayed progress bar incomplete")
+		advance_feedback(0.95)
+		check(int(room.visual_tiers[id]) == ROOM.visual_count(id), id + " reaches its final authored look before full upgrade completion")
+		quote = ledger.room_upgrade_view(id)
+		wallet = ledger.cash
+		tap(button().get_global_rect().get_center())
+		room.set_process(false)
+		check(int(ledger.room_upgrade_levels()[id]) == last + 1 and ledger.cash == wallet - float(quote.cost)
+			and panel.get_node("%ProgressState").text == "%d / %d" % [last + 1, cap] and not button().disabled,
+			id + " continues its real income upgrades after the last makeover")
+		advance_feedback(0.95)
+		set_completion_fixture(id, cap - 1)
+		check(panel.get_node("%ProgressState").text == "%d / %d" % [cap - 1, cap] and not button().disabled,
+			id + " penultimate level keeps the final upgrade available")
+		quote = ledger.room_upgrade_view(id)
+		wallet = ledger.cash
+		tap(button().get_global_rect().get_center())
+		room.set_process(false)
+		check(int(ledger.room_upgrade_levels()[id]) == cap and ledger.cash == wallet - float(quote.cost)
+			and panel.get_node("%ProgressState").text == "Fully upgraded" and button().disabled and button().text == "Fully upgraded",
+			id + " completes only when its final real upgrade is purchased")
+		var before: Dictionary = ledger._capture_state()
+		tap(button().get_global_rect().get_center())
+		check(ledger._capture_state() == before, id + " completed offer prevents any extra spend")
+		advance_feedback(0.95)
+		await create_timer(0.3).timeout
+		check(panel.get_node("%TransformationProgress").value == 1.0, id + " real cap fills its displayed progress bar")
+		tap(panel.get_node("%Close").get_global_rect().get_center())
+	check(game.soil.make_snapshot() == original_rug and ledger.active_job_id == original_job,
+		"All five completion transitions preserve the live carpet and its current job")
 
 
 func run() -> void:
@@ -357,6 +420,7 @@ func run() -> void:
 	await validate_bursts()
 	await validate_visual_phases()
 	await validate_gates()
+	await validate_completion_progress()
 	game.free()
 	current_scene = null
 	var audio := root.get_node_or_null("GameAudio")
