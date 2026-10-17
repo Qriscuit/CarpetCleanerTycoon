@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920"><title>bud lower left</title><defs>
+ <linearGradient id="bud_lower_left__ribbonA" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#77C9AE"/><stop offset=".45" stop-color="#A5D9C2"/><stop offset="1" stop-color="#2B817A"/></linearGradient>
+ <linearGradient id="bud_lower_left__ribbonB" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#154D54"/><stop offset=".45" stop-color="#2A8B7B"/><stop offset="1" stop-color="#77C9AE"/></linearGradient>
+ <linearGradient id="bud_lower_left__ribbonCream" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#FFF9E8"/><stop offset="1" stop-color="#F1E2BE"/></linearGradient>
+ <linearGradient id="bud_lower_left__leafDark" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#154D54"/><stop offset=".55" stop-color="#2A8277"/><stop offset="1" stop-color="#4EA78C"/></linearGradient>
+ <linearGradient id="bud_lower_left__leafLight" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#347F71"/><stop offset=".55" stop-color="#77C9AE"/><stop offset="1" stop-color="#B8DFB9"/></linearGradient>
+ <linearGradient id="bud_lower_left__petalCream" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFF9E8"/><stop offset=".5" stop-color="#FFEACD"/><stop offset="1" stop-color="#E9A58B"/></linearGradient>
+ <linearGradient id="bud_lower_left__petalHeart" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFFDF3"/><stop offset=".65" stop-color="#FFF0CE"/><stop offset="1" stop-color="#F4C299"/></linearGradient>
+ <linearGradient id="bud_lower_left__petalRose" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFF2DD"/><stop offset=".45" stop-color="#F2B99D"/><stop offset="1" stop-color="#E5775B"/></linearGradient>
+ <linearGradient id="bud_lower_left__outerPetal" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FAD8BC"/><stop offset="1" stop-color="#D96D58"/></linearGradient>
+ <linearGradient id="bud_lower_left__flowerCup" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFE9C7"/><stop offset="1" stop-color="#E99268"/></linearGradient>
+ <linearGradient id="bud_lower_left__koiBody" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFFDF2"/><stop offset=".55" stop-color="#FFF9E8"/><stop offset="1" stop-color="#DCCEB0"/></linearGradient>
+ <linearGradient id="bud_lower_left__koiTail" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F8DCC1"/><stop offset="1" stop-color="#EA9678"/></linearGradient>
+ <linearGradient id="bud_lower_left__koiCoral" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F1916D"/><stop offset="1" stop-color="#D56650"/></linearGradient>
+ <clipPath id="bud_lower_left__koiClip"><path d="M-122 7 C-102 -17 -72 -36 -31 -39 C4 -42 43 -35 72 -19 C91 -9 98 1 91 12 C74 32 41 42 6 44 C-52 48 -96 33 -122 7Z"/></clipPath>
+</defs><g transform="translate(198 1625) rotate(14)"><path d="M-4 48 C-16 81 -13 117 4 142" stroke="#397B6F" stroke-width="4" fill="none"/><path d="M-4 48 C-32 32 -32 -21 0 -67 C35 -19 35 28 -4 48Z" fill="url(#bud_lower_left__petalRose)"/><path d="M0 -61 C-7 -17 -6 17 -4 42" stroke="#FFEAD0" stroke-width="2" fill="none"/><path d="M-4 43 C-37 25 -42 2 -37 -6 C-14 7 -11 22 -4 43 M-4 43 C24 32 37 10 32 1 C7 9 3 30 -4 43" fill="#2A8277"/></g></svg>

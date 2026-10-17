@@ -10,6 +10,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -60,7 +61,14 @@ def source_color(stream, clip):
     return matrix, video_range
 
 
-def video_filter(crop=None, matrix="bt601", video_range="pc"):
+def canvas_color(value="0xFFF5DD"):
+    """Restrict canvas colors to portable RGB literals, not filter expressions."""
+    if not isinstance(value, str) or not re.fullmatch(r"(?:#|0x)[0-9a-fA-F]{6}", value):
+        raise ValueError("canvas_color must be an RGB color such as '#FFF9E8' or '0xFFF9E8'.")
+    return "0x" + value.removeprefix("#").removeprefix("0x").upper()
+
+
+def video_filter(crop=None, matrix="bt601", video_range="pc", picture_slot=None, color="0xFFF5DD"):
     parts = []
     if crop:
         x, y, w, h = crop
@@ -68,9 +76,12 @@ def video_filter(crop=None, matrix="bt601", video_range="pc"):
     # A crop is a framing choice. Every subsequent resize keeps the original aspect.
     # Decode the actual source YUV matrix/range into RGB before compositing PNG art.
     # Merely tagging a 601 YUV picture as 709 shifts the game's and vector kit's hues.
-    parts.extend([f"scale={WIDTH}:{HEIGHT}:force_original_aspect_ratio=decrease:flags=lanczos:"
+    x, y, width, height = picture_slot or (0, 0, WIDTH, HEIGHT)
+    pad_x = f"{x}+({width}-iw)/2" if picture_slot else "(ow-iw)/2"
+    pad_y = f"{y}+({height}-ih)/2" if picture_slot else "(oh-ih)/2"
+    parts.extend([f"scale={width}:{height}:force_original_aspect_ratio=decrease:flags=lanczos:"
                   f"in_color_matrix={matrix}:in_range={video_range}:out_range=pc", "format=rgba",
-                  f"pad={WIDTH}:{HEIGHT}:(ow-iw)/2:(oh-ih)/2:color=0xFFF5DD",
+                  f"pad={WIDTH}:{HEIGHT}:{pad_x}:{pad_y}:color={color}",
                   "setsar=1", f"fps={FPS}"])
     return ",".join(parts)
 
@@ -142,6 +153,16 @@ def validate(edit, base, ffprobe):
             x, y, w, h = crop
             if min(x, y) < 0 or min(w, h) <= 0 or x + w > video["width"] or y + h > video["height"]:
                 raise ValueError(f"Clip {clip['id']} crop exceeds {video['width']}×{video['height']} source.")
+        if "picture_slot" in clip:
+            slot = clip["picture_slot"]
+            if not isinstance(slot, list) or len(slot) != 4 or any(type(v) is not int for v in slot):
+                raise ValueError("picture_slot must be four integer canvas pixels [x,y,width,height].")
+            x, y, w, h = slot
+            if min(x, y) < 0 or min(w, h) <= 0 or x + w > WIDTH or y + h > HEIGHT:
+                raise ValueError(f"Clip {clip['id']} picture_slot exceeds the {WIDTH}×{HEIGHT} canvas.")
+            if clip.get("kind") == "endcard":
+                raise ValueError("picture_slot applies to gameplay, freeze and hero clips; static endcards use hero_slot.")
+        canvas_color(clip.get("canvas_color", "0xFFF5DD"))
         for key in ("background", "audio_source"):
             if clip.get(key) and not resolve(base, clip[key]).is_file():
                 raise FileNotFoundError(resolve(base, clip[key]))
@@ -252,6 +273,8 @@ def main():
         matrix, video_range = source_color(video_stream, clip)
         start, frames = float(clip.get("in", 0)), clip["frames"]
         duration = frames / FPS
+        slot = clip.get("picture_slot")
+        color = canvas_color(clip.get("canvas_color", "0xFFF5DD"))
         silent = clip.get("audio", "source") == "mute" or clip.get("kind") in STILL_KINDS
         intermediate = work / f"{name}.mkv"
         layers = overlay_layers(clip)
@@ -273,7 +296,7 @@ def main():
             command = ff + ["-loop", 1, "-framerate", FPS, "-i", card]
         elif clip.get("kind") in ("freeze", "hero"):
             hero = assets / f"{name}_hero.png"
-            run(ff + ["-ss", start, "-i", source, "-vf", video_filter(clip.get("crop"), matrix, video_range),
+            run(ff + ["-ss", start, "-i", source, "-vf", video_filter(clip.get("crop"), matrix, video_range, slot, color),
                       "-frames:v", 1, "-update", 1, hero])
             command = ff + ["-loop", 1, "-framerate", FPS, "-i", hero]
         else:
@@ -294,7 +317,10 @@ def main():
                                                "source": str(resolve(base, layer["source"])),
                                                "output": str(assets / f"{layer_name}.png")}, assets)
             command += ["-loop", 1, "-framerate", FPS, "-i", overlay]
-        picture = video_filter(None, "bt709", "pc") if clip.get("kind") in STILL_KINDS else video_filter(clip.get("crop"), matrix, video_range)
+        # Freeze/hero PNGs have already been cropped, fitted and padded above.
+        # Reapplying their picture_slot here would shrink the entire canvas twice.
+        picture = (video_filter(None, "bt709", "pc") if clip.get("kind") in STILL_KINDS else
+                   video_filter(clip.get("crop"), matrix, video_range, slot, color))
         if clip.get("kind") in ("freeze", "hero"):
             zoom_start, zoom_end = clip.get("freeze_zoom", [1, 1.03])
             # Presentation motion applies only to a disclosed recorded still; the
@@ -339,6 +365,7 @@ def main():
         rendered.append(intermediate)
         timeline.append({**clip, "timeline_in_frame": clock_frames, "timeline_out_frame_exclusive": clock_frames + frames,
                          "source_color_matrix": matrix, "source_color_range": video_range,
+                         "picture_slot": slot or [0, 0, WIDTH, HEIGHT], "canvas_color": color,
                          "intermediate": str(intermediate.relative_to(base))})
         clock_frames += frames
     concat_file = work / "concat.txt"

@@ -1,0 +1,32 @@
+{
+  "timeline": "Both 15s; identical 5–15s body",
+  "nativeEnding": {
+    "suction": 1.8,
+    "reveal": 2.4,
+    "departureToExit": 1.95
+  },
+  "nativeVectorAssets": [
+    {
+      "file": "pond_border.svg",
+      "paths": 168
+    },
+    {
+      "file": "opening_overlay.svg",
+      "paths": 32
+    },
+    {
+      "file": "hook_overlay.svg",
+      "paths": 34
+    },
+    {
+      "file": "title_overlay.svg",
+      "paths": 40
+    },
+    {
+      "file": "cta_ribbon.svg",
+      "paths": 25
+    }
+  ],
+  "browser": "No errors; images load; desktop and phone fit",
+  "scope": "Artwork and preproduction only; no game code or player saves touched"
+}

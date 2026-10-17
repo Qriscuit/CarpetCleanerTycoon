@@ -1,0 +1,18 @@
+{
+  "first_gameplay_frame": "ai_handoff\\AI_Hook_End_Target_Composed.png",
+  "raw_reference": "ai_handoff\\AI_Hook_End_Target_Raw.png",
+  "tool": "Actual mint wide brush, not a wet squeegee; current paid build uses brush cleaning.",
+  "picture_crop": [
+    270,
+    880,
+    540,
+    730
+  ],
+  "picture_slot": [
+    100,
+    500,
+    880,
+    980
+  ],
+  "instruction": "End the future five-second illustration at the supplied frame pose and continue the actual brush movement. Keep printed koi/lotus still; generate no fake gameplay HUD."
+}

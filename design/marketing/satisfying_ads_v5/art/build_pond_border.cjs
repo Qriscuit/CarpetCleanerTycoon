@@ -1,0 +1,76 @@
+const fs = require('fs');
+const path = require('path');
+const sharp = require('C:/Users/Hurshuuuuuu/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/sharp');
+const out = __dirname;
+const leaf = (x,y,s,r,light=false) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${s})"><path d="M0 0 C29 -10 36 -59 104 -95 C134 -40 114 7 57 13 C33 15 10 7 0 0Z" fill="url(#${light?'leafLight':'leafDark'})"/><path d="M3 1 C44 -8 72 -40 103 -93" fill="none" stroke="${light?'#FFF9E8':'#77C9AE'}" stroke-width="2" opacity=".6"/><path d="M48 -17 C54 -36 69 -55 80 -59 M70 -38 C93 -35 105 -34 114 -35" fill="none" stroke="#FFF9E8" stroke-width="1" opacity=".25"/></g>`;
+const petal = (rot,s,g,stroke='') => `<path transform="rotate(${rot}) scale(${s})" d="M0 43 C-45 34 -65 -7 -53 -56 C-45 -86 -19 -118 0 -153 C18 -119 46 -87 53 -56 C65 -7 45 34 0 43Z" fill="url(#${g})" ${stroke?`stroke="${stroke}" stroke-width="1.7"`:''}/><path transform="rotate(${rot}) scale(${s})" d="M0 32 C-7 -20 -9 -78 0 -142" stroke="#FFF9E8" stroke-width="1.2" fill="none" opacity=".45"/>`;
+const lotus = (x,y,s,r=0) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${s})"><path d="M-9 41 C-21 71 -55 78 -67 54 C-31 60 -25 40 -9 34 M10 40 C27 63 56 81 78 53 C45 65 26 40 10 32" fill="#1F6866"/><path d="M-8 37 C-69 44 -138 4 -149 -50 C-87 -54 -52 -28 -8 37Z" fill="url(#outerPetal)"/><path d="M8 37 C69 44 138 4 149 -50 C87 -54 52 -28 8 37Z" fill="url(#outerPetal)"/>${petal(-48,.98,'petalRose')}${petal(48,.98,'petalRose')}${petal(-25,1.09,'petalCream')}${petal(25,1.09,'petalCream')}${petal(0,1.09,'petalHeart','#F6D9AD')}<path d="M-41 22 C-32 -20 -16 -27 0 21 C17 -27 33 -20 43 22 C28 45 -24 45 -41 22Z" fill="url(#flowerCup)"/><path d="M-25 14 C-14 23 -8 28 0 31 C8 26 19 23 26 14" fill="none" stroke="#EDBA43" stroke-width="5" stroke-linecap="round"/><g fill="#EDBA43"><circle cx="-25" cy="11" r="3"/><circle cx="-13" cy="18" r="3"/><circle cx="0" cy="21" r="3"/><circle cx="13" cy="18" r="3"/><circle cx="25" cy="11" r="3"/></g><path d="M-121 -36 C-94 -29 -63 -7 -31 24 M121 -36 C94 -29 63 -7 31 24" stroke="#FFF9E8" stroke-width="1.5" fill="none" opacity=".8"/></g>`;
+const koi = (x,y,s,r) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${s})"><path d="M-114 1 C-132 -14 -153 -40 -194 -42 C-191 -14 -176 -1 -164 7 C-184 16 -197 30 -200 56 C-157 47 -135 24 -114 13Z" fill="url(#koiTail)"/><path d="M-181 -29 C-160 -13 -143 -2 -120 7 M-181 41 C-161 28 -140 15 -120 9" stroke="#FFF9E8" stroke-width="2" fill="none" opacity=".55"/><path d="M-72 -22 C-53 -51 -17 -62 7 -45 C-10 -30 -29 -19 -45 -11 M-41 27 C-11 26 20 39 15 65 C-12 64 -36 51 -56 31" fill="#F3CBA5"/><path d="M-122 7 C-102 -17 -72 -36 -31 -39 C4 -42 43 -35 72 -19 C91 -9 98 1 91 12 C74 32 41 42 6 44 C-52 48 -96 33 -122 7Z" fill="url(#koiBody)"/><g clip-path="url(#koiClip)"><path d="M-62 -53 C-86 -8 -44 5 -24 6 C-5 6 11 -7 5 -40Z M36 -36 C18 -15 48 -2 39 19 C33 34 50 56 78 40 L114 -19Z M-111 -1 C-103 12 -91 23 -70 24 C-59 11 -81 3 -87 -11Z" fill="url(#koiCoral)"/><path d="M-15 -38 C-1 -21 10 -3 7 12 C22 10 28 -8 26 -25Z" fill="#154D54" opacity=".8"/></g><path d="M-91 -9 C-51 -30 6 -31 41 -20" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" opacity=".6"/><path d="M73 -10 C69 0 70 12 77 17" stroke="#D6C5A5" stroke-width="1.5" fill="none"/><ellipse cx="76" cy="-6" rx="3.7" ry="4.3" fill="#154D54"/><circle cx="77" cy="-7" r="1.1" fill="#FFFFFF"/><path d="M90 5 C98 4 99 5 103 7" fill="none" stroke="#E5775B" stroke-width="1.5" stroke-linecap="round"/></g>`;
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920" role="img" aria-label="Flowing lotus and koi pond garden vector border, transparent center for gameplay">
+<defs>
+ <linearGradient id="ribbonA" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#77C9AE"/><stop offset=".45" stop-color="#A5D9C2"/><stop offset="1" stop-color="#2B817A"/></linearGradient>
+ <linearGradient id="ribbonB" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#154D54"/><stop offset=".45" stop-color="#2A8B7B"/><stop offset="1" stop-color="#77C9AE"/></linearGradient>
+ <linearGradient id="ribbonCream" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#FFF9E8"/><stop offset="1" stop-color="#F1E2BE"/></linearGradient>
+ <linearGradient id="leafDark" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#154D54"/><stop offset=".55" stop-color="#2A8277"/><stop offset="1" stop-color="#4EA78C"/></linearGradient>
+ <linearGradient id="leafLight" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#347F71"/><stop offset=".55" stop-color="#77C9AE"/><stop offset="1" stop-color="#B8DFB9"/></linearGradient>
+ <linearGradient id="petalCream" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFF9E8"/><stop offset=".5" stop-color="#FFEACD"/><stop offset="1" stop-color="#E9A58B"/></linearGradient>
+ <linearGradient id="petalHeart" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFFDF3"/><stop offset=".65" stop-color="#FFF0CE"/><stop offset="1" stop-color="#F4C299"/></linearGradient>
+ <linearGradient id="petalRose" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFF2DD"/><stop offset=".45" stop-color="#F2B99D"/><stop offset="1" stop-color="#E5775B"/></linearGradient>
+ <linearGradient id="outerPetal" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FAD8BC"/><stop offset="1" stop-color="#D96D58"/></linearGradient>
+ <linearGradient id="flowerCup" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFE9C7"/><stop offset="1" stop-color="#E99268"/></linearGradient>
+ <linearGradient id="koiBody" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#FFFDF2"/><stop offset=".55" stop-color="#FFF9E8"/><stop offset="1" stop-color="#DCCEB0"/></linearGradient>
+ <linearGradient id="koiTail" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F8DCC1"/><stop offset="1" stop-color="#EA9678"/></linearGradient>
+ <linearGradient id="koiCoral" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#F1916D"/><stop offset="1" stop-color="#D56650"/></linearGradient>
+ <clipPath id="koiClip"><path d="M-122 7 C-102 -17 -72 -36 -31 -39 C4 -42 43 -35 72 -19 C91 -9 98 1 91 12 C74 32 41 42 6 44 C-52 48 -96 33 -122 7Z"/></clipPath>
+</defs>
+<!-- Broad sculpted currents; edges are open and asymmetric, never a rectangular text plate. -->
+<path d="M-90 -40 L923 -40 C1010 37 960 141 862 141 C745 141 748 48 589 38 C385 26 316 196 142 267 C28 314 -62 271 -90 217Z" fill="url(#ribbonA)"/>
+<path d="M-38 4 C165 85 183 171 313 150 C418 132 467 56 594 69 C696 79 746 131 797 136 C616 164 593 113 512 122 C392 136 341 233 226 248 C109 263 71 200 -38 214Z" fill="url(#ribbonCream)"/>
+<path d="M-80 162 C35 233 84 229 183 196 C267 168 320 87 404 73 C305 127 311 206 228 251 C130 301 51 298 -40 383Z" fill="url(#ribbonB)"/>
+<path d="M-4 188 C112 267 185 218 280 149 C323 118 361 93 407 86" fill="none" stroke="#EFC267" stroke-width="3" opacity=".85"/>
+<path d="M-18 202 C99 281 176 234 273 165" fill="none" stroke="#FFF9E8" stroke-width="2" opacity=".7"/>
+<path d="M706 -12 C690 55 735 106 804 101 C871 96 874 54 887 37 C907 91 886 143 831 152 C756 164 698 125 677 72 C660 32 653 11 623 -12Z" fill="#154D54"/>
+<path d="M727 -7 C703 70 765 128 822 118 C864 111 874 78 883 55" fill="none" stroke="#A9DCC1" stroke-width="2" opacity=".75"/>
+<path d="M-110 1684 C12 1599 104 1555 191 1608 C294 1671 266 1782 403 1804 C527 1825 592 1741 711 1687 C863 1619 1016 1674 1169 1655 L1169 1990 L-110 1990Z" fill="url(#ribbonA)"/>
+<path d="M-67 1869 C152 1811 172 1697 96 1651 C211 1681 263 1845 420 1839 C603 1832 665 1714 804 1707 C944 1700 1045 1780 1141 1726 L1141 1841 C1001 1900 895 1793 779 1770 C652 1745 609 1913 443 1927 C222 1946 173 1808 -67 1950Z" fill="url(#ribbonCream)"/>
+<path d="M-78 1784 C74 1793 207 1841 260 1889 C161 1761 135 1695 113 1655 C234 1693 257 1800 350 1836 C452 1875 495 1830 542 1827 C455 1899 351 1907 258 1874 C129 1828 48 1893 -78 1892Z" fill="url(#ribbonB)"/>
+<path d="M628 1919 C700 1820 773 1788 858 1815 C944 1842 972 1882 1085 1864 L1115 1969Z" fill="#154D54"/>
+<path d="M-50 1737 C81 1681 166 1720 236 1819 C303 1914 415 1881 493 1854" fill="none" stroke="#EDBA43" stroke-width="3"/>
+<path d="M506 1920 C637 1872 661 1779 798 1755 C925 1734 1026 1808 1102 1779" fill="none" stroke="#DCA43E" stroke-width="3"/>
+<path d="M535 1919 C657 1876 687 1788 802 1769 C929 1747 1021 1820 1102 1792" fill="none" stroke="#FFF9E8" stroke-width="2" opacity=".8"/>
+<!-- Botanical stems follow the currents and curl off-frame. -->
+<g fill="none" stroke-linecap="round">
+ <path d="M-28 426 C58 337 162 332 193 254 C223 177 178 122 252 65 C287 38 331 49 324 81 C318 107 279 105 279 85" stroke="#C69B48" stroke-width="3"/>
+ <path d="M-31 373 C71 308 24 192 86 151 C125 126 183 142 188 184" stroke="#F4C86A" stroke-width="2"/>
+ <path d="M956 -26 C998 68 1068 117 1072 209 C1075 278 1029 334 1048 405" stroke="#D4A344" stroke-width="3"/>
+ <path d="M998 150 C947 119 902 133 920 166 C930 184 952 174 952 161" stroke="#D4A344" stroke-width="2"/>
+ <path d="M1150 1678 C1017 1536 892 1536 850 1648 C804 1772 907 1888 830 1962" stroke="#D9AA4D" stroke-width="4"/>
+ <path d="M1049 1757 C967 1692 957 1593 1003 1527 C1037 1478 1094 1489 1096 1530 C1099 1559 1063 1580 1046 1558" stroke="#EFC267" stroke-width="2"/>
+ <path d="M-10 1836 C81 1779 12 1672 39 1570 C53 1514 105 1508 117 1550 C128 1588 74 1602 71 1567" stroke="#D3A346" stroke-width="3"/>
+ <path d="M168 1931 C199 1802 120 1675 143 1577" stroke="#C69B48" stroke-width="2"/>
+</g>
+${leaf(30,364,1.03,-22)}${leaf(105,327,.76,-148,true)}${leaf(169,278,.7,-2)}${leaf(184,224,.76,-159)}${leaf(212,117,.64,-9,true)}${leaf(246,72,.53,-127)}
+${leaf(1048,386,.61,170)}${leaf(1065,297,.7,-164,true)}${leaf(1060,224,.64,66)}${leaf(1016,142,.75,179)}${leaf(972,83,.7,78,true)}
+${leaf(911,1916,1.23,164)}${leaf(882,1845,1.14,14,true)}${leaf(850,1734,1.1,185)}${leaf(858,1668,.96,45)}${leaf(944,1586,.85,188,true)}${leaf(1036,1674,.82,73,true)}${leaf(1027,1591,.74,189)}
+${leaf(39,1690,.72,-166,true)}${leaf(30,1770,.91,-6)}${leaf(151,1700,.75,-3,true)}${leaf(170,1810,.72,161)}
+<!-- One side-facing lotus above; a larger bloom opens into the bottom current. -->
+${lotus(112,213,.89,-24)}
+${lotus(972,1763,1.32,19)}
+${lotus(1029,298,.46,-33)}
+<!-- Bud with two unfurling curves. -->
+<g transform="translate(198 1625) rotate(14)"><path d="M-4 48 C-16 81 -13 117 4 142" stroke="#397B6F" stroke-width="4" fill="none"/><path d="M-4 48 C-32 32 -32 -21 0 -67 C35 -19 35 28 -4 48Z" fill="url(#petalRose)"/><path d="M0 -61 C-7 -17 -6 17 -4 42" stroke="#FFEAD0" stroke-width="2" fill="none"/><path d="M-4 43 C-37 25 -42 2 -37 -6 C-14 7 -11 22 -4 43 M-4 43 C24 32 37 10 32 1 C7 9 3 30 -4 43" fill="#2A8277"/></g>
+<!-- Two little fish, drawn with curved fins, tails, coral saddle markings and cream body shading. -->
+${koi(840,225,.83,14)}
+${koi(188,1804,.87,-24)}
+<g fill="none" stroke="#77C9AE" stroke-width="2" opacity=".7">
+ <path d="M761 283 C805 308 870 310 922 289"/><path d="M738 295 C801 327 882 328 943 301"/>
+ <path d="M70 1764 C91 1727 139 1704 190 1716"/><path d="M61 1743 C91 1702 143 1686 192 1698"/>
+</g>
+<!-- Long, tapering current strands add movement without filling the clean center. -->
+<path d="M14 444 C61 401 104 421 101 476 C99 513 46 533 27 562 C79 545 131 509 132 465 C135 401 68 365 14 444Z" fill="#77C9AE" opacity=".5"/>
+<path d="M1031 1444 C992 1495 1029 1520 1063 1552 C1092 1580 1097 1611 1078 1639 C1133 1590 1093 1539 1064 1518 C1038 1499 1023 1476 1031 1444Z" fill="#77C9AE" opacity=".65"/>
+<g fill="#EDBA43"><path d="M273 312 C270 304 270 299 273 291 C276 299 276 304 273 312Z"/><path d="M273 312 C264 309 260 306 255 301 C263 301 270 305 273 312Z"/><path d="M762 1610 C759 1602 760 1597 763 1591 C766 1599 766 1604 762 1610Z"/></g>
+</svg>`;
+fs.mkdirSync(out,{recursive:true});
+fs.writeFileSync(path.join(out,'pond_border.svg'),svg);
+sharp(Buffer.from(svg)).resize(540,960).png().toFile(path.join(out,'pond_border_preview.png')).then(()=>console.log('Created transparent 1080 × 1920 pond_border.svg and preview.'));

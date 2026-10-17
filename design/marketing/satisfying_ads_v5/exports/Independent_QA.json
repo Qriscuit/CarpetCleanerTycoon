@@ -1,0 +1,109 @@
+{
+  "status": "pass",
+  "failures": [],
+  "A": {
+    "file": "Carpet_Cleaner_Pond_Garden_A_15s.mp4",
+    "frames": 450,
+    "video_seconds": 15.0,
+    "audio_seconds": 15.0,
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "color": "BT.709 limited",
+    "sample_rate": 48000,
+    "channels": 2,
+    "integrated_lufs": -18.01,
+    "true_peak_dbtp": -3.1,
+    "decode_errors": false,
+    "black_intervals": [],
+    "sha256": "492fd8e56fc6c15e2ed44095e3ff308e2a9c462cec72214d83beb7abccd511aa"
+  },
+  "B": {
+    "file": "Carpet_Cleaner_Pond_Garden_B_Gameplay_10s.mp4",
+    "frames": 300,
+    "video_seconds": 10.0,
+    "audio_seconds": 10.0,
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "color": "BT.709 limited",
+    "sample_rate": 48000,
+    "channels": 2,
+    "integrated_lufs": -18.87,
+    "true_peak_dbtp": -3.11,
+    "decode_errors": false,
+    "black_intervals": [],
+    "sha256": "0b39586f5130baa207ed37d3303484009ed2f87efcdae183efe208789af6a015"
+  },
+  "audio_comparison": {
+    "reference": "Carpet_Cleaner_Mix.wav samples240000..719999 (5\u201315s)",
+    "reference_samples_per_channel": 480000,
+    "decoded_samples_per_channel_including_codec_padding": 480256,
+    "compared_samples_per_channel": 480000,
+    "correlation_at_zero_offset": 0.9995395676676684,
+    "aac_difference_snr_db": 30.358672278296694,
+    "conclusion": "Entire 10-second master mix excerpt retained with expected AAC encoding error"
+  },
+  "visual_endcard_review": {
+    "frame": "stills/review_frame_08.png",
+    "hud_absent": true,
+    "title_room_overlap": false,
+    "cta_clear": true,
+    "empty_room_visible": true
+  },
+  "notes": [
+    "B is the finished 10-second gameplay body only; no AI hook generated or placeholder included.",
+    "B integrated loudness differs naturally from A because the same normalized master mix is excerpted."
+  ],
+  "picture_comparison": {
+    "reference": "A lossless picture_lock.mkv frames150..449",
+    "frames_compared": 300,
+    "timestamp_method": "Both streams normalized to N/(30*TB) to avoid Matroska millisecond rounding in framesync",
+    "psnr_db": {
+      "y": 53.862351,
+      "u": 55.34883,
+      "v": 54.903333,
+      "average": 54.242589,
+      "minimum_frame": 48.181773,
+      "maximum_frame": 57.33212
+    },
+    "conclusion": "Correct 300-frame excerpt within expected H.264 encoding error"
+  },
+  "capture": {
+    "sessions": [
+      {
+        "session": "pond-paid-001",
+        "production_files_verified": 346,
+        "production_sources_unchanged": true,
+        "snapshot_changes": "Viewport configuration and Godot-added default import settings only",
+        "import_sidecars_with_added_defaults": 20,
+        "native_speed": true,
+        "mask_fixture": false,
+        "earned_resume": null,
+        "native_phase_frames": null,
+        "take_success": false,
+        "first_take_note": "A uses valid earned footage preceding later focus loss; second take deliberately resumes its earned save",
+        "engine": "Godot4.7.2stableMono"
+      },
+      {
+        "session": "pond-paid-002",
+        "production_files_verified": 346,
+        "production_sources_unchanged": true,
+        "snapshot_changes": "Viewport configuration and Godot-added default import settings only",
+        "import_sidecars_with_added_defaults": 20,
+        "native_speed": true,
+        "mask_fixture": false,
+        "earned_resume": "pond-paid-001",
+        "native_phase_frames": {
+          "suction": 54,
+          "reveal": 72,
+          "departure": 71
+        },
+        "take_success": true,
+        "first_take_note": null,
+        "engine": "Godot4.7.2stableMono"
+      }
+    ],
+    "raw_recordings_hashes_match_edit_report": true
+  }
+}

@@ -1,0 +1,6 @@
+file 'S:/Game Projects/CarpetCleanerTycoon/design/marketing/satisfying_ads_v5/exports/intermediates/01_clean_lane.mkv'
+file 'S:/Game Projects/CarpetCleanerTycoon/design/marketing/satisfying_ads_v5/exports/intermediates/02_last_patch.mkv'
+file 'S:/Game Projects/CarpetCleanerTycoon/design/marketing/satisfying_ads_v5/exports/intermediates/03_native_suction.mkv'
+file 'S:/Game Projects/CarpetCleanerTycoon/design/marketing/satisfying_ads_v5/exports/intermediates/04_native_clean_reveal.mkv'
+file 'S:/Game Projects/CarpetCleanerTycoon/design/marketing/satisfying_ads_v5/exports/intermediates/05_native_room_and_exit.mkv'
+file 'S:/Game Projects/CarpetCleanerTycoon/design/marketing/satisfying_ads_v5/exports/intermediates/06_empty_room_title.mkv'

@@ -1,0 +1,473 @@
+{
+  "edit": "S:\\Game Projects\\CarpetCleanerTycoon\\design\\marketing\\satisfying_ads_v5\\edit_A.json",
+  "canvas": [
+    1080,
+    1920
+  ],
+  "fps": 30,
+  "frames": 450,
+  "seconds": 15.0,
+  "speed": 1,
+  "sources_preserved": true,
+  "clips": [
+    {
+      "id": "clean_lane",
+      "source": "../../../build/ad-capture-v5/pond-paid-001/restorations.avi",
+      "in": 50.56666666666667,
+      "frames": 150,
+      "crop": [
+        310,
+        980,
+        460,
+        550
+      ],
+      "picture_slot": [
+        100,
+        520,
+        880,
+        950
+      ],
+      "canvas_color": "0xFFF9E8",
+      "audio_gain": 1.0,
+      "overlays": [
+        {
+          "source": "production_art/upper_garden.svg",
+          "motion": {
+            "enter": 0,
+            "rise": 0
+          }
+        },
+        {
+          "source": "production_art/lower_garden.svg",
+          "motion": {
+            "enter": 0,
+            "rise": 0
+          }
+        },
+        {
+          "source": "production_art/opening_lettering.svg",
+          "at": 0,
+          "until": 2.6,
+          "motion": {
+            "enter": 0.15,
+            "exit": 0.25,
+            "rise": 8
+          }
+        }
+      ],
+      "timeline_in_frame": 0,
+      "timeline_out_frame_exclusive": 150,
+      "source_color_matrix": "bt601",
+      "source_color_range": "pc",
+      "intermediate": "exports\\intermediates\\01_clean_lane.mkv"
+    },
+    {
+      "id": "last_patch",
+      "source": "../../../build/ad-capture-v5/pond-paid-002/restorations.avi",
+      "in": 39.86666666666667,
+      "frames": 54,
+      "crop": [
+        270,
+        880,
+        540,
+        730
+      ],
+      "picture_slot": [
+        100,
+        500,
+        880,
+        980
+      ],
+      "canvas_color": "0xFFF9E8",
+      "overlays": [
+        {
+          "source": "production_art/upper_garden.svg",
+          "motion": {
+            "enter": 0,
+            "rise": 0
+          }
+        },
+        {
+          "source": "production_art/lower_garden.svg",
+          "motion": {
+            "enter": 0,
+            "rise": 0
+          }
+        }
+      ],
+      "timeline_in_frame": 150,
+      "timeline_out_frame_exclusive": 204,
+      "source_color_matrix": "bt601",
+      "source_color_range": "pc",
+      "intermediate": "exports\\intermediates\\02_last_patch.mkv"
+    },
+    {
+      "id": "native_suction",
+      "source": "../../../build/ad-capture-v5/pond-paid-002/restorations.avi",
+      "in": 41.666666666666664,
+      "frames": 54,
+      "crop": [
+        270,
+        880,
+        540,
+        730
+      ],
+      "picture_slot": [
+        100,
+        500,
+        880,
+        980
+      ],
+      "canvas_color": "0xFFF9E8",
+      "overlays": [
+        {
+          "source": "production_art/upper_garden.svg",
+          "motion": {
+            "enter": 0,
+            "rise": 0
+          }
+        },
+        {
+          "source": "production_art/lower_garden.svg",
+          "motion": {
+            "enter": 0,
+            "rise": 0
+          }
+        }
+      ],
+      "timeline_in_frame": 204,
+      "timeline_out_frame_exclusive": 258,
+      "source_color_matrix": "bt601",
+      "source_color_range": "pc",
+      "intermediate": "exports\\intermediates\\03_native_suction.mkv"
+    },
+    {
+      "id": "native_clean_reveal",
+      "source": "../../../build/ad-capture-v5/pond-paid-002/restorations.avi",
+      "in": 43.46666666666667,
+      "frames": 72,
+      "crop": [
+        250,
+        490,
+        590,
+        750
+      ],
+      "picture_slot": [
+        100,
+        480,
+        880,
+        1000
+      ],
+      "canvas_color": "0xFFF9E8",
+      "overlays": [
+        {
+          "source": "production_art/upper_garden.svg",
+          "motion": {
+            "enter": 0,
+            "rise": 0
+          }
+        },
+        {
+          "source": "production_art/lower_garden.svg",
+          "motion": {
+            "enter": 0,
+            "rise": 0
+          }
+        }
+      ],
+      "timeline_in_frame": 258,
+      "timeline_out_frame_exclusive": 330,
+      "source_color_matrix": "bt601",
+      "source_color_range": "pc",
+      "intermediate": "exports\\intermediates\\04_native_clean_reveal.mkv"
+    },
+    {
+      "id": "native_room_and_exit",
+      "source": "../../../build/ad-capture-v5/pond-paid-002/restorations.avi",
+      "in": 45.86666666666667,
+      "frames": 71,
+      "crop": [
+        120,
+        360,
+        840,
+        1310
+      ],
+      "picture_slot": [
+        90,
+        540,
+        900,
+        940
+      ],
+      "canvas_color": "0xFFF9E8",
+      "overlays": [
+        {
+          "source": "production_art/upper_garden.svg",
+          "motion": {
+            "enter": 0,
+            "rise": 0
+          }
+        },
+        {
+          "source": "production_art/lower_garden.svg",
+          "motion": {
+            "enter": 0,
+            "rise": 0
+          }
+        }
+      ],
+      "timeline_in_frame": 330,
+      "timeline_out_frame_exclusive": 401,
+      "source_color_matrix": "bt601",
+      "source_color_range": "pc",
+      "intermediate": "exports\\intermediates\\05_native_room_and_exit.mkv"
+    },
+    {
+      "id": "empty_room_title",
+      "kind": "freeze",
+      "source": "../../../build/ad-capture-v5/pond-paid-002/restorations.avi",
+      "in": 48.233333333333334,
+      "frames": 49,
+      "crop": [
+        90,
+        590,
+        930,
+        1100
+      ],
+      "picture_slot": [
+        90,
+        595,
+        900,
+        880
+      ],
+      "canvas_color": "0xFFF9E8",
+      "freeze_zoom": [
+        1,
+        1
+      ],
+      "overlays": [
+        {
+          "source": "production_art/upper_garden.svg",
+          "motion": {
+            "enter": 0,
+            "rise": 0
+          }
+        },
+        {
+          "source": "production_art/lower_garden.svg",
+          "motion": {
+            "enter": 0,
+            "rise": 0
+          }
+        },
+        {
+          "source": "production_art/ending_title.svg",
+          "motion": {
+            "enter": 0.16,
+            "rise": 9
+          }
+        },
+        {
+          "source": "production_art/cta_ribbon.svg",
+          "motion": {
+            "enter": 0.14,
+            "rise": 9
+          }
+        }
+      ],
+      "timeline_in_frame": 401,
+      "timeline_out_frame_exclusive": 450,
+      "source_color_matrix": "bt601",
+      "source_color_range": "pc",
+      "intermediate": "exports\\intermediates\\06_empty_room_title.mkv"
+    }
+  ],
+  "color_pipeline": "Source-metadata YUV decode -> RGB artwork composition -> explicit BT.709 limited-range YUV -> H.264; review PNGs decode BT.709 before Pillow JPEG encoding",
+  "source_files": [
+    {
+      "path": "S:\\Game Projects\\CarpetCleanerTycoon\\build\\ad-capture-v5\\pond-paid-001\\restorations.avi",
+      "bytes": 401476722,
+      "sha256": "423f10668d3c371625ac73469d2a94bf47f15e27d616ef704736fde9e83db903"
+    },
+    {
+      "path": "S:\\Game Projects\\CarpetCleanerTycoon\\build\\ad-capture-v5\\pond-paid-002\\restorations.avi",
+      "bytes": 199816978,
+      "sha256": "ca450284f6b1c62ac9af51b6309669ba0d40a6e90360a6b98697f43c6d8cbe1e"
+    }
+  ],
+  "audio": {
+    "target_lufs": -18.0,
+    "target_true_peak_dbtp": -1,
+    "premix_measurement": {
+      "input_i": "-29.92",
+      "input_tp": "-15.02",
+      "input_lra": "6.80",
+      "input_thresh": "-40.02",
+      "output_i": "-19.14",
+      "output_tp": "-5.35",
+      "output_lra": "5.00",
+      "output_thresh": "-29.20",
+      "normalization_type": "dynamic",
+      "target_offset": "1.14"
+    },
+    "music": {
+      "source": "../../../CarpetToy/assets/audio/quiet_shop_music_loop.wav",
+      "gain": 0.26,
+      "in": 3.0,
+      "fade_out": 0.75
+    },
+    "added_events": []
+  },
+  "output": "S:\\Game Projects\\CarpetCleanerTycoon\\design\\marketing\\satisfying_ads_v5\\exports\\Carpet_Cleaner_Pond_Garden_A_15s.mp4",
+  "output_probe": {
+    "streams": [
+      {
+        "index": 0,
+        "codec_name": "h264",
+        "codec_long_name": "H.264 / AVC / MPEG-4 AVC / MPEG-4 part 10",
+        "profile": "High",
+        "codec_type": "video",
+        "codec_tag_string": "avc1",
+        "codec_tag": "0x31637661",
+        "width": 1080,
+        "height": 1920,
+        "coded_width": 1080,
+        "coded_height": 1920,
+        "closed_captions": 0,
+        "film_grain": 0,
+        "has_b_frames": 2,
+        "sample_aspect_ratio": "1:1",
+        "display_aspect_ratio": "9:16",
+        "pix_fmt": "yuv420p",
+        "level": 42,
+        "color_range": "tv",
+        "color_space": "bt709",
+        "color_transfer": "bt709",
+        "color_primaries": "bt709",
+        "chroma_location": "center",
+        "field_order": "progressive",
+        "refs": 1,
+        "is_avc": "true",
+        "nal_length_size": "4",
+        "id": "0x1",
+        "r_frame_rate": "30/1",
+        "avg_frame_rate": "30/1",
+        "time_base": "1/15360",
+        "start_pts": 0,
+        "start_time": "0.000000",
+        "duration_ts": 230400,
+        "duration": "15.000000",
+        "bit_rate": "1168605",
+        "bits_per_raw_sample": "8",
+        "nb_frames": "450",
+        "extradata_size": 51,
+        "disposition": {
+          "default": 1,
+          "dub": 0,
+          "original": 0,
+          "comment": 0,
+          "lyrics": 0,
+          "karaoke": 0,
+          "forced": 0,
+          "hearing_impaired": 0,
+          "visual_impaired": 0,
+          "clean_effects": 0,
+          "attached_pic": 0,
+          "timed_thumbnails": 0,
+          "captions": 0,
+          "descriptions": 0,
+          "metadata": 0,
+          "dependent": 0,
+          "still_image": 0
+        },
+        "tags": {
+          "language": "und",
+          "handler_name": "VideoHandler",
+          "vendor_id": "[0][0][0][0]",
+          "encoder": "Lavc59.37.100 libx264"
+        }
+      },
+      {
+        "index": 1,
+        "codec_name": "aac",
+        "codec_long_name": "AAC (Advanced Audio Coding)",
+        "profile": "LC",
+        "codec_type": "audio",
+        "codec_tag_string": "mp4a",
+        "codec_tag": "0x6134706d",
+        "sample_fmt": "fltp",
+        "sample_rate": "48000",
+        "channels": 2,
+        "channel_layout": "stereo",
+        "bits_per_sample": 0,
+        "id": "0x2",
+        "r_frame_rate": "0/0",
+        "avg_frame_rate": "0/0",
+        "time_base": "1/48000",
+        "start_pts": 0,
+        "start_time": "0.000000",
+        "duration_ts": 720000,
+        "duration": "15.000000",
+        "bit_rate": "256037",
+        "nb_frames": "705",
+        "extradata_size": 5,
+        "disposition": {
+          "default": 1,
+          "dub": 0,
+          "original": 0,
+          "comment": 0,
+          "lyrics": 0,
+          "karaoke": 0,
+          "forced": 0,
+          "hearing_impaired": 0,
+          "visual_impaired": 0,
+          "clean_effects": 0,
+          "attached_pic": 0,
+          "timed_thumbnails": 0,
+          "captions": 0,
+          "descriptions": 0,
+          "metadata": 0,
+          "dependent": 0,
+          "still_image": 0
+        },
+        "tags": {
+          "language": "und",
+          "handler_name": "SoundHandler",
+          "vendor_id": "[0][0][0][0]"
+        }
+      }
+    ],
+    "format": {
+      "filename": "S:\\Game Projects\\CarpetCleanerTycoon\\design\\marketing\\satisfying_ads_v5\\exports\\Carpet_Cleaner_Pond_Garden_A_15s.mp4",
+      "nb_streams": 2,
+      "nb_programs": 0,
+      "format_name": "mov,mp4,m4a,3gp,3g2,mj2",
+      "format_long_name": "QuickTime / MOV",
+      "start_time": "0.000000",
+      "duration": "15.000000",
+      "size": "2689680",
+      "bit_rate": "1434496",
+      "probe_score": 100,
+      "tags": {
+        "major_brand": "isom",
+        "minor_version": "512",
+        "compatible_brands": "isomiso2avc1mp41",
+        "encoder": "Lavf59.27.100"
+      }
+    }
+  },
+  "review_images": {
+    "poster": "S:\\Game Projects\\CarpetCleanerTycoon\\design\\marketing\\satisfying_ads_v5\\stills\\ad_poster.jpg",
+    "poster_time": 1.6,
+    "contact_sheet": "S:\\Game Projects\\CarpetCleanerTycoon\\design\\marketing\\satisfying_ads_v5\\stills\\Contact_Sheet.jpg",
+    "frame_times": [
+      1.6,
+      5.6,
+      7.4,
+      9.5,
+      11.6,
+      12.4,
+      13.0,
+      14.2
+    ]
+  }
+}

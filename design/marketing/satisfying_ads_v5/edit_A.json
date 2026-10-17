@@ -1,0 +1,105 @@
+{
+  "recorded_gameplay": true,
+  "total_frames": 450,
+  "output_dir": "exports",
+  "filename": "Carpet_Cleaner_Pond_Garden_A_15s.mp4",
+  "stills_dir": "stills",
+  "review_title": "CARPET CLEANER / POND GARDEN / RECORDED GAMEPLAY",
+  "review_frame_times": [1.6, 5.6, 7.4, 9.5, 11.6, 12.4, 13.0, 14.2],
+  "poster_time": 1.6,
+  "target_lufs": -18,
+  "crf": 17,
+  "preset": "slow",
+  "music": {
+    "source": "../../../CarpetToy/assets/audio/quiet_shop_music_loop.wav",
+    "gain": 0.26,
+    "in": 3.0,
+    "fade_out": 0.75
+  },
+  "clips": [
+    {
+      "id": "clean_lane",
+      "source": "../../../build/ad-capture-v5/pond-paid-001/restorations.avi",
+      "in": 50.56666666666667,
+      "frames": 150,
+      "crop": [310, 980, 460, 550],
+      "picture_slot": [100, 520, 880, 950],
+      "canvas_color": "#FFF9E8",
+      "audio_gain": 1.0,
+      "overlays": [
+        {"source": "production_art/upper_garden.svg", "motion": {"enter": 0, "rise": 0}},
+        {"source": "production_art/lower_garden.svg", "motion": {"enter": 0, "rise": 0}},
+        {"source": "production_art/opening_lettering.svg", "at": 0, "until": 2.6, "motion": {"enter": 0.15, "exit": 0.25, "rise": 8}}
+      ]
+    },
+    {
+      "id": "last_patch",
+      "source": "../../../build/ad-capture-v5/pond-paid-002/restorations.avi",
+      "in": 39.86666666666667,
+      "frames": 54,
+      "crop": [270, 880, 540, 730],
+      "picture_slot": [100, 500, 880, 980],
+      "canvas_color": "#FFF9E8",
+      "overlays": [
+        {"source": "production_art/upper_garden.svg", "motion": {"enter": 0, "rise": 0}},
+        {"source": "production_art/lower_garden.svg", "motion": {"enter": 0, "rise": 0}}
+      ]
+    },
+    {
+      "id": "native_suction",
+      "source": "../../../build/ad-capture-v5/pond-paid-002/restorations.avi",
+      "in": 41.666666666666664,
+      "frames": 54,
+      "crop": [270, 880, 540, 730],
+      "picture_slot": [100, 500, 880, 980],
+      "canvas_color": "#FFF9E8",
+      "overlays": [
+        {"source": "production_art/upper_garden.svg", "motion": {"enter": 0, "rise": 0}},
+        {"source": "production_art/lower_garden.svg", "motion": {"enter": 0, "rise": 0}}
+      ]
+    },
+    {
+      "id": "native_clean_reveal",
+      "source": "../../../build/ad-capture-v5/pond-paid-002/restorations.avi",
+      "in": 43.46666666666667,
+      "frames": 72,
+      "crop": [250, 490, 590, 750],
+      "picture_slot": [100, 480, 880, 1000],
+      "canvas_color": "#FFF9E8",
+      "overlays": [
+        {"source": "production_art/upper_garden.svg", "motion": {"enter": 0, "rise": 0}},
+        {"source": "production_art/lower_garden.svg", "motion": {"enter": 0, "rise": 0}}
+      ]
+    },
+    {
+      "id": "native_room_and_exit",
+      "source": "../../../build/ad-capture-v5/pond-paid-002/restorations.avi",
+      "in": 45.86666666666667,
+      "frames": 71,
+      "crop": [120, 360, 840, 1310],
+      "picture_slot": [90, 540, 900, 940],
+      "canvas_color": "#FFF9E8",
+      "overlays": [
+        {"source": "production_art/upper_garden.svg", "motion": {"enter": 0, "rise": 0}},
+        {"source": "production_art/lower_garden.svg", "motion": {"enter": 0, "rise": 0}}
+      ]
+    },
+    {
+      "id": "empty_room_title",
+      "kind": "freeze",
+      "source": "../../../build/ad-capture-v5/pond-paid-002/restorations.avi",
+      "in": 48.233333333333334,
+      "frames": 49,
+      "crop": [90, 590, 930, 1100],
+      "picture_slot": [90, 595, 900, 880],
+      "canvas_color": "#FFF9E8",
+      "freeze_zoom": [1, 1],
+      "overlays": [
+        {"source": "production_art/upper_garden.svg", "motion": {"enter": 0, "rise": 0}},
+        {"source": "production_art/lower_garden.svg", "motion": {"enter": 0, "rise": 0}},
+        {"source": "production_art/ending_title.svg", "motion": {"enter": 0.16, "rise": 9}},
+        {"source": "production_art/cta_ribbon.svg", "motion": {"enter": 0.14, "rise": 9}}
+      ]
+    }
+  ]
+}

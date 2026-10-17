@@ -1,0 +1,23 @@
+{
+  "playback": [
+    {
+      "id": "ad-a",
+      "duration": 15,
+      "ended": true,
+      "width": 1080,
+      "height": 1920,
+      "error": null
+    },
+    {
+      "id": "ad-b",
+      "duration": 10,
+      "ended": true,
+      "width": 1080,
+      "height": 1920,
+      "error": null
+    }
+  ],
+  "layout": "Desktop and390px fit; both videos play to completion at normal rate",
+  "browser": "Edge headless",
+  "errors": []
+}
