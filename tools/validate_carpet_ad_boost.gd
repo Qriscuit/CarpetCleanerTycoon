@@ -42,8 +42,8 @@ func fresh(label: String) -> Node:
 	var state := State.new()
 	state._save_path = "res://.godot/carpet_ad_%d_%s.json" % [OS.get_process_id(),label]
 	paths.append(state._save_path)
-	state._test_ticks_msec = 0
-	state._test_unix_time = 1800000000.0
+
+
 	root.add_child(state)
 	state.set_process(false)
 	check(state.reset_progress(), label + ": isolated ledger resets")
@@ -52,8 +52,8 @@ func fresh(label: String) -> Node:
 func reload_state(state: Node) -> Node:
 	var replacement := State.new()
 	replacement._save_path = state._save_path
-	replacement._test_ticks_msec = 0
-	replacement._test_unix_time = state._test_unix_time
+
+
 	state.free()
 	root.add_child(replacement)
 	replacement.set_process(false)
@@ -246,16 +246,9 @@ func check_atomic_failure_and_migration() -> void:
 	bad.stores["1"].active_job_id = ""
 	check(not state._valid_save(bad), "An empty carpet reservation cannot retain an active boost")
 	state.free()
-	state = fresh("migration")
-	job = state.start_job()
-	state.record_cleaning_progress(job,snapshot(0.5))
-	var legacy: Dictionary = state._capture_state()
-	legacy.stores["1"].erase("job_ad_boost")
-	var file := FileAccess.open(state._save_path,FileAccess.WRITE)
-	file.store_string(JSON.stringify(legacy,"",true,true))
-	file.close()
-	state = reload_state(state)
-	check(state.active_job_id == job and state.cash == 10.0 and state.job_snapshot.dirt_marker == "same-carpet" and not state._branch().job_ad_boost and state._branch().job_cleaning_paid == 10.0, "Existing unfinished saves default unboosted while preserving cash, dirt and payment history")
+	state = fresh("fresh_boost")
+	state.start_job()
+	check(not state.carpet_ad_offer().boosted and state._branch().job_cleaning_paid == 0.0, "Fresh jobs start unboosted with no prior payment")
 	state.free()
 
 func check_legacy_completed_compatibility() -> void:
@@ -274,25 +267,23 @@ func check_file_failure_and_provider_replacement() -> void:
 	var state := fresh("file_failure")
 	var job: String = state.start_job()
 	state.record_cleaning_progress(job,snapshot(0.5))
-	state._branch().bonzi_tier = 0
 	state.save_state()
 	var provider := attach(state)
 	state.request_carpet_reward_ad(job)
 	var before: Dictionary = state._capture_state()
 	var disk := FileAccess.get_file_as_string(state._save_path)
 	var real_path: String = state._save_path
-	var old_ticks: int = state._last_ticks
-	state._test_ticks_msec += 120000
-	state._test_unix_time += 120.0
+
+
 	state._save_path = "res://.godot/carpet_ad_missing_%d/ledger.json" % OS.get_process_id()
 	provider.resolve("real-file-retry")
-	check(state._capture_state() == before and state._last_ticks == old_ticks and FileAccess.get_file_as_string(real_path) == disk, "A real file-open failure rolls back both ad top-up and elapsed independent Bonzi income")
+	check(state._capture_state() == before and FileAccess.get_file_as_string(real_path) == disk, "A real file-open failure rolls back the ad top-up and wallet")
 	check(state.complete_and_start_next_job(job,snapshot(0.75)).is_empty() and state._capture_state() == before, "A subsequent failed completion cannot consume the waiting verified receipt")
 	state._save_path = real_path
 	var requests := provider.requests
-	check(state.request_carpet_reward_ad(job) and provider.requests == requests and state.cash == 60.0 and state.automated_jobs == 1 and state._branch().job_cleaning_paid == 20.0, "Storage recovery commits one Bonzi order and one verified top-up without replaying either")
+	check(state.request_carpet_reward_ad(job) and provider.requests == requests and state.cash == 20.0 and state._branch().job_cleaning_paid == 20.0, "Storage recovery commits one verified top-up without replaying it")
 	state = reload_state(state)
-	check(state.cash == 60.0 and state.carpet_ad_offer().boosted and state.automated_jobs == 1, "The recovered real file contains the entire committed transaction")
+	check(state.cash == 20.0 and state.carpet_ad_offer().boosted, "The recovered real file contains the entire committed transaction")
 	state.free()
 	state = fresh("provider_replaced")
 	job = state.start_job()

@@ -202,8 +202,8 @@ func check_finish_and_exit() -> void:
 func run() -> void:
 	state = root.get_node("ShopState")
 	state.set_process(false)
-	state._test_ticks_msec = 0
-	state._test_unix_time = 2000000.0
+
+
 	save_path = "res://.godot/workshop_optimization_%d.json" % OS.get_process_id()
 	state._save_path = save_path
 	check(state.reset_progress(), "isolated ledger resets")

@@ -90,20 +90,9 @@ func build() -> void:
 	var stack := add(scroll,VBoxContainer.new(),"Stack",false) as VBoxContainer
 	stack.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	stack.add_theme_constant_override("separation",12)
-	var routine := add(stack,PanelContainer.new(),"Routine") as PanelContainer
-	routine.add_theme_stylebox_override("panel",rounded("e3f0e8"))
-	routine.visible=false
-	var routine_content := add(routine,VBoxContainer.new(),"RoutineContents",false) as VBoxContainer
-	words(routine_content,"RoutineRate","10 coins every 120s",22)
-	words(routine_content,"RoutineTime","Next +10 in 2:00",14)
-	var progress := add(routine_content,ProgressBar.new(),"RoutineProgress") as ProgressBar
-	progress.custom_minimum_size.y=8
-	progress.show_percentage=false
-	progress.add_theme_stylebox_override("background",rounded("cfe0d4",4))
-	progress.add_theme_stylebox_override("fill",rounded("85be98",4))
 	var rows := add(stack,VBoxContainer.new(),"Rows") as VBoxContainer
 	rows.add_theme_constant_override("separation",10)
-	for data in [["hand_brush","Hand Brush","BrushIcon"],["bonzi","Bonzi","BonziIcon"],["wide_brush","Wide Brush","BrushIcon"],["bonzi_mk2","Bonzi Mk II","BonziIcon"],["intake","Welcome Sign","FloatingShop"]]:
+	for data in [["slot_1","Room upgrade","BrushIcon"],["slot_2","Tool upgrade","BrushIcon"],["slot_3","Room upgrade","BrushIcon"],["slot_4","Room upgrade","BrushIcon"],["slot_5","Store","FloatingShop"]]:
 		var card := add(rows,PanelContainer.new(),data[0],false) as PanelContainer
 		card.set_meta("item_id",data[0])
 		card.add_theme_stylebox_override("panel",rounded("f0f4e9",18))
@@ -131,8 +120,8 @@ func build() -> void:
 	confirm.add_theme_stylebox_override("panel",rounded("fff8e9",24))
 	var review_content := add(confirm,VBoxContainer.new(),"ReviewContent",false) as VBoxContainer
 	review_content.add_theme_constant_override("separation",14)
-	words(review_content,"BuildTitle","Build Bonzi?",24).autowrap_mode=TextServer.AUTOWRAP_OFF
-	words(review_content,"BuildBenefit","10 coins every 120s",18).autowrap_mode=TextServer.AUTOWRAP_OFF
+	words(review_content,"BuildTitle","Open store?",24).autowrap_mode=TextServer.AUTOWRAP_OFF
+	words(review_content,"BuildBenefit","A fresh room and starter tools",18).autowrap_mode=TextServer.AUTOWRAP_OFF
 	words(review_content,"BuildBalance","100 coins · 0 left",15).autowrap_mode=TextServer.AUTOWRAP_OFF
 	button(review_content,"ConfirmBuild","Build · 100")
 	button(review_content,"CancelBuild","Not now")

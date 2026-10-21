@@ -55,8 +55,6 @@ func check_formatter() -> void:
 func check_home_ui() -> void:
 	ledger = root.get_node("ShopState")
 	ledger.set_process(false)
-	ledger._test_ticks_msec = 0
-	ledger._test_unix_time = 1800000000.0
 	save_path = ProjectSettings.globalize_path("res://.godot/large_money_test_%d.json" % OS.get_process_id())
 	ledger._save_path = save_path
 	check(ledger.reset_progress(), "Large-wallet fixtures use an isolated save")
@@ -71,10 +69,8 @@ func check_home_ui() -> void:
 	current_scene = home
 	await settle()
 	check(home.get_node("%Cash").text == "1AF", "The real home wallet renders an AF balance")
-	var nav := home.get_node("%NavBonzi") as Button
-	var caption := nav.get_node("CaptionContent/Caption") as Label
-	check(caption.text == "Hire Bonzi" and nav.tooltip_text.contains(Money.format(Progression.bot_cost(1, -1))) and nav.tooltip_text.contains("while away"), "Three local rugs reveal the nonblocking Bonzi hint with its actual revised hire price")
-	check(not ledger.owns("bonzi") and ledger.cash == 1e30 and not home.get_node("%Management").visible, "The hiring hint neither buys Bonzi nor opens a modal")
+	var nav := home.get_node("%NavAvatar") as Button
+	check(nav.visible and ledger.cash == 1e30 and not home.get_node("%Management").visible, "The avatar entry is available without spending the AF wallet")
 	home.open_management("shop")
 	var menu: Control = home.management
 	await settle()
@@ -83,8 +79,8 @@ func check_home_ui() -> void:
 		if row.visible:
 			visible_rows += 1
 	check(visible_rows == 5 and menu.actions.values().has("room:walls"), "Home shop presents all five independent accessory rows")
-	var walls_button: Button = menu.action_for("intake")
-	check(menu.rows["intake"].get_node("Row/Words/Title").text.begins_with("Walls"), "The fifth authored row presents the wall upgrade")
+	var walls_button: Button = menu.action_for("slot_5")
+	check(menu.rows["slot_5"].get_node("Row/Words/Title").text.begins_with("Walls"), "The fifth authored row presents the wall upgrade")
 	for size: Vector2i in [Vector2i(390, 844), Vector2i(844, 390)]:
 		root.size = size
 		await settle()
@@ -93,12 +89,10 @@ func check_home_ui() -> void:
 		check(menu.get_node("%MenuScroll").get_global_rect().grow(0.5).encloses(walls_button.get_global_rect()), "The fifth upgrade remains reachable by scrolling at " + str(size))
 	check(menu.get_node("%SheetCash").text == "1AF", "The real compact sheet uses the shared AF formatter")
 	home.close_management()
-	check(ledger.buy_bonzi_upgrade(), "The normal Bonzi hire transaction still works with an AF wallet")
-	check(caption.text == "Bonzi", "Hiring Bonzi restores its ordinary navigation caption")
 	ledger._sync_active_branch()
 	ledger.stores["2"] = Progression.new_branch(2)
 	check(ledger.select_store(2), "Owned later-store fixture selects normally")
-	check(caption.text == "Bonzi", "Later stores retain the ordinary Bonzi navigation caption")
+	check(nav.visible, "Later stores retain the avatar entry")
 	home.free()
 	home = null
 	current_scene = null

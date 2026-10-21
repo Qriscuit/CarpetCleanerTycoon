@@ -49,9 +49,9 @@ func newest_left_segment() -> int:
 func run() -> void:
 	var state: Node = root.get_node("ShopState")
 	state.set_process(false)
-	state._test_unix_time = 1234567890.0
-	state._test_ticks_msec = 0
-	state._last_ticks = 0
+
+
+
 	check(state.reset_progress(), "Isolate runoff test save")
 	state.cash = 123
 	check(not state.start_job().is_empty(), "Preserve an existing paid job")

@@ -4,19 +4,19 @@ The UI is saved as real scene nodes. Playing the game binds live values and swit
 
 ## Start here
 
-**F5** starts `scenes/production/rug_cleaning.tscn` and opens or resumes the last selected store's carpet. **Back** opens `scenes/production/floating_home.tscn`; its dock sheets live in `scenes/ui/compact_shop.tscn`. Open the menu scene and use **F6** to preview it directly. See [scene navigation](Scene_Navigation.md) for production/test organization. The detailed hub instructions below apply to the retained legacy test menu.
+**F5** starts `scenes/production/rug_cleaning.tscn` and opens or resumes the last selected store's carpet. **Back** opens `scenes/production/floating_home.tscn`; its dock sheets live in `scenes/ui/compact_shop.tscn`. Open the menu scene and use **F6** to preview it directly. See [scene navigation](Scene_Navigation.md) for production/test organization. Avatar customization lives in `scenes/ui/avatar_customization.tscn`.
 
-Open `CarpetToy/project.godot`, then open `scenes/test/shop_hub.tscn` and select **2D**. Select the `ShopHub` root and change **Editor Page** in the Inspector to preview Shop, Items, Blueprints, Bonzi, or the future shop. These pages already exist under `Shell / Layout / Pages`; each has its own scroll container and content. Editor Page is only a preview choice for this legacy test menu.
+Open `CarpetToy/project.godot` with the pinned editor launcher, then open the production scene or shared UI scene that you want to edit. The old detailed hub is retired.
 
 | What to edit | Where |
 | --- | --- |
 | Production main menu and navigation | `scenes/production/floating_home.tscn` |
 | Production shop sheets and purchase review | `scenes/ui/compact_shop.tscn` |
-| Legacy test shop menus and cards | `scenes/test/shop_hub.tscn` |
+| Avatar customization and preview | `scenes/ui/avatar_customization.tscn`, `scripts/avatar_customization.gd`, `scripts/avatar_preview.gd` |
 | In-game progress, gold counter, coin effects and Upgrade menu | `scenes/ui/cleaning_hud.tscn` |
 | Completion's single Compare button | `scenes/ui/completion_reveal.tscn` |
 | Art-review scene buttons | `scenes/ui/studio_hud.tscn` |
-| Storefront, Bonzi, brushes and other artwork | `scenes/ui/art/*.tscn` |
+| Storefront, brushes and other artwork | `scenes/ui/art/*.tscn` |
 | Shared palette, typography, borders and button styles | `resources/ui/mint_theme.tres` |
 
 The 3D rug scenes contain an editable `GymUI` instance. Expand it in the scene tree to edit its children in place, or open `cleaning_hud.tscn` to change the shared HUD. The carpet art-review scene similarly contains `StudioUI`.
@@ -27,9 +27,11 @@ Controls inside a `VBoxContainer` or `HBoxContainer` are arranged by that contai
 
 The cleaning HUD uses a compact progress/earnings header above the room and an action row below it in portrait. In landscape, Back, the prominent wallet, status and actions form a left column beside the diorama. The row is cart `UpgradeButton`, teal video `AdRewardButton`, then plain **Finish**. `FinishJobButton` appears at 75%, using a slot reserved even while hidden. The video button shows a padlock without an available provider, a play symbol when ready, a waiting state during verification and a check when the current carpet's 2× boost is active. Styles and contents remain authored scene controls; runtime composition uses the HUD root's **Responsive Layout** Inspector settings.
 
-Edit the tool comparison cards under `UpgradeSheet / UpgradesPanel / ShopContentsScroll / ShopColumns / Contents / ToolCardsScroll / ToolCards`. The adjacent `BonziContents / BonziCardsScroll / BonziCards` holds the authored current and next Bonzi artwork, earnings and cycle labels. Wide layouts place these two offers beside each other; narrow phones stack Bonzi below the tool and scroll the whole shop through `ShopContentsScroll`. Each offer's Buy button stays outside its comparison-card scroller. Done stays in the fixed `ShopHeading` above the body. Keep the scroll regions clipped so offscreen Buy buttons cannot receive taps. `UpgradeSheet` uses Z Index 50 above `Wallet` at 30; retain that order when adjusting the shop.
+Edit the tool comparison cards under `UpgradeSheet / UpgradesPanel / ShopContentsScroll / ShopColumns / Contents / ToolCardsScroll / ToolCards`. The Buy action stays outside its comparison-card scroller and Done remains in the fixed heading. Keep scrolling regions clipped so offscreen buttons cannot receive taps. `UpgradeSheet` uses Z Index 50 above `Wallet` at 30. A released tap outside closes it without cleaning underneath; drags, canceled gestures and extra fingers cancel dismissal.
 
-Bonzi shows the existing three-paid-carpet hiring gate, actual incremental cost, affordability and maximum speed. Its purchase uses the same saved store progression as management. A tap or click outside the shop closes it without cleaning the carpet underneath. Dragging, canceled gestures and a second finger cancel that dismissal; swiping across the shop scrolls its contents, including when the swipe begins on a button.
+The main menu's bottom-right `NavAvatar`, captioned **You**, opens `AvatarMenu`. Edit its Colors and Hats tabs and visual card styles in `avatar_customization.tscn`; the catalog is `avatar_catalog.gd`. All eight colors and three hat choices are free. The body asset in `assets/character/` stays white; `avatar_preview.gd` duplicates materials and applies the selected tint, orange `#F28C28` by default. The preview viewport rotates only while open, focused and motion-enabled. Static card thumbnails do not need animated viewports.
+
+Paid rooms use `level_companion.gd` and the separate `avatar_rig.glb` with the same saved appearance. `workshop.gd` supplies the brush-handle seat and room bounds. Edit the authored animations and rig source rather than moving UI controls to change riding, falling or returning. Hats follow the head through a `BoneAttachment3D`. The companion parks visibly during rug transitions and freezes behind menus, videos or focus loss. Its behavior changes no cleaning or economy values. See [Level Companion](Level_Companion.md).
 
 Change **Layout Edge**, **Layout Gap**, **Earnings Gap**, **Landscape Rail Width**, **Progress Max Width**, **Progress Height**, **Earnings Height**, **Action Height**, **Wallet Height**, **World Gutter** and **Landscape Aspect Threshold** to tune placement without device-specific offsets. `layout_metrics()` and `workshop_view_rect()` expose those same rectangles to the camera. Changing a child offset alone changes the editor snapshot, while these settings control the live responsive arrangement.
 
@@ -64,23 +66,23 @@ The HUD scales independently from the safe area's short side and the selected si
 
 Completion uses only a **Compare** button, authored at 148×56 with font size 20 in `completion_reveal.tscn`. It sits at the bottom center in portrait and at the lower right in landscape. Its root exposes the same phone/tablet sizing references plus **Layout Edge** and **Rug Gutter**. Holding Compare pauses the automatic reveal and shows the recorded starting rug; release restores the result. The camera uses `rug_view_rect()` above the portrait action or in the full-height area to its left in landscape. Landscape frames the complete room without shrinking the cleaning carpet; portrait retains the gentle reveal push. Full and early completion retain their 2.4-second and 1.1-second automatic pauses.
 
-The shop's Clean/Resume action and bottom navigation sit outside scrolling content. Keep that separation so a long blueprint list does not hide the way back. The Notice panel has a real layout slot below the header; it never covers a purchase or cleaning button.
+The main menu navigation stays outside scrolling management content. Keep that separation so a long store checklist or appearance catalog does not hide the way back.
 
 ## Text and live values
 
 Edit ordinary `Label.text` and `Button.text` directly. Static authored text survives gameplay and state refreshes.
 
-Shop text containing `{cash}`, `{cost}`, `{rugs_left}`, or similar braces is an editable **format template**. Keep the placeholder when you want the live number, and change the words around it. The braces may be visible in editor preview; playing substitutes the actual values. Item cards keep their own templates, and their root **Item Id** connects them to the existing economy. The `item_card.gd` **Editor State** selector previews the saved Locked, Need Cash, Ready, Owned and Equipped groups without purchasing anything; use **As authored** when arranging the normal scene.
+Management titles, wallet totals, prices and checklist descriptions are refreshed from current state. Keep functional unique names and action metadata while editing their surrounding text and styles.
 
 For the cleaning HUD, select `GymUI` to edit **Progress Colors** and **Responsive Layout** in the Inspector. `FinishJobButton` is saved hidden and appears at 75% combined cleanliness. **Per carpet** below progress shows the current full-clean reward and updates after accessory purchases. All six current stores use brushes; wet-tool rows are retained for future content, and the Gym has separate free previews. There are no contract, rug-picker or completion-card groups in the production HUD.
 
-Some text is factual state: wallet totals, build cost, equipped item, delivery countdown and cleaning percentages. The game updates those fields deliberately. Prices and unlock requirements remain in `shop_state.gd`; changing a visual caption does not change the economy.
+Some text is factual state: wallet totals, upgrade prices, selected appearance and cleaning percentages. The game updates those fields deliberately. Prices and unlock requirements remain in `shop_state.gd`; changing a visual caption does not change the economy.
 
 ## Artwork and shared styles
 
-Every illustration is a reusable scene containing an `Artwork` subtree. The storefront has groups for its facade, sign, window, door, awning and planters. Bonzi has editable body, face and brush parts. Move nodes, change polygons or Panel style colors, hide parts, or insert your own assets. These shapes exist in the editor, including before the game runs.
+Every illustration is a reusable scene containing an `Artwork` subtree. The storefront has groups for its facade, sign, window, door, awning and planters. Move nodes, change polygons or Panel style colors, hide parts, or insert your own assets. These shapes exist in the editor, including before the game runs.
 
-`illustration_layout.gd` only centers and scales the top-level `Artwork` group inside its Control. Edit the **illustration root's rectangle** to move/resize the whole asset, and edit **children inside Artwork** to change its design. Individual part transforms survive resizing. Bonzi's **Working** property animates a designated group around its authored pose. Disable Working to inspect a still pose.
+`illustration_layout.gd` only centers and scales the top-level `Artwork` group inside its Control. Edit the **illustration root's rectangle** to move/resize the whole asset, and edit **children inside Artwork** to change its design. Individual part transforms survive resizing.
 
 The shared Theme has named variations such as `PrimaryButton`, `SecondaryButton`, `NavButton`, `Card`, `SoftCard`, `BlueCard`, `Title` and `Body`. Edit these once for consistent changes, or add a local Theme Override to a specific node. Use **Make Unique** before modifying a shared style when you only want one card to change.
 
@@ -93,10 +95,10 @@ The one-off illustration generator is for initial authoring only and skips exist
 ## Usability and progression in this pass
 
 - Larger, separated targets and stronger text contrast; scroll gestures cancel button taps.
-- Fixed Clean/Resume action, persistent page scroll, and Back/Escape navigation.
+- Persistent navigation and Back/Escape handling, including modal dismissal.
 - Purchases show cost, effect and cash remaining before building.
-- Goals explain the next customer-rug milestone or cash shortfall; optional upgrades are identified as optional.
-- Both owned brushes can be equipped for free; the choice survives saving and reloading.
+- Store goals show five room caps, four brush upgrades, three max-brush paid rugs and the separate opening price.
+- Starter avatar colors and hats equip for free and persist globally; the strongest purchased brush remains available across stores.
 - Completion removes the finished rug and opens the next rug automatically, without a prompt or a trip through the shop.
 - Practice and future wet-tool previews are clearly labeled; practice does not pay money.
 - The future shop is a preview, not a cash sink or an unreachable active progression goal.

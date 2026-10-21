@@ -175,11 +175,11 @@ func capture_and_check_layout(label: String) -> void:
 
 func run() -> void:
 	var state: Node = root.get_node("ShopState")
-	# Keep asynchronous automation/checkpoints out of exact save comparisons.
+	# Keep checkpoints out of exact save comparisons.
 	state.set_process(false)
-	state._test_unix_time = 1234567890.0
-	state._test_ticks_msec = 0
-	state._last_ticks = 0
+
+
+
 	state._save_path = "res://.godot/gym_validation_%d.json" % OS.get_process_id()
 	check(state.reset_progress(), "Create isolated test progress")
 	state.cash = 123

@@ -128,6 +128,9 @@ func run() -> void:
 	await settle_lift()
 	check(not game.brush_dragging and is_equal_approx(visual_lift(), game.BRUSH_IDLE_LIFT), "Focus loss leaves no held brush")
 
+	# Projection checks run with the app active after the focus-loss assertion.
+	game._notification(MainLoop.NOTIFICATION_APPLICATION_FOCUS_IN)
+
 	for window_size: Vector2i in [Vector2i(390, 844), Vector2i(720, 1000), Vector2i(844, 390)]:
 		root.size = window_size
 		await process_frame

@@ -28,8 +28,8 @@ func stop_effect_processing() -> void:
 func run() -> void:
 	var state := root.get_node("ShopState")
 	state.set_process(false)
-	state._test_ticks_msec = 0
-	state._test_unix_time = 1000000.0
+
+
 	root.size = Vector2i(390, 844)
 	var started := Time.get_ticks_usec()
 	var scene: PackedScene = load("res://scenes/test/rug_cleaning_gym.tscn")

@@ -87,8 +87,6 @@ func complete_rug(amount: float = 1.0) -> void:
 func run() -> void:
 	state = root.get_node("ShopState")
 	state.set_process(false)
-	state._test_ticks_msec = 0
-	state._test_unix_time = 1000000.0
 	state._save_path = "res://.godot/store_loop_%d.json" % OS.get_process_id()
 	check(state.reset_progress(), "Isolated ledger resets")
 	state.cash = 50000
@@ -141,14 +139,12 @@ func run() -> void:
 	var before_ad: float = state.cash
 	var base_quote: float = state.current_job_full_reward()
 	var boosted_job: String = state.active_job_id
-	var bonzi_price: float = state.progression_view().bonzi_cost
 	check(float(state._branch().job_cleaning_paid) == 0.0, "The newly reserved carpet has no progressive money to top up")
 	tap(game.hud.control("AdRewardButton"))
 	check(provider.callback.is_valid() and ad_button.disabled and game.hud._carpet_ad_state == game.hud.CarpetAdState.REQUESTING, "A real tap requests the video once and disables duplicate requests")
 	provider.resolve()
 	check(state.cash == before_ad and state.current_job_full_reward() == base_quote * 2.0 and game.hud.pending_reward == 0.0 and game.hud.displayed_gold == before_ad, "Verified video doubles the current quote without granting unearned money or reward flights")
 	check(ad_button.visible and ad_button.disabled and game.hud._carpet_ad_state == game.hud.CarpetAdState.ACTIVE and game.hud.control("CarpetEarningsValue").text == Money.format(base_quote * 2.0), "The doubled quote has a persistent active indicator and its actual per-carpet value")
-	check(float(state.progression_view().bonzi_cost) == bonzi_price, "A temporary carpet boost cannot reprice a fixed Bonzi milestone")
 	state._load_state()
 	state.changed.emit()
 	await frames()
@@ -156,13 +152,10 @@ func run() -> void:
 	provider.resolve()
 	check(state.cash == before_ad and state.current_job_full_reward() == base_quote * 2.0 and ad_button.visible and ad_button.disabled, "A replayed verified receipt cannot add money or multiply the quote again")
 	check(game.get_instance_id() == scene_id and game.soil.batch.get_instance_id() == pool_id, "Upgrades and rewards retain the same scene and dirt pool")
-	check(state.buy_bonzi_upgrade(), "Bonzi can be built after three paid rugs")
-	state._produce(1200.0)
-	check(state.progression_view().bonzi_earned >= 100 and not state.progression_view().can_travel, "Bonzi earnings and tool use cannot bypass unfinished room mastery")
 	if not master_current_store():
 		quit(1)
 		return
-	check(state.progression_view().can_travel, "Completing every accessory and Bonzi tier enables affordable travel")
+	check(state.progression_view().can_travel, "Completing every accessory and the max-brush jobs enables affordable travel")
 	root.size = Vector2i(844, 390)
 	await capture("rug_landscape")
 	for dimensions: Vector2i in [Vector2i(320,568),Vector2i(390,844),Vector2i(844,390)]:
@@ -185,14 +178,14 @@ func run() -> void:
 	check(home.preview_store == 1, "Home opens the current store")
 	home.open_management("plans")
 	await capture("travel")
-	home.management.action_for("intake").grab_focus()
-	home.management._item_action("intake")
+	home.management.action_for("slot_5").grab_focus()
+	home.management._item_action("slot_5")
 	await frames()
 	check(home.management.pending_item == "travel", "Travel opens a concrete purchase review")
-	check(home.management.action_for("hand_brush").focus_mode == Control.FOCUS_NONE, "Travel review excludes background purchase actions from keyboard focus")
+	check(home.management.action_for("slot_1").focus_mode == Control.FOCUS_NONE, "Travel review excludes background purchase actions from keyboard focus")
 	home.management.cancel_build()
-	check(home.management.action_for("intake").has_focus(), "Cancel restores focus to the travel action")
-	home.management._item_action("intake")
+	check(home.management.action_for("slot_5").has_focus(), "Cancel restores focus to the travel action")
+	home.management._item_action("slot_5")
 	home.management.confirm_build()
 	await settle_home(home)
 	check(state.active_store == 2 and home.preview_store == 2, "Travel selects the new store in both ledger and diorama")
@@ -261,11 +254,8 @@ func master_current_store() -> bool:
 			check(bought, "Complete store%d/%s level%d for travel: %s" % [state.active_store,id,int(offer.next_level),state.last_error])
 			if not bought: return false
 	state.cash = maxf(Rules.reward_cap(state.active_store) * 10.0, 10000.0 * Rules.scale_for(state.active_store))
-	for _tier in range(int(state.progression_view().bonzi_tier) + 1, 3):
-		check(state.buy_bonzi_upgrade(), "Complete the current Bonzi speed track")
 	for _tier in range(int(state.progression_view().tool_level), 4):
 		check(state.buy_tool_upgrade(), "Complete the current brush track")
 	state.stores[str(state.active_store)].final_tool_jobs = 3
-	state._produce(1200.0)
 	check(state.save_state(), "The authored travel fixture commits every room and tool goal")
 	return failures == 0

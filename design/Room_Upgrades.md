@@ -32,7 +32,7 @@ The open-front workshop uses warm timber, mint paint, ivory, coral flowers and b
 
 Every feature has its own saved level, price curve and income contribution. Buying the floor never changes another feature's level or next price. The wallet is shared, and the full-clean reward is the sum of the store's base earnings and all five independently earned contributions.
 
-Bonzi earns that same full-clean reward for every completed order in this store, including live and offline production. All five feature upgrades raise both quotes together; other stores retain their own reward. Bonzi's upgrades shorten its cycle from 120 to 90 to 60 seconds. A room purchase settles completed orders at the prior quote before applying the increase to future completions.
+All five features improve the player's manual carpet quote in the selected store. Other stores retain their own room levels and reward. There is no automatic cleaner, timed delivery or offline income.
 
 | Feature | First price in Store 1 | Price growth per local level | First full-clean income gain | Income growth per local level |
 | --- | ---: | ---: | ---: | ---: |
@@ -46,11 +46,11 @@ The store scales are 1, 10⁴, 10⁷, 10¹¹, 10¹⁶ and 10²³. Each place sol
 
 Accessory caps are 50, 75, 100, 125, 150 and 175 across the six places. Spread model changes using the actual number of upgrade meshes: 50 levels/five upgraded meshes yields 10/20/30/40/50; 175 levels/three meshes yields 50/100/150. The current three upgraded meshes use 15/30/45, 25/50/75, 30/60/90, 40/80/120, 50/100/150 and 50/100/150 respectively. The baseline mesh is separate from the number of upgrades.
 
-The bar counts purchases toward the next real model change, resets at each change and remains full after the last available mesh. Remaining levels improve earnings with the final mesh retained. The level label and purchase action end only at the accessory's store cap. Home offers the same five ladders.
+The bar counts purchases toward the next real model change, resets at each change and tracks the remaining real levels after the last available mesh. Remaining levels improve earnings with the final mesh retained; only the store cap fills the bar and shows Fully upgraded. The level label and purchase action end only at the accessory's store cap. Home offers the same five ladders.
 
-A store's mastery requires all five capped accessories, its final brush, final Bonzi tier, three paid rugs using that brush and its local Bonzi earnings target. Mastery gates the next place; all six mastered places complete the first section. Additional sections remain unavailable until their content is authored. All six current places use brush cleaning.
+A store's mastery requires all five capped accessories, its final brush and three paid rugs using that brush. Opening the next place additionally spends `2000*S` coins. All six mastered places complete the first section. Additional sections remain unavailable until their content is authored. All six current places use brush cleaning.
 
-Legacy generic investments retain their round-robin mapping to the original four features; walls start at 0. Room rules version 4 remaps historical 5/10/15 model milestones onto the corresponding new milestones, and maps the old refinement tail through 120 into the remaining local levels. Fully purchased old accessories remain complete. Wallet coins, ownership, active rug and dirt are preserved; future earnings and the unpaid quote rebase to the new store ceiling. A historical first-shop AF reward becomes at most 400 K. The rules marker prevents repeated migration. `payout_level` remains a derived compatibility count.
+Current progress uses the new `user://carpet_cleaner_v1.json` namespace. The old save is untouched and unused; no migration or refund occurs. `payout_level` is the derived sum of the five room levels.
 
 Room panels pause cleaning and water effects. Touch purchases commit on release; swipes, canceled gestures and extra fingers cannot buy. The panel's purchase/close controls stay fixed while its details can scroll on short screens. Back/Escape or a tap outside the floating card closes it before returning to cleaning. The remaining brush/tool button still opens tool improvements.
 
@@ -66,9 +66,9 @@ Buy remains available during feedback whenever the next durable offer is afforda
 
 Use only the pinned Godot 4.7.2 stable Mono bundle through `tools/run_godot.ps1`. PowerShell callers should pass an argument array so the literal `--` separator reaches Godot.
 
-Focused checks: `validate_room_upgrades.gd` (models and store-specific milestones), `validate_room_economy.gd` (independent prices/income, migration, save rollback and caps), `validate_room_interaction.gd` (input/UI), `validate_room_upgrade_vfx.gd` (animation, focus pause, reset and reusable effects), `validate_rapid_room_upgrades.gd` (real rapid touches, current quotes and purchase safety gates), `validate_home_room_ladders.gd` (real Home-sheet touches and phone layouts), and `validate_brush_lift.gd`. All gameplay runs require `-- --shop-test`. Add `--room-capture` to room interaction validation to render the starting workshop, individual offers, phone layouts and final tiers into `art/renders/`.
+Focused checks: `validate_room_upgrades.gd` (models and store-specific milestones), `validate_room_economy.gd` (independent prices/income, current reload, save rollback and caps), `validate_room_interaction.gd` (input/UI), `validate_room_upgrade_vfx.gd` (animation, focus pause, reset and reusable effects), `validate_rapid_room_upgrades.gd` (real rapid touches, current quotes and purchase safety gates), `validate_home_room_ladders.gd` (real Home-sheet touches and phone layouts), and `validate_brush_lift.gd`. All gameplay runs require `-- --shop-test`. Add `--room-capture` to room interaction validation to render the starting workshop, individual offers, phone layouts and final tiers into `art/renders/`.
 
-`validate_bonzi_earnings.gd` checks shared full-clean rewards, all five room purchases, Bonzi speed tiers, independent stores, offline income, save rollback and wallet limits. `validate_bonzi_earnings_ui.gd` checks actual Bonzi-sheet touches and dynamic reward previews in portrait and landscape; `--bonzi-earnings-capture` saves both layouts.
+`validate_avatar_state.gd` checks free global appearance transactions, reload and reset without changing manual earnings or store progress. Its 17 October 2026 headless run passed 116 checks with zero failures.
 
 `tools/preview_room_upgrades.gd` opens a disposable workshop with 5,000 test coins for hands-on review; it requires `-- --shop-test` and never uses the player's save. Mobile device performance and physical touch feel still need a device playtest.
 
@@ -94,11 +94,11 @@ The visual reference is [Eatventure's station card](https://henamap.doorblog.jp/
 - Place the card beside the actual selected item with a pointer connecting the offer to the room. Corner plants and both railings use the instance nearest the tap; floor taps use their own position. Reproject that point when the viewport changes.
 - Keep the diorama visible behind the card. The transparent outside area still catches input so buying cannot accidentally brush the rug.
 - Show the current and next level and one prominent `Clean 40 → 44` earnings row, using the full-restoration reward. Remove the transformation description, early/full earnings table and wallet row. The main action displays the exact next price from the save ledger.
-- Show a 28-unit-tall blue bar with the selected feature's current purchases and interval toward its next real model. It advances only for that feature, resets after a model change, and remains full after its last available model. Remaining income purchases retain the completed model bar until the separate economic cap. Remove `COINS SAVED`, `Ready!` and next-look text.
+- Show a 28-unit-tall blue bar with the selected feature's current purchases and interval toward its next real model. It advances only for that feature, resets after a model change, then tracks current level against the economic cap after its last available model. The bar completes only at the actual cap. Remove `COINS SAVED`, `Ready!` and next-look text.
 - The normalized progress bar uses the ledger's `milestone_progress`, independently of wallet balance. The button still enables only when the durable offer is affordable and coin collection has finished. This introduces no extra currency or upgrade timer.
 - Keep the floating card at 272 × 212 logical units. Show extra text only while collecting coins or when saving fails.
 - Use compact placement above, below or beside the item, clamped to the device safe area. Retain reachable purchase and close controls on short screens.
-- Fit the normal camera to the closed room's actual geometry inside the HUD's shared `workshop_view_rect()`. Portrait uses a compact progress/earnings header and bottom action row; landscape groups controls in a left column beside a full-height diorama. Finish has a permanent reserved slot, so appearing at 75% does not move the camera. Wallet text and hidden completion HUDs retain the same world reservation. The cart opens the tools and Bonzi shop. The configured angle is shared by cleaning, reveal and open-window departure.
+- Fit the normal camera to the closed room's actual geometry inside the HUD's shared `workshop_view_rect()`. Portrait uses a compact progress/earnings header and bottom action row; landscape groups controls in a left column beside a full-height diorama. Finish has a permanent reserved slot, so appearing at 75% does not move the camera. Wallet text and hidden completion HUDs retain the same world reservation. The cart opens tool improvements. Avatar appearance is edited from Home and has no cleaning-scene instance or effect on earnings. The configured angle is shared by cleaning, reveal and open-window departure.
 
 ## Responsive composition
 

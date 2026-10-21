@@ -49,6 +49,7 @@ func run() -> void:
 		quit(1)
 		return
 	var ledger := root.get_node("ShopState")
+	check(ledger.reset_progress(), "Home validation starts with an isolated fresh ledger")
 	check(ProjectSettings.get_setting("application/run/main_scene")=="res://scenes/production/rug_cleaning.tscn","F5 launches the current carpet; Back opens this menu")
 	home=load("res://scenes/production/floating_home.tscn").instantiate()
 	check(home.get_node_or_null("%ShopViewport") != null,"3D viewport authored in saved scene")
@@ -112,14 +113,9 @@ func run() -> void:
 	check(home.get_node("%TopBar").get_rect().end.x<=home.size.x,"Large coin balance does not overflow header")
 	check(home.get_node("%Cash").text=="1.2B","Large coin balance uses compact display")
 	ledger.cash=0
-	ledger.return_reward=20
 	home._refresh()
 	await frame()
-	check(home.get_node("%ReturnNotice").visible,"Away earnings acknowledgement is accessible")
-	tap(home.get_node("%ReturnNotice"))
-	await frame()
-	check(ledger.return_reward==0,"Away notice acknowledges existing credit")
-	check(not home.get_node("%ReturnNotice").visible,"Acknowledged notice leaves the screen clear")
+	check(home.get_node_or_null("%ReturnNotice") == null, "Home has no offline earnings notice")
 	# Motion is real geometry animation and can be stopped.
 	home.animate_shop=true
 	var angle_before: float=home.get_node("%ShopPivot").rotation.y
@@ -137,7 +133,7 @@ func run() -> void:
 	await frame()
 	check(not home.get_node("%SettingsSheet").visible,"Touch outside closes settings")
 	check(not home.get_node("%Management").visible,"Dismissal does not open the navigation underneath")
-	for definition in [["NavShop","shop"],["NavItems","items"],["NavPlans","plans"],["NavBonzi","bonzi"]]:
+	for definition in [["NavShop","shop"],["NavItems","items"],["NavPlans","plans"]]:
 		tap(home.get_node("%"+definition[0]))
 		await frame()
 		check(home.get_node("%Management").visible,"Touch opens "+definition[1])
@@ -146,15 +142,30 @@ func run() -> void:
 		tap(home.management.get_node("%CloseSheet"))
 		await frame()
 		check(not home.get_node("%Management").visible,"Touch returns home from "+definition[1])
-	# Compact shop purchase reviews, scrolling and tool equipment use the ledger.
+	# The free character menu has its own input and rendering boundary.
+	var selected_store: int = ledger.active_store
+	var avatar_cash: float = ledger.cash
+	tap(home.get_node("%NavAvatar"))
+	await frame()
+	var avatar: Control = home.get_node("%AvatarMenu")
+	check(avatar.visible and not home.get_node("%Management").visible, "Character button opens the wardrobe")
+	check(home.get_node("%ShopViewport").render_target_update_mode == SubViewport.UPDATE_DISABLED and home.get_node("%IncomingShopViewport").render_target_update_mode == SubViewport.UPDATE_DISABLED, "Both shop viewports stop while the wardrobe is visible")
+	tap(avatar.hat_cards["pirate"])
+	await frame()
+	check(ledger.appearance.hat_id == "pirate" and ledger.cash == avatar_cash, "A hat card equips immediately without spending coins")
+	await capture("menu_avatar")
+	home._back()
+	await frame()
+	check(not avatar.visible and ledger.active_store == selected_store, "Back closes the wardrobe without changing stores")
+	check(root.gui_get_focus_owner() == home.get_node("%NavAvatar"), "Wardrobe dismissal restores character-button focus")
+	# Compact shop swipes never purchase; real taps buy manual upgrades once.
 	ledger.cash=300
-	ledger.manual_jobs=10
-	ledger._refresh_blueprints()
 	home._refresh()
 	tap(home.get_node("%NavShop"))
 	await frame()
 	var menu: Control=home.management
-	var buy_button: Button=menu.action_for("bonzi")
+	var buy_button: Button=menu.action_for("slot_1")
+	var room_price: float = ledger.room_upgrade_view("floor").cost
 	var buy_point := buy_button.get_global_rect().get_center()
 	tap_at(buy_point,true)
 	var swipe := InputEventScreenDrag.new()
@@ -163,41 +174,22 @@ func run() -> void:
 	swipe.relative=Vector2(0,-35)
 	root.push_input(swipe,true)
 	tap_at(swipe.position,false)
-	check(menu.pending_item.is_empty() and ledger.cash==300,"Swiping over a build button never purchases")
+	await frame()
+	check(menu.pending_item.is_empty() and ledger.cash==300, "Swiping over an upgrade button never purchases")
 	tap(buy_button)
 	await frame()
-	check(menu.pending_item=="bonzi" and ledger.cash==300,"Build tap opens a review without spending")
-	check(home._safe_rect().encloses(menu.get_node("%ConfirmPanel").get_global_rect()),"Purchase review fits entirely on screen")
-	check(menu.get_node("%ConfirmPanel").get_global_rect().encloses(menu.get_node("%ConfirmBuild").get_global_rect()),"Build button is inside visible review")
-	await capture("purchase_review")
-	home._back()
-	check(menu.pending_item.is_empty() and home.get_node("%Management").visible,"Back dismisses purchase first")
-	tap(buy_button)
-	await frame()
-	tap(menu.get_node("%ConfirmBuild"))
-	menu.confirm_build()
-	await frame()
-	check(ledger.owns("bonzi") and ledger.cash==200,"Confirmed purchase charges once")
-	check(menu.action_for("bonzi").disabled,"Purchased item cannot be bought again")
-	menu.request_build("wide_brush")
-	await frame()
-	tap(menu.get_node("%ConfirmBuild"))
-	await frame()
-	check(ledger.owns("wide_brush") and ledger.cash==120,"Compact shop builds the wide brush")
+	check(ledger.room_upgrade_view("floor").level == 1 and ledger.cash == 300 - room_price, "A room-upgrade tap charges once and improves the room")
 	menu.show_tab("items")
 	await frame()
-	tap(menu.action_for("hand_brush"))
+	var tool_price: float = ledger.progression_view().tool_cost
+	tap(menu.action_for("slot_2"))
 	await frame()
-	check(ledger.equipped_brush=="hand_brush","Tools sheet equips an owned brush")
+	check(ledger.progression_view().tool_level == 1 and ledger.cash == 300 - room_price - tool_price, "Tools sheet purchases the first manual brush upgrade")
+	check(menu.action_for("slot_1").disabled and menu.action_for("slot_1").text == "Using", "The equipped manual tool remains clearly selected")
 	menu.show_tab("plans")
 	await frame()
-	tap(menu.action_for("bonzi_mk2"))
-	await frame()
-	check(menu.current_tab=="shop","Found blueprint routes to the shop")
-	menu.show_tab("bonzi")
-	await frame()
-	check(menu.get_node("%Routine").visible,"Bonzi sheet shows working income")
-	await capture("bonzi_working")
+	check(menu.get_node("%TravelGoals").visible and menu.action_for("slot_5").disabled, "Store opening waits for the manual mastery checklist")
+	await capture("manual_store_requirements")
 	root.size=Vector2i(844,390)
 	await frame()
 	await capture("menu_landscape")

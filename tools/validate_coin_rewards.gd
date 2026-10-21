@@ -91,8 +91,8 @@ func run() -> void:
 		return
 	state = root.get_node("ShopState")
 	state.set_process(false)
-	state._test_ticks_msec = 0
-	state._test_unix_time = 1800000000.0
+
+
 	state._save_path = "res://.godot/coin_reward_test_%d.json" % OS.get_process_id()
 	check(state.reset_progress(), "The reward ledger is isolated from the player's save")
 	state.cash = 120.0

@@ -19,7 +19,7 @@ func verify(condition: bool, message: String) -> void:
 		push_error(message)
 
 func run() -> void:
-	for kind: String in ["store", "bonzi", "brush", "wide_brush", "blueprint", "upgrade", "intake"]:
+	for kind: String in ["store", "brush", "wide_brush", "blueprint", "upgrade", "intake"]:
 		var packed: PackedScene = load("res://scenes/ui/art/" + kind + ".tscn")
 		verify(packed != null, kind + " loads")
 		if packed == null:
@@ -38,15 +38,6 @@ func run() -> void:
 		await process_frame
 		verify(part.position == Vector2(17, 13), kind + " resize preserves authored transforms")
 		verify(artwork.scale.x > 0 and is_equal_approx(artwork.scale.x, artwork.scale.y), kind + " uniform aspect fit")
-		if kind == "bonzi":
-			var bonzi: Node2D = scene.get_node("Artwork/Robot/Bonzi")
-			var rest := bonzi.position
-			scene.working = true
-			await process_frame
-			await process_frame
-			verify(bonzi.position != rest, "Bonzi working animation moves its group")
-			scene.working = false
-			verify(bonzi.position == rest, "Stopping Bonzi restores authored rest pose")
 		print("EDITABLE ART: ", kind, " has ", shapes, " native shapes.")
 		root.remove_child(scene)
 		scene.free()

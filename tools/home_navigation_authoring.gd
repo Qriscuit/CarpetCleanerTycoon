@@ -1,7 +1,7 @@
 extends RefCounted
 ## Saved short captions make the icon routes understandable on touch devices.
 static func decorate(home: Control) -> void:
-	for definition in [["NavShop","Shop","FloatingShop"],["NavItems","Tools","BrushIcon"],["NavPlans","Plans","BlueprintIcon"],["NavBonzi","Bonzi","BonziIcon"]]:
+	for definition in [["NavShop","Shop","FloatingShop"],["NavItems","Tools","BrushIcon"],["NavPlans","Stores","BlueprintIcon"],["NavAvatar","You","../character/thumbnails/portrait"]]:
 		var b: Button = home.get_node("%"+definition[0])
 		b.icon=null
 		b.custom_minimum_size=Vector2(64,72)

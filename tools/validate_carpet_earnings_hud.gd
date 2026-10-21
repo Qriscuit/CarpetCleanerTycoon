@@ -189,8 +189,8 @@ func buy_last_wall(store_id: int) -> void:
 func run() -> void:
 	ledger = root.get_node("ShopState")
 	ledger.set_process(false)
-	ledger._test_ticks_msec = 0
-	ledger._test_unix_time = 1800000000.0
+
+
 	save_path = "res://.godot/carpet_earnings_hud_%d.json" % OS.get_process_id()
 	ledger._save_path = save_path
 	check(ledger.reset_progress(), "The HUD test begins in a disposable save")

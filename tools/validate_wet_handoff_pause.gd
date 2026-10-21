@@ -147,9 +147,9 @@ func run() -> void:
 	state = root.get_node("ShopState")
 	save_path = "res://.godot/wet_handoff_%d.json" % OS.get_process_id()
 	state._save_path = save_path
-	state._test_ticks_msec = 0
-	state._last_ticks = 0
-	state._test_unix_time = 1800000000.0
+
+
+
 	state.set_process(false)
 	check(state.reset_progress(), "Reset a disposable ledger")
 	state.start_job()

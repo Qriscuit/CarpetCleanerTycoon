@@ -50,6 +50,7 @@ export_credentials.cfg
 
 # Local game saves; test saves inside .godot are already excluded above.
 neighborhood_shop_v*.json
+carpet_cleaner_v*.json
 shop_test_*.json
 
 # Blender backups, Python caches, and local virtual environments.

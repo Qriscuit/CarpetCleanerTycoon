@@ -1,295 +1,94 @@
 extends SceneTree
-## Run with --headless --path CarpetToy --script ../tools/validate_shop_state.gd -- --shop-test
-
+## Current manual ledger: durable jobs, progressive rewards and failure rollback.
 const State := preload("res://scripts/shop_state.gd")
-var _paths: Array[String] = []
-var _checks: int = 0
-var _failures: int = 0
-
+const Rules := preload("res://scripts/progression.gd")
+var checks := 0
+var failures := 0
+var paths: Array[String] = []
 
 func _initialize() -> void:
-	if not "--shop-test" in OS.get_cmdline_user_args():
-		printerr("Refusing to run without --shop-test: real player saves must remain untouched.")
+	if "--shop-test" not in OS.get_cmdline_user_args():
 		quit(2)
 		return
-	_run.call_deferred()
+	run.call_deferred()
 
+func check(ok: bool, message: String) -> void:
+	checks += 1
+	if not ok:
+		failures += 1
+		push_error("SHOP STATE: " + message)
 
-func _run() -> void:
-	_check_manual_reward_tiers()
-	var state := _new_state("main")
-	_check(state.cash == 0 and state.owns("hand_brush") and state.output_per_hour() == 0.0, "Free shop starts without routine income")
-	_check(state.equipped_brush == "hand_brush", "Free starter brush is equipped by default")
-	_check(not state.equip_brush("wide_brush") and not state.equip_brush("bonzi") and not state.equip_brush("unknown") and state.equipped_brush == "hand_brush", "Only owned personal brushes can be equipped")
-	_check(not state.build("bonzi") and not state.build("unknown"), "Locked and unknown builds are rejected")
-	var first: String = state.start_job()
-	_check(not first.is_empty() and state.start_job() == first, "One resumable active job")
-	_check(not state.complete_job(first), "Uncleaned carpet does not pay")
-	state.save_job_snapshot({"unique_clearance": 0.95, "surface_clearance": 0.74, "pixels": [1, 2, 3]})
-	_check(not state.complete_job(first), "Both clearance thresholds are required")
-	state.save_job_snapshot({"unique_clearance": 0.75, "surface_clearance": 0.75, "pixels": [1, 2, 3]})
-	state = _reload(state)
-	_check(state.active_job_id == first and state.job_snapshot["pixels"].size() == 3, "Active carpet persists across reload")
-	_check(state.complete_job(first) and state.cash == 20 and state.manual_jobs == 1, "Saved early carpet settles its fixed first half")
-	_check(not state.complete_job(first) and state.cash == 20, "Repeated reward is rejected")
-	for _job in range(2):
-		_finish_one(state)
-	_check(state.blueprint_known("bonzi") and not state.owns("bonzi") and state.cash == 100, "Bonzi blueprint is permanent permission at three jobs")
-	_check(not state.build("bonzi") and state.cash == 100, "Unaffordable blueprint cannot be built")
-	for _job in range(2):
-		_finish_one(state)
-	_advance(state, 10000.0)
-	_check(state.build_cost("bonzi") == 160 and state.build("bonzi") and state.cash == 20 and state.output_per_hour() == 30.0, "Bonzi charges its revised hire price and starts with no earlier catch-up")
-	_check(not state.build("bonzi") and state.cash == 20, "Duplicate purchases do not charge")
-	_advance(state, 60.0)
-	_check(state.save_state() and state.cash == 20 and is_equal_approx(state.routine_remainder, 0.5), "Only whole automated deliveries pay")
-	_check(is_equal_approx(state.seconds_to_delivery(), 60.0), "Delivery countdown uses remaining order fraction")
-	state = _reload(state)
-	_check(is_equal_approx(state.routine_remainder, 0.5), "Fractional routine order survives a reload")
-	_advance(state, 60.0)
-	state.save_state()
-	_check(state.cash == 60 and state.automated_jobs == 1, "Timed Bonzi still pays the unchanged full40 quote")
-	for _job in range(5):
-		_finish_one(state)
-	_check(state.blueprint_known("wide_brush") and state.blueprint_known("bonzi_mk2") and state.blueprint_known("intake"), "Job milestones reveal starter tools and modules")
-	_check(not state.build("bonzi_mk2") and state.build_cost("bonzi_mk2") == 16000, "The geometric middle tier requires its real price")
-	state.cash = state.build_cost("bonzi_mk2") + 15.0
-	state.save_state()
-	# Settle the old 120-second delivery before charging the new midpoint tier.
-	_advance(state, 120.0)
-	_check(state.build("bonzi_mk2") and state.cash == 55 and state.automated_jobs == 2, "Rate change settles old output before charging")
-	_check(state.capacity_per_hour() == 40.0 and state.output_per_hour() == 40.0 and state.bottleneck() == "Bonzi cycle", "Bonzi II follows its90-second cycle")
-	_advance(state, 45.0)
-	state.save_state()
-	_check(is_equal_approx(state.routine_remainder, 0.5), "New output applies only after installation")
-	for _job in range(25):
-		_finish_one(state)
-	_check(not state.build("intake") and state.build_cost("intake") == 1600000, "The capstone Bonzi tier requires its real cap-scaled price")
-	state.cash = state.build_cost("intake") + 200.0
-	state.save_state()
-	_check(state.build("intake") and state.output_per_hour() == 60.0, "Bonzi III pays the same quote every60 seconds")
-	var pre_offline_cash: int = state.cash
-	var pre_offline_jobs: int = state.automated_jobs
-	state = _reload(state, 12.0 * 3600.0)
-	_check(state.cash == pre_offline_cash + 19200 and state.automated_jobs == pre_offline_jobs + 480, "Twelve hours away credits the eight-hour cap")
-	_check(is_equal_approx(state.routine_remainder, 0.5) and is_equal_approx(state.return_seconds, 28800.0), "Offline cap preserves the half-finished order")
-	_check(state.return_reward == 19200, "Return summary describes cash already credited")
-	state = _reload(state)
-	_check(state.cash == pre_offline_cash + 19200 and state.return_reward == 19200, "Reopening the return panel cannot pay twice")
-	_check(state.acknowledge_return() and state.return_reward == 0 and state.cash == pre_offline_cash + 19200, "Acknowledgement clears only the summary")
-	state = _reload(state)
-	_check(state.return_reward == 0, "Acknowledgement survives reload")
-	var before_backward: int = state.cash
-	state = _reload(state, -3600.0)
-	_check(state.cash == before_backward, "Backward wall clock awards no offline time")
-	_advance(state, 3600.0)
-	state.save_state()
-	_check(state.cash == before_backward + 2400, "Online production follows elapsed monotonic time")
-	_check(state.build("wide_brush") and state.owns("wide_brush"), "The optional personal tool can be built")
-	_check(state.equipped_brush == "wide_brush", "Building the wider brush equips its benefit immediately")
-	state = _reload(state)
-	_check(state.equipped_brush == "wide_brush", "New brush selection persists after building")
-	var before_equip_cash: int = state.cash
-	_check(state.equip_brush("hand_brush") and state.cash == before_equip_cash, "Owned brushes can be swapped without spending cash")
-	state = _reload(state)
-	_check(state.equipped_brush == "hand_brush" and state.owns("wide_brush"), "Selected starter brush survives reload while the wider brush remains owned")
-	var equipped_path: String = state._save_path
-	state._save_path += "/cannot-write.json"
-	_check(not state.equip_brush("wide_brush") and state.equipped_brush == "hand_brush", "Failed equipment save preserves the previous selection")
-	state._save_path = equipped_path
-	_check(state.equip_brush("wide_brush") and state.equip_brush("wide_brush") and state.cash == before_equip_cash, "Repeated equip taps are harmless and keep the wider brush selected")
-	_check(not state.build("wide_brush"), "The personal tool cannot be duplicated")
-	var pre_pause_cash: int = state.cash
-	state._notification(Node.NOTIFICATION_APPLICATION_PAUSED)
-	_advance(state, 12.0 * 3600.0)
-	state._process(12.0 * 3600.0)
-	_check(state.cash == pre_pause_cash, "Suspended app does not count absence as live production")
-	state._notification(Node.NOTIFICATION_APPLICATION_RESUMED)
-	_check(state.cash == pre_pause_cash + 19200 and state.return_reward == 19200, "Suspending and returning uses the same eight-hour absence cap")
-	state.acknowledge_return()
-	var main_path: String = state._save_path
-	state._save_path = main_path + "/missing-folder/save.json"
-	var before_failed_cash: int = state.cash
-	var before_failed_jobs: int = state.manual_jobs
-	_check(state.start_job().is_empty() and state.active_job_id.is_empty(), "Failed save rolls back new jobs")
-	state._save_path = main_path
-	var pending: String = state.start_job()
-	state.save_job_snapshot({"unique_clearance": 1.0, "surface_clearance": 1.0})
-	state._save_path = main_path + "/missing-folder/save.json"
-	_check(not state.complete_job(pending) and state.cash == before_failed_cash and state.manual_jobs == before_failed_jobs and state.active_job_id == pending, "Failed commit rolls back cash, count and the active job")
-	state._save_path = main_path
-	_check(state.complete_job(pending) and state.cash == before_failed_cash + 40 and state.manual_jobs == before_failed_jobs + 1, "Retry after a failed perfect-rug commit pays exactly 40")
-	_check(not state.complete_job(pending) and state.cash == before_failed_cash + 40, "Repeated perfect-rug completion cannot pay twice")
-	state = _reload(state)
-	_check(state.cash == before_failed_cash + 40 and state.active_job_id.is_empty(), "Perfect-rug payout survives a reload without restoring the completed job")
+func fresh(label: String) -> Node:
+	var state := State.new()
+	state._save_path = "res://.godot/manual_state_%d_%s.json" % [OS.get_process_id(),label]
+	paths.append(state._save_path)
+	root.add_child(state)
+	return state
+
+func reload_state(state: Node) -> Node:
+	var path: String = state._save_path
 	state.free()
-	# Finishing and reserving the next rug is atomic and rejects the old id twice.
-	var atomic := _new_state("atomic_next")
-	var old_job: String = atomic.start_job()
-	var next_job: String = atomic.complete_and_start_next_job(old_job, {"unique_clearance": 0.75, "surface_clearance": 0.75})
-	_check(not next_job.is_empty() and next_job != old_job and atomic.active_job_id == next_job, "Completion atomically reserves a fresh rug")
-	_check(atomic.cash == 20 and atomic.manual_jobs == 1 and atomic.job_snapshot.is_empty(), "Atomic completion pays once and starts the next rug clean")
-	_check(atomic.complete_and_start_next_job(old_job, {"unique_clearance": 1.0, "surface_clearance": 1.0}).is_empty() and atomic.cash == 20, "Repeated completion with the old id cannot pay twice")
-	var atomic_path: String = atomic._save_path
-	atomic._save_path += "/cannot-write.json"
-	var active_before_failure: String = atomic.active_job_id
-	_check(atomic.complete_and_start_next_job(active_before_failure, {"unique_clearance": 1.0, "surface_clearance": 1.0}).is_empty() and atomic.active_job_id == active_before_failure and atomic.cash == 20, "Failed atomic save keeps the current rug and reward ledger unchanged")
-	atomic._save_path = atomic_path
-	var perfect_next: String = atomic.complete_and_start_next_job(active_before_failure, {"unique_clearance": 0.99, "surface_clearance": 1.0})
-	_check(not perfect_next.is_empty() and perfect_next != active_before_failure and atomic.cash == 60 and atomic.manual_jobs == 2, "Retry atomically awards40 for a perfect rug and reserves its replacement")
-	_check(atomic.complete_and_start_next_job(active_before_failure, {"unique_clearance": 1.0, "surface_clearance": 1.0}).is_empty() and atomic.cash == 60, "Repeated perfect atomic completion cannot pay twice")
-	atomic = _reload(atomic)
-	_check(atomic.cash == 60 and atomic.manual_jobs == 2 and atomic.active_job_id == perfect_next and atomic.job_snapshot.is_empty(), "Atomic perfect reward and next-rug reservation survive reload together")
-	atomic.free()
-	# Legacy button IDs cannot skip the actual Bonzi tier sequence.
-	var intake_first := _new_state("intake_first")
-	for _job in range(15):
-		_finish_one(intake_first)
-	_check(intake_first.build("bonzi") and not intake_first.build("intake") and intake_first.output_per_hour() == 30.0, "A legacy intake button cannot bypass Bonzi II")
-	var before_build: int = intake_first.cash
-	intake_first._save_path += "/cannot-write.json"
-	_check(not intake_first.build("wide_brush") and not intake_first.owns("wide_brush") and intake_first.cash == before_build and intake_first.equipped_brush == "hand_brush", "Failed purchase preserves cash, ownership and equipment")
-	intake_first.free()
-	# Additive version-1 migration preserves the pre-selector equipment behavior.
-	var legacy := _new_state("legacy_equipment")
-	_check(legacy.save_state(), "Legacy fixture begins with a valid ledger")
-	_remove_equipment_field(legacy._save_path)
-	legacy = _reload(legacy)
-	_check(legacy.equipped_brush == "hand_brush", "Legacy starter save migrates to its free hand brush")
-	for _job in range(8):
-		_finish_one(legacy)
-	_check(legacy.build("wide_brush"), "Legacy wider-brush fixture is earned and built")
-	_remove_equipment_field(legacy._save_path)
-	legacy = _reload(legacy)
-	_check(legacy.equipped_brush == "wide_brush", "Legacy save with an owned wide brush retains that equipped benefit")
-	_check(JSON.parse_string(FileAccess.get_file_as_string(legacy._save_path)).get("equipped_brush") == "wide_brush", "Migrated equipment is written back to disk")
-	for invalid_selection: Variant in ["jet_spray", 42, {"not": "an item"}]:
-		var fixture: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(legacy._save_path))
-		fixture["equipped_brush"] = invalid_selection
-		_write_fixture(legacy._save_path, fixture)
-		legacy = _reload(legacy)
-		_check(legacy.equipped_brush == "hand_brush" and legacy.owns("wide_brush"), "Invalid saved equipment falls back safely without losing owned tools")
-	legacy.free()
-	var unowned := _new_state("unowned_equipment")
-	unowned.save_state()
-	var unowned_fixture: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(unowned._save_path))
-	unowned_fixture["equipped_brush"] = "wide_brush"
-	_write_fixture(unowned._save_path, unowned_fixture)
-	unowned = _reload(unowned)
-	_check(unowned.equipped_brush == "hand_brush" and not unowned.owns("wide_brush"), "Saved equipment cannot grant an unowned tool")
-	unowned.free()
-	# Preserve unknown future data instead of silently starting over and overwriting it.
-	var invalid_path := _path("invalid")
-	var invalid := FileAccess.open(invalid_path, FileAccess.WRITE)
-	invalid.store_string('{"version":999}')
-	invalid.close()
-	var broken := _new_state("invalid")
-	_check(not broken.save_state() and FileAccess.get_file_as_string(invalid_path) == '{"version":999}', "Unsupported save versions remain untouched")
-	broken.free()
-	for path in _paths:
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
-		if FileAccess.file_exists(path + ".tmp"):
-			DirAccess.remove_absolute(ProjectSettings.globalize_path(path + ".tmp"))
-	print("VERIFIED: ", _checks, " shop ledger checks; save/resume, brush selection/migration, thresholds, one-time rewards/builds, production, offline cap, bottlenecks and failure rollback.")
-	quit(0 if _failures == 0 else 1)
+	var next := State.new()
+	next._save_path = path
+	root.add_child(next)
+	return next
 
+func snapshot(fraction: float) -> Dictionary:
+	return {"unique_clearance":fraction,"surface_clearance":fraction,"earned_clearance":fraction,"marker":"manual-work"}
 
-func _new_state(suffix: String) -> Node:
-	var state := State.new()
-	state._save_path = _path(suffix)
-	state._test_ticks_msec = 0
-	state._test_unix_time = 1800000000.0
-	root.add_child(state)
-	state.set_process(false)
-	return state
-
-
-func _path(suffix: String) -> String:
-	var path := "res://.godot/shop_validation_%d_%s.json" % [OS.get_process_id(), suffix]
-	if not path in _paths:
-		_paths.append(path)
-	return path
-
-
-func _reload(old: Node, away_seconds: float = 0.0) -> Node:
-	var state := State.new()
-	state._save_path = old._save_path
-	state._test_ticks_msec = 0
-	state._test_unix_time = old._test_unix_time + away_seconds
-	old.free()
-	root.add_child(state)
-	state.set_process(false)
-	return state
-
-
-func _advance(state: Node, seconds: float) -> void:
-	state._test_ticks_msec += int(seconds * 1000.0)
-	state._test_unix_time += seconds
-
-
-func _finish_one(state: Node) -> void:
-	var id: String = state.start_job()
-	_check(state.save_job_snapshot({"unique_clearance": 1.0, "surface_clearance": 1.0}) and state.complete_job(id), "Complete a fully restored manual commission")
-
-
-func _check_manual_reward_tiers() -> void:
-	var cases: Array[Dictionary] = [
-		{"label": "74.99 percent", "snapshot": {"unique_clearance": 0.7499, "surface_clearance": 0.7499}, "reward": 0},
-		{"label": "75 percent", "snapshot": {"unique_clearance": 0.75, "surface_clearance": 0.75}, "reward": 20},
-		{"label": "85 percent", "snapshot": {"unique_clearance": 0.85, "surface_clearance": 0.85}, "reward": 20},
-		{"label": "98.99 percent", "snapshot": {"unique_clearance": 0.9899, "surface_clearance": 0.9899}, "reward": 20},
-		{"label": "99 percent", "snapshot": {"unique_clearance": 0.99, "surface_clearance": 0.99}, "reward": 40},
-		{"label": "100 percent", "snapshot": {"unique_clearance": 1.0, "surface_clearance": 1.0}, "reward": 40},
-		{"label": "integer full clearances", "snapshot": {"unique_clearance": 1, "surface_clearance": 1}, "reward": 40},
-		{"label": "dust below minimum", "snapshot": {"unique_clearance": 1.0, "surface_clearance": 0.7499}, "reward": 0},
-		{"label": "debris below minimum", "snapshot": {"unique_clearance": 0.7499, "surface_clearance": 1.0}, "reward": 0},
-		{"label": "dust limits early reward", "snapshot": {"unique_clearance": 1.0, "surface_clearance": 0.9899}, "reward": 20},
-		{"label": "debris limits early reward", "snapshot": {"unique_clearance": 0.75, "surface_clearance": 1.0}, "reward": 20},
-		{"label": "unequal perfect layers", "snapshot": {"unique_clearance": 0.99, "surface_clearance": 1.0}, "reward": 40},
-		{"label": "missing layers", "snapshot": {}, "reward": 0},
-		{"label": "missing surface", "snapshot": {"unique_clearance": 1.0}, "reward": 0},
-		{"label": "missing debris", "snapshot": {"surface_clearance": 1.0}, "reward": 0},
-	]
-	for invalid: Variant in [null, true, "1.0", NAN, INF, -INF, -0.1, 1.001, [], {}]:
-		for key: String in ["unique_clearance", "surface_clearance"]:
-			var snapshot := {"unique_clearance": 1.0, "surface_clearance": 1.0}
-			snapshot[key] = invalid
-			cases.append({"label": "invalid %s (%s)" % [key, str(invalid)], "snapshot": snapshot, "reward": 0})
-	var ledger := _new_state("reward_tiers")
-	for sample: Dictionary in cases:
-		var label: String = sample.label
-		var snapshot: Dictionary = sample.snapshot
-		var expected: int = sample.reward
-		_check(State.manual_reward_for(snapshot) == expected, "Reward rule handles " + label)
-		var job: String = ledger.start_job()
-		var before_cash: int = ledger.cash
-		var before_jobs: int = ledger.manual_jobs
-		ledger.job_snapshot = snapshot.duplicate(true)
-		var completed: bool = ledger.complete_job(job)
-		_check(completed == (expected > 0) and ledger.cash == before_cash + expected and ledger.manual_jobs == before_jobs + (1 if expected > 0 else 0) and ledger.active_job_id == ("" if expected > 0 else job), "Standalone payout follows both-layer rule for " + label)
-		job = ledger.start_job()
-		before_cash = ledger.cash
-		before_jobs = ledger.manual_jobs
-		var replacement: String = ledger.complete_and_start_next_job(job, snapshot)
-		var replaced: bool = not replacement.is_empty() and replacement != job and replacement == ledger.active_job_id
-		_check(replaced == (expected > 0) and ledger.cash == before_cash + expected and ledger.manual_jobs == before_jobs + (1 if expected > 0 else 0) and (expected > 0 or ledger.active_job_id == job), "Atomic payout follows both-layer rule for " + label)
-	ledger.free()
-
-
-func _remove_equipment_field(path: String) -> void:
-	var fixture: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(path))
-	fixture.erase("equipped_brush")
-	_write_fixture(path, fixture)
-
-
-func _write_fixture(path: String, data: Dictionary) -> void:
-	var file := FileAccess.open(path, FileAccess.WRITE)
-	file.store_string(JSON.stringify(data))
-	file.close()
-
-
-func _check(passed: bool, message: String) -> void:
-	_checks += 1
-	if not passed:
-		_failures += 1
-		printerr("FAILED: ", message)
+func run() -> void:
+	var state := fresh("jobs")
+	check(state.cash == 0.0 and state.manual_jobs == 0 and state.stores.size() == 1 and state.active_store == 1, "A fresh save starts at Neighborhood with an empty wallet")
+	check(state._valid_save(state._capture_state()), "A fresh current-schema ledger validates")
+	check(not state.is_processing(), "The ledger has no idle production process")
+	check(not state.complete_job("missing") and state.active_job_id.is_empty(), "Unknown job completion cannot pay")
+	var job: String = state.start_job()
+	check(not job.is_empty() and state.start_job() == job and state._job_serial == 1, "Repeated start reuses one durable reservation")
+	for pair: Array in [[0.0,0.0],[0.7499,0.0],[0.75,20.0],[0.9899,20.0],[0.99,40.0],[1.0,40.0]]:
+		check(state.reward_for_current_job(snapshot(float(pair[0]))) == float(pair[1]), "The starter quote respects early/full thresholds")
+	check(state.record_cleaning_progress(job,snapshot(0.25)) == 5.0 and state.cash == 5.0, "Manual surface removal saves its first installment")
+	check(state.record_cleaning_progress(job,snapshot(0.25)) == 0.0 and state.cash == 5.0, "Replaying an installment cannot pay twice")
+	state = reload_state(state)
+	check(state.active_job_id == job and state.cash == 5.0 and state.job_snapshot.marker == "manual-work", "Wallet, reservation, masks and watermark survive reload")
+	check(state.record_cleaning_progress(job,snapshot(0.25)) == 0.0, "Reloading cannot reopen a paid installment")
+	var before: Dictionary = state._capture_state()
+	var disk := FileAccess.get_file_as_string(state._save_path)
+	var path: String = state._save_path
+	state._save_path += "/cannot-write.json"
+	check(state.record_cleaning_progress(job,snapshot(0.5)) == -1.0 and state._capture_state() == before, "A real file-open failure restores wallet and cleaning snapshot")
+	check(state.complete_and_start_next_job(job,snapshot(1.0)).is_empty() and state._capture_state() == before, "A failed completion preserves its current rug and unpaid reward")
+	state._save_path = path
+	check(FileAccess.get_file_as_string(path) == disk, "Failed transactions leave the durable ledger unchanged")
+	var next_job: String = state.complete_and_start_next_job(job,snapshot(1.0))
+	check(not next_job.is_empty() and next_job != job and state.cash == 40.0 and state.manual_jobs == 1, "Retry settles exactly one full carpet and reserves its replacement atomically")
+	check(state.completed_rewards[job].amount == 40.0 and state.job_snapshot.is_empty(), "Completion records the full job value and starts fresh masks")
+	check(state.complete_and_start_next_job(job,snapshot(1.0)).is_empty() and state.cash == 40.0, "The prior job ID cannot pay again")
+	check(state.save_job_snapshot(snapshot(0.75)) and state.complete_job(next_job) and state.cash == 60.0 and state.active_job_id.is_empty(), "Early completion settles exactly its half quote")
+	state = reload_state(state)
+	check(state.cash == 60.0 and state.manual_jobs == 2 and state.active_job_id.is_empty(), "Cold reload retains completed earnings without reserving or paying another rug")
+	job = state.start_job()
+	for malformed: Dictionary in [{"unique_clearance":NAN,"surface_clearance":0.5},{"unique_clearance":0.5,"surface_clearance":INF},{"unique_clearance":1.1,"surface_clearance":0.5},{"unique_clearance":0.5,"surface_clearance":0.5,"earned_clearance":0.8},{"unique_clearance":0.5,"surface_clearance":0.5,"rug_id":"missing"}]:
+		before = state._capture_state()
+		check(state.record_cleaning_progress(job,malformed) == -1.0 and state._capture_state() == before, "Malformed work cannot alter a reservation or wallet")
+	var valid: Dictionary = state._capture_state()
+	for amount: Variant in [NAN,INF,-1.0,0.5,Rules.MAX_MONEY*2.0]:
+		var invalid := valid.duplicate(true)
+		invalid.cash = amount
+		check(not state._valid_save(invalid), "Invalid money cannot be loaded")
+	state.cash = Rules.MAX_MONEY
+	check(state.save_state(), "The supported wallet maximum saves")
+	check(state.complete_and_start_next_job(job,snapshot(1.0)).is_empty() and state.cash == Rules.MAX_MONEY, "A full wallet cannot destroy an unpaid completion")
+	state.cash = 0.0
+	check(not state.complete_and_start_next_job(job,snapshot(1.0)).is_empty() and state.cash == 40.0, "Completion retries once wallet space exists")
+	check(state.set_appearance("mint","beanie"), "The free appearance can be selected before reset")
+	before = state._capture_state()
+	state._save_path += "/cannot-write.json"
+	check(not state.reset_progress() and state._capture_state() == before, "A failed reset keeps all current progress and appearance")
+	state._save_path = path
+	check(state.reset_progress() and state.cash == 0.0 and state.manual_jobs == 0 and state.stores.size() == 1 and state.appearance == {"color_id":"orange","hat_id":"none"}, "A durable reset restores the new free starter state")
+	state.free()
+	for saved: String in paths:
+		for suffix: String in ["", ".tmp"]:
+			if FileAccess.file_exists(saved+suffix): DirAccess.remove_absolute(ProjectSettings.globalize_path(saved+suffix))
+	print("SHOP_STATE_VALIDATION %d checks, %d failures" % [checks,failures])
+	quit(0 if failures == 0 else 1)

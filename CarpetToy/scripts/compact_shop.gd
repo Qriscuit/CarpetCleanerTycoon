@@ -6,7 +6,6 @@ const Progression = preload("res://scripts/progression.gd")
 const Money = preload("res://scripts/money.gd")
 const Coin = preload("res://assets/floating_shop/CoinIcon.png")
 const Brush = preload("res://assets/floating_shop/BrushIcon.png")
-const Buddy = preload("res://assets/floating_shop/BonziIcon.png")
 const Store = preload("res://assets/floating_shop/FloatingShop.png")
 const RoomUpgrades = preload("res://scripts/room_upgrades.gd")
 const ROOM_ICONS := {
@@ -17,8 +16,8 @@ const ROOM_ICONS := {
 	"walls": preload("res://assets/ui/room_upgrades/walls.svg"),
 }
 const ROOM_TITLES := {"floor": "Floor", "plants": "Plants", "window": "Window", "railings": "Railings", "walls": "Walls"}
-const ROW_IDS := ["hand_brush", "wide_brush", "bonzi", "bonzi_mk2", "intake"]
-const PLAN_ROW_IDS := ["hand_brush", "wide_brush", "bonzi", "bonzi_mk2", "store_5", "store_6", "intake", "next_section"]
+const ROW_IDS := ["slot_1", "slot_2", "slot_3", "slot_4", "slot_5"]
+const PLAN_ROW_IDS := ["slot_1", "slot_2", "slot_3", "slot_4", "store_5", "store_6", "slot_5", "next_section"]
 var current_tab := "shop"
 var ledger: Node
 var pending_item := ""
@@ -83,16 +82,16 @@ func _layout() -> void:
 	var count := 0
 	for row in rows.values():
 		if row.visible: count += 1
-	var desired := 112.0 + count * 88.0 + (94.0 if %Routine.visible else 0.0) + (130.0 if %TravelGoals.visible else 0.0) + (44.0 if %SheetNote.visible else 0.0)
+	var desired := 112.0 + count * 88.0 + (130.0 if %TravelGoals.visible else 0.0) + (44.0 if %SheetNote.visible else 0.0)
 	%Sheet.size = Vector2(minf(500 if current_tab == "plans" else 430, size.x - 24), minf(desired, size.y - 24))
 	%Sheet.position = (size - %Sheet.size) * 0.5
 	%ConfirmPanel.size = Vector2(minf(336, size.x - 36), 280)
 	%ConfirmPanel.position = (size - %ConfirmPanel.size) * 0.5
 
 func show_tab(tab: String) -> void:
-	if tab not in ["shop", "items", "plans", "bonzi"]: return
+	if tab not in ["shop", "items", "plans"]: return
 	current_tab = tab
-	%SheetTitle.text = {"shop":"Shop", "items":"Tools", "plans":"Stores", "bonzi":"Bonzi"}[tab]
+	%SheetTitle.text = {"shop":"Shop", "items":"Tools", "plans":"Stores"}[tab]
 	%SheetNote.hide()
 	%MenuScroll.scroll_vertical = 0
 	cancel_build()
@@ -110,8 +109,6 @@ func refresh() -> void:
 	actions.clear()
 	%SheetNote.visible = current_tab == "plans"
 	%TravelGoals.hide()
-	%Routine.visible = current_tab == "bonzi" and int(view.bonzi_tier) >= 0
-	%RoutineRate.text = "%s coins / %ds" % [_amount(view.bonzi_reward), int(view.bonzi_seconds)]
 	if current_tab == "shop":
 		for index in RoomUpgrades.IDS.size():
 			var room_id: String = RoomUpgrades.IDS[index]
@@ -128,17 +125,6 @@ func refresh() -> void:
 		_row(0, str(view.tool_name), current_detail, "Using", "", false, Brush)
 		_tool_row(1)
 		_wet_rows(2)
-	elif current_tab == "bonzi":
-		var tier: int = view.bonzi_tier
-		var detail := "%s / %s earned" % [_amount(view.bonzi_earned), _amount(view.bonzi_target)]
-		var cost: float = float(view.bonzi_cost)
-		var full_reward: float = float(view.full_reward)
-		if tier < 0:
-			detail = "%s coins / 120s" % _amount(full_reward)
-			if int(view.local_jobs) < 3: detail = "3 rugs to meet Bonzi\n" + detail
-		_row(0, "Bonzi" if tier < 0 else "Bonzi · %d/3" % (tier + 1), detail, "Max" if cost < 0 else _amount(cost), "bonzi", bool(view.can_upgrade_bonzi), Buddy, cost >= 0)
-		if tier >= 0 and tier < 2:
-			_row(1, "Faster cycle", "%s coins / %ds" % [_amount(full_reward), 90 if tier == 0 else 60], "", "", false, Buddy)
 	else:
 		var owned: Array = view.owned_store_ids
 		var section_id := Progression.section_for(int(view.store_id))
@@ -159,7 +145,7 @@ func refresh() -> void:
 			%TravelHelp.text = "Fully upgrade every room feature. Paid rugs must use the max-level %s." % ("hose" if int(view.store_id) >= Progression.WET_FIRST_STORE else "brush")
 			%TravelHelp.tooltip_text = "Upgrading during a rug counts once you use the upgraded tool. Stationary watering counts too."
 			_row(6, "Open next store", "All requirements met" if bool(view.can_travel) else "Complete the checklist above", _amount(view.travel_cost), "travel", bool(view.can_travel), Store, true)
-			action_for("intake").tooltip_text = "\n".join(view.get("travel_blockers", []))
+			action_for("slot_5").tooltip_text = "\n".join(view.get("travel_blockers", []))
 		elif owned.size() < Progression.STORE_COUNT:
 			# Visiting an older shop must not hide how to reach the next opening.
 			var latest_store := int(owned.back())
@@ -171,7 +157,7 @@ func refresh() -> void:
 			%TravelHelp.text = "Requirements are tracked per store."
 			%TravelHelp.tooltip_text = ""
 			_row(6, "Next store requirements", "Visit " + latest_name, "View", "store:%d" % latest_store, true, Store)
-			action_for("intake").tooltip_text = "View " + latest_name + " requirements"
+			action_for("slot_5").tooltip_text = "View " + latest_name + " requirements"
 		elif not bool(section.complete):
 			%TravelGoals.show()
 			%TravelTitle.text = "Master %s" % str(view.store_name)
@@ -224,12 +210,6 @@ func _amount(value: float) -> String:
 	if value < 0: return "—"
 	return Money.format(value)
 
-func _process(_delta: float) -> void:
-	if not is_visible_in_tree() or not %Routine.visible or ledger == null: return
-	var seconds: float = ledger.seconds_to_delivery()
-	%RoutineProgress.value = 100.0 * (1.0 - seconds / maxf(float(view.bonzi_seconds), 1.0))
-	%RoutineTime.text = "%ds" % ceili(seconds)
-
 func _item_action(id: String) -> void:
 	var action: String = actions.get(id, "")
 	if action == "travel":
@@ -245,7 +225,6 @@ func _item_action(id: String) -> void:
 		"tool": success = ledger.buy_tool_upgrade()
 		"hose": success = ledger.buy_hose_upgrade()
 		"squeegee": success = ledger.buy_squeegee_upgrade()
-		"bonzi": success = ledger.buy_bonzi_upgrade()
 		_:
 			if action.begins_with("room:"): success = ledger.buy_room_upgrade(action.get_slice(":", 1))
 			elif action.begins_with("store:"): success = ledger.select_store(int(action.get_slice(":", 1)))
@@ -254,7 +233,7 @@ func _item_action(id: String) -> void:
 
 func _refresh_confirmation() -> void:
 	%BuildTitle.text = "Open next store?"
-	%BuildBenefit.text = "Starter tools + Bonzi included"
+	%BuildBenefit.text = "A fresh room and starter tools"
 	%BuildBalance.text = "%s coins · %s left" % [_amount(view.travel_cost), _amount(ledger.cash - float(view.travel_cost))]
 	%ConfirmBuild.text = "Open · %s" % _amount(view.travel_cost)
 	%ConfirmBuild.disabled = not bool(view.can_travel)

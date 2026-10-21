@@ -17,6 +17,7 @@ var touch_origin := Vector2.ZERO
 var touch_target: Button
 var touch_dragged := false
 var changing_scene := false
+var application_focused := true
 var original_scale_size := Vector2i.ZERO
 var original_scale_aspect := 0
 var original_scale_mode := 0
@@ -83,7 +84,7 @@ func _ready() -> void:
 		%ShopTap.button_up.connect(_release_shop)
 		%ShopTap.mouse_exited.connect(_release_shop)
 		%ShopTap.focus_exited.connect(_release_shop)
-		for button in [%Settings,%NavShop,%NavItems,%NavPlans,%NavBonzi,%ReturnNotice,%MotionToggle,%MusicToggle,%EffectsToggle,%OpenGym,%ResetProgress,%CancelReset,%ConfirmReset]: Pop.bind(button)
+		for button in [%Settings,%NavShop,%NavItems,%NavPlans,%NavAvatar,%MotionToggle,%MusicToggle,%EffectsToggle,%OpenGym,%ResetProgress,%CancelReset,%ConfirmReset]: Pop.bind(button)
 		%Settings.pressed.connect(_open_settings)
 		%MotionToggle.toggled.connect(_toggle_motion)
 		%MotionToggle.set_pressed_no_signal(animate_shop)
@@ -98,9 +99,9 @@ func _ready() -> void:
 		%NavShop.pressed.connect(open_management.bind("shop"))
 		%NavItems.pressed.connect(open_management.bind("items"))
 		%NavPlans.pressed.connect(open_management.bind("plans"))
-		%NavBonzi.pressed.connect(open_management.bind("bonzi"))
+		%NavAvatar.pressed.connect(open_avatar)
+		%AvatarMenu.closed.connect(close_avatar)
 		%CloseManagement.hide()
-		%ReturnNotice.pressed.connect(acknowledge_return)
 		%StatusTimer.timeout.connect(_clear_status)
 		%NavPlans.get_node("CaptionContent/Caption").text = "Stores"
 		_refresh()
@@ -123,12 +124,13 @@ func _exit_tree() -> void:
 func _toggle_motion(enabled: bool) -> void:
 	animate_shop = enabled
 	state.set_meta("home_animate", enabled)
+	%AvatarMenu.get_node("%Preview").set_motion(enabled)
 	if not enabled:
 		%ShopPivot.rotation.y = 0.0
 		%ShopPivot.position.y = 0.0
 
 func _process(delta: float) -> void:
-	if not is_node_ready() or not animate_shop or %Management.visible or shop_pressed or changing_scene or store_transition_active: return
+	if not is_node_ready() or not animate_shop or %Management.visible or %AvatarMenu.visible or not application_focused or shop_pressed or changing_scene or store_transition_active: return
 	elapsed += minf(delta, 0.1)
 	%ShopPivot.rotation.y = deg_to_rad(rotation_speed_degrees) * elapsed
 	%ShopPivot.position.y = sin(elapsed * 1.25) * 0.055
@@ -179,14 +181,13 @@ func _layout() -> void:
 	%ShopTap.size = %BuildingView.size * Vector2(.80,.84)
 	%StatusMessage.position = safe.position+Vector2(margin,82)
 	%StatusMessage.size = Vector2(safe.size.x-margin*2, 44)
-	%ReturnNotice.position = Vector2(safe.get_center().x-130, safe.position.y+82)
-	%ReturnNotice.size = Vector2(260, 44)
 	%SettingsPanel.size = Vector2(minf(300,safe.size.x-36),280)
 	%SettingsPanel.position = safe.get_center()-%SettingsPanel.size*.5
 	%CloseManagement.position = safe.position+Vector2(18,12)
 	if is_instance_valid(management):
 		management.position = safe.position
 		management.size = safe.size
+	if not Engine.is_editor_hint(): %AvatarMenu.set_safe_rect(safe)
 	if store_transition_active: _set_store_transition_progress(store_transition_progress)
 
 func _open_settings() -> void:
@@ -242,7 +243,7 @@ func _confirm_reset() -> void:
 	_show_error("Progress reset")
 
 func _set_home_focus(enabled: bool) -> void:
-	for button in [%ShopTap,%Settings,%NavShop,%NavItems,%NavPlans,%NavBonzi,%ReturnNotice]:
+	for button in [%ShopTap,%Settings,%NavShop,%NavItems,%NavPlans,%NavAvatar]:
 		button.focus_mode = Control.FOCUS_ALL if enabled else Control.FOCUS_NONE
 
 func _new_shop_tween() -> Tween:
@@ -265,12 +266,6 @@ func _refresh() -> void:
 	%Cash.text = _cash_text(state.cash)
 	%Cash.tooltip_text = "%s coins" % _cash_text(state.cash)
 	_layout.call_deferred()
-	%ReturnNotice.visible = state.return_reward > 0 and not %StatusMessage.visible
-	%ReturnNotice.text = "+%s while away · Got it" % _cash_text(state.return_reward)
-	var progression: Dictionary = state.progression_view()
-	var hire_ready := int(progression.store_id) == 1 and int(progression.bonzi_tier) < 0 and int(progression.local_jobs) >= 3
-	(%NavBonzi.get_node("CaptionContent/Caption") as Label).text = "Hire Bonzi" if hire_ready else "Bonzi"
-	%NavBonzi.tooltip_text = "Hire Bonzi · %s coins. Cleans automatically and earns coins while away." % _cash_text(state.build_cost("bonzi")) if hire_ready else "Bonzi"
 	if last_active_store != state.active_store:
 		last_active_store = state.active_store
 		if not _selecting_store:
@@ -411,12 +406,6 @@ func _swipe_store(delta: Vector2) -> bool:
 func _cash_text(amount: float) -> String:
 	return Money.format(amount)
 
-func acknowledge_return() -> void:
-	if not state.acknowledge_return():
-		_show_error(state.last_error)
-		return
-	_refresh()
-
 func _clear_status() -> void:
 	%StatusMessage.hide()
 	_refresh()
@@ -424,11 +413,10 @@ func _clear_status() -> void:
 func _show_error(message: String) -> void:
 	%StatusMessage.text = message
 	%StatusMessage.show()
-	%ReturnNotice.hide()
 	%StatusTimer.start()
 
 func enter_cleaning() -> void:
-	if changing_scene or store_transition_active: return
+	if changing_scene or store_transition_active or %AvatarMenu.visible: return
 	if preview_store not in state.progression_view().owned_store_ids:
 		open_management("plans")
 		return
@@ -462,7 +450,7 @@ func enter_gym() -> void:
 		_show_error("Could not open the gym. Try again.")
 
 func open_management(tab: String) -> void:
-	if changing_scene: return
+	if changing_scene or %AvatarMenu.visible: return
 	_settle_store_transition()
 	%SettingsSheet.hide()
 	if not is_instance_valid(management):
@@ -487,13 +475,13 @@ func close_management() -> void:
 
 func _button_at(point: Vector2) -> Button:
 	var candidates: Array[Button] = []
-	if %Management.visible:
+	if %Management.visible or %AvatarMenu.visible:
 		return null
 	elif %SettingsSheet.visible:
 		if reset_pending: candidates = [%CancelReset, %ConfirmReset]
 		else: candidates = [%MotionToggle, %MusicToggle, %EffectsToggle, %ResetProgress, %OpenGym]
 	else:
-		candidates = [%Settings, %NavShop, %NavItems, %NavPlans, %NavBonzi, %ReturnNotice, %ShopTap]
+		candidates = [%Settings, %NavShop, %NavItems, %NavPlans, %NavAvatar, %ShopTap]
 	for button in candidates:
 		if button.is_visible_in_tree() and not button.disabled and button.get_global_rect().has_point(point): return button
 	return null
@@ -502,6 +490,13 @@ func _input(event: InputEvent) -> void:
 	if Engine.is_editor_hint(): return
 	if changing_scene:
 		get_viewport().set_input_as_handled()
+		return
+	if %AvatarMenu.visible:
+		if event is InputEventScreenTouch or event is InputEventScreenDrag:
+			get_viewport().set_input_as_handled()
+			%AvatarMenu.handle_touch(event)
+		elif %AvatarMenu.handle_mouse(event):
+			get_viewport().set_input_as_handled()
 		return
 	# Keep the backdrop in place until release and consume the whole gesture.
 	# A drag or canceled touch must not dismiss the sheet or reach the home controls.
@@ -599,19 +594,24 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		_back()
 		get_viewport().set_input_as_handled()
-	elif not %Management.visible and not %SettingsSheet.visible:
+	elif not %Management.visible and not %SettingsSheet.visible and not %AvatarMenu.visible:
 		if event.is_action_pressed("ui_left"): _swipe_store(Vector2(64, 0))
 		elif event.is_action_pressed("ui_right"): _swipe_store(Vector2(-64, 0))
 
 func _back() -> void:
-	if %SettingsSheet.visible:
+	if %AvatarMenu.visible:
+		close_avatar()
+	elif %SettingsSheet.visible:
 		if reset_pending: _cancel_reset()
 		else: _close_settings()
 	elif %Management.visible: management.back()
 
 func _notification(what: int) -> void:
-	if Engine.is_editor_hint(): return
-	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+	if Engine.is_editor_hint() or not is_node_ready(): return
+	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED]:
+		application_focused = false
+		%AvatarMenu.set_focused(false)
+		_sync_home_render()
 		_settle_store_transition()
 		mouse_store_drag = false
 		mouse_outside_settings = false
@@ -621,4 +621,34 @@ func _notification(what: int) -> void:
 		touch_id = -1
 		touch_target = null
 		if is_instance_valid(management): management.reset_touch()
+	if what in [NOTIFICATION_APPLICATION_FOCUS_IN, NOTIFICATION_APPLICATION_RESUMED]:
+		application_focused = true
+		%AvatarMenu.set_focused(true)
+		_sync_home_render()
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST: _back()
+
+func open_avatar() -> void:
+	if changing_scene: return
+	_settle_store_transition()
+	if %SettingsSheet.visible: _close_settings()
+	if %Management.visible: close_management()
+	_cancel_touch_feedback()
+	touch_id = -1
+	touch_target = null
+	mouse_store_drag = false
+	%AvatarMenu.open(animate_shop)
+	%AvatarMenu.set_focused(application_focused)
+	_set_home_focus(false)
+	_sync_home_render()
+	_layout()
+
+func close_avatar() -> void:
+	%AvatarMenu.close()
+	_set_home_focus(true)
+	_sync_home_render()
+	%NavAvatar.grab_focus()
+
+func _sync_home_render() -> void:
+	var awake: bool = application_focused and not %AvatarMenu.visible
+	%ShopViewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if awake else SubViewport.UPDATE_DISABLED
+	%IncomingShopViewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS if awake and store_transition_active else SubViewport.UPDATE_DISABLED

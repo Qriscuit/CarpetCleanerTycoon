@@ -1,0 +1,231 @@
+{
+  "generator": "tools/rig_avatar.py",
+  "source": "art/blender/avatar.blend",
+  "rig_scene": "avatar_rig.glb",
+  "coordinates": "Y-up, forward -Z, identity root; units match avatar.glb",
+  "root_motion": "None. root bone stays identity. Controller owns world locomotion; pelvis is local pose only.",
+  "rest_height": 2.161513,
+  "ride_pelvis_height": 0.88,
+  "hat_attachment_bone": "head",
+  "hat_local_transform": "inverse(head global rest transform) * existing full-body hat transform",
+  "physical_bone_candidates": [
+    "pelvis",
+    "spine",
+    "head",
+    "upper_arm_l",
+    "upper_arm_r",
+    "thigh_l",
+    "thigh_r",
+    "shin_l",
+    "shin_r"
+  ],
+  "bones": {
+    "root": {
+      "head": [
+        0,
+        0,
+        0
+      ],
+      "tail": [
+        0,
+        0.12,
+        0
+      ],
+      "parent": null,
+      "deform": false
+    },
+    "pelvis": {
+      "head": [
+        0,
+        0.84,
+        0
+      ],
+      "tail": [
+        0,
+        1.08,
+        0
+      ],
+      "parent": "root",
+      "deform": true
+    },
+    "spine": {
+      "head": [
+        0,
+        1.08,
+        0
+      ],
+      "tail": [
+        0,
+        1.6751543,
+        0
+      ],
+      "parent": "pelvis",
+      "deform": true
+    },
+    "head": {
+      "head": [
+        0,
+        1.6751543,
+        0
+      ],
+      "tail": [
+        0,
+        2.13,
+        0
+      ],
+      "parent": "spine",
+      "deform": true
+    },
+    "upper_arm_l": {
+      "head": [
+        0.37,
+        1.45,
+        0
+      ],
+      "tail": [
+        0.49,
+        1.1451543,
+        0
+      ],
+      "parent": "spine",
+      "deform": true
+    },
+    "forearm_l": {
+      "head": [
+        0.49,
+        1.1451543,
+        0
+      ],
+      "tail": [
+        0.5,
+        0.8151543,
+        0
+      ],
+      "parent": "upper_arm_l",
+      "deform": true
+    },
+    "thigh_l": {
+      "head": [
+        0.18,
+        0.82,
+        0
+      ],
+      "tail": [
+        0.18,
+        0.4,
+        0
+      ],
+      "parent": "pelvis",
+      "deform": true
+    },
+    "shin_l": {
+      "head": [
+        0.18,
+        0.4,
+        0
+      ],
+      "tail": [
+        0.18,
+        0.06,
+        0
+      ],
+      "parent": "thigh_l",
+      "deform": true
+    },
+    "upper_arm_r": {
+      "head": [
+        -0.37,
+        1.45,
+        0
+      ],
+      "tail": [
+        -0.49,
+        1.1451543,
+        0
+      ],
+      "parent": "spine",
+      "deform": true
+    },
+    "forearm_r": {
+      "head": [
+        -0.49,
+        1.1451543,
+        0
+      ],
+      "tail": [
+        -0.5,
+        0.8151543,
+        0
+      ],
+      "parent": "upper_arm_r",
+      "deform": true
+    },
+    "thigh_r": {
+      "head": [
+        -0.18,
+        0.82,
+        0
+      ],
+      "tail": [
+        -0.18,
+        0.4,
+        0
+      ],
+      "parent": "pelvis",
+      "deform": true
+    },
+    "shin_r": {
+      "head": [
+        -0.18,
+        0.4,
+        0
+      ],
+      "tail": [
+        -0.18,
+        0.06,
+        0
+      ],
+      "parent": "thigh_r",
+      "deform": true
+    }
+  },
+  "clips": {
+    "idle": {
+      "duration": 2.0,
+      "loop": true,
+      "minimum_mesh_floor": 0.0
+    },
+    "ride": {
+      "duration": 2.0,
+      "loop": true,
+      "minimum_mesh_floor": 0.4248986
+    },
+    "run": {
+      "duration": 0.8,
+      "loop": true,
+      "minimum_mesh_floor": 0.0
+    },
+    "get_up": {
+      "duration": 1.4,
+      "loop": false,
+      "minimum_mesh_floor": 0.0
+    },
+    "dust_off": {
+      "duration": 1.0,
+      "loop": false,
+      "minimum_mesh_floor": 0.0
+    },
+    "climb": {
+      "duration": 1.2,
+      "loop": false,
+      "minimum_mesh_floor": 0.0
+    }
+  },
+  "skin": {
+    "vertices": 1498,
+    "triangles": 2992,
+    "material_surfaces": 1,
+    "max_vertex_influences": 4,
+    "max_weight_sum_error": 0.0
+  }
+}

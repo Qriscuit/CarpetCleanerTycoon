@@ -279,8 +279,8 @@ func validate_rewards() -> void:
 	var state := State.new()
 	save_path = "res://.godot/three_wash_cycles_%d.json" % OS.get_process_id()
 	state._save_path = save_path
-	state._test_ticks_msec = 0
-	state._test_unix_time = 1800000000.0
+
+
 	root.add_child(state)
 	state.set_process(false)
 	state.stores["2"] = Rules.new_branch(2)
@@ -315,8 +315,8 @@ func validate_completed_cycle_resume() -> void:
 	var state: Node = root.get_node("ShopState")
 	state.set_process(false)
 	state._save_path = "res://.godot/three_wash_resume_%d.json" % OS.get_process_id()
-	state._test_ticks_msec = 0
-	state._test_unix_time = 1800000000.0
+
+
 	check(state.reset_progress(), "The animated-resume ledger is isolated")
 	state._sync_active_branch()
 	state.stores["2"] = Rules.new_branch(2)

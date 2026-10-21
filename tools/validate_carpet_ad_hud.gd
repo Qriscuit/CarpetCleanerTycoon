@@ -106,7 +106,7 @@ func validate_states(label: String) -> void:
 		else:
 			hud.set_progression(quote_view(true), true)
 			check(button.disabled and button.text == "2×" and button.icon.resource_path.ends_with("video_active.svg"), label + ": an active boost remains visibly marked with its check")
-			check((hud.control("CarpetEarningsValue") as Label).text == "80" and (hud.control("NextBonziStats") as Label).text.begins_with("40 coins"), label + ": the current-carpet quote doubles while Bonzi retains its base rate")
+			check((hud.control("CarpetEarningsValue") as Label).text == "80", label + ": the current-carpet quote doubles")
 			await capture("active_" + label)
 		footer_bounds(label + " state%d" % ad_state)
 	hud.set_wallet_paused(false)
@@ -132,7 +132,7 @@ func validate_states(label: String) -> void:
 func run() -> void:
 	state = root.get_node("ShopState")
 	state.set_process(false)
-	state._test_unix_time = 1500000000.0
+
 	state._save_path = "res://../art/carpet_ad_hud_test_%d.json" % OS.get_process_id()
 	save_path = state._save_path
 	check(state.reset_progress(), "Use an isolated video HUD save")

@@ -2,7 +2,7 @@ extends SceneTree
 ## Before-layout screenshots from disposable production gameplay, including departure.
 ## --composition-phone preserves the real 720x1000 canvas and captures phone UI
 ## in composition_phone; --composition-phone-first saves only the 591x1280 view.
-## --composition-shop captures the integrated in-carpet tool/Bonzi shop on the
+## --composition-shop captures the integrated in-carpet manual-tool shop on the
 ## actual production canvas, preserving the earlier composition previews.
 const Room := preload("res://scripts/room_upgrades.gd")
 const Rules := preload("res://scripts/progression.gd")
@@ -67,8 +67,8 @@ func run() -> void:
 		return
 	ledger = root.get_node("ShopState")
 	ledger.set_process(false)
-	ledger._test_ticks_msec = 0
-	ledger._test_unix_time = 1800000000.0
+
+
 	save_path = "res://.godot/composition_baseline_%d.json" % OS.get_process_id()
 	ledger._save_path = save_path
 	ledger.reset_progress()
@@ -226,43 +226,41 @@ func phone_scroll(scroll: ScrollContainer, direction: float = -1.0) -> void:
 func phone_shop_accessibility(label: String) -> void:
 	var panel: Control = game.hud.control("UpgradesPanel")
 	var done: Button = game.hud.control("CloseUpgradesButton")
-	var bonzi: Button = game.hud.control("BonziUpgradeButton")
+	var buy: Button = game.hud.control("ToolUpgradeButton")
 	phone_button_bounds(done,panel)
 	var done_bounds := done.get_global_rect()
 	var scroll: ScrollContainer = game.hud.control("ShopContentsScroll")
 	var before_cash: float = ledger.cash
 	var before_job: String = ledger.active_job_id
-	var before_bot: int = ledger._branch().bonzi_tier
+	var before_tool: int = int(ledger._branch().tool_level)
 	for _step: int in 8:
-		if game.hud.visible_button_at(bonzi.get_global_rect().get_center(),game.hud.action_buttons()) == bonzi: break
+		if game.hud.visible_button_at(buy.get_global_rect().get_center(),game.hud.action_buttons()) == buy: break
 		await phone_scroll(scroll)
-	phone_button_bounds(bonzi,panel)
+	phone_button_bounds(buy,panel)
 	phone_expect(done.get_global_rect().is_equal_approx(done_bounds), "Done stays fixed while the integrated shop scrolls")
-	phone_expect(ledger.cash == before_cash and ledger.active_job_id == before_job and int(ledger._branch().bonzi_tier) == before_bot, "A shop swipe does not purchase Bonzi or replace the carpet")
-	await capture(label + "_bonzi_action")
-	print("PHONE_SHOP_BOUNDS Done=",done_bounds,"; BonziBuy=",bonzi.get_global_rect(),"; Scroll=",scroll.get_global_rect(),"; safe=",game.hud._safe_rect())
-	var cards: ScrollContainer = game.hud.control("BonziCardsScroll")
+	phone_expect(ledger.cash == before_cash and ledger.active_job_id == before_job and int(ledger._branch().tool_level) == before_tool, "A shop swipe does not buy a tool or replace the carpet")
+	await capture(label + "_tool_action")
+	print("PHONE_SHOP_BOUNDS Done=",done_bounds,"; ToolBuy=",buy.get_global_rect(),"; Scroll=",scroll.get_global_rect(),"; safe=",game.hud._safe_rect())
+	var cards: ScrollContainer = game.hud.control("ToolCardsScroll")
 	if cards.get_v_scroll_bar().max_value > cards.get_v_scroll_bar().page + 0.5:
-		var buy_bounds := bonzi.get_global_rect()
+		var buy_bounds := buy.get_global_rect()
 		await phone_scroll(cards)
-		phone_expect(cards.scroll_vertical > 0,"Actual touch scrolling reaches the next Bonzi comparison")
-		phone_expect(cards.get_global_rect().grow(0.5).encloses(game.hud.control("NextBonziStats").get_global_rect()),"Both next-Bonzi stats remain readable after the card swipe")
-		phone_expect(done.get_global_rect().is_equal_approx(done_bounds) and bonzi.get_global_rect().is_equal_approx(buy_bounds),"Done and Bonzi Buy remain fixed during comparison scrolling")
-		phone_expect(ledger.cash == before_cash and ledger.active_job_id == before_job and int(ledger._branch().bonzi_tier) == before_bot,"A comparison swipe does not spend coins or replace the carpet")
-		await capture(label + "_bonzi_comparison")
+		phone_expect(cards.scroll_vertical > 0,"Actual touch scrolling reaches the next tool comparison")
+		phone_expect(cards.get_global_rect().grow(0.5).encloses(game.hud.control("NextToolStats").get_global_rect()),"Both next-tool stats remain readable after the card swipe")
+		phone_expect(done.get_global_rect().is_equal_approx(done_bounds) and buy.get_global_rect().is_equal_approx(buy_bounds),"Done and Buy remain fixed during comparison scrolling")
+		phone_expect(ledger.cash == before_cash and ledger.active_job_id == before_job and int(ledger._branch().tool_level) == before_tool,"A comparison swipe does not spend coins or replace the carpet")
+		await capture(label + "_tool_comparison")
 
 func run_phone_shop() -> void:
 	ledger = root.get_node("ShopState")
 	ledger.set_process(false)
-	ledger._test_ticks_msec = 0
-	ledger._test_unix_time = 1800000000.0
+
+
 	save_path = "res://.godot/composition_shop_%d.json" % OS.get_process_id()
 	ledger._save_path = save_path
 	phone_expect(ledger.reset_progress(), "Integrated shop uses a fresh disposable save")
 	ledger.cash = 1000.0
-	ledger.manual_jobs = 3
-	ledger._branch().manual_jobs = 3
-	phone_expect(ledger.save_state(), "Three-job hire eligibility is saved in the capture fixture")
+	phone_expect(ledger.save_state(), "Manual-tool capture fixture is saved")
 	folder = ProjectSettings.globalize_path("res://../art/renders/composition_integrated")
 	DirAccess.make_dir_recursive_absolute(folder)
 	root.size = Vector2i(591,1280)
@@ -275,18 +273,16 @@ func run_phone_shop() -> void:
 	game.set_physics_process(false)
 	await phone_settle()
 	phone_progress()
-	for hired: bool in [false,true]:
-		if hired: phone_expect(ledger.buy_bonzi_upgrade(), "Bonzi is hired through its real isolated-ledger purchase")
-		for size: Vector2i in [Vector2i(591,1280),Vector2i(390,844),Vector2i(844,390)]:
-			root.size = size
-			await phone_settle()
-			game.hud.open_upgrades()
-			await phone_settle()
-			var label := "shop_%s_%dx%d" % ["hired" if hired else "hire",size.x,size.y]
-			await capture(label + "_top")
-			await phone_shop_accessibility(label)
-			game.hud.close_upgrades()
-			await phone_settle()
+	for size: Vector2i in [Vector2i(591,1280),Vector2i(390,844),Vector2i(844,390)]:
+		root.size = size
+		await phone_settle()
+		game.hud.open_upgrades()
+		await phone_settle()
+		var label := "shop_manual_%dx%d" % [size.x,size.y]
+		await capture(label + "_top")
+		await phone_shop_accessibility(label)
+		game.hud.close_upgrades()
+		await phone_settle()
 	game.free()
 	game = null
 	current_scene = null
@@ -300,8 +296,8 @@ func run_phone_shop() -> void:
 func run_phone() -> void:
 	ledger = root.get_node("ShopState")
 	ledger.set_process(false)
-	ledger._test_ticks_msec = 0
-	ledger._test_unix_time = 1800000000.0
+
+
 	save_path = "res://.godot/composition_phone_%d.json" % OS.get_process_id()
 	ledger._save_path = save_path
 	if not ledger.reset_progress(): failures += 1

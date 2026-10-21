@@ -55,8 +55,8 @@ func reload_ledger() -> void:
 	ledger = State.new()
 	ledger.name = "ShopState"
 	ledger._save_path = save_path
-	ledger._test_ticks_msec = 0
-	ledger._test_unix_time = 1800000000.0
+
+
 	root.add_child(ledger)
 	ledger.set_process(false)
 	check(ledger.last_error.is_empty(), "A new ledger instance loads the saved progress")
@@ -77,8 +77,8 @@ func run() -> void:
 	save_path = "res://.godot/startup_room_%d.json" % OS.get_process_id()
 	ledger = root.get_node("ShopState")
 	ledger._save_path = save_path
-	ledger._test_ticks_msec = 0
-	ledger._test_unix_time = 1800000000.0
+
+
 	ledger.set_process(false)
 	check(ledger.reset_progress(), "A new-player fixture persists in an isolated save")
 	await launch()

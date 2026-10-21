@@ -45,13 +45,10 @@ func run() -> void:
 		quit(2)
 		return
 	var state := root.get_node("ShopState")
-	state.cash = state.build_cost("bonzi") + state.build_cost("bonzi_mk2") + state.build_cost("intake") + 2000.0
+	state.cash = 2000.0
 	state.manual_jobs = 10
 	state.stores["1"].manual_jobs = 10
-	state._refresh_blueprints()
-	state.build("bonzi")
-	state.build("bonzi_mk2")
-	state.build("intake")
+	state.set_appearance("blue", "pirate")
 	state.start_job()
 	home = load("res://scenes/production/floating_home.tscn").instantiate()
 	root.add_child(home)
@@ -62,13 +59,10 @@ func run() -> void:
 	check(home.get_node_or_null("%Hint") == null and not home.get_node("%StatusMessage").visible, "No persistent text under the house")
 	for state_name: String in ["normal","hover","pressed","hover_pressed","disabled","focus"]:
 		check(home.get_node("%ShopTap").get_theme_stylebox(state_name) is StyleBoxEmpty, "House has no color overlay in " + state_name)
-	tap(home.get_node("%NavBonzi"))
+	tap(home.get_node("%NavAvatar"))
 	await settle()
-	check(home.management.get_node("%Routine").visible and home.management.get_node("%RoutineRate").text == "40 coins / 60s", "Bonzi shows reward per actual bar length")
-	var countdown: String = home.management.get_node("%RoutineTime").text
-	check(countdown.ends_with("s") and countdown.trim_suffix("s").is_valid_int() and int(countdown.trim_suffix("s")) > 0, "Countdown states seconds until the next payout")
-	root.get_texture().get_image().save_png("res://../art/renders/bonzi_cycle_payout.png")
-	tap(home.management.get_node("%CloseSheet"))
+	check(home.get_node("%AvatarMenu").visible, "You opens customization from the dock")
+	home._back()
 	tap(home.get_node("%Settings"))
 	await settle()
 	var readable_blue := Color(0.20784314,0.34509805,0.4627451,1)
@@ -160,7 +154,7 @@ func run() -> void:
 	await settle()
 	tap(home.get_node("%ConfirmReset"))
 	await settle()
-	check(state.cash == 0 and not state.owns("bonzi") and state.active_job_id.is_empty(), "Confirmed reset clears earned progress")
+	check(state.cash == 0 and state.appearance == {"color_id":"orange", "hat_id":"none"} and state.active_job_id.is_empty(), "Confirmed reset clears earned progress and cosmetics")
 	check(not home.get_node("%SettingsSheet").visible and home.get_node("%Cash").text == "0", "Reset refreshes the home wallet")
 	state.cash = 3
 	home._confirm_reset()

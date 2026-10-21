@@ -221,8 +221,8 @@ func capture(label: String) -> void:
 func run() -> void:
 	ledger = root.get_node("ShopState")
 	ledger.set_process(false)
-	ledger._test_ticks_msec = 1000
-	ledger._test_unix_time = 1791471600.0
+
+
 	save_path = ProjectSettings.globalize_path("res://.godot/workshop_walls_%d.json" % OS.get_process_id())
 	ledger._save_path = save_path
 	check(ledger.reset_progress(), "Create an isolated wall validation ledger")

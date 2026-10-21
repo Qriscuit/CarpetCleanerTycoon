@@ -208,8 +208,8 @@ func run() -> void:
 	started_usec = Time.get_ticks_usec()
 	ledger = root.get_node("ShopState")
 	ledger.set_process(false)
-	ledger._test_ticks_msec = 0
-	ledger._test_unix_time = 2000000.0
+
+
 	save_path = "res://.godot/cleaning_stress_%d.json" % OS.get_process_id()
 	ledger._save_path = save_path
 	root.size = Vector2i(1080, 2400)

@@ -4,7 +4,7 @@ extends SceneTree
 
 const RoomRules := preload("res://scripts/room_upgrades.gd")
 const HUD_CONTROLS := ["HomeButton", "CleaningProgress", "EarningsPerCarpet", "Wallet", "UpgradeButton", "FinishJobButton", "AdRewardButton"]
-const SHOP_BADGES := ["UpgradeButton", "ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton", "BonziUpgradeButton"]
+const SHOP_BADGES := ["UpgradeButton", "ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton"]
 var game: Node
 var ledger: Node
 var checks := 0
@@ -85,8 +85,8 @@ func run() -> void:
 	save_path = "res://../art/upgrade_badges_test_%d.json" % OS.get_process_id()
 	ledger._save_path = save_path
 	ledger.set_process(false)
-	ledger._test_ticks_msec = 0
-	ledger._test_unix_time = 1000000.0
+
+
 	check(ledger.reset_progress(), "A fresh isolated ledger is available")
 	ledger.cash = 0.0
 	root.size = Vector2i(390, 844)
@@ -231,7 +231,8 @@ func check_tool_badges() -> void:
 	var cart: Control = game.hud._shop_upgrade_badges.UpgradeButton
 	set_cash(float(ledger.progression_view().tool_cost) - 1.0)
 	await settle_badges()
-	check(not available(cart) and not cart.visible, "The cart ignores affordable room ladders when tools are unaffordable and Bonzi is locked")
+
+	check(not available(cart) and not cart.visible, "The cart ignores affordable room ladders when the tool is unaffordable")
 	set_cash(float(ledger.progression_view().tool_cost))
 	await settle_badges()
 	check(available(cart) and cart.is_visible_in_tree(), "An affordable brush shows the cart marker")
@@ -240,7 +241,7 @@ func check_tool_badges() -> void:
 	check(not cart.is_visible_in_tree(), "The cart marker leaves the screen while the drawer is open")
 	var tool: Control = game.hud._shop_upgrade_badges.ToolUpgradeButton
 	check(available(tool) and tool.is_visible_in_tree(), "The affordable brush purchase shows its drawer marker")
-	check(not game.hud._shop_upgrade_badges.BonziUpgradeButton.is_visible_in_tree(), "Locked Bonzi has no purchase marker")
+
 	await capture("brush_drawer")
 	game.hud.close_upgrades()
 	await settle_badges()
@@ -251,7 +252,7 @@ func check_tool_badges() -> void:
 	await settle()
 	wet_hud.initialize_wallet(1000.0)
 	var wet_view: Dictionary = ledger.progression_view().duplicate(true)
-	wet_view.merge({"store_id":2, "wet_unlocked":true, "tool_cost":640.0, "can_upgrade_tool":true, "hose_cost":640.0, "can_upgrade_hose":true, "squeegee_cost":800.0, "can_upgrade_squeegee":true, "bonzi_cost":-1.0, "can_upgrade_bonzi":false}, true)
+	wet_view.merge({"store_id":7, "wet_unlocked":true, "tool_cost":640.0, "can_upgrade_tool":true, "hose_cost":640.0, "can_upgrade_hose":true, "squeegee_cost":800.0, "can_upgrade_squeegee":true}, true)
 	wet_hud.set_progression(wet_view, true)
 	wet_hud.open_upgrades()
 	await settle_badges()
@@ -262,13 +263,13 @@ func check_tool_badges() -> void:
 	await settle_badges()
 	check(not wet_hud._shop_upgrade_badges.ToolUpgradeButton.visible and not wet_hud._shop_upgrade_badges.SqueegeeUpgradeButton.visible, "Spending below wet prices removes both drawer markers")
 	wet_hud.sync_wallet(1000.0)
-	wet_view.merge({"local_jobs":3, "bonzi_cost":800.0, "can_upgrade_bonzi":true}, true)
 	wet_hud.set_progression(wet_view, true)
 	await settle_badges()
-	check(available(wet_hud._shop_upgrade_badges.BonziUpgradeButton) and wet_hud._shop_upgrade_badges.BonziUpgradeButton.is_visible_in_tree(), "Unlocked and affordable Bonzi shows its purchase marker")
+
 	wet_hud.reserve_reward(1.0)
 	await settle_badges()
-	check(not wet_hud._shop_upgrade_badges.ToolUpgradeButton.visible and not wet_hud._shop_upgrade_badges.SqueegeeUpgradeButton.visible and not wet_hud._shop_upgrade_badges.BonziUpgradeButton.visible, "Pending rewards gate all drawer purchases")
+	check(not wet_hud._shop_upgrade_badges.ToolUpgradeButton.visible and not wet_hud._shop_upgrade_badges.SqueegeeUpgradeButton.visible, "Pending rewards gate drawer purchases")
+
 	wet_hud.free()
 
 func check_practice() -> void:

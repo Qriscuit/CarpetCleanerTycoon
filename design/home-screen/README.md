@@ -1,14 +1,21 @@
-# Floating shop home screen — reference v1
+# Floating shop home screen — historical reference v1
 
 Generated using the built-in image generation tool. These images are design references, not implemented game screens or device compatibility evidence. No game scenes or project settings were changed in this reference pass.
 
-## Direction
+Current implementation: the dock contains Shop, Tools, Stores and the bottom-right
+Avatar entry. Avatar opens a rotating 3D customization menu with Colors and Hats
+tabs; all starter choices are free. The former robot and its automatic/offline
+income are removed. See [implementation](IMPLEMENTATION.md) for current behavior.
+The original reference direction and exact generation prompts below are retained
+as historical artwork provenance rather than current product requirements.
 
-A single matte, rounded floating shop is the focal point. Light blue bubbles and sparkle patterns sit behind it. The top row contains cash and settings; the bottom dock contains Home, Items, Blueprints and Bonzi. The building itself starts/resumes a rug; the only persistent instruction is “Tap to clean” (or “Tap to resume”). The reference number 120 is illustrative; implementation must use saved cash.
+## Current direction
 
-In the live scene the shop should be a real 3D model with slow rotation and a gentle bob, not a rotating screenshot. Keep icons and text as independent native controls. Keep quests, upgrade descriptions and detailed income data in their appropriate panels, opened by the dock. Surface actionable messages temporarily, and keep existing return-reward acknowledgement and error handling accessible.
+A single matte, rounded floating shop is the focal point. Light blue bubbles and sparkle patterns sit behind it. The top row contains cash and settings; the bottom dock contains Shop, Tools, Stores and Avatar. The building itself starts/resumes a rug; the building remains a native mouse/touch target without a persistent hint caption. The reference number 120 is illustrative; implementation must use saved cash.
 
-## Existing project inspection
+In the live scene the shop should be a real 3D model with slow rotation and a gentle bob, not a rotating screenshot. Keep icons and text as independent native controls. Keep quests, upgrade descriptions and detailed income data in their appropriate panels, opened by the dock. Surface actionable messages temporarily and keep error handling accessible.
+
+## Original reference-pass inspection (historical)
 
 - Main scene: CarpetToy/scenes/test/shop_hub.tscn.
 - Controller: CarpetToy/scripts/shop_hub.gd.

@@ -61,6 +61,9 @@ func run() -> void:
 		check(change_scene_to_file("res://scenes/test/shop_hub.tscn") == OK, "Legacy hub remains available for testing")
 		await settle()
 		current_scene.call(action)
+		for wait_frame in 120:
+			await create_timer(0.02).timeout
+			if current_scene != null and current_scene is Node3D: break
 		await settle()
 		check(current_scene.paid_contract == (action == "enter_cleaning"), "Legacy action keeps its intended practice/paid behavior")
 		current_scene.hud.control("HomeButton").pressed.emit()

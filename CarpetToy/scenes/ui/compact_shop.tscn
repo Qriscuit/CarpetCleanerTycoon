@@ -3,7 +3,6 @@
 [ext_resource type="Script" path="res://scripts/compact_shop.gd" id="1_p4oyw"]
 [ext_resource type="Texture2D" path="res://assets/floating_shop/CoinIcon.png" id="2_l7tgw"]
 [ext_resource type="Texture2D" path="res://assets/floating_shop/BrushIcon.png" id="3_yssv1"]
-[ext_resource type="Texture2D" path="res://assets/floating_shop/BonziIcon.png" id="4_7sdjq"]
 [ext_resource type="Texture2D" path="res://assets/floating_shop/FloatingShop.png" id="5_2s3ec"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mo3ys"]
@@ -712,39 +711,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 12
 
-[node name="Routine" type="PanelContainer" parent="Sheet/Content/MenuScroll/Stack" unique_id=2041958765]
-unique_name_in_owner = true
-visible = false
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_mc2ql")
-
-[node name="RoutineContents" type="VBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Routine" unique_id=1122632642]
-layout_mode = 2
-
-[node name="RoutineRate" type="Label" parent="Sheet/Content/MenuScroll/Stack/Routine/RoutineContents" unique_id=972806293]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
-theme_override_font_sizes/font_size = 22
-text = "10 coins every 120s"
-autowrap_mode = 3
-
-[node name="RoutineTime" type="Label" parent="Sheet/Content/MenuScroll/Stack/Routine/RoutineContents" unique_id=640069530]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
-theme_override_font_sizes/font_size = 14
-text = "Next +10 in 2:00"
-autowrap_mode = 3
-
-[node name="RoutineProgress" type="ProgressBar" parent="Sheet/Content/MenuScroll/Stack/Routine/RoutineContents" unique_id=162671753]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 8)
-layout_mode = 2
-theme_override_styles/background = SubResource("StyleBoxFlat_oth4l")
-theme_override_styles/fill = SubResource("StyleBoxFlat_vnf5g")
-show_percentage = false
-
 [node name="TravelGoals" type="PanelContainer" parent="Sheet/Content/MenuScroll/Stack"]
 unique_name_in_owner = true
 visible = false
@@ -783,16 +749,16 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="hand_brush" type="PanelContainer" parent="Sheet/Content/MenuScroll/Stack/Rows" unique_id=611874694]
+[node name="slot_1" type="PanelContainer" parent="Sheet/Content/MenuScroll/Stack/Rows" unique_id=611874694]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_4uhlk")
-metadata/item_id = "hand_brush"
+metadata/item_id = "slot_1"
 
-[node name="Row" type="HBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/hand_brush" unique_id=1388180289]
+[node name="Row" type="HBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_1" unique_id=1388180289]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Artwork" type="TextureRect" parent="Sheet/Content/MenuScroll/Stack/Rows/hand_brush/Row" unique_id=1980567904]
+[node name="Artwork" type="TextureRect" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_1/Row" unique_id=1980567904]
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 mouse_filter = 2
@@ -800,26 +766,26 @@ texture = ExtResource("3_yssv1")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Words" type="VBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/hand_brush/Row" unique_id=510312841]
+[node name="Words" type="VBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_1/Row" unique_id=510312841]
 layout_mode = 2
 size_flags_horizontal = 3
 alignment = 1
 
-[node name="Title" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/hand_brush/Row/Words" unique_id=670931140]
+[node name="Title" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_1/Row/Words" unique_id=670931140]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_font_sizes/font_size = 17
 text = "Hand Brush"
 autowrap_mode = 3
 
-[node name="Status" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/hand_brush/Row/Words" unique_id=346628590]
+[node name="Status" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_1/Row/Words" unique_id=346628590]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.38431373, 0.49803922, 0.53333336, 1)
 theme_override_font_sizes/font_size = 13
 text = "0 / 3 rugs"
 autowrap_mode = 3
 
-[node name="Action" type="Button" parent="Sheet/Content/MenuScroll/Stack/Rows/hand_brush/Row" unique_id=1579056596]
+[node name="Action" type="Button" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_1/Row" unique_id=1579056596]
 custom_minimum_size = Vector2(80, 48)
 layout_mode = 2
 size_flags_vertical = 4
@@ -838,43 +804,43 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_diwhv")
 text = "100"
 expand_icon = true
 
-[node name="bonzi" type="PanelContainer" parent="Sheet/Content/MenuScroll/Stack/Rows" unique_id=2826161]
+[node name="slot_3" type="PanelContainer" parent="Sheet/Content/MenuScroll/Stack/Rows" unique_id=2826161]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_wfoai")
-metadata/item_id = "bonzi"
+metadata/item_id = "slot_3"
 
-[node name="Row" type="HBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/bonzi" unique_id=1881557860]
+[node name="Row" type="HBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_3" unique_id=1881557860]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Artwork" type="TextureRect" parent="Sheet/Content/MenuScroll/Stack/Rows/bonzi/Row" unique_id=1149763500]
+[node name="Artwork" type="TextureRect" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_3/Row" unique_id=1149763500]
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("4_7sdjq")
+texture = ExtResource("3_yssv1")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Words" type="VBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/bonzi/Row" unique_id=291080160]
+[node name="Words" type="VBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_3/Row" unique_id=291080160]
 layout_mode = 2
 size_flags_horizontal = 3
 alignment = 1
 
-[node name="Title" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/bonzi/Row/Words" unique_id=904885876]
+[node name="Title" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_3/Row/Words" unique_id=904885876]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_font_sizes/font_size = 17
-text = "Bonzi"
+text = "Room upgrade"
 autowrap_mode = 3
 
-[node name="Status" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/bonzi/Row/Words" unique_id=1210894185]
+[node name="Status" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_3/Row/Words" unique_id=1210894185]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.38431373, 0.49803922, 0.53333336, 1)
 theme_override_font_sizes/font_size = 13
 text = "0 / 3 rugs"
 autowrap_mode = 3
 
-[node name="Action" type="Button" parent="Sheet/Content/MenuScroll/Stack/Rows/bonzi/Row" unique_id=542095874]
+[node name="Action" type="Button" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_3/Row" unique_id=542095874]
 custom_minimum_size = Vector2(80, 48)
 layout_mode = 2
 size_flags_vertical = 4
@@ -893,16 +859,16 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_fs6dm")
 text = "100"
 expand_icon = true
 
-[node name="wide_brush" type="PanelContainer" parent="Sheet/Content/MenuScroll/Stack/Rows" unique_id=1821114502]
+[node name="slot_2" type="PanelContainer" parent="Sheet/Content/MenuScroll/Stack/Rows" unique_id=1821114502]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_r6tai")
-metadata/item_id = "wide_brush"
+metadata/item_id = "slot_2"
 
-[node name="Row" type="HBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/wide_brush" unique_id=1472389290]
+[node name="Row" type="HBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_2" unique_id=1472389290]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Artwork" type="TextureRect" parent="Sheet/Content/MenuScroll/Stack/Rows/wide_brush/Row" unique_id=1248256563]
+[node name="Artwork" type="TextureRect" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_2/Row" unique_id=1248256563]
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 mouse_filter = 2
@@ -910,26 +876,26 @@ texture = ExtResource("3_yssv1")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Words" type="VBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/wide_brush/Row" unique_id=120787117]
+[node name="Words" type="VBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_2/Row" unique_id=120787117]
 layout_mode = 2
 size_flags_horizontal = 3
 alignment = 1
 
-[node name="Title" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/wide_brush/Row/Words" unique_id=834047152]
+[node name="Title" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_2/Row/Words" unique_id=834047152]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_font_sizes/font_size = 17
 text = "Wide Brush"
 autowrap_mode = 3
 
-[node name="Status" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/wide_brush/Row/Words" unique_id=1113128620]
+[node name="Status" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_2/Row/Words" unique_id=1113128620]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.38431373, 0.49803922, 0.53333336, 1)
 theme_override_font_sizes/font_size = 13
 text = "0 / 3 rugs"
 autowrap_mode = 3
 
-[node name="Action" type="Button" parent="Sheet/Content/MenuScroll/Stack/Rows/wide_brush/Row" unique_id=2008843753]
+[node name="Action" type="Button" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_2/Row" unique_id=2008843753]
 custom_minimum_size = Vector2(80, 48)
 layout_mode = 2
 size_flags_vertical = 4
@@ -948,43 +914,43 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_erig4")
 text = "100"
 expand_icon = true
 
-[node name="bonzi_mk2" type="PanelContainer" parent="Sheet/Content/MenuScroll/Stack/Rows" unique_id=788420544]
+[node name="slot_4" type="PanelContainer" parent="Sheet/Content/MenuScroll/Stack/Rows" unique_id=788420544]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_jioil")
-metadata/item_id = "bonzi_mk2"
+metadata/item_id = "slot_4"
 
-[node name="Row" type="HBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/bonzi_mk2" unique_id=2141884199]
+[node name="Row" type="HBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_4" unique_id=2141884199]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Artwork" type="TextureRect" parent="Sheet/Content/MenuScroll/Stack/Rows/bonzi_mk2/Row" unique_id=421673176]
+[node name="Artwork" type="TextureRect" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_4/Row" unique_id=421673176]
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 mouse_filter = 2
-texture = ExtResource("4_7sdjq")
+texture = ExtResource("3_yssv1")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Words" type="VBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/bonzi_mk2/Row" unique_id=196891298]
+[node name="Words" type="VBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_4/Row" unique_id=196891298]
 layout_mode = 2
 size_flags_horizontal = 3
 alignment = 1
 
-[node name="Title" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/bonzi_mk2/Row/Words" unique_id=195439153]
+[node name="Title" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_4/Row/Words" unique_id=195439153]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_font_sizes/font_size = 17
-text = "Bonzi Mk II"
+text = "Room upgrade"
 autowrap_mode = 3
 
-[node name="Status" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/bonzi_mk2/Row/Words" unique_id=783093463]
+[node name="Status" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_4/Row/Words" unique_id=783093463]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.38431373, 0.49803922, 0.53333336, 1)
 theme_override_font_sizes/font_size = 13
 text = "0 / 3 rugs"
 autowrap_mode = 3
 
-[node name="Action" type="Button" parent="Sheet/Content/MenuScroll/Stack/Rows/bonzi_mk2/Row" unique_id=1328390549]
+[node name="Action" type="Button" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_4/Row" unique_id=1328390549]
 custom_minimum_size = Vector2(80, 48)
 layout_mode = 2
 size_flags_vertical = 4
@@ -1003,16 +969,16 @@ theme_override_styles/focus = SubResource("StyleBoxFlat_im75o")
 text = "100"
 expand_icon = true
 
-[node name="intake" type="PanelContainer" parent="Sheet/Content/MenuScroll/Stack/Rows" unique_id=82147580]
+[node name="slot_5" type="PanelContainer" parent="Sheet/Content/MenuScroll/Stack/Rows" unique_id=82147580]
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_7ub04")
-metadata/item_id = "intake"
+metadata/item_id = "slot_5"
 
-[node name="Row" type="HBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/intake" unique_id=1612498667]
+[node name="Row" type="HBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_5" unique_id=1612498667]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Artwork" type="TextureRect" parent="Sheet/Content/MenuScroll/Stack/Rows/intake/Row" unique_id=511223775]
+[node name="Artwork" type="TextureRect" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_5/Row" unique_id=511223775]
 custom_minimum_size = Vector2(48, 48)
 layout_mode = 2
 mouse_filter = 2
@@ -1020,26 +986,26 @@ texture = ExtResource("5_2s3ec")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Words" type="VBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/intake/Row" unique_id=1023386318]
+[node name="Words" type="VBoxContainer" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_5/Row" unique_id=1023386318]
 layout_mode = 2
 size_flags_horizontal = 3
 alignment = 1
 
-[node name="Title" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/intake/Row/Words" unique_id=1302106260]
+[node name="Title" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_5/Row/Words" unique_id=1302106260]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_font_sizes/font_size = 17
 text = "Welcome Sign"
 autowrap_mode = 3
 
-[node name="Status" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/intake/Row/Words" unique_id=813749794]
+[node name="Status" type="Label" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_5/Row/Words" unique_id=813749794]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.38431373, 0.49803922, 0.53333336, 1)
 theme_override_font_sizes/font_size = 13
 text = "0 / 3 rugs"
 autowrap_mode = 3
 
-[node name="Action" type="Button" parent="Sheet/Content/MenuScroll/Stack/Rows/intake/Row" unique_id=1285305804]
+[node name="Action" type="Button" parent="Sheet/Content/MenuScroll/Stack/Rows/slot_5/Row" unique_id=1285305804]
 custom_minimum_size = Vector2(80, 48)
 layout_mode = 2
 size_flags_vertical = 4
@@ -1085,14 +1051,14 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_font_sizes/font_size = 24
-text = "Build Bonzi?"
+text = "Open store?"
 
 [node name="BuildBenefit" type="Label" parent="PurchaseReview/ConfirmPanel/ReviewContent" unique_id=1118699458]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 theme_override_font_sizes/font_size = 18
-text = "10 coins every 120s"
+text = "A fresh room and starter tools"
 
 [node name="BuildBalance" type="Label" parent="PurchaseReview/ConfirmPanel/ReviewContent" unique_id=338936130]
 unique_name_in_owner = true

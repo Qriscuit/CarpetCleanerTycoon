@@ -318,8 +318,8 @@ func check_gym() -> void:
 func run() -> void:
 	state = root.get_node("ShopState")
 	state.set_process(false)
-	state._test_ticks_msec = 0
-	state._test_unix_time = 2000000.0
+
+
 	state._save_path = "res://.godot/wet_freshness_%d.json" % OS.get_process_id()
 	check(state.reset_progress(), "Create an isolated freshness ledger")
 	root.size = Vector2i(390, 844)

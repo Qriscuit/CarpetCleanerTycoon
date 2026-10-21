@@ -30,8 +30,8 @@ the full-clean amount is earned progressively during removal, normalized to the
 99% target; Finish pays the unpaid part of that half. Full restoration settles
 the other half too. Thus a fresh 40-coin carpet yields 20 total for an early
 finish and 40 total at 99%. An optional verified video doubles only the current
-carpet's quote. Store caps and prices use the base quote; timed Bonzi orders
-continue earning that place's unboosted full-clean amount.
+carpet's quote. Store caps and upgrade prices use the base quote. Income comes
+from the player's paid cleaning work; there is no idle or offline production.
 
 ## Independent accessory ladders
 
@@ -45,8 +45,7 @@ continue earning that place's unboosted full-clean amount.
 
 Buying one accessory changes only its local level, next price and contribution.
 All five contribute to the same carpet value. One purchase of every accessory
-raises the first place's full-clean reward from 40 to 68 coins. Tools and Bonzi
-speed remain separate purchases.
+raises the first place's full-clean reward from 40 to 68 coins. Brush improvements remain separate purchases. Avatar starter colors and hats are free.
 
 For store scale `S`, ladder cap `N` and full-clean cap `R`, solve a geometric growth
 factor `g` so:
@@ -70,70 +69,49 @@ is 236 at level 5, 1,592 at level 15, 17,636 at level 30, 183,540 at level 45 an
 400,000 at level 50. These are curve checkpoints, rather than a required purchase
 order. A player can improve the accessories in any order.
 
-[`simulate_first_shop_balance.py`](../tools/simulate_first_shop_balance.py)
-prints the six-store curve summary and first-shop pacing under explicitly assumed
-manual cleaning times. It models room purchases and Bonzi, while brush purchases
-and service requirements remain separate. Decimal arithmetic provides a curve
-reference; large floating-point game values can differ below displayed precision.
-The calculator never reads or writes a player's save.
-The checked-in `balance_validation.json` contains historical pacing results from
-before the staged brush/Bonzi prices; run the current calculator for fresh values.
-
-## Brush and Bonzi prices
+## Brush prices
 
 Four brush upgrades span each place's starting, early, middle and maximum earning
-range. Bonzi's hire and two speed upgrades span its start, midpoint and maximum.
-Prices are fixed by place and tier; room improvements or a temporary carpet
-reward boost do not change an offer's price.
+range. Prices are fixed by place and tier; room improvements or a temporary
+carpet reward boost do not change an offer's price.
 
 For starting full-carpet quote `P = 40*S` and maximum full-carpet quote `R`:
 
 ```text
 brush price = round(3 * P * (R/P)^t), with t = 0, 1/3, 2/3, 1
-Bonzi price = round(4 * P * (R/P)^t), with t = 0, 1/2, 1
 ```
 
-These geometric checkpoints follow each place's full earnings range. A brush
-costs about three carpets at its intended earning milestone; Bonzi costs four.
-The first Neighborhood brush and hire increase from 80 and 100 to 120 and 160.
-Its later brush prices are exactly 2,585, 55,699 and 1,200,000; Bonzi's later
-prices are 16,000 and 1,600,000.
+A brush costs about three carpets at its intended earning milestone.
+Neighborhood's exact prices are 120, 2,585, 55,699 and 1,200,000.
 
-| Place | Four brush prices | Bonzi hire, second and third tier prices |
-| --- | --- | --- |
-| Neighborhood | 120 / 2.6 K / 55.7 K / 1.2 M | 160 / 16 K / 1.6 M |
-| High Street | 1.2 M / 12 M / 120 M / 1.2 B | 1.6 M / 50.6 M / 1.6 B |
-| Wash House | 1.2 B / 25.9 B / 557 B / 12 T | 1.6 B / 160 B / 16 T |
-| Restoration Studio | 12 T / 557 T / 25.9 AA / 1.2 AB | 16 T / 5.1 AA / 1.6 AB |
-| Grand Arcade | 1.2 AB / 258.5 AB / 55.7 AC / 12 AD | 1.6 AB / 5.1 AC / 16 AD |
-| Royal Gallery | 12 AD / 5.6 AE / 2.6 AF / 1.2 AG | 16 AD / 160 AE / 1.6 AG |
+| Place | Four brush prices |
+| --- | --- |
+| Neighborhood | 120 / 2.6 K / 55.7 K / 1.2 M |
+| High Street | 1.2 M / 12 M / 120 M / 1.2 B |
+| Wash House | 1.2 B / 25.9 B / 557 B / 12 T |
+| Restoration Studio | 12 T / 557 T / 25.9 AA / 1.2 AB |
+| Grand Arcade | 1.2 AB / 258.5 AB / 55.7 AC / 12 AD |
+| Royal Gallery | 12 AD / 5.6 AE / 2.6 AF / 1.2 AG |
 
 The table uses the game's compact display rounding. Actual purchases use whole
 currency values from the formula, including float-safe values beyond int64.
-Previously bought brush levels and Bonzi tiers retain their power, models and
-cycle times. No existing purchase is charged again; only the next unowned offer
-uses the updated prices. The three-carpet hiring gate and all mastery/travel
-requirements stay the same.
+Current prices and room curves are unchanged by removal of automated income.
+The former automated-income simulator and its historical pacing output do not
+describe the current manual loop.
 
 ## Mastery and travel
 
-A place is complete when all five accessories reach that place's level cap, its
-four brush upgrades are bought, Bonzi reaches its final 60-second tier, three paid
-rugs have used that place's maximum brush, and Bonzi has earned its local target.
-The target is `100*S` coins. Opening the following place costs `2000*S` coins and
-is available only after those goals are complete. Revisiting an owned place is
-free and restores its exact unfinished rug and accessory levels.
+A place is complete when all five accessories reach that place's level cap,
+its four brush upgrades are bought, and three paid rugs have used that place's
+maximum brush. Opening the following place additionally requires and spends
+`2000*S` coins. No automation purchase or earnings target remains. Revisiting an
+owned place is free and restores its exact unfinished rug and accessory levels.
 
 The first section completes only after all six places are mastered. Ownership
 alone does not count as completion. The section system checks that a following
 section has authored content as well as a completed preceding section. Completing
 Royal Gallery currently shows section completion and a locked future chapter;
 it cannot create or enter an imaginary seventh store.
-
-Bonzi tiers deliver a full carpet every 120, 90 or 60 seconds. Completed live
-orders settle at their old reward before a room purchase. An absence credits at
-most eight hours at the saved room value, and repeated reloads cannot collect it
-twice. Purchases made after returning improve future work.
 
 ## Appearance milestones
 
@@ -147,30 +125,33 @@ The general rule uses the available upgrade model count: 50 levels and five
 upgraded meshes gives 10, 20, 30, 40 and 50; 175 levels and three upgraded meshes
 gives 50, 100 and 150. Intervals use readable multiples of five, or ten when the
 raw interval reaches fifty. The bar advances toward the next real mesh change,
-resets at that change, and remains full after the final model is earned. The
-separate level label and purchase button continue to reflect the economic cap.
+resets at that change, then tracks the remaining level count against the economic
+cap after the final model is earned. Only the actual cap shows Fully upgraded
+and a full completed bar.
 
-## Existing saves
+## Fresh save and appearance
 
-Room rules version 4 maps old five-purchase appearance milestones onto the new
-place's equivalent model milestones and maps the old 15-to-120 refinement tail
-onto the remaining economic levels. Old fully upgraded accessories remain fully
-upgraded under their place's new cap. Walls start unpurchased in saves from before
-the wall ladder existed.
+The game starts fresh in `user://carpet_cleaner_v1.json` using ledger schema 1.
+The former `neighborhood_shop_v1.json` is left untouched and is never read,
+imported or refunded. Its wallet, purchases and offline interval do not carry over.
+New saves retain manual work, room and brush levels, selected store, paid reward
+records and global appearance. Loading or returning from the background grants
+no money and makes no cleaning progress.
 
-The migration preserves accumulated cash, existing owned stores, selected place,
-brush and Bonzi ownership, service history, and the active rug's identity and dirt.
-It rebases future carpet earnings and the active unpaid quote to the new bounded
-curve. A historical first-shop AF quote becomes at most 400 K; saved wallet coins
-are kept. The explicit rules marker prevents another remap on reload.
+The avatar customization menu opens from the main menu's bottom-right entry.
+Eight colors and three hat choices are free; the default is orange with no hat.
+Appearance has no price, earnings multiplier or store-unlock requirement.
+The selected figure is always available as a visual companion in paid rooms:
+it rides the brush, can fall from fast tool motion, and returns to its seat.
+This behavior leaves manual cleaning, reward caps, prices and travel gates
+unchanged. Customer handoffs, character XP and growth are not implemented.
 
 ## Validation
 
 Use the pinned Godot 4.7.2 stable Mono bundle through `tools/run_godot.ps1`, with
 `-- --shop-test` for every gameplay check. Disposable ledgers cover all six places,
 real purchases through every cap, exact reward ceilings, brush-only recipes,
-mastery gates, future-section locks, failed-save rollback, offline delivery and
-old four-store/AF-save migration.
+mastery gates, future-section locks, failed-save rollback and current save/reload.
 
 Focused suites: `validate_section_progression.gd`, `validate_first_shop_mastery.gd`,
 `validate_room_economy.gd`, `validate_progression.gd` and `validate_store_loop.gd`.
@@ -178,3 +159,8 @@ Focused suites: `validate_section_progression.gd`, `validate_first_shop_mastery.
 affordability, failure rollback and retained ownership across all six places.
 The current curve is deterministic; pacing and touch feel still need device
 playtests before treating a particular completion time as a design promise.
+
+On 17 October 2026, the current nine headless ledger suites completed 13,152
+checks with zero failures, including 3,568 six-store progression checks and 116
+appearance-state checks. These runs used the pinned runner, isolated APPDATA
+and `-- --shop-test`; they do not establish a repository-wide or device result.

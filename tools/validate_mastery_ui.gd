@@ -62,8 +62,8 @@ func capture(label: String) -> void:
 func seed_late_game() -> void:
 	ledger = root.get_node("ShopState")
 	ledger.set_process(false)
-	ledger._test_ticks_msec = 0
-	ledger._test_unix_time = 1800000000.0
+
+
 	save_path = ProjectSettings.globalize_path("res://.godot/mastery_ui_test_%d.json" % OS.get_process_id())
 	ledger._save_path = save_path
 	check(ledger.reset_progress(), "Mastery fixtures use an isolated save")
@@ -104,8 +104,8 @@ func validate_home_walls() -> void:
 	home.open_management("shop")
 	await settle()
 	var sheet: Control = home.management
-	var button: Button = sheet.action_for("intake")
-	check(sheet.actions.get("intake") == "room:walls" and sheet.rows["intake"].visible, "The actual fifth Home row targets its independent walls ladder")
+	var button: Button = sheet.action_for("slot_5")
+	check(sheet.actions.get("slot_5") == "room:walls" and sheet.rows["slot_5"].visible, "The actual fifth Home row targets its independent walls ladder")
 	check(sheet.get_node("%SheetCash").text == Money.format(ledger.cash) and home.get_node("%Cash").text == Money.format(ledger.cash), "Both real Home wallet labels show the sixth-store balance")
 	for size: Vector2i in PHONE_SIZES:
 		root.size = size
@@ -131,7 +131,7 @@ func validate_home_walls() -> void:
 	check(ledger.cash == cash_before - float(offer.cost) and int(ledger.room_upgrade_levels().walls) == expected_level, "A real fifth-row touch buys exactly one late-game wall level")
 	for id: String in ["floor", "plants", "window", "railings"]:
 		check(int(ledger.room_upgrade_levels()[id]) == int(before[id]), "Home walls purchase leaves the " + id + " ladder unchanged")
-	check(sheet.rows["intake"].get_node("Row/Words/Title").text == "Walls · Lv %d" % expected_level, "The fifth row refreshes to its newly saved level")
+	check(sheet.rows["slot_5"].get_node("Row/Words/Title").text == "Walls · Lv %d" % expected_level, "The fifth row refreshes to its newly saved level")
 	home.free()
 	home = null
 	current_scene = null
@@ -224,15 +224,19 @@ func validate_af_completion() -> void:
 	# Accelerate contact time across real strips. This cleans both source clumps
 	# and the saved mask, then uses the ordinary finish transaction and vacuum.
 	for _repeat in 12:
-		for lane in 12:
-			var z := lerpf(-1.75, 1.75, float(lane) / 11.0)
-			var start: Vector3 = game.soil.rug_node.to_global(Vector3(-1.08, game.soil.RUG_Y, z))
-			var finish: Vector3 = game.soil.rug_node.to_global(Vector3(1.08, game.soil.RUG_Y, z))
-			game.soil.apply_bonzi_stroke(start, finish, 0.1)
+		for lane in 24:
+			var z := lerpf(-1.8, 1.8, float(lane) / 23.0)
+			var start: Vector3 = game.soil.rug_node.to_global(Vector3(-1.3, game.soil.RUG_Y, z))
+			var finish: Vector3 = game.soil.rug_node.to_global(Vector3(1.3, game.soil.RUG_Y, z))
+			game.soil.end_pass()
+			game.apply_selected_tool_stroke(start, finish, 0.1)
+			for tick in 45: game.soil._physics_process(0.05)
 	game.soil._process(0.0)
+	game.update_contract_status()
 	game.finish_rug()
 	await settle()
 	check(game.contract_finished and ledger.cash == cash_before + quote and ledger.manual_jobs == jobs_before + 1, "The genuine completed rug pays its AF reward exactly once")
+	if not ledger.completed_rewards.has(job): return
 	check(float(ledger.completed_rewards[job].amount) == quote and game.hud.pending_reward == 0.0 and game.hud._reserved_reward == 0.0, "AF history records the entire carpet quote and consumes the count-up reservation")
 	check(game.hud.displayed_gold >= cash_before - absf(cash_before) * 1e-12 and game.hud.displayed_gold <= ledger.cash + absf(ledger.cash) * 1e-12 and game.hud.active_coin_count() == 0, "The prompt AF count-up stays within the committed wallet and does not launch delayed reward flights")
 	game.finish_rug()

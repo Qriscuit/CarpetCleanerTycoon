@@ -305,9 +305,9 @@ func run() -> void:
 	save_path = "res://../art/incremental_cleaning_test_%d.json" % OS.get_process_id()
 	state._save_path = save_path
 	state.set_process(false)
-	state._test_unix_time = 1500000000.0
-	state._test_ticks_msec = 0
-	state._last_ticks = 0
+
+
+
 	check(state.reset_progress(), "Use an isolated incremental-cleaning save")
 	state.changed.connect(observe_save)
 	root.size = Vector2i(390, 844)

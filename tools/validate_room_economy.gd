@@ -1,5 +1,5 @@
 extends SceneTree
-## Independent accessory prices, real quotes, rollback, migration and store caps.
+## Independent accessory prices, real quotes, rollback and store caps.
 const State := preload("res://scripts/shop_state.gd")
 const Room := preload("res://scripts/room_upgrades.gd")
 const Rules := preload("res://scripts/progression.gd")
@@ -24,8 +24,6 @@ func fresh(label: String) -> Node:
 	var state := State.new()
 	state._save_path = "res://.godot/room_economy_%d_%s.json" % [OS.get_process_id(), label]
 	paths.append(state._save_path)
-	state._test_ticks_msec = 0
-	state._test_unix_time = 1800000000.0
 	root.add_child(state)
 	state.set_process(false)
 	return state
@@ -33,8 +31,6 @@ func fresh(label: String) -> Node:
 func reload_state(state: Node) -> Node:
 	var replacement := State.new()
 	replacement._save_path = state._save_path
-	replacement._test_ticks_msec = 0
-	replacement._test_unix_time = state._test_unix_time
 	state.free()
 	root.add_child(replacement)
 	replacement.set_process(false)
@@ -48,7 +44,6 @@ func write_fixture(path: String, data: Dictionary) -> void:
 func run() -> void:
 	check_independent_purchases()
 	check_visual_quotes()
-	check_legacy_migration()
 	check_validation()
 	check_final_cap()
 	for path: String in paths:
@@ -119,30 +114,6 @@ func check_visual_quotes() -> void:
 				check(offer.milestone_progress >= 0.0 and offer.milestone_progress <= 1.0 and offer.maxed == (level == Rules.room_level_cap(store_id)), "Milestone progress stays bounded and only the store cap completes its economic ladder")
 			branch.room_upgrades[id] = 0
 			branch.payout_level = 0
-	state.free()
-
-func check_legacy_migration() -> void:
-	var state := fresh("legacy")
-	state.cash = 777
-	var job: String = state.start_job()
-	state.save_job_snapshot({"unique_clearance":0.4,"surface_clearance":0.5,"pixels":[9,8]})
-	var old: Dictionary = state._capture_state()
-	old.version = 2
-	var branch: Dictionary = old.stores["1"]
-	branch.room_rules_version = 2
-	branch.room_upgrades = {"floor":5,"plants":10,"window":15,"railings":4}
-	branch.room_income_origins = {"floor":0,"plants":0,"window":0,"railings":0}
-	branch.room_base_early = 20
-	branch.payout_level = 34
-	branch.job_early_reward = 1000
-	write_fixture(state._save_path, old)
-	state = reload_state(state)
-	check(state._save_enabled and state.cash == 777 and state.active_job_id == job and state.job_snapshot.pixels.size() == 2 and int(state.job_snapshot.pixels[0]) == 9 and int(state.job_snapshot.pixels[1]) == 8, "Legacy purchased investments migrate without changing coins, rug identity or dirt")
-	check(state.room_upgrade_levels().floor == 15 and state.room_upgrade_levels().plants == 30 and state.room_upgrade_levels().window == 45 and state.room_upgrade_levels().walls == 0, "Historical makeovers map to the same models at their new evenly spaced levels")
-	check(state.stores["1"].room_rules_version == Room.RULES_VERSION and state.reward_for_current_job({"unique_clearance":1.0,"surface_clearance":1.0}) == state.progression_view().full_reward and state.progression_view().full_reward <= 400000.0, "The one-time new rules checkpoint rebases the unpaid quote within the store ceiling")
-	var migrated: Dictionary = state._capture_state()
-	state = reload_state(state)
-	check(JSON.parse_string(JSON.stringify(state._capture_state())) == JSON.parse_string(JSON.stringify(migrated)), "Reload cannot map a historical makeover or income checkpoint twice")
 	state.free()
 
 func check_validation() -> void:

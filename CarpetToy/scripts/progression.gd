@@ -16,16 +16,13 @@ const REWARD_CAPS := [4e5, 4e8, 4e12, 4e17, 4e24, 4e32]
 # each store's unboosted starting quote and authored full-carpet ceiling.
 const TOOL_COSTS := [120, 2585, 55699, 1200000]
 const TOOL_PRICE_STAGES := [0.0, 1.0 / 3.0, 2.0 / 3.0, 1.0]
-const BONZI_PRICE_STAGES := [0.0, 0.5, 1.0]
 const TOOL_PRICE_RUGS := 3.0
-const BONZI_PRICE_RUGS := 4.0
 const TOOL_NAMES := ["Hand brush", "Wide brush", "Firm brush", "Power brush", "Master brush", "Precision brush", "Dual brush", "Pro brush", "Ultimate brush"]
 const TOOL_WIDTHS := [1.0, 1.44, 1.55, 1.65, 1.75, 1.75, 1.75, 1.75, 1.75]
 const TOOL_POWERS := [1.0, 1.0, 1.1, 1.25, 1.45, 1.6, 1.8, 2.0, 2.25]
 const WET_NAMES := ["Wash kit", "Fresh wash kit", "Deep wash kit", "Power wash kit", "Master wash kit"]
 const WET_POWERS := [1.0, 1.2, 1.45, 1.75, 2.1]
 const WET_FIRST_STORE := STORES_PER_SECTION + 1
-const BOT_SECONDS := [120.0, 90.0, 60.0]
 
 static func scale_for(store_id: int) -> float:
 	return float(STORE_SCALES[store_id - 1]) if store_id >= 1 and store_id <= STORE_COUNT else 0.0
@@ -88,10 +85,6 @@ static func payout_cost(store_id: int, level: int) -> float:
 static func tool_cost(store_id: int, level: int) -> float:
 	return _staged_upgrade_cost(store_id, float(TOOL_PRICE_STAGES[level]), TOOL_PRICE_RUGS) if level >= 0 and level < TOOL_PRICE_STAGES.size() else -1.0
 
-static func bot_cost(store_id: int, tier: int) -> float:
-	var index := tier + 1
-	return _staged_upgrade_cost(store_id, float(BONZI_PRICE_STAGES[index]), BONZI_PRICE_RUGS) if index >= 0 and index < BONZI_PRICE_STAGES.size() else -1.0
-
 static func _staged_upgrade_cost(store_id: int, stage: float, rugs: float) -> float:
 	var starting := 40.0 * scale_for(store_id)
 	var ceiling := reward_cap(store_id)
@@ -103,21 +96,13 @@ static func _staged_upgrade_cost(store_id: int, stage: float, rugs: float) -> fl
 	var price := Money.rounded(raw)
 	return price if Money.is_valid(price) and price > 0.0 else -1.0
 
-static func bot_reward(store_id: int, tier: int, full_clean_reward: float) -> float:
-	# Room investments determine the carpet's value for every cleaner.
-	# Bonzi's own upgrades change cycle time, not the payment for that carpet.
-	if scale_for(store_id) <= 0 or tier < 0 or tier >= BOT_SECONDS.size(): return 0
-	return full_clean_reward if is_finite(full_clean_reward) and full_clean_reward > 0 and full_clean_reward <= MAX_MONEY else 0
-
-static func bot_seconds(tier: int) -> float:
-	return BOT_SECONDS[tier] if tier >= 0 and tier < BOT_SECONDS.size() else 0.0
-
 static func new_branch(store_id: int) -> Dictionary:
 	return {
 		"payout_level": 0, "tool_level": 0, "hose_level": 0, "squeegee_level": 0,
-		"bonzi_tier": -1 if store_id == 1 else 0,
-		"bonzi_earned": 0, "manual_jobs": 0, "automated_jobs": 0,
-		"routine_remainder": 0.0, "banked_orders": 0, "final_tool_jobs": 0,
+		"manual_jobs": 0, "final_tool_jobs": 0,
+		"room_rules_version": 4, "room_base_early": 20.0 * scale_for(store_id),
+		"room_upgrades": {"floor": 0, "plants": 0, "window": 0, "railings": 0, "walls": 0},
+		"room_income_origins": {"floor": 0, "plants": 0, "window": 0, "railings": 0, "walls": 0},
 		"active_job_id": "", "active_rug_id": "mint_meadow", "job_snapshot": {}, "job_early_reward": 0,
 		"job_cleaning_paid": 0.0, "job_cleaning_progress": 0.0,
 		"job_ad_boost": false,

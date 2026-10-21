@@ -66,9 +66,9 @@ func segment_mid(index: int) -> Vector3:
 func run() -> void:
 	var state: Node = root.get_node("ShopState")
 	state.set_process(false)
-	state._test_unix_time = 1234567890.0
-	state._test_ticks_msec = 0
-	state._last_ticks = 0
+
+
+
 	check(state.reset_progress(), "Isolate trail test saves")
 	state.cash = 123
 	check(not state.start_job().is_empty(), "Keep a paid job beside the free Gym")

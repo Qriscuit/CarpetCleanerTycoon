@@ -88,7 +88,7 @@ func run() -> void:
 		for point: Vector3 in points:
 			all_visible = all_visible and viewport.has_point(game.camera.unproject_position(point))
 		check(all_visible, "Every authored upgrade tier fits inside safe screen edges in " + label)
-		check(game.camera.global_basis.is_equal_approx(basis), "The configured room pitch and yaw show Bonzi's body in " + label)
+		check(game.camera.global_basis.is_equal_approx(basis), "The configured room pitch and yaw preserve room depth in " + label)
 		var rug_screen := Rect2(game.camera.unproject_position(Vector3(-1.06, game.CARPET_PLANE_Y, -1.72)), Vector2.ZERO)
 		for x: float in [-1.06, 1.06]:
 			for z: float in [-1.72, 1.72]:

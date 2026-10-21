@@ -14,8 +14,6 @@ const GOLD := Color("f8cc65")
 const BLUE := Color("b9e4ec")
 const SKY := Color("e6f3ed")
 
-var working := false
-var _phase := 0.0
 var _scene: Control
 var _artwork: Node2D
 var _group_parent: Node2D
@@ -25,7 +23,7 @@ var _index := 0
 
 func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute("res://scenes/ui/art")
-	for kind: String in ["store", "bonzi", "brush", "wide_brush", "blueprint", "upgrade", "intake"]:
+	for kind: String in ["store", "brush", "wide_brush", "blueprint", "upgrade", "intake"]:
 		var destination := "res://scenes/ui/art/" + kind + ".tscn"
 		if FileAccess.file_exists(destination) and not "--replace-art" in OS.get_cmdline_user_args():
 			print("Preserved editor-authored art: ", destination)
@@ -47,16 +45,11 @@ func _initialize() -> void:
 		_group("Backdrop")
 		match kind:
 			"store": _store()
-			"bonzi": _bonzi_card()
 			"brush": _brush()
 			"wide_brush": _wide_brush()
 			"blueprint": _blueprint()
 			"upgrade": _upgrade()
 			"intake": _intake()
-		if kind == "bonzi":
-			_scene.set("animation_target_path", NodePath("Artwork/Robot/Bonzi"))
-		elif kind == "store":
-			_scene.set("animation_target_path", NodePath("Artwork/BonziCompanion/Bonzi"))
 		var packed := PackedScene.new()
 		var result := packed.pack(_scene)
 		if result == OK:
@@ -300,11 +293,6 @@ func _store() -> void:
 	_plant(Vector2(139, 267), 0.86)
 	_group("RightPlanter")
 	_plant(Vector2(509, 266), 0.66)
-	# Little Bonzi waves from the front walk once the shop has its cleaner.
-	_group("BonziCompanion")
-	_local(Vector2(513, 207), 0.48, "Bonzi")
-	_bonzi(working)
-	_reset_transform()
 	_group("StreetSparkles")
 	_spark(Vector2(95, 148), 10, CREAM)
 	_spark(Vector2(550, 162), 8, MINT_DARK)
@@ -324,62 +312,6 @@ func _plant(base: Vector2, scale_factor: float) -> void:
 	_round(-25, -36, 50, 12, CORAL, 5, 3)
 	_line(Vector2(-10, -19), Vector2(-8, -8), Color("ffb099"), 4)
 	_reset_transform()
-
-
-func _bonzi_card() -> void:
-	_circle(Vector2(100, 77), 66, PALE)
-	_spark(Vector2(31, 46), 8, GOLD)
-	_spark(Vector2(164, 65), 6, MINT_DARK)
-	_round(37, 122, 134, 19, BLUE, 9, 0)
-	for x in [47, 66, 85, 104, 123, 142, 161]:
-		_line(Vector2(x, 141), Vector2(x, 146), Color("85b8c0"), 2)
-	var travel := 0.0
-	_group("Robot")
-	_local(Vector2(40 + travel, 22), 0.9, "Bonzi")
-	_bonzi(working)
-	_reset_transform()
-	if working:
-		_spark(Vector2(37 + travel, 116), 6.0 + sin(_phase * 4) * 2, CREAM)
-		_spark(Vector2(156 + travel, 126), 5.0 + cos(_phase * 4) * 2, CREAM)
-
-
-func _bonzi(is_working: bool) -> void:
-	var bob := sin(_phase * 3.2) * 2.0 if is_working else 0.0
-	_ellipse(Vector2(64, 126), Vector2(53, 7), Color("b6d7c3"))
-	# Stubby wheel feet, little side arms, rounded coral shell.
-	_subgroup("WheelsAndArms")
-	_round(24, 104 + bob, 25, 23, INK, 8, 0)
-	_round(79, 104 + bob, 25, 23, INK, 8, 0)
-	_line(Vector2(30, 119 + bob), Vector2(41, 119 + bob), Color("658681"), 3)
-	_line(Vector2(87, 119 + bob), Vector2(97, 119 + bob), Color("658681"), 3)
-	_round(7, 65 + bob, 18, 32, MINT, 8, 3)
-	_round(103, 64 + bob, 18, 32, MINT, 8, 3)
-	_line(Vector2(64, 21 + bob), Vector2(64, 9 + bob), INK, 4)
-	_circle(Vector2(64, 8 + bob), 7, INK)
-	_circle(Vector2(64, 7 + bob), 4, GOLD)
-	_subgroup("CoralBodyAndFace")
-	_round(19, 25 + bob, 91, 84, CORAL, 27, 4, 6)
-	_round(27, 32 + bob, 75, 53, CREAM, 18, 3)
-	_subgroup("EyesAndSmile")
-	_round(37, 48 + bob, 13, 20, INK, 6, 0)
-	_round(79, 48 + bob, 13, 20, INK, 6, 0)
-	_circle(Vector2(41, 52 + bob), 2, CREAM)
-	_circle(Vector2(83, 52 + bob), 2, CREAM)
-	_ellipse(Vector2(36, 70 + bob), Vector2(7, 3), Color("ffbaa1"))
-	_ellipse(Vector2(92, 70 + bob), Vector2(7, 3), Color("ffbaa1"))
-	_arc(Vector2(65, 64 + bob), 8, 0.15, PI - 0.15, 16, INK, 3, true)
-	_subgroup("StatusLights")
-	_round(49, 91 + bob, 32, 10, CORAL_DARK, 5, 0)
-	_circle(Vector2(57, 96 + bob), 2.3, CREAM)
-	_circle(Vector2(65, 96 + bob), 2.3, CREAM)
-	_circle(Vector2(73, 96 + bob), 2.3, CREAM)
-	# The rotating bottom brush is visible without distracting from the face.
-	_subgroup("RollerBrush")
-	_round(31, 109 + bob, 67, 10, MINT_DARK, 4, 2)
-	for i in range(8):
-		var brush_x := 36.0 + float(i) * 8.0
-		var lean := sin(_phase * 7 + float(i) * 0.4) * 2.5 if is_working else 0.0
-		_line(Vector2(brush_x, 114 + bob), Vector2(brush_x + lean, 120 + bob), CREAM, 2)
 
 
 func _brush() -> void:

@@ -27,7 +27,7 @@ static func workshop_basis(pitch_from_top: float = WORKSHOP_PITCH_FROM_TOP, yaw_
 
 
 static func frame_workshop(camera: Camera3D, viewport_size: Vector2, space: Rect2, bounds: AABB = WORKSHOP_CLEARANCE, pitch_from_top: float = WORKSHOP_PITCH_FROM_TOP, yaw_degrees: float = WORKSHOP_YAW_DEGREES) -> void:
-	# Show Bonzi's body and rotating brushes while keeping the carpet readable.
+	# Keep the room depth and carpet surface readable.
 	# Fit every accessory, including its tallest upgrade, at the same room angle.
 	var view_basis := workshop_basis(pitch_from_top, yaw_degrees)
 	_frame_bounds(camera, viewport_size, space, view_basis, bounds)

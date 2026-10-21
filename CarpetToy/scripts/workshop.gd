@@ -10,8 +10,8 @@ const WaterJet = preload("res://scripts/water_jet.gd")
 const HoseProfile = preload("res://scripts/water_hose_profile.gd")
 const SqueegeeMotion = preload("res://scripts/squeegee_motion.gd")
 const WorkshopCamera = preload("res://scripts/gym_camera.gd")
-const BonziCleaner = preload("res://scripts/bonzi_cleaner.gd")
 const CleaningHUD = preload("res://scripts/cleaning_hud.gd")
+const LevelCompanion = preload("res://scripts/level_companion.gd")
 const SQUEEGEE_WATER_SCENE = preload("res://scenes/effects/squeegee_water.tscn")
 @export var practice_only := false
 @export var animate_rug_changes := true
@@ -22,6 +22,14 @@ var rug_phase := RugPhase.ARRIVING
 var rug_roll := preload("res://scripts/rug_roll.gd").new()
 var transition_tween: Tween
 var leaving_scene := false
+var companion: Node3D
+var companion_motion_reset := true
+var companion_parked := false
+# All nine authored brush tiers share the same handle endpoints. The rider's
+# pelvis sits halfway up that shaft; cosmetic width upgrades never stretch him.
+const COMPANION_SEAT := Vector3(0, 0.835, -0.345)
+const COMPANION_BOUNDS := Rect2(-1.85, -2.30, 3.70, 4.60)
+const COMPANION_REST_SPOT := Vector3(1.6, CARPET_PLANE_Y, 1.8)
 
 const CARPET_PLANE_Y := 0.067
 const BRUSH_IDLE_LIFT := 0.24
@@ -63,7 +71,6 @@ var progress_fraction := 0.0
 var active_touch := -1
 var stroke_time := 0
 var soil: Node
-var bonzi: Node3D
 var application_focused := true
 var carpet_video_pending := false
 var completed_full_quote := 0.0
@@ -186,7 +193,6 @@ func _ready() -> void:
 				shop_state.start_job()
 	if paid_contract:
 		contract_job_id = str(shop_state.active_job_id)
-		wide_brush = shop_state.owns("wide_brush") and shop_state.equipped_brush == "wide_brush"
 	frame_carpet()
 	add_soft_accent_lights()
 	brush_home = brush.transform
@@ -222,10 +228,6 @@ func _ready() -> void:
 	soil.vacuum_started.connect(on_vacuum_started)
 	soil.vacuum_finished.connect(on_vacuum_finished)
 	soil.setup($RugDisplay)
-	bonzi = BonziCleaner.new()
-	bonzi.name = "Bonzi"
-	add_child(bonzi)
-	bonzi.setup(soil)
 	wet_recipe = paid_contract and bool(shop_state.progression_view().get("wet_unlocked", false))
 	water_only_recipe = wet_recipe and int(shop_state.active_store) == Progression.WET_FIRST_STORE
 	soil.set_recipe(wet_recipe, water_only_recipe)
@@ -262,6 +264,7 @@ func _ready() -> void:
 	cleaning_reward_timer.wait_time = CLEANING_REWARD_INTERVAL
 	add_child(cleaning_reward_timer)
 	cleaning_reward_timer.timeout.connect(_flush_cleaning_earnings)
+	_setup_companion()
 	start_rug_arrival()
 	get_viewport().size_changed.connect(frame_carpet)
 	if "--capture" in OS.get_cmdline_user_args():
@@ -276,7 +279,8 @@ func _ready() -> void:
 		get_tree().quit()
 
 func _physics_process(delta: float) -> void:
-	if not is_instance_valid(bonzi) or not is_instance_valid(soil):
+	_sync_companion(delta)
+	if not is_instance_valid(soil):
 		return
 	# A restored/canceled visual still owes the removed water, never a second
 	# reward. Release its durable watermark after the bounded runoff tail.
@@ -284,22 +288,42 @@ func _physics_process(delta: float) -> void:
 		wet_reward_age += delta
 		if wet_reward_age >= RUNOFF_REWARD_TAIL:
 			_release_pending_runoff()
-	var owned := _bonzi_owned()
-	var was_running: bool = bonzi.running
-	bonzi.visible = owned and soil.recommended_tool() == 0 and rug_phase == RugPhase.CLEANING and not leaving_scene
-	bonzi.set_running(_bonzi_can_clean())
-	bonzi.advance(delta)
-	if wet_recipe and owned and (was_running or bonzi.running) and soil.recommended_tool() != 0:
-		bonzi.set_running(false)
-		bonzi.hide()
-		if not brush_dragging:
-			_advance_wet_tool.call_deferred()
 
-func _bonzi_can_clean() -> bool:
-	return _bonzi_owned() and soil.recommended_tool() == 0 and application_focused and not carpet_video_pending and rug_phase == RugPhase.CLEANING and not leaving_scene and not finish_requested and not contract_finished and not hud.upgrades_open() and not soil.simulation_suspended and not soil.completion_started and soil.reveal_progress >= 1.0
+func _setup_companion() -> void:
+	if not paid_contract or is_instance_valid(companion): return
+	companion = LevelCompanion.new()
+	companion.name = "LevelCompanion"
+	add_child(companion)
+	companion.setup(COMPANION_BOUNDS, CARPET_PLANE_Y, shop_state.appearance)
+	shop_state.appearance_changed.connect(_on_companion_appearance)
+	_sync_companion(0.0, true)
 
-func _bonzi_owned() -> bool:
-	return paid_contract and not water_only_recipe and int(cached_progression.get("bonzi_tier", -1)) >= 0
+func _on_companion_appearance(appearance: Dictionary) -> void:
+	if is_instance_valid(companion): companion.set_appearance(appearance)
+
+func _sync_companion(delta := 0.0, reset_motion := false) -> void:
+	if not is_instance_valid(companion) or not companion.is_inside_tree(): return
+	if leaving_scene:
+		companion.set_active(false)
+		companion.hide()
+		return
+	var riding_phase := rug_phase == RugPhase.CLEANING and selected_tool == 0 and brush.visible and not finish_requested
+	if not riding_phase:
+		if not companion_parked:
+			companion.park_at(COMPANION_REST_SPOT)
+			companion_parked = true
+		companion.set_active(false)
+		companion.show()
+		return
+	var seat := Transform3D(brush.global_basis.orthonormalized(), brush.global_transform * COMPANION_SEAT)
+	companion.update_tool_transform(seat, delta, reset_motion or companion_motion_reset or companion_parked)
+	companion_motion_reset = false
+	if companion_parked:
+		companion.reset_to_tool()
+		companion_parked = false
+	companion.show()
+	var enabled: bool = application_focused and not carpet_video_pending and not hud.upgrades_open() and not soil.simulation_suspended
+	companion.set_active(enabled)
 
 func _input(event: InputEvent) -> void:
 	if not application_focused or carpet_video_pending: return
@@ -528,6 +552,7 @@ func _on_room_upgrade_finished(_id: String) -> void:
 func begin_stroke(screen_position: Vector2, touch_input: bool) -> void:
 	if not application_focused or carpet_video_pending or rug_phase != RugPhase.CLEANING or leaving_scene or hud.upgrades_open() or soil.completion_started or soil.simulation_suspended:
 		return
+	companion_motion_reset = true
 	# Placement is not a sweep from the parked tool: only held motion rakes dirt.
 	if selected_tool == 0:
 		soil.begin_pass()
@@ -560,13 +585,14 @@ func end_stroke() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST and is_node_ready():
 		back()
-	if what == NOTIFICATION_APPLICATION_FOCUS_OUT:
+	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED]:
 		application_focused = false
+		_sync_companion(0.0, true)
 		if is_instance_valid(hud): hud.set_wallet_paused(true)
 		if is_instance_valid(cleaning_reward_timer): cleaning_reward_timer.paused = true
 		modal_mouse_down = false
 		modal_mouse_canceled = false
-		if is_instance_valid(bonzi): bonzi.set_running(false)
+
 		if is_instance_valid(room): room.set_completion_paused(true)
 		if rug_phase in [RugPhase.REVEAL, RugPhase.DEPARTING]:
 			completion_motion_paused = true
@@ -589,8 +615,9 @@ func _notification(what: int) -> void:
 		touch_chord = false
 		if is_node_ready() and is_instance_valid(soil) and is_instance_valid(hud):
 			update_contract_status()
-	elif what == NOTIFICATION_APPLICATION_FOCUS_IN:
+	elif what in [NOTIFICATION_APPLICATION_FOCUS_IN, NOTIFICATION_APPLICATION_RESUMED]:
 		application_focused = true
+		companion_motion_reset = true
 		if is_instance_valid(hud): hud.set_wallet_paused(carpet_video_pending)
 		if is_instance_valid(cleaning_reward_timer): cleaning_reward_timer.paused = carpet_video_pending
 		if is_instance_valid(soil): soil.suspend_simulation(carpet_video_pending or leaving_scene or hud.upgrades_open() or rug_phase not in [RugPhase.CLEANING, RugPhase.VACUUMING])
@@ -636,6 +663,7 @@ func _sync_progression() -> void:
 		_ensure_wet_runtime()
 		_configure_hose_upgrade(int(view.get("effective_hose_level", view.get("hose_level", 0))), float(view.get("hose_power", 1.0)))
 		_configure_squeegee_upgrade(int(view.get("squeegee_level", 0)), float(view.get("squeegee_power", 1.0)))
+	if not is_equal_approx(float(view.tool_width), tool_width): companion_motion_reset = true
 	var wider: bool = float(view.tool_width) > tool_width
 	tool_width = float(view.tool_width)
 	wide_brush = tool_width > 1.0
@@ -670,9 +698,10 @@ func _sync_progression() -> void:
 func _sync_carpet_video_pause(requesting: bool) -> void:
 	if carpet_video_pending == requesting: return
 	carpet_video_pending = requesting
+	_sync_companion(0.0, true)
 	if requesting:
 		end_stroke()
-		if is_instance_valid(bonzi): bonzi.set_running(false)
+
 		_cancel_wet_runtime_effects()
 	if is_instance_valid(soil): soil.suspend_simulation(requesting or not application_focused or leaving_scene or hud.upgrades_open() or rug_phase not in [RugPhase.CLEANING, RugPhase.VACUUMING])
 	if is_instance_valid(hud): hud.set_wallet_paused(requesting or not application_focused)
@@ -703,12 +732,6 @@ func _purchase_squeegee() -> void:
 	if shop_state.buy_squeegee_upgrade():
 		_sync_progression()
 
-
-func _purchase_bonzi() -> void:
-	if not _can_purchase(): return
-	end_stroke()
-	if shop_state.buy_bonzi_upgrade():
-		_sync_progression()
 
 func _can_purchase() -> bool:
 	return application_focused and not carpet_video_pending and paid_contract and rug_phase == RugPhase.CLEANING and not finish_requested and not leaving_scene and hud.pending_reward == 0
@@ -859,12 +882,13 @@ func _cancel_wet_runtime_effects() -> void:
 			water.set_emission_locked(soil.water_stage_complete())
 
 func _on_upgrades_changed(open: bool) -> void:
+	_sync_companion(0.0, true)
 	if not open:
 		modal_mouse_down = false
 		modal_mouse_canceled = false
 	end_stroke()
 	if open:
-		if is_instance_valid(bonzi): bonzi.set_running(false)
+
 		_cancel_wet_runtime_effects()
 		soil.suspend_simulation(true)
 		if transition_tween != null and transition_tween.is_valid():
@@ -965,6 +989,7 @@ func select_tool(index: int) -> void:
 	if paid_contract and wet_recipe and index != soil.recommended_tool():
 		return
 	switching_tool = true
+	companion_motion_reset = true
 	end_stroke()
 	selected_tool = index
 	_set_brush_engaged(false, true)
@@ -1093,8 +1118,7 @@ func update_progress(_remaining: int, _total: int) -> void:
 	_queue_cleaning_earnings()
 
 func _on_manual_debris_cleared() -> void:
-	# Late physical dirt clearance belongs to finger brushing. Bonzi's suction
-	# reports progress separately and cannot qualify the player's final tool.
+	# Physical debris removal qualifies the current manual brush for mastery.
 	if paid_contract and rug_phase == RugPhase.CLEANING and selected_tool == 0:
 		shop_state.note_current_tool_used(0)
 
@@ -1158,10 +1182,7 @@ func _flush_cleaning_earnings(force: bool = false) -> bool:
 
 func queue_snapshot_save() -> void:
 	if paid_contract and snapshot_timer != null and snapshot_timer.is_inside_tree() and not contract_finished:
-		if is_instance_valid(bonzi) and bonzi.running:
-			if snapshot_timer.is_stopped(): snapshot_timer.start(2.0)
-		else:
-			snapshot_timer.start(0.5)
+		snapshot_timer.start(0.5)
 
 
 func update_contract_status() -> void:
@@ -1419,9 +1440,8 @@ func start_rug_arrival() -> void:
 	_cancel_transition()
 	_cancel_wet_runtime_effects()
 	rug_phase = RugPhase.ARRIVING
-	if is_instance_valid(bonzi):
-		bonzi.reset_route()
-		bonzi.hide()
+	companion_motion_reset = true
+	_sync_companion(0.0, true)
 	_set_brush_engaged(false, true)
 	frame_carpet()
 	soil.suspend_simulation(true)
@@ -1469,6 +1489,8 @@ func _tool_arrival_finished() -> void:
 	soil.suspend_simulation(carpet_video_pending or not application_focused or hud.upgrades_open())
 	_capture_rug_before()
 	select_tool(soil.recommended_tool() if wet_recipe else 0)
+	_sync_companion(0.0, true)
+	if is_instance_valid(companion): companion.reset_to_tool()
 	update_contract_status()
 	# A saved last blade pass may precede its deferred round transition.
 	# Resume that finished round without requiring a redundant press/release.
@@ -1507,10 +1529,8 @@ func finish_rug() -> void:
 	if wet_recipe and (soil.wash_cycle != soil.WASH_CYCLES - 1 or not soil.water_stage_complete() or soil.extraction_clearance() < CONTRACT_TARGET):
 		return
 	finish_requested = true
+	_sync_companion(0.0, true)
 	completed_full_quote = shop_state.current_job_full_reward() if paid_contract else 0.0
-	if is_instance_valid(bonzi):
-		bonzi.set_running(false)
-		bonzi.hide()
 	completed_fraction = soil.overall_clearance()
 	completed_full_restore = soil.all_washes_complete() if wet_recipe else ShopLedger.completion_reached(completed_fraction, AUTO_FINISH_TARGET)
 	end_stroke()
@@ -1586,6 +1606,7 @@ func return_to_shop() -> void:
 	if paid_contract and wet_recipe: _release_pending_runoff()
 	_dismiss_completion_reveal()
 	leaving_scene = true
+	_sync_companion(0.0, true)
 	_cancel_transition()
 	end_stroke()
 	_cancel_wet_runtime_effects()
@@ -1601,6 +1622,8 @@ func _exit_tree() -> void:
 	if is_instance_valid(game_audio): game_audio.set_context("off")
 	leaving_scene = true
 	_cancel_wet_runtime_effects()
+	if is_instance_valid(shop_state) and shop_state.appearance_changed.is_connected(_on_companion_appearance):
+		shop_state.appearance_changed.disconnect(_on_companion_appearance)
 	if is_instance_valid(shop_state) and shop_state.changed.is_connected(_sync_wallet):
 		shop_state.changed.disconnect(_sync_wallet)
 	if is_instance_valid(shop_state) and shop_state.ad_reward_granted.is_connected(_show_ad_reward):
@@ -1650,7 +1673,6 @@ func bind_ui() -> void:
 	if is_instance_valid(room): room.upgrade_finished.connect(_on_room_upgrade_finished)
 	hud.reward_finished.connect(_sync_wallet)
 	hud.request_tool_upgrade.connect(_purchase_tool)
-	hud.request_bonzi_upgrade.connect(_purchase_bonzi)
 	if hud.has_signal("request_hose_upgrade"):
 		hud.request_hose_upgrade.connect(_purchase_hose)
 	if hud.has_signal("request_squeegee_upgrade"):

@@ -305,8 +305,8 @@ func run() -> void:
 	audio.focused = true
 	var state := root.get_node("ShopState")
 	state.set_process(false)
-	state._test_ticks_msec = 0
-	state._test_unix_time = 1000000.0
+
+
 	var saved_state: Dictionary = state._capture_state().duplicate(true)
 	check_assets_and_envelopes()
 	await check_completion_lifecycle()

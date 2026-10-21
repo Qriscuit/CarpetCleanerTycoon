@@ -499,8 +499,8 @@ func check_practice() -> void:
 func run() -> void:
 	ledger = root.get_node("ShopState")
 	ledger.set_process(false)
-	ledger._test_ticks_msec = 0
-	ledger._test_unix_time = 1800000000.0
+
+
 	save_path = "res://.godot/responsive_composition_%d.json" % OS.get_process_id()
 	ledger._save_path = save_path
 	check(ledger.reset_progress(), "The layout run uses a disposable player ledger")

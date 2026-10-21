@@ -1,5 +1,8 @@
 extends SceneTree
-## Phone layouts and input contracts for the separate wet-tool upgrades.
+## Phone layouts for manual tools, retained wet-tool practice UI, and store mastery.
+const Rules := preload("res://scripts/progression.gd")
+const Room := preload("res://scripts/room_upgrades.gd")
+const Money := preload("res://scripts/money.gd")
 var checks := 0
 var failures := 0
 
@@ -28,10 +31,10 @@ func fixture(store_id: int) -> Dictionary:
 	return {
 		"store_id": store_id, "payout_cost": 800, "early_reward": 160, "next_early": 200,
 		"full_reward": 320, "next_full": 400, "tool_cost": 640, "tool_level": 0,
-		"tool_name": "Water hose" if store_id >= 2 else "Brush",
-		"next_tool_name": "Water hose II" if store_id >= 2 else "Wide brush",
+		"tool_name": "Water hose" if store_id >= Rules.WET_FIRST_STORE else "Brush",
+		"next_tool_name": "Water hose II" if store_id >= Rules.WET_FIRST_STORE else "Wide brush",
 		"can_upgrade_payout": true, "can_upgrade_tool": true,
-		"wet_unlocked": store_id >= 2, "hose_level": 0, "squeegee_level": 0,
+		"wet_unlocked": store_id >= Rules.WET_FIRST_STORE, "hose_level": 0, "squeegee_level": 0,
 		"hose_cost": 640, "squeegee_cost": 800,
 		"can_upgrade_hose": true, "can_upgrade_squeegee": true,
 		"hose_power": 1.0, "next_hose_power": 1.5, "hose_radius": 0.19,
@@ -55,7 +58,7 @@ func run() -> void:
 	for dimensions: Vector2i in [Vector2i(320, 568), Vector2i(568, 320), Vector2i(390, 844), Vector2i(844, 390)]:
 		root.size = dimensions
 		await settle()
-		for store_id in [1, 2, 3, 4]:
+		for store_id in [1, 2, Rules.WET_FIRST_STORE, Rules.WET_FIRST_STORE + 1]:
 			hud.set_progression(fixture(store_id), true)
 			hud.open_upgrades()
 			await create_timer(0.21).timeout
@@ -64,8 +67,8 @@ func run() -> void:
 			check(hud.get_node_or_null("%PayoutCard") == null and hud.get_node_or_null("%EarlyValue") == null and hud.get_node_or_null("%FullValue") == null, "Persistent earnings footer is removed " + label)
 			check(hud._progression.early_reward == 160 and hud._progression.full_reward == 320 and hud.get_node_or_null("%PayoutUpgradeButton") == null, "Reward quotes remain available without the footer or generic purchase button " + label)
 			check(not hud.control("HoseUpgradeRow").is_visible_in_tree(), "No duplicate hose upgrade " + label)
-			check(hud.control("ToolDrawerTitle").text == ("Hose" if store_id >= 2 else "Brush"), "Main upgrade matches store tool " + label)
-			check(hud.control("SqueegeeUpgradeRow").is_visible_in_tree() == (store_id >= 2), "Squeegee unlocks in second store " + label)
+			check(hud.control("ToolDrawerTitle").text == ("Hose" if store_id >= Rules.WET_FIRST_STORE else "Brush"), "Main upgrade matches store tool " + label)
+			check(hud.control("SqueegeeUpgradeRow").is_visible_in_tree() == (store_id >= Rules.WET_FIRST_STORE), "Squeegee appears only for a wet-tool fixture " + label)
 			var panel: Rect2 = hud.control("UpgradesPanel").get_global_rect()
 			check(hud._safe_rect().grow(1.0).encloses(panel), "Drawer fits safe area " + label)
 			var buttons: Array[Control] = []
@@ -79,12 +82,12 @@ func run() -> void:
 			for index in buttons.size():
 				for other in range(index + 1, buttons.size()):
 					check(not buttons[index].get_global_rect().intersects(buttons[other].get_global_rect()), "Drawer buttons do not overlap " + label)
-			if store_id == 2:
+			if store_id == Rules.WET_FIRST_STORE:
 				if dimensions.x <= dimensions.y:
 					check(hud.control("SqueegeeUpgradeRow").global_position.y > hud.control("ToolUpgradeButton").global_position.y, "Portrait squeegee is below the main hose offer " + label)
 				else:
 					check(hud.control("SqueegeeUpgradeRow").global_position.x > hud.control("ToolUpgradeButton").global_position.x, "Landscape wet upgrades use adjacent columns " + label)
-				await capture("store2_" + str(dimensions.x) + "x" + str(dimensions.y))
+				await capture("wet_fixture_" + str(dimensions.x) + "x" + str(dimensions.y))
 			hud.close_upgrades()
 	hud.free()
 	var gym: Node = load("res://scenes/ui/gym_hud.tscn").instantiate()
@@ -120,17 +123,17 @@ func run() -> void:
 func check_store_checklist() -> void:
 	var state := root.get_node("ShopState")
 	state.set_process(false)
-	state._test_ticks_msec = 0
-	state._test_unix_time = 1000000.0
 	check(state.reset_progress(), "Checklist uses an isolated fresh ledger")
-	state.stores["2"] = preload("res://scripts/progression.gd").new_branch(2)
+	state.stores["2"] = Rules.new_branch(2)
 	state.active_store = 2
 	state._load_active_branch()
-	# Reproduce the reported state: every requirement except the three jobs.
-	state.cash = 57400
-	state.stores["2"].hose_level = 4
-	state.stores["2"].squeegee_level = 4
-	state.stores["2"].bonzi_earned = 150560
+	# Every real requirement is met except the three paid capstone rugs.
+	for id: String in Room.IDS:
+		state.stores["2"].room_upgrades[id] = Rules.room_level_cap(2)
+	state.stores["2"].payout_level = Room.total_levels(state.stores["2"].room_upgrades)
+	state.stores["2"].tool_level = 4
+	var opening_price: float = state.progression_view().travel_cost
+	state.cash = opening_price * 2.0
 	var sheet: Control = load("res://scenes/ui/compact_shop.tscn").instantiate()
 	root.add_child(sheet)
 	sheet.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -139,12 +142,11 @@ func check_store_checklist() -> void:
 	check(sheet.get_node("%TravelGoals").visible, "Locked next store has a visible checklist")
 	check(sheet.get_node("%TravelTitle").text.contains("Wash House"), "Checklist names the destination")
 	var text: String = sheet.get_node("%TravelRequirements").text
-	check(text.contains("Water hose") and text.contains("0/3") and text.contains("800") and text.contains("16000"), "Checklist names the hose, paid jobs, Bonzi target and opening cash")
-	check(text.split("\n").size() == 2, "Requirements use two compact lines")
-	check(sheet.get_node("%TravelHelp").text.contains("Paid rugs") and sheet.get_node("%TravelHelp").text.contains("max-level hose"), "Compact hint explains qualifying paid work")
+	check(text.contains("Room upgrades") and text.contains("Brush upgrades: 4/4") and text.contains("0/3") and text.contains(Money.format(opening_price)), "Checklist explains room mastery, brush upgrades, paid rugs and opening coins")
+	check(text.split("\n").size() == 4, "Each manual mastery requirement has a readable line")
+	check(sheet.get_node("%TravelHelp").text.contains("Paid rugs") and sheet.get_node("%TravelHelp").text.contains("max-level brush"), "Compact hint explains qualifying paid work")
 	check(sheet.get_node("%TravelHelp").tooltip_text.contains("during a rug"), "Detailed current-rug qualification remains available")
-	check(sheet.get_node("%TravelRequirements").tooltip_text.contains("57400/16000"), "Exact balances remain available without inflating the compact completed counters")
-	check(sheet.action_for("intake").disabled, "Opening stays disabled while jobs are missing")
+	check(sheet.action_for("slot_5").disabled, "Opening stays disabled while paid rugs are missing")
 	for dimensions: Vector2i in [Vector2i(320, 568), Vector2i(390, 844), Vector2i(844, 390)]:
 		root.size = dimensions
 		await settle()
@@ -152,36 +154,39 @@ func check_store_checklist() -> void:
 		var rect: Rect2 = sheet.get_node("%Sheet").get_global_rect()
 		check(sheet.get_global_rect().grow(1.0).encloses(rect), "Store sheet fits " + label)
 		var goals: Rect2 = sheet.get_node("%TravelGoals").get_global_rect()
-		check(rect.size.x <= 501.0 and goals.size.y <= 145.0, "Requirements card stays compact " + label)
+		check(rect.size.x <= 501.0, "Store sheet retains a phone-friendly reading width " + label)
 		for name: String in ["TravelTitle", "TravelRequirements", "TravelHelp"]:
 			check(goals.grow(1.0).encloses(sheet.get_node("%" + name).get_global_rect()), name + " stays inside checklist " + label)
 		check(sheet.get_node("%MenuScroll").size.y > 80.0, "Checklist and stores can scroll " + label)
 		await capture("checklist_" + str(dimensions.x) + "x" + str(dimensions.y))
-	state.cash = 15999
+	state.stores["2"].final_tool_jobs = Rules.CAPSTONE_JOBS
+	state.stores["2"].manual_jobs = Rules.CAPSTONE_JOBS
+	state.manual_jobs = Rules.CAPSTONE_JOBS
+	state.cash = opening_price - 1.0
 	sheet.refresh()
-	check(sheet.get_node("%TravelRequirements").text.contains("15999/16000"), "Compact currency does not round an unmet requirement into a completed one")
-	check(sheet.get_node("%TravelRequirements").text.contains("Bonzi here"), "Local Bonzi requirement stays explicit without a tooltip")
-	state.cash = 57400
-	state.stores["2"].final_tool_jobs = 3
+	check(sheet.action_for("slot_5").disabled, "Opening remains blocked one coin below the actual price even if compact labels round")
+	state.cash = opening_price
 	sheet.refresh()
-	check(not sheet.action_for("intake").disabled, "Opening enables when all visible requirements pass")
+	check(not sheet.action_for("slot_5").disabled, "Opening enables exactly when the manual checklist and price pass")
 	sheet.show_tab("items")
 	check(not sheet.get_node("%TravelGoals").visible, "Checklist is only shown in Stores")
-	check(sheet.rows["wide_brush"].get_node("Row/Words/Title").text.contains("Water hose"), "Store2 Tools retains the main hose offer")
-	check(sheet.rows["bonzi"].get_node("Row/Words/Title").text.contains("Squeegee"), "Shop 2 squeegee is directly below hose")
+	check(sheet.rows["slot_1"].visible and sheet.action_for("slot_1").text == "Using", "Tools sheet identifies the equipped manual brush")
+	check(sheet.action_for("slot_2").disabled and sheet.action_for("slot_2").text == "Max", "Four local brush upgrades show the completed offer")
+	check(not sheet.rows["slot_3"].visible, "Current dry stores do not show wet-tool offers")
 	check(state.select_store(1), "Checklist navigation visits an earlier owned store")
 	sheet.show_tab("plans")
 	check(sheet.get_node("%TravelGoals").visible and sheet.get_node("%TravelRequirements").text.contains("Visit High Street"), "Older stores explain where to find the next opening requirements")
-	check(not sheet.action_for("intake").disabled and sheet.actions["intake"] == "store:2", "A visible View action leads to the relevant owned store")
-	sheet._item_action("intake")
-	check(state.active_store == 2 and sheet.get_node("%TravelRequirements").text.contains("Water hose"), "View opens the correct checklist without buying a store")
-	state.stores["3"] = preload("res://scripts/progression.gd").new_branch(3)
-	state.select_store(3)
-	state.cash = 127999
+	check(not sheet.action_for("slot_5").disabled and sheet.actions["slot_5"] == "store:2", "A visible View action leads to the relevant owned store")
+	sheet._item_action("slot_5")
+	check(state.active_store == 2 and sheet.get_node("%TravelRequirements").text.contains("Brush upgrades"), "View opens the correct checklist without buying a store")
+	state.stores["3"] = Rules.new_branch(3)
+	check(state.select_store(3), "Later store fixture remains selectable")
+	var later_price: float = state.progression_view().travel_cost
+	state.cash = later_price * 0.5
 	sheet.refresh()
 	root.size = Vector2i(320, 568)
 	await settle()
-	check(sheet.get_node("%TravelRequirements").text.contains("127999/128000"), "Largest travel price remains exact in the compact summary")
-	check(sheet.get_node("%TravelGoals").size.y <= 145.0, "Largest travel requirements still fit a compact phone card")
+	check(sheet.get_node("%TravelRequirements").text.contains("%s/%s" % [Money.format(state.cash), Money.format(later_price)]), "Large opening prices retain the current shared currency display")
+	check(sheet.action_for("slot_5").disabled, "Later unmastered stores stay locked")
 	sheet.free()
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(state._save_path))

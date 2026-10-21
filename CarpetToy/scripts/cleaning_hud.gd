@@ -8,7 +8,6 @@ signal request_room_upgrade(id: String)
 signal request_tool_upgrade
 signal request_hose_upgrade
 signal request_squeegee_upgrade
-signal request_bonzi_upgrade
 signal request_rewarded_ad
 signal composition_changed
 
@@ -22,7 +21,7 @@ const AD_VIDEO_LOCKED := preload("res://assets/ui/room_upgrades/video_locked.svg
 const AD_VIDEO_ACTIVE := preload("res://assets/ui/room_upgrades/video_active.svg")
 const UpgradeBadge := preload("res://scripts/ui/upgrade_badge.gd")
 const ROOM_BADGE_SIZE := 24.0
-const SHOP_BADGE_BUTTONS := ["ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton", "BonziUpgradeButton"]
+const SHOP_BADGE_BUTTONS := ["ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton"]
 enum CarpetAdState { HIDDEN, LOCKED, READY, REQUESTING, ACTIVE }
 
 @export var preview_safe_insets := Vector4.ZERO
@@ -86,7 +85,6 @@ func _ready() -> void:
 	(control("ToolUpgradeButton") as Button).pressed.connect(_on_tool_upgrade_pressed)
 	(control("HoseUpgradeButton") as Button).pressed.connect(_on_wet_upgrade_pressed.bind("hose"))
 	(control("SqueegeeUpgradeButton") as Button).pressed.connect(_on_wet_upgrade_pressed.bind("squeegee"))
-	(control("BonziUpgradeButton") as Button).pressed.connect(_on_bonzi_upgrade_pressed)
 	(control("AdRewardButton") as Button).pressed.connect(_on_ad_reward_pressed)
 	set_progression({}, false)
 	_refresh_carpet_ad()
@@ -186,7 +184,7 @@ func room_badge_at_point(screen_point: Vector2) -> String:
 
 func action_buttons() -> Array[Button]:
 	var buttons: Array[Button] = []
-	for node_name in ["UpgradeButton", "CloseUpgradesButton", "ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton", "BonziUpgradeButton", "AdRewardButton"]:
+	for node_name in ["UpgradeButton", "CloseUpgradesButton", "ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton", "AdRewardButton"]:
 		buttons.append(control(node_name) as Button)
 	buttons.append_array(room_panel.action_buttons())
 	return buttons
@@ -260,12 +258,11 @@ func set_progression(view: Dictionary, purchases_allowed: bool = true) -> void:
 		button.text = "Buy %s" % _money_text(cost) if cost >= 0 else "Max"
 		button.icon = COIN_TEXTURE if cost >= 0 else null
 		button.tooltip_text = ("Wider water + faster soaking" if kind == "hose" else "Remove more water with every pass") + (" · %s coins" % _money_text(cost) if cost >= 0 else " · Maximum level")
-	control("UpgradeButton").tooltip_text = "Shop for tools + Bonzi upgrades"
+	control("UpgradeButton").tooltip_text = "Shop for tool upgrades"
 	var full_reward := float(view.get("carpet_full_reward", view.get("full_reward", 0.0)))
 	control("EarningsPerCarpet").visible = full_reward > 0.0
 	(control("CarpetEarningsValue") as Label).text = _money_text(full_reward)
 	control("EarningsPerCarpet").tooltip_text = "%s coins per fully cleaned carpet" % _money_text(full_reward)
-	_set_bonzi_offer(view)
 	_refresh_availability()
 	_layout()
 
@@ -306,40 +303,12 @@ func _money_text(amount: float) -> String:
 	return Money.format(amount)
 
 
-func _set_bonzi_offer(view: Dictionary) -> void:
-	control("BonziContents").visible = view.has("bonzi_tier")
-	var tier := int(view.get("bonzi_tier", -1))
-	var next_tier := mini(tier + 1, 2)
-	var cost := float(view.get("bonzi_cost", -1.0))
-	var hired := tier >= 0
-	var locked := not hired and int(view.get("local_jobs", 0)) < 3
-	var titles := ["Bonzi I", "Bonzi II", "Bonzi III"]
-	(control("CurrentBonziName") as Label).text = titles[clampi(tier, 0, 2)] if hired else "Not hired"
-	(control("NextBonziName") as Label).text = titles[clampi(next_tier, 0, 2)]
-	(control("CurrentBonziStats") as Label).text = "%s coins\nEvery %ds" % [_money_text(float(view.get("bonzi_reward", 0.0))), int(view.get("bonzi_seconds", 0))] if hired else "No earnings yet"
-	(control("NextBonziStats") as Label).text = "%s coins\nEvery %ds" % [_money_text(float(view.get("full_reward", 0.0))), int(Progression.bot_seconds(next_tier))]
-	control("CurrentBonziPreview").modulate = Color.WHITE if hired else Color(1,1,1,0.35)
-	(control("CurrentBonziPreview").get_parent().get_node("Words/State") as Label).text = "Working" if hired else "Current"
-	(control("NextBonziPreview").get_parent().get_node("Words/State") as Label).text = "Next" if hired else "Hire"
-	control("NextBonziCard").visible = cost >= 0.0
-	var button := control("BonziUpgradeButton") as Button
-	button.text = ("Hire " if not hired else "Buy ") + _money_text(cost) if cost >= 0.0 else "Max"
-	button.icon = COIN_TEXTURE if cost >= 0.0 else null
-	button.tooltip_text = "Complete 3 paid carpets to hire Bonzi" if locked else ("%s coins · automatic cleaning every %ds" % [_money_text(cost), int(Progression.bot_seconds(next_tier))] if cost >= 0.0 else "Bonzi is at maximum speed")
-
-
 func _refresh_availability() -> void:
 	if not is_node_ready(): return
 	var ready := _purchases_allowed and pending_reward == 0 and not _progression.is_empty()
 	var tool_cost := float(_progression.get("tool_cost", -1.0))
 	var tool := control("ToolUpgradeButton") as Button
 	tool.disabled = not ready or not bool(_progression.get("can_upgrade_tool", tool_cost >= 0)) or tool_cost < 0 or _actual_balance < tool_cost
-	var bonzi_cost := float(_progression.get("bonzi_cost", -1.0))
-	(control("BonziUpgradeButton") as Button).disabled = not ready or not bool(_progression.get("can_upgrade_bonzi", false)) or bonzi_cost < 0.0 or _actual_balance < bonzi_cost
-	var bonzi_locked := int(_progression.get("bonzi_tier", -1)) < 0 and int(_progression.get("local_jobs", 0)) < 3
-	var bonzi_status := control("BonziStatus") as Label
-	bonzi_status.text = "Paid carpets: %d / 3 to hire" % mini(int(_progression.get("local_jobs", 0)), 3) if bonzi_locked else ("Max speed" if bonzi_cost < 0.0 else ("Need %s coins" % _money_text(bonzi_cost) if _actual_balance < bonzi_cost else ""))
-	bonzi_status.visible = not bonzi_status.text.is_empty()
 	(control("AdRewardButton") as Button).disabled = _carpet_ad_state != CarpetAdState.READY or not _purchases_allowed or pending_reward > 0 or upgrades_open()
 	for kind in ["hose", "squeegee"]:
 		var button := control(("Hose" if kind == "hose" else "Squeegee") + "UpgradeButton") as Button
@@ -348,7 +317,7 @@ func _refresh_availability() -> void:
 	_queue_upgrade_badge_refresh()
 	var done := control("CloseUpgradesButton")
 	var focusable: Array[Control] = [done]
-	for node_name in ["ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton", "BonziUpgradeButton"]:
+	for node_name in ["ToolUpgradeButton", "HoseUpgradeButton", "SqueegeeUpgradeButton"]:
 		var button := control(node_name) as Button
 		if button.is_visible_in_tree() and not button.disabled: focusable.append(button)
 		elif upgrades_open() and button.has_focus(): done.grab_focus()
@@ -361,11 +330,6 @@ func _refresh_availability() -> void:
 func _on_tool_upgrade_pressed() -> void:
 	if upgrades_open() and not (control("ToolUpgradeButton") as Button).disabled:
 		request_tool_upgrade.emit()
-
-
-func _on_bonzi_upgrade_pressed() -> void:
-	if upgrades_open() and not (control("BonziUpgradeButton") as Button).disabled:
-		request_bonzi_upgrade.emit()
 
 
 func _on_wet_upgrade_pressed(kind: String) -> void:
@@ -441,7 +405,7 @@ func initialize_wallet(balance: float) -> void:
 
 func reserve_reward(amount: float) -> void:
 	# Call before the ledger emits its balance change so those coins wait for
-	# their flight. Ordinary automation income is never held back.
+	# their flight. Already committed wallet money remains available.
 	var value := maxf(amount, 0.0)
 	_reserved_reward += value
 	pending_reward += value
@@ -600,7 +564,7 @@ func _process(delta: float) -> void:
 	var safe := _safe_rect()
 	var origin := safe.position + safe.size * Vector2(0.5, 0.49)
 	# Read the target every frame: coins still reach the wallet after rotation,
-	# a safe-area change, or a wider balance label from automation income.
+	# a safe-area change, or a wider balance label after a reward.
 	var target := control("WalletIcon").get_global_rect().get_center()
 	for index in _coin_flights.size():
 		var flight := _coin_flights[index]
@@ -663,7 +627,6 @@ func open_upgrades() -> void:
 	if upgrades_open(): return
 	_begin_modal()
 	(control("ToolCardsScroll") as ScrollContainer).scroll_vertical = 0
-	(control("BonziCardsScroll") as ScrollContainer).scroll_vertical = 0
 	(control("ShopContentsScroll") as ScrollContainer).scroll_vertical = 0
 	control("UpgradeSheet").show()
 	_refresh_availability()
@@ -732,7 +695,7 @@ func upgrades_open() -> bool:
 
 func drag_tool_contents(origin: Vector2, relative: Vector2) -> void:
 	if not control("UpgradeSheet").visible: return
-	var scroll_names := ["ShopContentsScroll", "ToolCardsScroll", "BonziCardsScroll"] if _shop_stacked else ["ToolCardsScroll", "BonziCardsScroll", "ShopContentsScroll"]
+	var scroll_names := ["ShopContentsScroll", "ToolCardsScroll"] if _shop_stacked else ["ToolCardsScroll", "ShopContentsScroll"]
 	for name: String in scroll_names:
 		var scroll := control(name) as ScrollContainer
 		if not scroll.is_visible_in_tree() or not scroll.get_global_rect().has_point(origin): continue
@@ -769,7 +732,7 @@ func blocks_point(point: Vector2) -> bool:
 func visible_button_at(point: Vector2, buttons: Array[Button]) -> Button:
 	for button in buttons:
 		if room_panel.visible and button not in room_panel.action_buttons(): continue
-		if control("UpgradeSheet").visible and button not in [control("CloseUpgradesButton"), control("ToolUpgradeButton"), control("HoseUpgradeButton"), control("SqueegeeUpgradeButton"), control("BonziUpgradeButton")]: continue
+		if control("UpgradeSheet").visible and button not in [control("CloseUpgradesButton"), control("ToolUpgradeButton"), control("HoseUpgradeButton"), control("SqueegeeUpgradeButton")]: continue
 		if button.is_visible_in_tree() and not button.disabled and _button_contains_point(button, point):
 			return button
 	return null
@@ -924,21 +887,15 @@ func _layout() -> void:
 
 func _layout_shop(panel: Control, safe: Rect2, edge: float) -> void:
 	var contents := control("Contents")
-	var bonzi := control("BonziContents")
 	var wet_rows := control("WetUpgradeRows")
-	var has_bonzi := bonzi.visible
 	var has_wet := wet_rows.visible
 	var available := safe.size - Vector2.ONE * edge * 2.0
-	var adjacent := (has_bonzi or has_wet) and available.x >= 584.0
-	_shop_stacked = has_bonzi and not adjacent
+	var adjacent := has_wet and available.x >= 584.0
+	_shop_stacked = has_wet and not adjacent
 	var tool_height := 300.0 if control("NextToolCard").visible else 204.0
-	var bonzi_height := 326.0 if control("NextBonziCard").visible else 230.0
 	var wet_height := (178.0 if control("HoseUpgradeRow").visible else 84.0) if has_wet else 0.0
-	var requested_width := 584.0 if adjacent else (340.0 if has_wet else 304.0)
-	var requested_body := maxf(tool_height,bonzi_height) if adjacent and has_bonzi else tool_height
-	if _shop_stacked: requested_body += bonzi_height + 16.0
-	if has_wet: requested_body += wet_height + 12.0
-	panel.size = Vector2(minf(requested_width, available.x), minf(requested_body + 96.0, available.y))
+	var requested_body := maxf(tool_height,wet_height) if adjacent else tool_height + (wet_height + 12.0 if has_wet else 0.0)
+	panel.size = Vector2(minf(584.0 if adjacent else 340.0, available.x), minf(requested_body + 96.0, available.y))
 	var heading := control("ShopHeading")
 	heading.position = Vector2(16,16)
 	heading.size = Vector2(panel.size.x - 32.0,56.0)
@@ -948,19 +905,11 @@ func _layout_shop(panel: Control, safe: Rect2, edge: float) -> void:
 	var columns := control("ShopColumns")
 	var usable_width := scroll.size.x - scroll.get_v_scroll_bar().get_combined_minimum_size().x
 	var column_width := (usable_width - 16.0) * 0.5 if adjacent else usable_width
-	var body_height := scroll.size.y if adjacent or not has_bonzi else requested_body
-	var tool_min := contents.get_combined_minimum_size().y
-	var bonzi_min := bonzi.get_combined_minimum_size().y if has_bonzi else 0.0
-	if adjacent and has_bonzi:
-		body_height = maxf(body_height,maxf(tool_min,bonzi_min) + (wet_height + 12.0 if has_wet else 0.0))
-	var tools_end := tool_height if _shop_stacked else maxf(tool_min,body_height - (wet_height + 12.0 if has_wet and not adjacent else 0.0))
 	contents.position = Vector2.ZERO
-	contents.size = Vector2(column_width,tools_end)
-	bonzi.position = Vector2(column_width + 16.0,0.0) if adjacent else Vector2(0,tools_end + 16.0)
-	bonzi.size = Vector2(column_width,bonzi_height if _shop_stacked else maxf(bonzi_min,body_height - (wet_height + 12.0 if has_wet else 0.0)))
+	contents.size = Vector2(column_width,maxf(tool_height if _shop_stacked else scroll.size.y,contents.get_combined_minimum_size().y))
+	var content_height := contents.size.y
 	if has_wet:
-		wet_rows.position = Vector2(column_width + 16.0,body_height - wet_height) if adjacent else Vector2(0,(bonzi.position.y + bonzi.size.y if has_bonzi else tools_end) + 12.0)
+		wet_rows.position = Vector2(column_width + 16.0,0.0) if adjacent else Vector2(0,content_height + 12.0)
 		wet_rows.size = Vector2(column_width,wet_height)
-	var content_height := maxf(contents.position.y + contents.size.y,bonzi.position.y + bonzi.size.y if has_bonzi else 0.0)
-	if has_wet: content_height = maxf(content_height,wet_rows.position.y + wet_rows.size.y)
+		content_height = maxf(content_height,wet_rows.position.y + wet_rows.size.y)
 	columns.custom_minimum_size = Vector2(0,content_height)

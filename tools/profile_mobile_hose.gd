@@ -41,8 +41,8 @@ func pause_effects() -> void:
 func run() -> void:
 	var state := root.get_node("ShopState")
 	state.set_process(false)
-	state._test_ticks_msec = 0
-	state._test_unix_time = 1000000.0
+
+
 	root.size = Vector2i(390, 844)
 	game = load("res://scenes/test/rug_cleaning_gym.tscn").instantiate()
 	game.animate_rug_changes = false

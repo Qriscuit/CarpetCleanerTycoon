@@ -1,0 +1,90 @@
+{
+  "generator": "tools/build_avatar.py",
+  "editable_source": "art/blender/avatar.blend",
+  "coordinates": "Y-up, front -Z, feet Y=0; all GLBs have the same origin",
+  "body_tint": "#F28C28",
+  "attachment": "Hats are siblings of avatar with identity transform; never re-center hats",
+  "assets": {
+    "avatar.glb": {
+      "triangles": 2992,
+      "material_surfaces": 1,
+      "bounds_min": [
+        -0.632872,
+        0.0,
+        -0.25
+      ],
+      "bounds_max": [
+        0.632872,
+        2.161513,
+        0.25
+      ],
+      "file_bytes": 55048,
+      "connected_components": 1,
+      "nonmanifold_edges": 0,
+      "boundary_edges": 0,
+      "vertices": 1498
+    },
+    "pirate_hat.glb": {
+      "triangles": 640,
+      "material_surfaces": 2,
+      "bounds_min": [
+        -0.425987,
+        2.028513,
+        -0.383005
+      ],
+      "bounds_max": [
+        0.425987,
+        2.298012,
+        0.29362
+      ],
+      "file_bytes": 13664
+    },
+    "beanie.glb": {
+      "triangles": 440,
+      "material_surfaces": 1,
+      "bounds_min": [
+        -0.26572,
+        2.018013,
+        -0.23296
+      ],
+      "bounds_max": [
+        0.26572,
+        2.291013,
+        0.23296
+      ],
+      "file_bytes": 9192
+    },
+    "avatar_rig.glb": {
+      "triangles": 2992,
+      "material_surfaces": 1,
+      "bounds_min": [
+        -0.632872,
+        0.0,
+        -0.25
+      ],
+      "bounds_max": [
+        0.632872,
+        2.161513,
+        0.25
+      ],
+      "file_bytes": 152636,
+      "connected_components": 1,
+      "nonmanifold_edges": 0,
+      "boundary_edges": 0,
+      "vertices": 1498,
+      "bones": 12,
+      "animations": [
+        "idle",
+        "ride",
+        "run",
+        "get_up",
+        "dust_off",
+        "climb"
+      ],
+      "rig_metadata": "rig.json"
+    }
+  },
+  "equipped_max_triangles": 3632,
+  "equipped_max_material_surfaces": 3,
+  "rig_generator": "tools/rig_avatar.py"
+}

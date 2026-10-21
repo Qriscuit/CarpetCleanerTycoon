@@ -1,0 +1,944 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/avatar_customization.gd" id="1_ui"]
+[ext_resource type="Script" path="res://scripts/avatar_preview.gd" id="2_preview"]
+[ext_resource type="PackedScene" path="res://assets/character/avatar.glb" id="3_avatar"]
+[ext_resource type="PackedScene" path="res://assets/character/pirate_hat.glb" id="4_pirate"]
+[ext_resource type="PackedScene" path="res://assets/character/beanie.glb" id="5_beanie"]
+[ext_resource type="Texture2D" path="res://assets/character/thumbnails/none.png" id="6_none"]
+[ext_resource type="Texture2D" path="res://assets/character/thumbnails/pirate.png" id="7_pirate"]
+[ext_resource type="Texture2D" path="res://assets/character/thumbnails/beanie.png" id="8_beanie"]
+
+[sub_resource type="StyleBoxFlat" id="Card"]
+bg_color = Color(1, 0.992, 0.965, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.82, 0.87, 0.81, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="CardSelected"]
+bg_color = Color(0.89, 0.96, 0.83, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.38, 0.63, 0.32, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="CardHover"]
+bg_color = Color(0.96, 0.98, 0.91, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.46, 0.63, 0.70, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="StyleBoxFlat" id="Focus"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.22, 0.43, 0.60, 1)
+corner_radius_top_left = 18
+corner_radius_top_right = 18
+corner_radius_bottom_right = 18
+corner_radius_bottom_left = 18
+
+[sub_resource type="Theme" id="Theme"]
+default_font_size = 16
+Button/colors/font_color = Color(0.208, 0.345, 0.463, 1)
+Button/colors/font_pressed_color = Color(0.208, 0.345, 0.463, 1)
+Button/colors/font_hover_color = Color(0.208, 0.345, 0.463, 1)
+Button/colors/font_hover_pressed_color = Color(0.208, 0.345, 0.463, 1)
+Button/colors/font_focus_color = Color(0.208, 0.345, 0.463, 1)
+Button/styles/normal = SubResource("Card")
+Button/styles/pressed = SubResource("CardSelected")
+Button/styles/hover_pressed = SubResource("CardSelected")
+Button/styles/hover = SubResource("CardHover")
+Button/styles/focus = SubResource("Focus")
+Label/colors/font_color = Color(0.208, 0.345, 0.463, 1)
+
+[sub_resource type="StyleBoxFlat" id="PreviewPanel"]
+bg_color = Color(0.80, 0.91, 0.94, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.95, 0.99, 0.97, 1)
+corner_radius_top_left = 32
+corner_radius_top_right = 32
+corner_radius_bottom_right = 32
+corner_radius_bottom_left = 32
+
+[sub_resource type="StyleBoxFlat" id="CollectionPanel"]
+bg_color = Color(1, 0.992, 0.965, 1)
+corner_radius_top_right = 24
+corner_radius_bottom_right = 24
+corner_radius_bottom_left = 24
+
+[sub_resource type="StyleBoxFlat" id="TabInactive"]
+bg_color = Color(0.83, 0.89, 0.81, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+
+[sub_resource type="StyleBoxFlat" id="TabActive"]
+bg_color = Color(1, 0.992, 0.965, 1)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+
+[sub_resource type="StyleBoxFlat" id="SelectedBadge"]
+bg_color = Color(0.31, 0.54, 0.28, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="Environment" id="Environment"]
+background_mode = 0
+ambient_light_source = 2
+ambient_light_color = Color(0.91, 0.96, 1, 1)
+ambient_light_energy = 0.45
+reflected_light_source = 2
+
+[sub_resource type="Shader" id="ShadowShader"]
+code = "shader_type spatial; render_mode unshaded, cull_disabled, depth_draw_never; void fragment(){float d=length((UV-vec2(0.5))*2.0); ALBEDO=vec3(0.25,0.43,0.48); ALPHA=0.19*exp(-4.0*d*d)*(1.0-smoothstep(0.65,1.0,d));}"
+
+[sub_resource type="ShaderMaterial" id="ShadowMaterial"]
+shader = SubResource("ShadowShader")
+
+[sub_resource type="PlaneMesh" id="ShadowMesh"]
+size = Vector2(2.1, 1.45)
+
+[node name="AvatarCustomization" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+theme = SubResource("Theme")
+script = ExtResource("1_ui")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.91, 0.95, 0.87, 1)
+
+[node name="Header" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+mouse_filter = 2
+
+[node name="Back" type="Button" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 44.0
+offset_bottom = 44.0
+theme_override_font_sizes/font_size = 30
+text = "‹"
+tooltip_text = "Back to home"
+
+[node name="Title" type="Label" parent="Header"]
+layout_mode = 0
+offset_left = 58.0
+offset_right = 290.0
+offset_bottom = 44.0
+theme_override_font_sizes/font_size = 23
+text = "Your character"
+vertical_alignment = 1
+mouse_filter = 2
+
+[node name="PreviewCard" type="Panel" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("PreviewPanel")
+
+[node name="Preview" type="Control" parent="PreviewCard"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 6.0
+offset_right = -8.0
+offset_bottom = -6.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_preview")
+
+[node name="Picture" type="TextureRect" parent="PreviewCard/Preview"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 0
+
+[node name="AvatarViewport" type="SubViewport" parent="PreviewCard/Preview"]
+own_world_3d = true
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(512, 512)
+msaa_3d = 1
+gui_disable_input = true
+render_target_update_mode = 0
+
+[node name="Studio" type="Node3D" parent="PreviewCard/Preview/AvatarViewport"]
+
+[node name="Environment" type="WorldEnvironment" parent="PreviewCard/Preview/AvatarViewport/Studio"]
+environment = SubResource("Environment")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="PreviewCard/Preview/AvatarViewport/Studio"]
+rotation_degrees = Vector3(-35, 150, 0)
+light_color = Color(1, 0.95, 0.86, 1)
+light_energy = 0.95
+shadow_enabled = false
+
+[node name="GroundShadow" type="MeshInstance3D" parent="PreviewCard/Preview/AvatarViewport/Studio"]
+position = Vector3(0, 0.005, 0)
+material_override = SubResource("ShadowMaterial")
+cast_shadow = 0
+mesh = SubResource("ShadowMesh")
+
+[node name="Turntable" type="Node3D" parent="PreviewCard/Preview/AvatarViewport/Studio"]
+
+[node name="Avatar" parent="PreviewCard/Preview/AvatarViewport/Studio/Turntable" instance=ExtResource("3_avatar")]
+
+[node name="PirateHat" parent="PreviewCard/Preview/AvatarViewport/Studio/Turntable" instance=ExtResource("4_pirate")]
+visible = false
+
+[node name="Beanie" parent="PreviewCard/Preview/AvatarViewport/Studio/Turntable" instance=ExtResource("5_beanie")]
+visible = false
+
+[node name="Camera" type="Camera3D" parent="PreviewCard/Preview/AvatarViewport/Studio"]
+position = Vector3(0, 1.5, -8)
+projection = 1
+current = true
+size = 3.3
+near = 0.05
+far = 20.0
+
+[node name="Tabs" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="HatsTab" type="Button" parent="Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(116, 44)
+layout_mode = 2
+theme_override_styles/normal = SubResource("TabInactive")
+theme_override_styles/pressed = SubResource("TabActive")
+theme_override_styles/hover_pressed = SubResource("TabActive")
+toggle_mode = true
+text = "Hats"
+
+[node name="ColorTab" type="Button" parent="Tabs"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(116, 44)
+layout_mode = 2
+theme_override_styles/normal = SubResource("TabInactive")
+theme_override_styles/pressed = SubResource("TabActive")
+theme_override_styles/hover_pressed = SubResource("TabActive")
+toggle_mode = true
+text = "Color"
+
+[node name="CollectionPanel" type="Panel" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("CollectionPanel")
+
+[node name="CollectionScroll" type="ScrollContainer" parent="CollectionPanel"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+
+[node name="Cards" type="GridContainer" parent="CollectionPanel/CollectionScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+columns = 3
+
+[node name="NoneCard" type="Button" parent="CollectionPanel/CollectionScroll/Cards"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "None"
+metadata/category = "hats"
+metadata/item_id = "none"
+
+[node name="Artwork" type="TextureRect" parent="CollectionPanel/CollectionScroll/Cards/NoneCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 5.0
+offset_right = -6.0
+offset_bottom = -29.0
+mouse_filter = 2
+texture = ExtResource("6_none")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="CollectionPanel/CollectionScroll/Cards/NoneCard"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -28.0
+offset_bottom = -5.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
+text = "None"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Selected" type="Label" parent="CollectionPanel/CollectionScroll/Cards/NoneCard"]
+visible = false
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -28.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/normal = SubResource("SelectedBadge")
+theme_override_colors/font_color = Color(1, 1, 0.96, 1)
+text = "✓"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PirateCard" type="Button" parent="CollectionPanel/CollectionScroll/Cards"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "Pirate hat"
+metadata/category = "hats"
+metadata/item_id = "pirate"
+
+[node name="Artwork" type="TextureRect" parent="CollectionPanel/CollectionScroll/Cards/PirateCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 5.0
+offset_right = -6.0
+offset_bottom = -29.0
+mouse_filter = 2
+texture = ExtResource("7_pirate")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="CollectionPanel/CollectionScroll/Cards/PirateCard"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -28.0
+offset_bottom = -5.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
+text = "Pirate hat"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Selected" type="Label" parent="CollectionPanel/CollectionScroll/Cards/PirateCard"]
+visible = false
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -28.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/normal = SubResource("SelectedBadge")
+theme_override_colors/font_color = Color(1, 1, 0.96, 1)
+text = "✓"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BeanieCard" type="Button" parent="CollectionPanel/CollectionScroll/Cards"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "Beanie"
+metadata/category = "hats"
+metadata/item_id = "beanie"
+
+[node name="Artwork" type="TextureRect" parent="CollectionPanel/CollectionScroll/Cards/BeanieCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 6.0
+offset_top = 5.0
+offset_right = -6.0
+offset_bottom = -29.0
+mouse_filter = 2
+texture = ExtResource("8_beanie")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Name" type="Label" parent="CollectionPanel/CollectionScroll/Cards/BeanieCard"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -28.0
+offset_bottom = -5.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 13
+text = "Beanie"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Selected" type="Label" parent="CollectionPanel/CollectionScroll/Cards/BeanieCard"]
+visible = false
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -28.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/normal = SubResource("SelectedBadge")
+theme_override_colors/font_color = Color(1, 1, 0.96, 1)
+text = "✓"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="OrangeCard" type="Button" parent="CollectionPanel/CollectionScroll/Cards"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "Orange"
+metadata/category = "color"
+metadata/item_id = "orange"
+
+[node name="Artwork" type="Control" parent="CollectionPanel/CollectionScroll/Cards/OrangeCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 11.0
+offset_top = 10.0
+offset_right = -11.0
+offset_bottom = -29.0
+mouse_filter = 2
+
+[node name="Swatch" type="ColorRect" parent="CollectionPanel/CollectionScroll/Cards/OrangeCard/Artwork"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.949, 0.549, 0.157, 1)
+
+[node name="Name" type="Label" parent="CollectionPanel/CollectionScroll/Cards/OrangeCard"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -28.0
+offset_bottom = -5.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+text = "Orange"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Selected" type="Label" parent="CollectionPanel/CollectionScroll/Cards/OrangeCard"]
+visible = false
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -28.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/normal = SubResource("SelectedBadge")
+theme_override_colors/font_color = Color(1, 1, 0.96, 1)
+text = "✓"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GoldCard" type="Button" parent="CollectionPanel/CollectionScroll/Cards"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "Gold"
+metadata/category = "color"
+metadata/item_id = "gold"
+
+[node name="Artwork" type="Control" parent="CollectionPanel/CollectionScroll/Cards/GoldCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 11.0
+offset_top = 10.0
+offset_right = -11.0
+offset_bottom = -29.0
+mouse_filter = 2
+
+[node name="Swatch" type="ColorRect" parent="CollectionPanel/CollectionScroll/Cards/GoldCard/Artwork"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.949, 0.549, 0.157, 1)
+
+[node name="Name" type="Label" parent="CollectionPanel/CollectionScroll/Cards/GoldCard"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -28.0
+offset_bottom = -5.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+text = "Gold"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Selected" type="Label" parent="CollectionPanel/CollectionScroll/Cards/GoldCard"]
+visible = false
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -28.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/normal = SubResource("SelectedBadge")
+theme_override_colors/font_color = Color(1, 1, 0.96, 1)
+text = "✓"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CoralCard" type="Button" parent="CollectionPanel/CollectionScroll/Cards"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "Coral"
+metadata/category = "color"
+metadata/item_id = "coral"
+
+[node name="Artwork" type="Control" parent="CollectionPanel/CollectionScroll/Cards/CoralCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 11.0
+offset_top = 10.0
+offset_right = -11.0
+offset_bottom = -29.0
+mouse_filter = 2
+
+[node name="Swatch" type="ColorRect" parent="CollectionPanel/CollectionScroll/Cards/CoralCard/Artwork"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.949, 0.549, 0.157, 1)
+
+[node name="Name" type="Label" parent="CollectionPanel/CollectionScroll/Cards/CoralCard"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -28.0
+offset_bottom = -5.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+text = "Coral"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Selected" type="Label" parent="CollectionPanel/CollectionScroll/Cards/CoralCard"]
+visible = false
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -28.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/normal = SubResource("SelectedBadge")
+theme_override_colors/font_color = Color(1, 1, 0.96, 1)
+text = "✓"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PinkCard" type="Button" parent="CollectionPanel/CollectionScroll/Cards"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "Pink"
+metadata/category = "color"
+metadata/item_id = "pink"
+
+[node name="Artwork" type="Control" parent="CollectionPanel/CollectionScroll/Cards/PinkCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 11.0
+offset_top = 10.0
+offset_right = -11.0
+offset_bottom = -29.0
+mouse_filter = 2
+
+[node name="Swatch" type="ColorRect" parent="CollectionPanel/CollectionScroll/Cards/PinkCard/Artwork"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.949, 0.549, 0.157, 1)
+
+[node name="Name" type="Label" parent="CollectionPanel/CollectionScroll/Cards/PinkCard"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -28.0
+offset_bottom = -5.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+text = "Pink"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Selected" type="Label" parent="CollectionPanel/CollectionScroll/Cards/PinkCard"]
+visible = false
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -28.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/normal = SubResource("SelectedBadge")
+theme_override_colors/font_color = Color(1, 1, 0.96, 1)
+text = "✓"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MintCard" type="Button" parent="CollectionPanel/CollectionScroll/Cards"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "Mint"
+metadata/category = "color"
+metadata/item_id = "mint"
+
+[node name="Artwork" type="Control" parent="CollectionPanel/CollectionScroll/Cards/MintCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 11.0
+offset_top = 10.0
+offset_right = -11.0
+offset_bottom = -29.0
+mouse_filter = 2
+
+[node name="Swatch" type="ColorRect" parent="CollectionPanel/CollectionScroll/Cards/MintCard/Artwork"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.949, 0.549, 0.157, 1)
+
+[node name="Name" type="Label" parent="CollectionPanel/CollectionScroll/Cards/MintCard"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -28.0
+offset_bottom = -5.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+text = "Mint"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Selected" type="Label" parent="CollectionPanel/CollectionScroll/Cards/MintCard"]
+visible = false
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -28.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/normal = SubResource("SelectedBadge")
+theme_override_colors/font_color = Color(1, 1, 0.96, 1)
+text = "✓"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BlueCard" type="Button" parent="CollectionPanel/CollectionScroll/Cards"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "Blue"
+metadata/category = "color"
+metadata/item_id = "blue"
+
+[node name="Artwork" type="Control" parent="CollectionPanel/CollectionScroll/Cards/BlueCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 11.0
+offset_top = 10.0
+offset_right = -11.0
+offset_bottom = -29.0
+mouse_filter = 2
+
+[node name="Swatch" type="ColorRect" parent="CollectionPanel/CollectionScroll/Cards/BlueCard/Artwork"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.949, 0.549, 0.157, 1)
+
+[node name="Name" type="Label" parent="CollectionPanel/CollectionScroll/Cards/BlueCard"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -28.0
+offset_bottom = -5.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+text = "Blue"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Selected" type="Label" parent="CollectionPanel/CollectionScroll/Cards/BlueCard"]
+visible = false
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -28.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/normal = SubResource("SelectedBadge")
+theme_override_colors/font_color = Color(1, 1, 0.96, 1)
+text = "✓"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="VioletCard" type="Button" parent="CollectionPanel/CollectionScroll/Cards"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "Violet"
+metadata/category = "color"
+metadata/item_id = "violet"
+
+[node name="Artwork" type="Control" parent="CollectionPanel/CollectionScroll/Cards/VioletCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 11.0
+offset_top = 10.0
+offset_right = -11.0
+offset_bottom = -29.0
+mouse_filter = 2
+
+[node name="Swatch" type="ColorRect" parent="CollectionPanel/CollectionScroll/Cards/VioletCard/Artwork"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.949, 0.549, 0.157, 1)
+
+[node name="Name" type="Label" parent="CollectionPanel/CollectionScroll/Cards/VioletCard"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -28.0
+offset_bottom = -5.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+text = "Violet"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Selected" type="Label" parent="CollectionPanel/CollectionScroll/Cards/VioletCard"]
+visible = false
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -28.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/normal = SubResource("SelectedBadge")
+theme_override_colors/font_color = Color(1, 1, 0.96, 1)
+text = "✓"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="IvoryCard" type="Button" parent="CollectionPanel/CollectionScroll/Cards"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+size_flags_horizontal = 3
+toggle_mode = true
+tooltip_text = "Ivory"
+metadata/category = "color"
+metadata/item_id = "ivory"
+
+[node name="Artwork" type="Control" parent="CollectionPanel/CollectionScroll/Cards/IvoryCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 11.0
+offset_top = 10.0
+offset_right = -11.0
+offset_bottom = -29.0
+mouse_filter = 2
+
+[node name="Swatch" type="ColorRect" parent="CollectionPanel/CollectionScroll/Cards/IvoryCard/Artwork"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+color = Color(0.949, 0.549, 0.157, 1)
+
+[node name="Name" type="Label" parent="CollectionPanel/CollectionScroll/Cards/IvoryCard"]
+layout_mode = 1
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_top = -28.0
+offset_bottom = -5.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 12
+text = "Ivory"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Selected" type="Label" parent="CollectionPanel/CollectionScroll/Cards/IvoryCard"]
+visible = false
+layout_mode = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -28.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = 28.0
+mouse_filter = 2
+theme_override_styles/normal = SubResource("SelectedBadge")
+theme_override_colors/font_color = Color(1, 1, 0.96, 1)
+text = "✓"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SaveError" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 0
+theme_override_colors/font_color = Color(0.66, 0.24, 0.18, 1)
+theme_override_styles/normal = SubResource("Card")
+text = "Couldn’t save. Try again."
+horizontal_alignment = 1
+mouse_filter = 2
+
+[node name="SaveErrorTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 3.0
+one_shot = true

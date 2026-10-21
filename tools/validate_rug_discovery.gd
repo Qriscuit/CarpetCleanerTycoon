@@ -208,8 +208,8 @@ func reload_partial_rug(expected: String) -> void:
 func run() -> void:
 	state = root.get_node("ShopState")
 	state.set_process(false)
-	state._test_unix_time = 1234567890.0
-	state._test_ticks_msec = 0
+
+
 	state._save_path = "res://../art/rug_discovery_test_%d.json" % OS.get_process_id()
 	check(state.reset_progress(), "Isolated discovery ledger resets")
 	root.size = Vector2i(390, 844)

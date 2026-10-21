@@ -8,7 +8,9 @@
 [ext_resource type="Texture2D" path="res://assets/ui/room_upgrades/cart.svg" id="6_77kit"]
 [ext_resource type="Texture2D" path="res://assets/floating_shop/BrushIcon.png" id="7_xawj1"]
 [ext_resource type="Texture2D" path="res://assets/floating_shop/BlueprintIcon.png" id="8_esa3y"]
-[ext_resource type="Texture2D" path="res://assets/floating_shop/BonziIcon.png" id="9_0806d"]
+[ext_resource type="Texture2D" path="res://assets/character/thumbnails/portrait.png" id="9_0806d"]
+
+[ext_resource type="PackedScene" path="res://scenes/ui/avatar_customization.tscn" id="10_avatar_menu"]
 
 [sub_resource type="Theme" id="Theme_1jgdo"]
 default_font_size = 18
@@ -822,12 +824,12 @@ theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 text = "Stores"
 horizontal_alignment = 1
 
-[node name="NavBonzi" type="Button" parent="Dock/Navigation" unique_id=464408791]
+[node name="NavAvatar" type="Button" parent="Dock/Navigation" unique_id=464408791]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(64, 72)
 layout_mode = 2
 size_flags_horizontal = 3
-tooltip_text = "Bonzi"
+tooltip_text = "Your character"
 theme_override_styles/normal = SubResource("StyleBoxFlat_8kpcp")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_5432r")
 theme_override_styles/hover = SubResource("StyleBoxFlat_v2tsq")
@@ -836,7 +838,7 @@ theme_override_constants/icon_max_width = 62
 icon_alignment = 1
 expand_icon = true
 
-[node name="CaptionContent" type="VBoxContainer" parent="Dock/Navigation/NavBonzi" unique_id=2103311869]
+[node name="CaptionContent" type="VBoxContainer" parent="Dock/Navigation/NavAvatar" unique_id=2103311869]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -844,7 +846,7 @@ mouse_filter = 2
 theme_override_constants/separation = 0
 alignment = 1
 
-[node name="Icon" type="TextureRect" parent="Dock/Navigation/NavBonzi/CaptionContent" unique_id=794179473]
+[node name="Icon" type="TextureRect" parent="Dock/Navigation/NavAvatar/CaptionContent" unique_id=794179473]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 mouse_filter = 2
@@ -852,21 +854,13 @@ texture = ExtResource("9_0806d")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Caption" type="Label" parent="Dock/Navigation/NavBonzi/CaptionContent" unique_id=342373887]
+[node name="Caption" type="Label" parent="Dock/Navigation/NavAvatar/CaptionContent" unique_id=342373887]
 layout_mode = 2
 theme_override_font_sizes/font_size = 12
 theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
-text = "Bonzi"
+text = "You"
 horizontal_alignment = 1
 
-[node name="ReturnNotice" type="Button" parent="." unique_id=880631903]
-unique_name_in_owner = true
-visible = false
-layout_mode = 0
-theme_override_styles/normal = SubResource("StyleBoxFlat_jqln8")
-theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
-theme_override_font_sizes/font_size = 15
-text = "While away"
 
 [node name="StatusTimer" type="Timer" parent="." unique_id=82341079]
 unique_name_in_owner = true
@@ -1056,3 +1050,7 @@ offset_bottom = 60.0
 theme_override_styles/normal = SubResource("StyleBoxFlat_uc7od")
 theme_override_colors/font_color = Color(0.20784314, 0.34509805, 0.4627451, 1)
 text = "‹  Home"
+
+[node name="AvatarMenu" parent="." instance=ExtResource("10_avatar_menu")]
+unique_name_in_owner = true
+visible = false

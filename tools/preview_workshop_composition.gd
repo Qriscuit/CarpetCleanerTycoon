@@ -38,8 +38,8 @@ func seed_room(maxed: bool) -> void:
 		for id: String in RoomRules.IDS: branch.room_upgrades[id] = Rules.room_level_cap(1)
 		branch.payout_level = RoomRules.total_levels(branch.room_upgrades)
 		branch.tool_level = 4
-		branch.bonzi_tier = 2
-		ledger._owned.merge({"wide_brush": true, "bonzi": true, "bonzi_mk2": true, "intake": true}, true)
+
+
 	branch.job_early_reward = RoomRules.early_reward(1, branch)
 	ledger.cash = 400000.0 if maxed else 1000.0
 	check(ledger.save_state(), "The preview's real levels and quote save and emit the normal state update")
@@ -77,8 +77,8 @@ func capture_room(label: String, window_size: Vector2i, yaw: float) -> void:
 func run() -> void:
 	ledger = root.get_node("ShopState")
 	ledger.set_process(false)
-	ledger._test_ticks_msec = 0
-	ledger._test_unix_time = 1800000000.0
+
+
 	save_path = "res://.godot/preview_workshop_composition_%d.json" % OS.get_process_id()
 	ledger._save_path = save_path
 	root.size = WINDOW_SIZES[0]

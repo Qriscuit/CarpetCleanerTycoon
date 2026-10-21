@@ -36,7 +36,7 @@ M = {k: material(k, c) for k, c in {
     'Mint shade': '66A582', 'Grass': 'AED08A', 'Coral': 'EC9177',
     'Coral shade': 'CE725D', 'Window': '426D8E', 'Blue': '689ACA',
     'Navy': '304F65', 'Gold': 'F6C356', 'Gold shade': 'DC9E37',
-    'Robot face': '294558', 'Brass': 'BB9873'
+    'Brass': 'BB9873'
 }.items()}
 assets = {}
 group = None
@@ -227,17 +227,6 @@ tube('Drawn rug outline',[(-.23,-.13,.47),(.20,-.13,.47),(.20,-.13,1.02),(-.23,-
 tube('Drawn rug chevron',[(-.2,-.14,.74),(-.07,-.14,.86),(.07,-.14,.64),(.18,-.14,.76)],.019,'Cream')
 for x in [-.16,-.04,.08,.18]:
     tube('Drawn rug fringe',[(x,-.13,.42),(x,-.13,.48)],.012,'Cream')
-
-collection('BonziIcon')
-box('Robot cream body',(0,0,.65),(1.12,.79,.96),'Ivory',.27)
-box('Robot dark face',(0,-.403,.72),(.85,.09,.53),'Robot face',.21)
-for x in [-.20,.20]:
-    tube('Happy eye',[(x+.085*math.cos(t),-.467,.71+.085*math.sin(t)) for t in [i*math.pi/16 for i in range(17)]],.025,'Blue')
-rod('Top button',(0,0,1.12),(0,0,1.18),.16,'Blue')
-for x in [-.56,.56]:
-    rod('Side wheel',(x-.065,0,.32),(x+.065,0,.32),.24,'Navy')
-    for i in range(3):
-        box('Robot cleaning bristle',(x*.75+(i-1)*.1,-.30,.14),(.10,.25,.22),'Cream',.043)
 
 collection('CoinIcon')
 rod('Coin gold edge',(0,.045,.66),(0,-.09,.66),.58,'Gold shade',48)

@@ -25,8 +25,6 @@ func fresh(label: String) -> Node:
 	var state := State.new()
 	state._save_path = "res://.godot/split_ledger_%d_%s.json" % [OS.get_process_id(),label]
 	paths.append(state._save_path)
-	state._test_ticks_msec = 0
-	state._test_unix_time = 1800000000.0
 	root.add_child(state)
 	state.set_process(false)
 	check(state.reset_progress(), "A disposable ledger resets")
@@ -35,8 +33,6 @@ func fresh(label: String) -> Node:
 func reload_state(state: Node) -> Node:
 	var replacement := State.new()
 	replacement._save_path = state._save_path
-	replacement._test_ticks_msec = state._test_ticks_msec
-	replacement._test_unix_time = state._test_unix_time
 	state.free()
 	root.add_child(replacement)
 	replacement.set_process(false)
@@ -129,20 +125,15 @@ func check_failures_and_validation() -> void:
 			var malformed := snapshot(0.5)
 			malformed[field] = invalid
 			check(state.preview_cleaning_reward(job,malformed) == -1.0 and state.record_cleaning_progress(job,malformed) == -1.0 and not state.save_job_snapshot(malformed) and state._capture_state() == before and FileAccess.get_file_as_string(state._save_path) == disk, "Malformed optional payment progress preserves wallet, masks and durable bytes")
-	state._branch().bonzi_tier = 0
 	state.save_state()
-	state._test_ticks_msec += 120000
-	state._test_unix_time += 120.0
 	state._save_enabled = false
-	var old_ticks: int = state._last_ticks
-	check(state.record_cleaning_progress(job,snapshot(0.5)) == -1.0 and state.cash == 4.0 and state.automated_jobs == 0 and state._last_ticks == old_ticks, "Failed progress also rolls back independently elapsed Bonzi delivery")
+	check(state.record_cleaning_progress(job,snapshot(0.5)) == -1.0 and state.cash == 4.0, "Failed progress preserves its wallet and cleaning watermark")
 	state._save_enabled = true
-	check(state.record_cleaning_progress(job,snapshot(0.5)) == 6.0 and state.cash == 50.0 and state.automated_jobs == 1, "Retry pays the cleaning delta and the unchanged timed Bonzi order once")
+	check(state.record_cleaning_progress(job,snapshot(0.5)) == 6.0 and state.cash == 10.0, "Retry pays only the cleaning delta once")
 	state._save_enabled = false
 	before = state._capture_state()
 	check(state.complete_and_start_next_job(job,snapshot(1.0)).is_empty() and state._capture_state() == before, "Failed restoration settlement preserves the job, wallet and already-paid half")
 	state._save_enabled = true
-	state._branch().bonzi_tier = -1
 	state.cash = Rules.MAX_MONEY
 	state.save_state()
 	before = state._capture_state()
@@ -152,7 +143,7 @@ func check_failures_and_validation() -> void:
 	check(state.record_cleaning_progress(job,snapshot(0.75)) == 5.0, "An installment retries after wallet space becomes available")
 	state.free()
 
-func check_travel_upgrade_migration() -> void:
+func check_travel_upgrade_persistence() -> void:
 	var state := fresh("travel")
 	var job: String = state.start_job()
 	state.record_cleaning_progress(job,snapshot(0.5))
@@ -169,20 +160,13 @@ func check_travel_upgrade_migration() -> void:
 	check(state.record_cleaning_progress(job,snapshot(0.501)) == 1.0, "New work after an upgrade catches up to the new first-half rate")
 	check(state.reward_for_current_job(snapshot(0.99)) == 35.0 and not state.complete_and_start_next_job(job,snapshot(0.99)).is_empty() and state.cash == 996.0, "Full restoration after renovation pays the new quote minus every earlier installment")
 	state.free()
-	state = fresh("migration")
+	state = fresh("saved_marks")
 	job = state.start_job()
 	state.cash = 1234.0
-	state.save_job_snapshot(snapshot(0.5))
-	var legacy: Dictionary = state._capture_state()
-	for key: String in legacy.stores:
-		legacy.stores[key].erase("job_cleaning_paid")
-		legacy.stores[key].erase("job_cleaning_progress")
-	var file := FileAccess.open(state._save_path,FileAccess.WRITE)
-	file.store_string(JSON.stringify(legacy,"",true,true))
-	file.close()
+	state.record_cleaning_progress(job,snapshot(0.5))
 	state = reload_state(state)
-	check(state.active_job_id == job and state.cash == 1234.0 and state.job_snapshot.mask_marker == "real-work" and state._branch().job_cleaning_paid == 0.0, "An old unfinished save adds accounting without replacing wallet, job or masks")
-	check(state.record_cleaning_progress(job,state.job_snapshot) == 10.0, "Previously unpaid saved work remains eligible under the additive migration")
+	check(state.active_job_id == job and state.cash == 1244.0 and state.job_snapshot.mask_marker == "real-work" and state._branch().job_cleaning_paid == 10.0, "The current save preserves wallet, job, masks and payment marks")
+	check(state.record_cleaning_progress(job,state.job_snapshot) == 0.0, "Reloading already paid work cannot pay again")
 	var fixture: Dictionary = state._capture_state()
 	for invalid: Variant in [-1.0,10.5,NAN,INF,21.0,"10"]:
 		var bad := fixture.duplicate(true)
@@ -205,7 +189,7 @@ func check_travel_upgrade_migration() -> void:
 	valid.job_snapshot.cleaning_pending_clearance = 0.5
 	valid.job_snapshot.dry_cleaning_clearance = 0.5
 	valid.stores["1"].job_snapshot = valid.job_snapshot.duplicate(true)
-	check(state._valid_save(valid), "Valid optional payment marks retain additive save compatibility")
+	check(state._valid_save(valid), "Valid optional payment marks remain valid in the current save")
 	state.free()
 	for pair: Array in [["cleaning_pending_clearance", NAN], ["earned_clearance", -0.1], ["cleaning_pending_clearance", 0.6], ["dry_cleaning_clearance", NAN], ["dry_cleaning_clearance", 0.6]]:
 		state = fresh("malformed_%d" % checks)
@@ -214,13 +198,11 @@ func check_travel_upgrade_migration() -> void:
 		var bad: Dictionary = state._capture_state()
 		bad.stores["1"].job_snapshot[pair[0]] = pair[1]
 		var corrupt_bytes := JSON.stringify(bad, "", true, true)
-		file = FileAccess.open(state._save_path, FileAccess.WRITE)
+		var file := FileAccess.open(state._save_path, FileAccess.WRITE)
 		file.store_string(corrupt_bytes)
 		file.close()
 		var rejected := State.new()
 		rejected._save_path = state._save_path
-		rejected._test_ticks_msec = 0
-		rejected._test_unix_time = 1800000000.0
 		state.free()
 		root.add_child(rejected)
 		rejected.set_process(false)
@@ -328,7 +310,7 @@ func run() -> void:
 	check_early()
 	check_dry_extraction_before_collection()
 	check_failures_and_validation()
-	check_travel_upgrade_migration()
+	check_travel_upgrade_persistence()
 	check_wet_and_large()
 	check_wet_mask_roundtrip()
 	for path: String in paths:

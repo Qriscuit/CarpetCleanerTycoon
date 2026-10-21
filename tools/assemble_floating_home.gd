@@ -172,17 +172,11 @@ func build() -> void:
 	dock.add_theme_stylebox_override("panel",style(Color("fff8e9"),28,true))
 	var nav := add(dock,HBoxContainer.new(),"Navigation") as HBoxContainer
 	nav.add_theme_constant_override("separation",6)
-	for definition in [["NavShop","FloatingShop","Shop"],["NavItems","BrushIcon","Tools"],["NavPlans","BlueprintIcon","Blueprints"],["NavBonzi","BonziIcon","Bonzi"]]:
+	for definition in [["NavShop","FloatingShop","Shop"],["NavItems","BrushIcon","Tools"],["NavPlans","BlueprintIcon","Stores"],["NavAvatar","../character/thumbnails/portrait","You"]]:
 		var b := button(nav,definition[0],definition[1],definition[2])
 		b.custom_minimum_size=Vector2(64,64)
 		b.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 		if definition[0]=="NavShop": b.add_theme_stylebox_override("normal",style(Color("dbedce"),22))
-	var notice := add(home,Button.new(),"ReturnNotice",true) as Button
-	notice.visible=false
-	notice.text="While away"
-	notice.add_theme_font_size_override("font_size",15)
-	notice.add_theme_color_override("font_color",Color("355876"))
-	notice.add_theme_stylebox_override("normal",style(Color("fff3ce"),22,true))
 	var timer := add(home,Timer.new(),"HintTimer",true) as Timer
 	timer.one_shot=true
 	timer.wait_time=5
@@ -220,6 +214,12 @@ func build() -> void:
 	back.position=Vector2(18,12)
 	back.add_theme_stylebox_override("normal",style(Color("dbedce"),18))
 	back.add_theme_color_override("font_color",Color("355876"))
+	var avatar_menu: Control = load("res://scenes/ui/avatar_customization.tscn").instantiate()
+	avatar_menu.name = "AvatarMenu"
+	home.add_child(avatar_menu)
+	avatar_menu.owner = home
+	avatar_menu.unique_name_in_owner = true
+	avatar_menu.hide()
 	home.set_script(load("res://scripts/floating_home.gd"))
 	load("res://../tools/home_navigation_authoring.gd").decorate(home)
 	load("res://../tools/home_settings_authoring.gd").decorate(home)

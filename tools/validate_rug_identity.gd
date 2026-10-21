@@ -27,8 +27,8 @@ func new_state(label: String) -> Node:
 	var state := State.new()
 	state._save_path = "res://.godot/rug_identity_%d_%s.json" % [OS.get_process_id(), label]
 	paths.append(state._save_path)
-	state._test_ticks_msec = 0
-	state._test_unix_time = 1800000000.0
+
+
 	root.add_child(state)
 	state.set_process(false)
 	return state
@@ -37,8 +37,8 @@ func new_state(label: String) -> Node:
 func reload_state(state: Node) -> Node:
 	var next := State.new()
 	next._save_path = state._save_path
-	next._test_ticks_msec = 0
-	next._test_unix_time = state._test_unix_time
+
+
 	state.free()
 	root.add_child(next)
 	next.set_process(false)
@@ -47,9 +47,9 @@ func reload_state(state: Node) -> Node:
 
 func snapshot(state: Node, fraction: float = 1.0) -> Dictionary:
 	var result := {"rug_id": state.active_rug_id, "unique_clearance": fraction, "surface_clearance": fraction, "pixels": [1, 7, 9]}
-	if state.active_store >= 2:
+	if state.active_store >= Rules.WET_FIRST_STORE:
 		result.merge({"wet_recipe": true, "water_clearance": fraction, "extraction_clearance": fraction if fraction >= 0.99 else 0.0, "wash_cycle_count": 3, "wash_cycle": 2 if fraction >= 0.99 else 0})
-		if state.active_store == 2: result.skip_dry_stage = true
+		if state.active_store == Rules.WET_FIRST_STORE: result.skip_dry_stage = true
 	return result
 
 
@@ -101,7 +101,7 @@ func _run() -> void:
 	state.free()
 	_check_stores()
 	_check_every_design_in_every_store()
-	_check_migration()
+	_check_unsupported_saves()
 	_check_identity_recovery()
 	_check_retired_design_migration()
 	for path: String in paths:
@@ -124,7 +124,7 @@ func _check_stores() -> void:
 	state.save_job_snapshot(snapshot(state, 0.6))
 	var second_job: String = state.active_job_id
 	state = reload_state(state)
-	check(state.active_store == 2 and state.active_rug_id == "playful_fox" and state.active_job_id == second_job, "Active wet-store identity survives disk reload")
+	check(state.active_store == 2 and state.active_rug_id == "playful_fox" and state.active_job_id == second_job, "Active later-store identity survives disk reload")
 	check(state.select_store(1) and state.active_rug_id == "sunburst_geometry" and state.active_job_id == first_job and state.job_snapshot.surface_clearance == 0.35, "Travel restores Neighborhood's unfinished Sunburst")
 	check(state.select_store(2) and state.active_rug_id == "playful_fox" and state.active_job_id == second_job and state.job_snapshot.surface_clearance == 0.6, "Travel restores High Street's unfinished Fox independently")
 	state.free()
@@ -134,12 +134,12 @@ func _check_every_design_in_every_store() -> void:
 	var state := new_state("full_collection")
 	for store_id in range(2, Rules.STORE_COUNT + 1):
 		state.stores[str(store_id)] = Rules.new_branch(store_id)
-	check(state.save_state(), "All four stores are available in the isolated collection fixture")
+	check(state.save_state(), "All six stores are available in the isolated collection fixture")
 	for store_id in range(1, Rules.STORE_COUNT + 1):
 		check(state.select_store(store_id), "Enter collection test store %d" % store_id)
 		var job: String = state.start_job()
-		var earned := 0
-		var opening_cash: int = state.cash
+		var earned := 0.0
+		var opening_cash: float = state.cash
 		for index in Catalog.IDS.size():
 			var expected: String = Catalog.IDS[index]
 			check(not job.is_empty() and state.active_rug_id == expected, "Store %d reserves %s in the full discovery cycle" % [store_id, expected])
@@ -151,32 +151,32 @@ func _check_every_design_in_every_store() -> void:
 			earned += state.reward_for_current_job(finished)
 			job = state.complete_and_start_next_job(job, finished)
 			check(not job.is_empty() and state.active_rug_id == Catalog.IDS[(index + 1) % Catalog.IDS.size()], "Store %d advances after completing %s" % [store_id, expected])
-		check(state.active_rug_id == Catalog.DEFAULT_ID and int(state.progression_view().local_jobs) == Catalog.IDS.size() and state.cash == opening_cash + earned, "Store %d completes and pays the whole collection exactly once before repeating" % store_id)
+		check(state.active_rug_id == Catalog.DEFAULT_ID and int(state.progression_view().local_jobs) == Catalog.IDS.size() and is_equal_approx(state.cash, opening_cash + earned), "Store %d completes and pays the whole collection exactly once before repeating" % store_id)
 	state.free()
 
 
-func _check_migration() -> void:
-	for version: int in [1, 2]:
-		var state := new_state("legacy_%d" % version)
+func _check_unsupported_saves() -> void:
+	check(State.SAVE_PATH == "user://carpet_cleaner_v1.json", "Current rug progress uses the fresh save namespace")
+	for version: int in [2, 3]:
+		var state := new_state("unsupported_%d" % version)
 		state.start_job()
 		state.cash = 777
 		state.manual_jobs = 8
 		state.stores["1"].manual_jobs = 8
 		state.save_job_snapshot(snapshot(state, 0.58))
-		var old: Dictionary = state._capture_state()
-		old.erase("active_rug_id")
-		old.job_snapshot.erase("rug_id")
-		for branch: Dictionary in old.stores.values():
-			branch.erase("active_rug_id")
-			branch.job_snapshot.erase("rug_id")
-		old.version = version
-		if version == 1:
-			for key: String in ["stores", "active_store", "completed_rewards", "ad_receipts", "latest_reward_job"]: old.erase(key)
-		write_fixture(state._save_path, old)
+		var unsupported: Dictionary = state._capture_state()
+		unsupported.version = version
+		write_fixture(state._save_path, unsupported)
+		var original_bytes := FileAccess.get_file_as_string(state._save_path)
 		state = reload_state(state)
-		check(state._save_enabled and state.active_rug_id == "mint_meadow" and state.cash == 777 and state.manual_jobs == 8 and state.job_snapshot.surface_clearance == 0.58 and int(state.job_snapshot.pixels[1]) == 7, "Version %d missing identity preserves old Mint and progress regardless of count" % version)
+		check(not state._save_enabled and state.cash == 0.0 and state.manual_jobs == 0 and state.active_store == 1 and state.active_job_id.is_empty() and state.active_rug_id == Catalog.DEFAULT_ID and state.job_snapshot.is_empty(), "Unsupported version %d leaves a fresh default state instead of importing previous progress" % version)
+		check(not state.save_state() and state.start_job().is_empty() and FileAccess.get_file_as_string(state._save_path) == original_bytes, "Unsupported version %d stays byte-for-byte intact until an explicit reset" % version)
+		check(state.reset_progress() and state._save_enabled and state.cash == 0.0 and state.active_rug_id == Catalog.DEFAULT_ID, "Explicit reset replaces the rejected test save with fresh current progress")
+		var job: String = state.start_job()
+		check(not job.is_empty() and state.active_rug_id == Catalog.DEFAULT_ID and state.save_job_snapshot(snapshot(state, 0.58)), "Fresh reset reserves Mint and saves its own partial cleaning")
+		state = reload_state(state)
 		var saved: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(state._save_path))
-		check(saved.version == 2 and saved.stores["1"].active_rug_id == "mint_meadow" and saved.job_snapshot.rug_id == "mint_meadow", "Version %d identity migration commits without replacing the ledger" % version)
+		check(saved.version == State.SAVE_VERSION and saved.appearance == {"color_id":"orange", "hat_id":"none"} and state.active_job_id == job and state.active_rug_id == Catalog.DEFAULT_ID and is_equal_approx(state.job_snapshot.surface_clearance, 0.58), "Fresh current-schema rug identity and progress survive reload")
 		state.free()
 
 
@@ -218,7 +218,7 @@ func _check_retired_design_migration() -> void:
 	state.select_store(2)
 	state.start_job()
 	state.save_job_snapshot(snapshot(state, 0.67))
-	var wet_job: String = state.active_job_id
+	var second_job: String = state.active_job_id
 	var old: Dictionary = state._capture_state()
 	old.active_rug_id = "celestial_whale"
 	old.job_snapshot.rug_id = "celestial_whale"
@@ -226,13 +226,13 @@ func _check_retired_design_migration() -> void:
 		branch.active_rug_id = "celestial_whale"
 		branch.job_snapshot.rug_id = "celestial_whale"
 	# Compare the serialized numeric types used by both the old and restored save.
-	var expected_wet: Dictionary = JSON.parse_string(JSON.stringify(old.stores["2"].job_snapshot))
-	expected_wet.rug_id = "stillwater_pond"
+	var expected_second: Dictionary = JSON.parse_string(JSON.stringify(old.stores["2"].job_snapshot))
+	expected_second.rug_id = "stillwater_pond"
 	var expected_dry: Dictionary = JSON.parse_string(JSON.stringify(old.stores["1"].job_snapshot))
 	expected_dry.rug_id = "stillwater_pond"
 	write_fixture(state._save_path, old)
 	state = reload_state(state)
-	check(state._save_enabled and state.active_rug_id == "stillwater_pond" and state.active_job_id == wet_job and state.job_snapshot == expected_wet, "Active Whale migrates to Stillwater with exact saved water and cleaning progress")
+	check(state._save_enabled and state.active_rug_id == "stillwater_pond" and state.active_job_id == second_job and state.job_snapshot == expected_second, "Active Whale migrates to Stillwater with exact saved cleaning progress")
 	check(state.cash == int(old.cash) and state.manual_jobs == int(old.manual_jobs) and state.completed_rewards == old.completed_rewards, "Retiring Whale preserves wallet, completed jobs and reward receipts")
 	check(state.select_store(1) and state.active_rug_id == "stillwater_pond" and state.active_job_id == dry_job and state.job_snapshot == expected_dry, "Inactive-store Whale also migrates with exact saved dirt and reservation")
 	state = reload_state(state)
@@ -244,5 +244,5 @@ func _check_retired_design_migration() -> void:
 	var before_reward: int = state.cash
 	check(not state.complete_and_start_next_job(dry_job, snapshot(state)).is_empty() and state.cash == before_reward + 40, "Migrated job completes with its existing payout exactly once")
 	var saved: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(state._save_path))
-	check(saved.stores["2"].active_rug_id == "stillwater_pond" and saved.stores["2"].job_snapshot == expected_wet, "Committing the replacement also persists the inactive store migration")
+	check(saved.stores["2"].active_rug_id == "stillwater_pond" and saved.stores["2"].job_snapshot == expected_second, "Committing the replacement also persists the inactive store migration")
 	state.free()
